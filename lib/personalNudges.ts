@@ -138,8 +138,15 @@ async function cancelExisting(): Promise<void> {
 
 /**
  * (Re)schedule the day's personalized nudges. Idempotent — cancels the previous
- * set first, so it's safe to call on every app open. Requests notification
- * permission once; quietly no-ops if denied or disabled.
+ * set first, so it's safe to call on every app open. Quietly no-ops if
+ * notifications are not granted or nudges are disabled.
+ *
+ * It CHECKS the permission and never REQUESTS it. This runs from the root
+ * layout on every launch, signed in or not, and requesting here put the OS
+ * prompt in front of a brand-new install before it had shown anything —
+ * bypassing the in-context pre-prompt (components/onboarding/PushPrePrompt)
+ * whose whole job is to ask at the right moment (2026-09-30 release audit).
+ * Once the user grants it there, the next launch schedules the plan.
  */
 export async function syncPersonalNudges(
   enabled: boolean,
@@ -150,8 +157,7 @@ export async function syncPersonalNudges(
   if (!enabled) return;
   try {
     const perm = await Notifications.getPermissionsAsync();
-    const granted = perm.granted || (await Notifications.requestPermissionsAsync()).granted;
-    if (!granted) return;
+    if (!perm.granted) return;
 
     const model = loadModel();
     const hours = plannedNudgeHours(model, policy);

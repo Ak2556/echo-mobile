@@ -14,7 +14,7 @@ import {
   RankedFeedCursor,
 } from '../../../../lib/supabaseEchoApi';
 import { LOCAL_SEED_FEED, coerceFeedItem } from '../../../../lib/localFeedSeed';
-import { computeScore, GRAVITY } from '../../../../lib/feedScoring';
+import { computeScore, gravityForScope } from '../../../../lib/feedScoring';
 
 const PAGE_SIZE = 20;
 
@@ -23,7 +23,6 @@ export function useFeed() {
   const publishedEchoes = useAppStore(s => s.publishedEchoes);
   const likedIds        = useAppStore(s => s.likedIds);
   const bookmarkedIds   = useAppStore(s => s.bookmarkedIds);
-  const feedSort        = useAppStore(s => s.feedSort);
   const feedScope       = useAppStore(s => s.feedScope);
   const followingIds    = useAppStore(s => s.followingIds);
   const blockedIds      = useAppStore(s => s.blockedIds);
@@ -36,8 +35,8 @@ export function useFeed() {
 
   return useQuery({
     queryKey: remote
-      ? ['feed', feedSort, feedScope, blockedIds, mutedIds, notInterestedIds]
-      : ['feed', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedSort, feedScope, blockedIds, mutedIds, notInterestedIds, interests],
+      ? ['feed', feedScope, blockedIds, mutedIds, notInterestedIds]
+      : ['feed', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedScope, blockedIds, mutedIds, notInterestedIds, interests],
     staleTime: remote ? 30_000 : Infinity,
     queryFn: async (): Promise<FeedItem[]> => {
       // O(1) lookups — never use Array.includes inside a filter loop.
@@ -64,8 +63,7 @@ export function useFeed() {
             captureException(personalErr, { tags: { hook: 'useFeed', fallback: 'ranked' } });
           }
         }
-        // Gravity: recency-heavy for 'latest', engagement-heavy for 'popular'.
-        const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;
+        const gravity = gravityForScope(feedScope);
         try {
           const rows = await fetchRankedFeed({
             limit: 50,
@@ -97,7 +95,7 @@ export function useFeed() {
         merged = merged.filter(item => followSet.has(item.userId) || item.userId === 'me');
       }
 
-      const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;
+      const gravity = gravityForScope(feedScope);
 
       merged.sort((a, b) => {
         // Interest boost on top of the score — keeps interest matching as a
@@ -159,7 +157,6 @@ export function useInfiniteFeed() {
   const publishedEchoes  = useAppStore(s => s.publishedEchoes);
   const likedIds         = useAppStore(s => s.likedIds);
   const bookmarkedIds    = useAppStore(s => s.bookmarkedIds);
-  const feedSort         = useAppStore(s => s.feedSort);
   const feedScope        = useAppStore(s => s.feedScope);
   const followingIds     = useAppStore(s => s.followingIds);
   const blockedIds       = useAppStore(s => s.blockedIds);
@@ -180,8 +177,8 @@ export function useInfiniteFeed() {
     RankedFeedCursor
   >({
     queryKey: remote
-      ? ['feed', 'paginated', feedSort, feedScope, blockedIds, mutedIds, notInterestedIds]
-      : ['feed', 'paginated', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedSort, feedScope, blockedIds, mutedIds, notInterestedIds, interests],
+      ? ['feed', 'paginated', feedScope, blockedIds, mutedIds, notInterestedIds]
+      : ['feed', 'paginated', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedScope, blockedIds, mutedIds, notInterestedIds, interests],
     initialPageParam: undefined,
     // Cursor carries (score, id) so keyset pagination is stable under new posts.
     getNextPageParam: (lastPage: FeedItem[]): RankedFeedCursor => {
@@ -233,7 +230,7 @@ export function useInfiniteFeed() {
           }
         }
 
-        const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;
+        const gravity = gravityForScope(feedScope);
         try {
           return await fetchRankedFeed({
             limit: PAGE_SIZE,
@@ -270,7 +267,7 @@ export function useInfiniteFeed() {
         merged = merged.filter(item => followSet.has(item.userId) || item.userId === 'me');
       }
 
-      const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;
+      const gravity = gravityForScope(feedScope);
 
       merged.sort((a, b) => {
         const interestDelta =

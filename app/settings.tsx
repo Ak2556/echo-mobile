@@ -560,7 +560,6 @@ export default function SettingsScreen() {
   const [showDmPicker, setShowDmPicker] = useState(false);
   const [showAppLanguagePicker, setShowAppLanguagePicker] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
-  const [showFeedSortPicker, setShowFeedSortPicker] = useState(false);
   const [showCornerPicker, setShowCornerPicker] = useState(false);
   const [showAccentPicker, setShowAccentPicker] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
@@ -844,7 +843,6 @@ export default function SettingsScreen() {
   }[s.aiModel];
   const bubbleLabel = { modern: 'Modern', classic: 'Classic', minimal: 'Minimal' }[s.chatBubbleStyle];
   const dmLabel = { everyone: 'Everyone', followers: 'Followers Only', nobody: 'Nobody' }[s.dmPrivacy];
-  const feedLabel = { latest: 'Latest', popular: 'Popular', following: 'Following' }[s.feedSort];
   const cornerLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.roundedCorners];
   const themeLabel = THEMES[s.theme]?.name ?? 'Midnight';
   const appLanguageLabel = languageLabel(s.appLanguage);
@@ -1118,8 +1116,6 @@ export default function SettingsScreen() {
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Globe} iconColor={colors.accent} label={t('settings.appLanguage')} subtitle={t('settings.appLanguageSubtitle')} onPress={() => setShowAppLanguagePicker(true)} right={chevronValue(appLanguageLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Feed Sort")} subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
-            {divider}
             <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Compact Feed")} subtitle={ttx("Show smaller cards in the feed")} right={SwitchEl(s.compactFeed, s.setCompactFeed)} />
             {divider}
             <SettingsRow theme={theme} icon={Broadcast} label={ttx("Autoplay Stories")} subtitle={ttx("Auto-advance through stories")} right={SwitchEl(s.autoplayStories, s.setAutoplayStories)} />
@@ -1342,21 +1338,6 @@ export default function SettingsScreen() {
           value={s.contentLanguage}
           onChange={(v) => void handleContentLanguage(v)}
           onClose={() => setShowLanguagePicker(false)}
-        />
-      )}
-
-      {showFeedSortPicker && (
-        <OptionPicker
-          theme={theme}
-          title={ttx("Feed Sort Order")}
-          options={[
-            { label: 'Latest', value: 'latest' as const, desc: 'Most recent posts first' },
-            { label: 'Popular', value: 'popular' as const, desc: 'Sort by engagement' },
-            { label: 'Following', value: 'following' as const, desc: 'Only from people you follow' },
-          ]}
-          value={s.feedSort}
-          onChange={(v) => { s.setFeedSort(v); showToast(`Feed: ${v}`, 'Feed'); }}
-          onClose={() => setShowFeedSortPicker(false)}
         />
       )}
 

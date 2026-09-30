@@ -2913,6 +2913,7 @@ export async function searchRemoteUsers(query: string, limit = 8): Promise<UserS
     .from('profiles')
     .select('id, username, display_name, avatar_color, avatar_url, is_verified')
     .or(`username.ilike.${escPg(q)}%,display_name.ilike.%${escPg(q)}%`)
+    .eq('hidden_from_discovery', false)
     .order('follower_count', { ascending: false })
     .limit(limit);
   if (error) {
@@ -3997,6 +3998,8 @@ export async function fetchSuggestedUsers(): Promise<import('../types').User[]> 
     .from('profiles')
     .select('id, username, display_name, avatar_color, bio, follower_count')
     .not('id', 'in', `(${Array.from(alreadyFollowing).join(',')})`)
+    // Internal accounts (the store reviewers') are never suggested.
+    .eq('hidden_from_discovery', false)
     .order('follower_count', { ascending: false })
     .limit(8);
 

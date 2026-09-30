@@ -6,6 +6,16 @@ export const GRAVITY: Record<string, number> = {
   popular: 1.0, // engagement-heavy (older viral posts rank higher)
 };
 
+export type FeedScope = 'semantic' | 'forYou' | 'following' | 'latest';
+
+// The Home chips are the only ranking control. 'forYou' is labelled Trending,
+// so it ranks by engagement; every other scope ranks by recency. This used to
+// come from a separate Settings "Feed Sort" value, which made Trending and
+// Latest return the same list and let a stale hidden setting reorder the feed.
+export function gravityForScope(scope: FeedScope): number {
+  return scope === 'forYou' ? GRAVITY.popular : GRAVITY.latest;
+}
+
 export type ScoringInput = {
   likes: number;
   commentCount: number;

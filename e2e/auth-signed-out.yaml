@@ -1,0 +1,73 @@
+# Signed-out surface: welcome screen, analytics consent, legal links, email
+# validation, and the store reviewers' hidden sign-in. Sends nothing: Send
+# code is only asserted enabled or disabled, never tapped, and the reviewer
+# sheet is opened and closed without credentials.
+#
+# CLEARS APP DATA: run it last, or on a device you do not need signed in.
+# Run: maestro test e2e/auth-signed-out.yaml
+appId: com.downloadecho.echo
+---
+- launchApp:
+    clearState: true
+
+# Android 13+ shows the OS notification prompt on first launch (tracked: it
+# should wait for the in-app pre-prompt).
+- tapOn:
+    text: "Don.t allow"
+    optional: true
+
+- extendedWaitUntil:
+    visible: ".*with Google.*"
+    timeout: 30000
+
+# Builds before #135 show the analytics banner over "Log in" and the legal
+# links, a moment after the screen appears; from #135 it waits until the user
+# is inside the app. Handle both: give it a moment, decline if it is there.
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Decline analytics"
+    commands:
+      - tapOn: "Decline analytics"
+      - waitForAnimationToEnd
+
+- tapOn: "Terms"
+- extendedWaitUntil:
+    visible: "Terms of Service"
+    timeout: 15000
+- back
+
+- tapOn: "Privacy."
+- extendedWaitUntil:
+    visible: "Privacy Policy"
+    timeout: 15000
+- back
+
+# Log in with email: Send code stays disabled until the address looks valid.
+- tapOn: "Already have an account\\? Log in"
+- tapOn: ".*with Email.*"
+- extendedWaitUntil:
+    visible: "you@example.com"
+    timeout: 15000
+- tapOn: "you@example.com"
+- inputText: "not-an-email"
+- assertVisible:
+    text: "Send code"
+    enabled: false
+- eraseText: 20
+- inputText: "maestro@example.com"
+- assertVisible:
+    text: "Send code"
+    enabled: true
+- eraseText: 30
+- hideKeyboard
+- back
+
+# Store reviewers: a 1.5 s long press on the wordmark opens a password sheet.
+- longPressOn: "echo"
+- extendedWaitUntil:
+    visible: "Reviewer sign-in"
+    timeout: 10000
+- assertVisible: "Reviewer email"
+- assertVisible: "Reviewer password"
+- back
