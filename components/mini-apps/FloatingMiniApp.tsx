@@ -6,7 +6,7 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withSpring, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
 import { usePathname } from 'expo-router';
-import { restingY, shouldPersistDrag } from '../../lib/floatingBubblePlacement';
+import { restingX, restingY, shouldPersistDrag } from '../../lib/floatingBubblePlacement';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Waveform, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
@@ -78,7 +78,7 @@ function Bubble({ pathname }: { pathname: string }) {
     ? colors.danger
     : meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? meta.color ?? colors.accent) : colors.accent;
 
-  const startX = x >= 0 ? x : SCREEN_W - BUBBLE - 14;
+  const startX = restingX(pathname, SCREEN_W, x);
   // Bottom-right on the tab screens, where that corner is free; lifted up the
   // right edge everywhere else, where the corner holds real controls
   // (lib/floatingBubblePlacement).
@@ -88,8 +88,9 @@ function Bubble({ pathname }: { pathname: string }) {
   const ty = useSharedValue(startY);
   // The bubble outlives navigation: move it when the screen changes.
   useEffect(() => {
+    tx.value = withSpring(startX, { damping: 18, stiffness: 200 });
     ty.value = withSpring(startY, { damping: 18, stiffness: 200 });
-  }, [startY, ty]);
+  }, [startX, startY, tx, ty]);
   const offX = useSharedValue(0);
   const offY = useSharedValue(0);
 

@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BUBBLE_SIZE, cornerY, homeCornerY, liftedY, restingY, shouldPersistDrag } from './floatingBubblePlacement';
+import { BUBBLE_SIZE, EDGE_MARGIN, cornerY, homeCornerY, liftedY, restingX, restingY, shouldPersistDrag } from './floatingBubblePlacement';
 
 // The audit device: 1344x2992 px at 3x = 448x997 pt.
 const H = 997;
@@ -60,6 +60,19 @@ describe('restingY', () => {
 
   it('stays clear of the header', () => {
     expect(liftedY(H)).toBeGreaterThan(120);
+  });
+});
+
+describe('restingX', () => {
+  const W = 448;
+  it('rests on the left edge on Flow, clear of its right-hand control column', () => {
+    expect(restingX('/watch', W, W - 60)).toBe(EDGE_MARGIN);
+  });
+
+  it('keeps the saved side everywhere else', () => {
+    expect(restingX('/settings', W, 6)).toBe(6);
+    expect(restingX('/explore', W, 6)).toBe(6);
+    expect(restingX('/explore', W, -1)).toBe(W - BUBBLE_SIZE - EDGE_MARGIN);
   });
 });
 

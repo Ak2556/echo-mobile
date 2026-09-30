@@ -61,6 +61,23 @@ export function restingY(pathname: string, screenH: number, savedY: number): num
   return savedY >= 0 ? savedY : cornerY(screenH);
 }
 
+/**
+ * Flow's right edge is a full column of controls (author + follow, like,
+ * comment, save, download, share) anchored to the bottom, so its top moves
+ * with screen height and no lifted y clears it everywhere. Once N2 moved that
+ * column up out from under the tab bar, the lifted bubble landed on the
+ * author's follow button. On Flow the bubble rests on the left edge, over
+ * nothing but video.
+ */
+const LEFT_EDGE_ROUTES = new Set(['/watch']);
+export const EDGE_MARGIN = 14;
+
+/** Resting x for the bubble. `savedX` is the persisted drag (negative when never dragged). */
+export function restingX(pathname: string, screenW: number, savedX: number): number {
+  if (LEFT_EDGE_ROUTES.has(pathname)) return EDGE_MARGIN;
+  return savedX >= 0 ? savedX : screenW - BUBBLE_SIZE - EDGE_MARGIN;
+}
+
 /** A finished drag is remembered only where the corner is free. */
 export function shouldPersistDrag(pathname: string): boolean {
   return cornerIsFree(pathname);
