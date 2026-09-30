@@ -14,7 +14,7 @@ import {
   RankedFeedCursor,
 } from '../../../../lib/supabaseEchoApi';
 import { LOCAL_SEED_FEED, coerceFeedItem } from '../../../../lib/localFeedSeed';
-import { computeScore, gravityForScope } from '../../../../lib/feedScoring';
+import { computeScore, gravityForScope, rankTrending } from '../../../../lib/feedScoring';
 
 const PAGE_SIZE = 20;
 
@@ -310,7 +310,15 @@ export function useInfiniteFeed() {
 }
 
 // Watch / Shorts feed (video only)
-export function useInfiniteVideoFeed() {
+export type FlowSort = 'trending' | 'new';
+
+// Videos a Trending ranking is drawn from. get_ranked_feed can't filter by post
+// type, so Trending ranks the newest videos here with the server's own curve.
+// Production has 11 videos (2026-09-30); past a few hundred this belongs in
+// the RPC as a post-type parameter.
+const TRENDING_VIDEO_POOL = 100;
+
+export function useInfiniteVideoFeed(sort: FlowSort = 'new') {
   const publishedEchoes  = useAppStore(s => s.publishedEchoes);
   const blockedIds       = useAppStore(s => s.blockedIds);
   const mutedIds         = useAppStore(s => s.mutedIds);
@@ -325,10 +333,12 @@ export function useInfiniteVideoFeed() {
     string | undefined
   >({
     queryKey: remote
-      ? ['feed', 'videos', blockedIds, mutedIds, notInterestedIds]
-      : ['feed', 'videos', 'local', publishedEchoes, blockedIds, mutedIds, notInterestedIds],
+      ? ['feed', 'videos', sort, blockedIds, mutedIds, notInterestedIds]
+      : ['feed', 'videos', sort, 'local', publishedEchoes, blockedIds, mutedIds, notInterestedIds],
     initialPageParam: undefined,
     getNextPageParam: (lastPage: FeedItem[]) => {
+      // Trending is one ranked page; a created_at cursor means nothing to it.
+      if (sort === 'trending') return undefined;
       if (lastPage.length < PAGE_SIZE) return undefined;
       return lastPage[lastPage.length - 1].createdAt;
     },
@@ -341,17 +351,22 @@ export function useInfiniteVideoFeed() {
         list.filter(item => !blockSet.has(item.userId) && !skipSet.has(item.id));
 
       if (remote) {
-        const remoteFeed = await fetchRemoteFeed({ limit: PAGE_SIZE, cursor: pageParam, postType: 'video' });
-        
+        const remoteFeed = await fetchRemoteFeed({
+          limit: sort === 'trending' ? TRENDING_VIDEO_POOL : PAGE_SIZE,
+          cursor: pageParam,
+          postType: 'video',
+        });
+
         if (!pageParam) {
           const localVideos = publishedEchoes
             .map(coerceFeedItem)
             .filter(i => i.postType === 'video' || !!i.videoUri);
-            
+
           const remoteIds = new Set(remoteFeed.map(r => r.id));
           const newLocals = localVideos.filter(l => !remoteIds.has(l.id));
-          
-          return filterHidden([...newLocals, ...remoteFeed]);
+
+          const page = filterHidden([...newLocals, ...remoteFeed]);
+          return sort === 'trending' ? rankTrending(page) : page;
         }
         
         return filterHidden(remoteFeed);
@@ -362,6 +377,7 @@ export function useInfiniteVideoFeed() {
         .filter(i => i.postType === 'video' || !!i.videoUri);
 
       merged = filterHidden(merged);
+      if (sort === 'trending') return pageParam ? [] : rankTrending(merged);
       merged.sort((a, b) => a.createdAt > b.createdAt ? -1 : 1);
       
       // Cursor pagination locally

@@ -1,17 +1,67 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { VideoProbeOverlay } from '../../components/dev/VideoProbeOverlay';
-import { View, RefreshControl, FlatList } from 'react-native';
+import { View, Text, Pressable, RefreshControl, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { FlowCard } from '../../src/features/feed/ui/FlowCard';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
-import { useInfiniteVideoFeed } from '../../src/features/feed/api/useFeed';
+import { useInfiniteVideoFeed, type FlowSort } from '../../src/features/feed/api/useFeed';
+import { useI18n } from '../../src/shared/lib/i18n';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { useTheme } from '../../src/shared/lib/theme';
 
+// Trending | New, centred over the video like the rest of Flow's chrome. Layout
+// sits on inner Views: box props on a Pressable drop out in release builds.
+// White over video; theme colours while loading or empty, when the screen
+// behind them is the theme background (white in light mode).
+function FlowSortTabs({ sort, onChange, top, overVideo }: { sort: FlowSort; onChange: (s: FlowSort) => void; top: number; overVideo: boolean }) {
+  const { t } = useI18n();
+  const { font, colors } = useTheme();
+  const on = overVideo ? '#fff' : colors.text;
+  const off = overVideo ? 'rgba(255,255,255,0.6)' : colors.textMuted;
+  const tabs: { key: FlowSort; label: string }[] = [
+    { key: 'trending', label: t('home.trending') },
+    { key: 'new', label: t('common.new') },
+  ];
+  return (
+    <View pointerEvents="box-none" style={{ position: 'absolute', top, left: 0, right: 0, alignItems: 'center', zIndex: 5 }}>
+      <View accessibilityRole="tablist" style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        {tabs.map(tab => {
+          const active = sort === tab.key;
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => onChange(tab.key)}
+              hitSlop={8}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={tab.label}
+            >
+              <View style={{ paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center' }}>
+                <Text
+                  style={[font.bodySemibold, {
+                    color: active ? on : off,
+                    fontSize: 16,
+                    textShadowColor: overVideo ? 'rgba(0,0,0,0.5)' : 'transparent',
+                    textShadowRadius: 6,
+                    textShadowOffset: { width: 0, height: 1 },
+                  }]}
+                >
+                  {tab.label}
+                </Text>
+                <View style={{ marginTop: 4, width: 18, height: 2.5, borderRadius: 2, backgroundColor: active ? on : 'transparent' }} />
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
 
 export default function WatchScreen() {
   const router = useRouter();
+  const [sort, setSort] = useState<FlowSort>('trending');
   const {
     data: feedData,
     isLoading,
@@ -20,7 +70,7 @@ export default function WatchScreen() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteVideoFeed();
+  } = useInfiniteVideoFeed(sort);
   
   const feed = feedData?.pages.flat() ?? [];
   const listRef = useRef<any>(null);
@@ -79,9 +129,20 @@ export default function WatchScreen() {
     alignSelf: 'center' as const,
   };
 
+  const changeSort = (next: FlowSort) => {
+    if (next === sort) {
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+      return;
+    }
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    setSort(next);
+  };
+  // Level with the mute button on each card (FlowCard: insets.top + 12, 40pt).
+  const sortTabs = <FlowSortTabs sort={sort} onChange={changeSort} top={insets.top + 12} overVideo={feed.length > 0} />;
+
   if (isLoading && feed.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }} />
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>{sortTabs}</View>
     );
   }
 
@@ -125,6 +186,7 @@ export default function WatchScreen() {
           />
         }
       />
+      {sortTabs}
       <VideoProbeOverlay />
     </View>
   );

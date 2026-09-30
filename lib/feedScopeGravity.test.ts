@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { GRAVITY, gravityForScope } from './feedScoring';
+import { GRAVITY, gravityForScope, rankTrending } from './feedScoring';
 
 describe('gravityForScope', () => {
   it('ranks the Trending chip by engagement and the rest by recency', () => {
@@ -32,5 +32,37 @@ describe('Home feed has one ranking control', () => {
 
   it('names the section after the selected chip, not always "Top conversations"', () => {
     expect(home).toMatch(/feedScope === 'forYou' \? t\('home\.topConversations'\) : feedScopeLabel\(feedScope, t\)/);
+  });
+});
+
+describe('rankTrending', () => {
+  const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString();
+  const video = (id: string, likes: number, ageH: number) => ({
+    id, likes, commentCount: 0, repostCount: 0, viewCount: 10, createdAt: hoursAgo(ageH), postType: 'video',
+  });
+
+  it('puts an engaged older video above a newer one nobody liked', () => {
+    const ranked = rankTrending([video('new-quiet', 0, 1), video('older-liked', 40, 48)]);
+    expect(ranked.map(v => v.id)).toEqual(['older-liked', 'new-quiet']);
+  });
+
+  it('does not mutate its input', () => {
+    const input = [video('a', 0, 1), video('b', 40, 48)];
+    rankTrending(input);
+    expect(input.map(v => v.id)).toEqual(['a', 'b']);
+  });
+});
+
+describe('Flow has Trending | New', () => {
+  const watch = readFileSync('app/(tabs)/watch.tsx', 'utf8');
+  const useFeed = readFileSync('src/features/feed/api/useFeed.ts', 'utf8');
+
+  it('passes the selected tab to the video feed, defaulting to Trending', () => {
+    expect(watch).toMatch(/useState<FlowSort>\('trending'\)/);
+    expect(watch).toMatch(/useInfiniteVideoFeed\(sort\)/);
+  });
+
+  it('keys the video query by tab so the two lists never share a cache entry', () => {
+    expect(useFeed).toMatch(/\['feed', 'videos', sort,/);
   });
 });
