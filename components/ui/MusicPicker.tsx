@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, Pressable, FlatList, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
-import { X, MagnifyingGlass, MusicNote } from 'phosphor-react-native';
+import { X, MagnifyingGlass, MusicNote, WarningCircle } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { searchSpotify, SpotifyTrack } from '../../lib/spotify';
 import { Image } from 'expo-image';
+import { ttx } from '../../src/shared/lib/i18n';
 
 export interface Song {
   title: string;
   artist: string;
   url: string;
+  /** Album art, shown on the composer's music card. */
+  coverArt?: string;
 }
 
 interface MusicPickerProps {
@@ -18,7 +21,7 @@ interface MusicPickerProps {
 }
 
 export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProps) {
-  const { colors, fontSizes, radius } = useTheme();
+  const { colors, fontSizes, font } = useTheme();
   const [query, setQuery] = useState('');
   const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,8 +46,11 @@ export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProp
       try {
         const results = await searchSpotify(query);
         setTracks(results);
-      } catch (err: any) {
-        setError(err.message || 'Failed to search Spotify');
+      } catch {
+        // The raw message was shown before ("Edge Function returned a non-2xx
+        // status code"). The cause is logged server-side; people need to know
+        // it is not them and what to do.
+        setError(ttx("Music search isn't working right now. Try again in a bit."));
       } finally {
         setLoading(false);
       }
@@ -55,11 +61,15 @@ export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProp
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
-        <View style={[styles.content, { backgroundColor: colors.bg, borderTopLeftRadius: 18, borderTopRightRadius: 18 }]}>
+        <View style={[styles.content, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
           <View style={styles.header}>
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Add Music (Spotify)</Text>
-            <Pressable onPress={onClose} hitSlop={8}>
-              <X color={colors.textMuted} size={20} />
+            <View>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: 18 }]}>{ttx("Add music")}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>{ttx("Search by Spotify")}</Text>
+            </View>
+            <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={ttx("Close")}>
+              <X color={colors.textSecondary} size={20} />
             </Pressable>
           </View>
 
@@ -68,7 +78,7 @@ export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProp
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search songs or artists..."
+              placeholder={ttx("Search songs or artists")}
               placeholderTextColor={colors.textMuted}
               style={[styles.searchInput, { color: colors.text, fontSize: fontSizes.body }]}
               autoCapitalize="none"
@@ -81,8 +91,13 @@ export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProp
               <ActivityIndicator color={colors.accent} />
             </View>
           ) : error ? (
-            <View style={{ padding: 40, alignItems: 'center' }}>
-              <Text style={{ color: colors.danger, textAlign: 'center' }}>{error}</Text>
+            <View style={{ paddingVertical: 36, paddingHorizontal: 24, alignItems: 'center', gap: 10 }}>
+              <WarningCircle color={colors.textMuted} size={28} />
+              <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: fontSizes.small, lineHeight: 20 }}>{error}</Text>
+            </View>
+          ) : query.trim() && tracks.length === 0 ? (
+            <View style={{ paddingVertical: 36, alignItems: 'center' }}>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{ttx("No songs match that search")}</Text>
             </View>
           ) : (
             <FlatList
@@ -90,13 +105,15 @@ export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProp
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
+                // A style function on Pressable loses flex props in release
+                // builds, which stacked cover, title and artist vertically.
                 <Pressable
-                  style={({ pressed }) => [
-                    styles.songItem,
-                    { backgroundColor: pressed ? colors.surfaceHover : 'transparent', borderBottomColor: colors.border }
-                  ]}
-                  onPress={() => onSelect({ title: item.title, artist: item.artist, url: item.url! })}
+                  onPress={() => onSelect({ title: item.title, artist: item.artist, url: item.url ?? '', coverArt: item.coverArt || undefined })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.title}, ${item.artist}`}
                 >
+                  {({ pressed }) => (
+                  <View style={[styles.songItem, { backgroundColor: pressed ? colors.surfaceHover : 'transparent', borderBottomColor: colors.border }]}>
                   <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
                     {item.coverArt ? (
                       <Image source={{ uri: item.coverArt }} style={{ width: '100%', height: '100%', borderRadius: 8 }} />
@@ -105,9 +122,11 @@ export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProp
                     )}
                   </View>
                   <View style={styles.songTextContainer}>
-                    <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }} numberOfLines={1}>{item.title}</Text>
+                    <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>{item.title}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }} numberOfLines={1}>{item.artist}</Text>
                   </View>
+                  </View>
+                  )}
                 </Pressable>
               )}
             />
@@ -125,9 +144,19 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 10,
     paddingBottom: 32,
     maxHeight: '80%',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 12,
   },
   header: {
     flexDirection: 'row',
@@ -138,7 +167,9 @@ const styles = StyleSheet.create({
   songItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   iconContainer: {

@@ -248,6 +248,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   }, [frameStalled, uri]);
 
   const webRef = useRef<any>(null);
+  const isLocalUri = /^(file|content):/i.test(uri);
 
   /**
    * The fallback's markup must depend on the uri and NOTHING else.
@@ -315,7 +316,20 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
         </View>
       )}
 
-      {loadState === 'error' && (
+      {loadState === 'error' && isLocalUri && (
+        // The WebView fallback loads the URI in an HTML <video>, which cannot
+        // read a device file (file:// or content://). For a clip that was just
+        // picked in the composer it drew a black box forever. Say what is
+        // attached instead; the upload does not depend on the preview.
+        <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#141210' }}>
+          <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+            <Play color="#fff" size={24} weight="fill" />
+          </View>
+          <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>{ttx("Preview unavailable. The video will still post.")}</Text>
+        </View>
+      )}
+
+      {loadState === 'error' && !isLocalUri && (
         <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}>
           {isActive && WebView && (
             <WebView

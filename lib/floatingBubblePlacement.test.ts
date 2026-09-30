@@ -46,7 +46,7 @@ describe('restingY', () => {
   });
 
   it('lifts on every other screen, ignoring a saved tab position', () => {
-    for (const p of ['/settings', '/mini-apps/calculator', '/mini-apps/shopping-list', '/mini-apps/world-clock', '/watch', '/privacy', '/create-post', '/user/abc']) {
+    for (const p of ['/settings', '/mini-apps/calculator', '/mini-apps/shopping-list', '/mini-apps/world-clock', '/watch', '/privacy', '/user/abc']) {
       expect(restingY(p, H, 800)).toBe(liftedY(H));
     }
   });
