@@ -20,13 +20,16 @@ appId: com.downloadecho.echo
     visible: ".*with Google.*"
     timeout: 30000
 
-# The consent banner covers "Log in" and the legal links until answered. On a
-# fresh install it always appears, a moment after the screen: wait for it.
-- extendedWaitUntil:
-    visible: "Decline analytics"
-    timeout: 15000
-- tapOn: "Decline analytics"
+# Builds before #135 show the analytics banner over "Log in" and the legal
+# links, a moment after the screen appears; from #135 it waits until the user
+# is inside the app. Handle both: give it a moment, decline if it is there.
 - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Decline analytics"
+    commands:
+      - tapOn: "Decline analytics"
+      - waitForAnimationToEnd
 
 - tapOn: "Terms"
 - extendedWaitUntil:
