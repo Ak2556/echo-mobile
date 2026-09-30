@@ -54,7 +54,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
           maxWidth: 360,
         }}
       >
-        <GlassPanel style={{ flex: 1, overflow: 'hidden', borderTopRightRadius: 24, borderBottomRightRadius: 24 }}>
+        <GlassPanel overlay style={{ flex: 1, overflow: 'hidden', borderTopRightRadius: 24, borderBottomRightRadius: 24 }}>
           <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{ttx("Conversations")}</Text>
             <Pressable onPress={onClose} style={{ padding: 6 }}>
