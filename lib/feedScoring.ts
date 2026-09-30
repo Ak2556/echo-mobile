@@ -46,6 +46,14 @@ export function computeScore(item: ScoringInput, gravity: number = GRAVITY.lates
   return base * engagementRate * authorAuthority * mediaBoost * followBoost;
 }
 
+/** Highest engagement-weighted score first, using the same curve as the
+ *  server's get_ranked_feed at the 'popular' gravity. */
+export function rankTrending<T extends ScoringInput>(items: T[]): T[] {
+  const scored = items.map(item => ({ item, score: computeScore(item, GRAVITY.popular) }));
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map(s => s.item);
+}
+
 // Min-heap for merging sorted pages without re-sorting everything
 // Used in useInfiniteFeed to merge incoming pages while preserving rank order.
 
