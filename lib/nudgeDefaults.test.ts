@@ -31,6 +31,10 @@ describe('personalized nudges are on by default', () => {
     expect(p).toMatch(/PRIVACY_VERSION = '3\.3'/);
   });
 
+  it('new sign-ups get it: the wizard sends it with the date of birth, so the minors trigger can see an adult', () => {
+    expect(src('app/auth/signup-wizard.tsx')).toMatch(/\{ date_of_birth: dobIso, personalized_notifications: true \}/);
+  });
+
   it('the first nudge a person receives says where the switch is', () => {
     const f = src('supabase/functions/personalized-fanout/index.ts');
     expect(f).toMatch(/withFirstNudgeNotice\(/);

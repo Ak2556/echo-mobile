@@ -577,7 +577,12 @@ export default function SignupWizard() {
     finishing.current = true;
 
     const { error } = await supabase.from('profiles').upsert({
-      ...(dobIso ? { date_of_birth: dobIso } : {}),
+      // Personalized notifications are on by default for adults (20260930130000),
+      // but the row is created before we know the date of birth, so
+      // trg_enforce_minor_profiling_off switched them off at insert. Setting
+      // both in this one statement lets the trigger see the birthday: adults
+      // keep it on, minors are still forced off.
+      ...(dobIso ? { date_of_birth: dobIso, personalized_notifications: true } : {}),
       id: session.user.id,
       username: usernameClean,
       display_name: displayName.trim(),
