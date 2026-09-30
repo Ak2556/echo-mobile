@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
-  Platform, TouchableOpacity, Pressable, Alert, Modal, StyleSheet,
+  Platform, Pressable, Alert, Modal, StyleSheet,
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -15,13 +15,14 @@ import { QuotedEchoCard } from '../src/features/feed/ui/QuotedEchoCard';
 import { VideoPreview } from '../src/features/feed/ui/VideoPreview';
 import { MentionSuggestions, applyMentionPick } from '../src/features/feed/ui/MentionSuggestions';
 import { MusicPickerModal, Song } from '../components/ui/MusicPicker';
-import { MusicNotes } from 'phosphor-react-native';
 import Animated, { FadeInDown, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 import {
-  PaperPlaneTilt, Hash, Image as ImageIcon,
+  PaperPlaneTilt, Hash, MusicNotes,
   VideoCamera, ChartBar, X, Plus, Clock, Camera, Images, CheckCircle, Question,
   Users, MagnifyingGlass, PencilSimple, CaretLeft, CaretRight,
 } from 'phosphor-react-native';
+import { ActionSheet } from '../components/common/ActionSheet';
+import { composerMediaAspect, formatClipDuration, parseTags } from '../lib/composerMedia';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
@@ -57,12 +58,69 @@ const POLL_DURATIONS = [
   { label: '7d', hours: 168 },
 ];
 
+/**
+ * One header style for every optional section of the composer: prompt, poll,
+ * tags, co-author, photos, video, music. They used to be five hand-rolled
+ * variants with different icon colours, sizes, indents and close-button
+ * placement, so the screen changed shape depending on what you added.
+ */
+function SectionHeader({ icon, label, onRemove, removeLabel }: {
+  icon: React.ReactNode;
+  label: string;
+  onRemove?: () => void;
+  removeLabel?: string;
+}) {
+  const { colors, fontSizes, font } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, marginLeft: 4, minHeight: 24 }}>
+      {icon}
+      <Text style={[font.bodySemibold, { flex: 1, color: colors.textSecondary, fontSize: fontSizes.caption }]}>{label}</Text>
+      {onRemove && (
+        <Pressable onPress={onRemove} hitSlop={10} accessibilityRole="button" accessibilityLabel={removeLabel ?? `${ttx('Remove')} ${label}`}>
+          <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}>
+            <X color={colors.textSecondary} size={13} weight="bold" />
+          </View>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+/**
+ * A composer add-on chip. Layout sits on the inner View: box props on a
+ * Pressable are dropped in release builds. Inactive chips used grey-on-grey
+ * (textMuted on surface) and read as disabled; active ones only tinted the
+ * border. Now inactive is readable and active is unmistakably filled.
+ */
+function ToolChip({ label, Icon, active, onPress }: {
+  label: string;
+  Icon: React.ComponentType<{ color: string; size: number; weight?: 'regular' | 'fill' | 'bold' }>;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const { colors, fontSizes, font, radius } = useTheme();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active }}>
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, paddingHorizontal: 13,
+        borderRadius: radius.full,
+        backgroundColor: active ? colors.accent : colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: active ? colors.accent : colors.border,
+      }}>
+        <Icon color={active ? '#fff' : colors.accent} size={16} weight={active ? 'fill' : 'regular'} />
+        <Text style={[font.bodySemibold, { color: active ? '#fff' : colors.text, fontSize: fontSizes.small }]}>{label}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
 
 export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
   const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string; firstEcho?: string; prefillImages?: string }>();
-  const { colors, radius, fontSizes, animation } = useTheme();
+  const { colors, radius, fontSizes, animation, font } = useTheme();
   const { t } = useI18n();
   const { username, userId, avatarColor, avatarUrl, profilePhotoVisible, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore();
   const visibleAvatarUrl = profilePhotoVisible ? avatarUrl : '';
@@ -116,6 +174,8 @@ export default function CreatePostScreen() {
   const [responseCaret, setResponseCaret] = useState(0);
   const [responseFocused, setResponseFocused] = useState(false);
   const [tagsRaw, setTagsRaw] = useState('');
+  // One parse for the preview chips and the publish payload.
+  const parsedTags = parseTags(tagsRaw);
   const [publishing, setPublishing] = useState(false);
 
   // Photo state — up to 4 device assets
@@ -145,6 +205,9 @@ export default function CreatePostScreen() {
 
   // Video state — single device URI
   const [video, setVideo] = useState<LocalVideoUpload | null>(null);
+  // The preview's height follows the clip's shape, so it needs the box width.
+  const [videoBoxWidth, setVideoBoxWidth] = useState(0);
+  const [cameraMenuOpen, setCameraMenuOpen] = useState(false);
   const videoUri = video?.uri ?? '';
 
   const setPickedVideo = async (asset: ImagePicker.ImagePickerAsset) => {
@@ -246,6 +309,8 @@ export default function CreatePostScreen() {
         uri: asset.uri,
         mimeType: asset.mimeType,
         fileName: asset.fileName,
+        width: asset.width,
+        height: asset.height,
       }))].slice(0, MAX_PHOTOS));
     }
   };
@@ -267,6 +332,8 @@ export default function CreatePostScreen() {
         uri: asset.uri,
         mimeType: asset.mimeType,
         fileName: asset.fileName,
+        width: asset.width,
+        height: asset.height,
       }].slice(0, MAX_PHOTOS));
     }
   };
@@ -348,7 +415,7 @@ export default function CreatePostScreen() {
     setPublishing(true);
 
     try {
-      const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#+/, '').trim()).filter(Boolean);
+      const hashtags = parsedTags;
       const remoteAuthorId = isSupabaseRemote() ? await getSessionUserId() : null;
       if (isSupabaseRemote() && !remoteAuthorId) {
         Alert.alert(
@@ -604,11 +671,14 @@ export default function CreatePostScreen() {
       {/* Co-author picker */}
       <Modal visible={coAuthorPickerOpen} transparent animationType="slide" onRequestClose={() => setCoAuthorPickerOpen(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: colors.bg, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 32, maxHeight: '80%' }}>
+          {/* Raised panel + handle: on colors.bg the sheet was the same black as
+              the dimmed screen behind it and read as a floating title. */}
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 32, maxHeight: '80%' }}>
+            <View style={{ alignSelf: 'center', width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{ttx("Pick co-author")}</Text>
-              <Pressable onPress={() => setCoAuthorPickerOpen(false)} hitSlop={8}>
-                <X color={colors.textMuted} size={20} />
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: 18 }]}>{ttx("Add a co-author")}</Text>
+              <Pressable onPress={() => setCoAuthorPickerOpen(false)} hitSlop={10} accessibilityRole="button" accessibilityLabel={ttx("Close")}>
+                <X color={colors.textSecondary} size={20} />
               </Pressable>
             </View>
             <View style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 4, marginBottom: 12, gap: 8 }]}>
@@ -625,8 +695,8 @@ export default function CreatePostScreen() {
             </View>
             <ScrollView keyboardShouldPersistTaps="handled">
               {coAuthorHits.length === 0 ? (
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, textAlign: 'center', paddingVertical: 20 }}>
-                  {coAuthorQuery ? `No matches for "${coAuthorQuery}"` : 'Type to find a co-author'}
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, textAlign: 'center', lineHeight: 20, paddingVertical: 20, paddingHorizontal: 12 }}>
+                  {coAuthorQuery ? `${ttx('No one matches')} "${coAuthorQuery}"` : ttx('Search by name or @handle to post this together.')}
                 </Text>
               ) : (
                 coAuthorHits.map((u, i) => (
@@ -697,62 +767,28 @@ export default function CreatePostScreen() {
               <QuotedEchoCard echo={quotedEcho} />
             </View>
           )}
-          {false && (
-            <Animated.View entering={animation(FadeIn.duration(80))}>
-              <View
-                style={{
-                  marginBottom: 14,
-                  padding: 14,
-                  borderRadius: radius.card,
-                  backgroundColor: colors.accent + '14',
-                  borderWidth: 1,
-                  borderColor: colors.accent + '30',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                }}
-              >
-                <Question color={colors.accent} size={20} weight="duotone" />
-                <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19, flex: 1 }}>
-                  {ttx("A musing is a thought you're still working through. No need for a tidy answer. Think out loud.")}
-                </Text>
-              </View>
-              <Text style={s.label}>{ttx("What's on your mind?")}</Text>
-              <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput
-                  multiline
-                  value={prompt}
-                  onChangeText={setPrompt}
-                  placeholder={t('create.placeholderWorking')}
-                  placeholderTextColor={colors.textMuted}
-                  maxLength={500}
-                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 120 }}
-                />
-                <Text style={{ color: prompt.length > 470 ? colors.danger : colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/500</Text>
-              </View>
-            </Animated.View>
-          )}
           {/* The one box — the whole post. Prompt/tags/co-author/media are all
               optional and added from the toolbar below. */}
           {!pollActive && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               {showPrompt && (
                 <>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, marginLeft: 4 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Question color={colors.accent} size={12} />
-                      <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Prompt (optional)")}</Text>
-                    </View>
-                    <Pressable onPress={() => { setShowPrompt(false); setPrompt(''); }} hitSlop={8}><X color={colors.textMuted} size={16} /></Pressable>
-                  </View>
+                  <SectionHeader
+                    icon={<Question color={colors.accent} size={14} weight="bold" />}
+                    label={ttx("Prompt (optional)")}
+                    onRemove={() => { setShowPrompt(false); setPrompt(''); }}
+                  />
                   <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                    <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder={ttx("What question or prompt started this?")} placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 44 }} />
+                    <TextInput multiline textAlignVertical="top" value={prompt} onChangeText={setPrompt} placeholder={ttx("What question or prompt started this?")} placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 44 }} />
                   </View>
                 </>
               )}
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput
                   multiline
+                  // Android centres multiline text vertically by default, so the
+                  // placeholder floated in the middle of the box.
+                  textAlignVertical="top"
                   value={response}
                   onChangeText={setResponse}
                   onSelectionChange={e => setResponseCaret(e.nativeEvent.selection.start)}
@@ -769,24 +805,23 @@ export default function CreatePostScreen() {
               {/* Co-author take — only when a co-author is added from the toolbar */}
               {coAuthor && (
                 <View style={{ marginBottom: 14 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
-                    <Users color={colors.accent} size={12} />
-                    <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Co-author")}</Text>
-                  </View>
+                  <SectionHeader
+                    icon={<Users color={colors.accent} size={14} weight="bold" />}
+                    label={ttx("Co-author")}
+                    onRemove={() => { setCoAuthor(null); setCoAuthorResponse(''); }}
+                  />
                   <View style={[s.surface, { padding: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
                     <Avatar name={coAuthor.display_name || coAuthor.username} color={coAuthor.avatar_color} url={coAuthor.avatar_url} size={32} />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{coAuthor.display_name || coAuthor.username}</Text>
+                      <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.small }]}>{coAuthor.display_name || coAuthor.username}</Text>
                       <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{coAuthor.username}</Text>
                     </View>
-                    <Pressable onPress={() => { setCoAuthor(null); setCoAuthorResponse(''); }} hitSlop={8}>
-                      <X color={colors.textMuted} size={16} />
-                    </Pressable>
                   </View>
                   <Text style={s.label}>{`${coAuthor.display_name || coAuthor.username}'s take`}</Text>
                   <View style={[s.surface, { padding: 14, marginBottom: 4 }]}>
                     <TextInput
                       multiline
+                      textAlignVertical="top"
                       value={coAuthorResponse}
                       onChangeText={setCoAuthorResponse}
                       placeholder={`How would @${coAuthor.username} answer?`}
@@ -801,175 +836,159 @@ export default function CreatePostScreen() {
             </Animated.View>
           )}
 
-          {/* Photo post */}
+          {/* Photos. Adding more goes through the Photo / Camera chips below;
+              the old Library + Camera bar here repeated them. */}
           {imageUris.length > 0 && (
-            <Animated.View entering={animation(FadeIn.duration(80))}>
-              {/* Picker buttons */}
-              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-                <Pressable
-                  onPress={pickImages}
-                  disabled={imageUris.length >= MAX_PHOTOS}
-                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= MAX_PHOTOS ? 0.4 : 1 }]}
-                >
-                  <Images color={colors.accent} size={20} />
-                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.body }}>{ttx("Library")}</Text>
-                </Pressable>
-                <Pressable
-                  onPress={takePhoto}
-                  disabled={imageUris.length >= MAX_PHOTOS}
-                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= MAX_PHOTOS ? 0.4 : 1 }]}
-                >
-                  <Camera color={colors.text} size={20} />
-                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{ttx("Camera")}</Text>
-                </Pressable>
-              </View>
-
-              {/* Count */}
-              <Text style={[s.label, { color: imageUris.length >= MAX_PHOTOS ? colors.accent : colors.textMuted }]}>
-                {imageUris.length}/{MAX_PHOTOS} {ttx("selected")}{imageUris.length > 1 ? ' · tap to edit, arrows to reorder' : ''}
-              </Text>
-
-              {/* Thumbnail grid */}
-              {imageUris.length > 0 ? (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-                  {imageUris.map((uri, idx) => (
-                    <View
-                      key={idx}
-                      style={{
-                        width: imageUris.length === 1 ? '100%' : '48%',
-                        aspectRatio: imageUris.length === 1 ? 16 / 9 : 1,
-                        borderRadius: radius.card, overflow: 'hidden',
-                        backgroundColor: colors.surfaceHover,
-                      }}
-                    >
-                      <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                      <Pressable
-                        onPress={() => removeImage(idx)}
-                        accessibilityRole="button"
-                        accessibilityLabel={ttx("Remove photo")}
-                        style={{ position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4 }}
-                      >
-                        <X color="#fff" size={14} />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => setEditingIndex(idx)}
-                        accessibilityRole="button"
-                        accessibilityLabel={ttx("Edit photo")}
-                        style={{ position: 'absolute', top: 6, left: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4 }}
-                      >
+            <Animated.View entering={animation(FadeIn.duration(80))} style={{ marginBottom: 14 }}>
+              <SectionHeader
+                icon={<Images color={colors.accent} size={14} weight="bold" />}
+                label={`${ttx("Photos")} · ${imageUris.length}/${MAX_PHOTOS}`}
+                onRemove={() => setImages([])}
+                removeLabel={ttx("Remove all photos")}
+              />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                {images.map((img, idx) => (
+                  <View
+                    key={`${img.uri}-${idx}`}
+                    style={{
+                      width: images.length === 1 ? '100%' : '48.5%',
+                      aspectRatio: images.length === 1 ? composerMediaAspect(img.width, img.height) : 1,
+                      borderRadius: radius.card, overflow: 'hidden',
+                      backgroundColor: colors.surfaceHover,
+                    }}
+                  >
+                    <Image source={{ uri: img.uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                    <Pressable onPress={() => removeImage(idx)} hitSlop={6} accessibilityRole="button" accessibilityLabel={ttx("Remove photo")} style={{ position: 'absolute', top: 8, right: 8 }}>
+                      <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
+                        <X color="#fff" size={14} weight="bold" />
+                      </View>
+                    </Pressable>
+                    <Pressable onPress={() => setEditingIndex(idx)} hitSlop={6} accessibilityRole="button" accessibilityLabel={ttx("Edit photo")} style={{ position: 'absolute', top: 8, left: 8 }}>
+                      <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
                         <PencilSimple color="#fff" size={14} weight="bold" />
-                      </Pressable>
-                      {imageUris.length > 1 && (
-                        <View style={{ position: 'absolute', bottom: 6, alignSelf: 'center', flexDirection: 'row', gap: 6 }}>
-                          <Pressable
-                            onPress={() => moveImage(idx, -1)}
-                            disabled={idx === 0}
-                            accessibilityRole="button"
-                            accessibilityLabel={ttx("Move photo left")}
-                            style={{ backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4, opacity: idx === 0 ? 0.35 : 1 }}
-                          >
-                            <CaretLeft color="#fff" size={14} weight="bold" />
+                      </View>
+                    </Pressable>
+                    {images.length > 1 && (
+                      <View style={{ position: 'absolute', bottom: 8, alignSelf: 'center', flexDirection: 'row', gap: 8 }}>
+                        {([[-1, CaretLeft, ttx("Move photo left"), idx === 0], [1, CaretRight, ttx("Move photo right"), idx === images.length - 1]] as const).map(([dir, Caret, a11y, off]) => (
+                          <Pressable key={dir} onPress={() => moveImage(idx, dir)} disabled={off} hitSlop={6} accessibilityRole="button" accessibilityLabel={a11y}>
+                            <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', opacity: off ? 0.35 : 1 }}>
+                              <Caret color="#fff" size={14} weight="bold" />
+                            </View>
                           </Pressable>
-                          <Pressable
-                            onPress={() => moveImage(idx, 1)}
-                            disabled={idx === imageUris.length - 1}
-                            accessibilityRole="button"
-                            accessibilityLabel={ttx("Move photo right")}
-                            style={{ backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4, opacity: idx === imageUris.length - 1 ? 0.35 : 1 }}
-                          >
-                            <CaretRight color="#fff" size={14} weight="bold" />
-                          </Pressable>
-                        </View>
-                      )}
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                ))}
+                {images.length < MAX_PHOTOS && (
+                  <Pressable onPress={pickImages} accessibilityRole="button" accessibilityLabel={ttx("Add photo")} style={{ width: images.length === 1 ? '100%' : '48.5%' }}>
+                    <View style={{
+                      height: images.length === 1 ? 52 : undefined, aspectRatio: images.length === 1 ? undefined : 1,
+                      borderRadius: radius.card, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border,
+                      flexDirection: images.length === 1 ? 'row' : 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}>
+                      <Plus color={colors.accent} size={18} weight="bold" />
+                      <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.small }]}>{ttx("Add photo")}</Text>
                     </View>
-                  ))}
-                </View>
-              ) : (
-                <View style={[s.surface, { height: 140, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
-                  <ImageIcon color={colors.border} size={40} weight="duotone" />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{ttx("No photos selected")}</Text>
-                </View>
-              )}
-
+                  </Pressable>
+                )}
+              </View>
             </Animated.View>
           )}
 
-          {/* Video post */}
-          {videoUri.length > 0 && (
-            <Animated.View entering={animation(FadeIn.duration(80))}>
-              {/* Picker buttons */}
-              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-                <Pressable
-                  onPress={pickVideo}
-                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8 }]}
-                >
-                  <Images color={colors.accent} size={20} />
-                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.body }}>{ttx("Library")}</Text>
-                </Pressable>
-                <Pressable
-                  onPress={recordVideo}
-                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8 }]}
-                >
-                  <VideoCamera color="#EF4444" size={20} />
-                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{ttx("Record")}</Text>
-                </Pressable>
+          {/* Video */}
+          {video && (
+            <Animated.View entering={animation(FadeIn.duration(80))} style={{ marginBottom: 14 }}>
+              <SectionHeader
+                icon={<VideoCamera color={colors.accent} size={14} weight="bold" />}
+                label={[ttx("Video"), formatClipDuration(video.duration)].filter(Boolean).join(' · ')}
+                onRemove={() => setVideo(null)}
+                removeLabel={ttx("Remove video")}
+              />
+              <View onLayout={e => setVideoBoxWidth(e.nativeEvent.layout.width)} style={{ borderRadius: radius.card, overflow: 'hidden', backgroundColor: '#000' }}>
+                {videoBoxWidth > 0 && (
+                  <VideoPreview
+                    uri={video.uri}
+                    height={Math.round(videoBoxWidth / composerMediaAspect(video.width, video.height))}
+                    borderRadius={radius.card}
+                    autoplay
+                  />
+                )}
               </View>
+            </Animated.View>
+          )}
 
-              {/* Preview / empty state */}
-              {videoUri ? (
-                <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden' }}>
-                  <VideoPreview uri={videoUri} height={200} borderRadius={radius.card} autoplay />
-                  <Pressable
-                    onPress={() => setVideo(null)}
-                    style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 14, padding: 6 }}
-                  >
-                    <X color="#fff" size={16} />
-                  </Pressable>
+          {/* Music — the song used to be invisible once picked: only the chip
+              changed colour, and tapping it again removed the song silently. */}
+          {selectedMusic && (
+            <Animated.View entering={animation(FadeIn.duration(80))} style={{ marginBottom: 14 }}>
+              <SectionHeader
+                icon={<MusicNotes color={colors.accent} size={14} weight="bold" />}
+                label={ttx("Music")}
+                onRemove={() => setSelectedMusic(null)}
+                removeLabel={ttx("Remove music")}
+              />
+              <Pressable onPress={() => setMusicPickerOpen(true)} accessibilityRole="button" accessibilityLabel={`${selectedMusic.title}, ${selectedMusic.artist}. ${ttx("Change song")}`}>
+                <View style={[s.surface, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10 }]}>
+                  <View style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
+                    {selectedMusic.coverArt
+                      ? <Image source={{ uri: selectedMusic.coverArt }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                      : <MusicNotes color={colors.accent} size={20} weight="fill" />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>{selectedMusic.title}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }} numberOfLines={1}>{selectedMusic.artist}</Text>
+                  </View>
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption, paddingRight: 4 }]}>{ttx("Change")}</Text>
                 </View>
-              ) : (
-                <View style={[s.surface, { height: 160, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
-                  <VideoCamera color={colors.border} size={44} weight="duotone" />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{ttx("No video selected")}</Text>
-                </View>
-              )}
-
+              </Pressable>
             </Animated.View>
           )}
 
           {/* Poll post */}
           {pollActive && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              <Text style={s.label}>{ttx("Question")}</Text>
+              <SectionHeader
+                icon={<ChartBar color={colors.accent} size={14} weight="bold" />}
+                label={ttx("Poll question")}
+                onRemove={() => setPollActive(false)}
+                removeLabel={ttx("Remove poll")}
+              />
               <View style={[s.surface, { padding: 14, marginBottom: 16 }]}>
                 <TextInput value={pollQuestion} onChangeText={setPollQuestion} placeholder={ttx("Ask your community something…")} placeholderTextColor={colors.textMuted} maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }} />
               </View>
-              <Text style={s.label}>{ttx("Options")}</Text>
+              <SectionHeader icon={<ChartBar color={colors.accent} size={14} />} label={ttx("Options")} />
               {pollOptions.map((opt, idx) => (
                 <View key={idx} style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 2, marginBottom: 8 }]}>
                   <TextInput value={opt} onChangeText={t => updatePollOption(idx, t)} placeholder={`Option ${idx + 1}`} placeholderTextColor={colors.textMuted} maxLength={80} style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 12 }} />
                   {pollOptions.length > 2 && (
-                    <Pressable onPress={() => removePollOption(idx)} style={{ padding: 4 }}>
-                      <X color={colors.textMuted} size={16} />
+                    <Pressable onPress={() => removePollOption(idx)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${ttx('Remove option')} ${idx + 1}`}>
+                      <View style={{ padding: 4 }}>
+                        <X color={colors.textMuted} size={16} />
+                      </View>
                     </Pressable>
                   )}
                 </View>
               ))}
               {pollOptions.length < 4 && (
-                <TouchableOpacity onPress={addPollOption} style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 16, gap: 6, borderStyle: 'dashed' }]}>
-                  <Plus color={colors.textMuted} size={16} />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{ttx("Add option")}</Text>
-                </TouchableOpacity>
+                <Pressable onPress={addPollOption} accessibilityRole="button" accessibilityLabel={ttx("Add option")}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 46, marginBottom: 16, gap: 6, borderRadius: radius.card, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border }}>
+                    <Plus color={colors.accent} size={16} weight="bold" />
+                    <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.small }]}>{ttx("Add option")}</Text>
+                  </View>
+                </Pressable>
               )}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-                <Clock color={colors.textMuted} size={13} />
-                <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Poll Duration")}</Text>
-              </View>
+              <SectionHeader icon={<Clock color={colors.accent} size={14} />} label={ttx("Runs for")} />
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
                 {POLL_DURATIONS.map(d => {
                   const active = pollDurationHours === d.hours;
                   return (
-                    <Pressable key={d.hours} onPress={() => setPollDurationHours(d.hours)} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.full, backgroundColor: active ? colors.accent : colors.surface, borderWidth: 1, borderColor: active ? colors.accent : colors.border }}>
-                      <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '600', fontSize: fontSizes.small }}>{d.label}</Text>
+                    <Pressable key={d.hours} onPress={() => setPollDurationHours(d.hours)} style={{ flex: 1 }} accessibilityRole="button" accessibilityState={{ selected: active }}>
+                      {/* Same look as the add-on chips below; layout on the inner View. */}
+                      <View style={{ alignItems: 'center', justifyContent: 'center', minHeight: 38, borderRadius: radius.full, backgroundColor: active ? colors.accent : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border }}>
+                        <Text style={[font.bodySemibold, { color: active ? '#fff' : colors.text, fontSize: fontSizes.small }]}>{d.label}</Text>
+                      </View>
                     </Pressable>
                   );
                 })}
@@ -980,36 +999,42 @@ export default function CreatePostScreen() {
           {/* Tags — optional, from the toolbar */}
           {showTags && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Hash color={colors.textMuted} size={13} />
-                  <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Tags")}</Text>
+              <SectionHeader
+                icon={<Hash color={colors.accent} size={14} weight="bold" />}
+                label={ttx("Tags")}
+                onRemove={() => { setShowTags(false); setTagsRaw(''); }}
+              />
+              <View style={[s.surface, { padding: 12, marginBottom: parsedTags.length ? 8 : 16 }]}>
+                <TextInput value={tagsRaw} onChangeText={setTagsRaw} placeholder={ttx("travel food ai")} placeholderTextColor={colors.textMuted} autoCapitalize="none" autoCorrect={false} style={{ color: colors.text, fontSize: fontSizes.body }} />
+              </View>
+              {/* What will actually be posted, so a stray comma or space is visible now. */}
+              {parsedTags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16, marginLeft: 4 }}>
+                  {parsedTags.map(tag => (
+                    <View key={tag} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full, backgroundColor: colors.accentMuted }}>
+                      <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption }]}>#{tag}</Text>
+                    </View>
+                  ))}
                 </View>
-                <Pressable onPress={() => { setShowTags(false); setTagsRaw(''); }} hitSlop={8}><X color={colors.textMuted} size={16} /></Pressable>
-              </View>
-              <View style={[s.surface, { padding: 12, marginBottom: 16 }]}>
-                <TextInput value={tagsRaw} onChangeText={setTagsRaw} placeholder={ttx("ai, react, tips (comma-separated)")} placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ color: colors.text, fontSize: fontSizes.body }} />
-              </View>
+              )}
             </Animated.View>
           )}
 
           {/* Add-on toolbar — everything optional is one tap away */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
             {[
-              { key: 'camera', label: 'Camera', Icon: Camera, active: false, onPress: takePhoto },
-              { key: 'photo', label: 'Photo', Icon: Images, active: imageUris.length > 0, onPress: pickImages },
-              { key: 'video', label: 'Video', Icon: VideoCamera, active: videoUri.length > 0, onPress: pickVideo },
-              { key: 'music', label: 'Music', Icon: MusicNotes, active: !!selectedMusic, onPress: () => { if (selectedMusic) setSelectedMusic(null); else setMusicPickerOpen(true); } },
-              { key: 'prompt', label: 'Prompt', Icon: Question, active: showPrompt, onPress: () => setShowPrompt(v => !v) },
-              { key: 'poll', label: 'Poll', Icon: ChartBar, active: pollActive, onPress: () => setPollActive(v => !v) },
-              { key: 'tags', label: 'Tags', Icon: Hash, active: showTags, onPress: () => setShowTags(v => !v) },
-              { key: 'coauthor', label: 'Co-author', Icon: Users, active: !!coAuthor, onPress: () => { if (coAuthor) { setCoAuthor(null); setCoAuthorResponse(''); } else { setCoAuthorPickerOpen(true); setCoAuthorQuery(''); } } },
+              // Camera offers photo or video: recording used to live only in a
+              // second button bar that appeared after a video was attached.
+              { key: 'camera', label: ttx('Camera'), Icon: Camera, active: false, onPress: () => setCameraMenuOpen(true) },
+              { key: 'photo', label: ttx('Photo'), Icon: Images, active: imageUris.length > 0, onPress: pickImages },
+              { key: 'video', label: ttx('Video'), Icon: VideoCamera, active: videoUri.length > 0, onPress: pickVideo },
+              { key: 'music', label: ttx('Music'), Icon: MusicNotes, active: !!selectedMusic, onPress: () => setMusicPickerOpen(true) },
+              { key: 'prompt', label: ttx('Prompt'), Icon: Question, active: showPrompt, onPress: () => setShowPrompt(v => !v) },
+              { key: 'poll', label: ttx('Poll'), Icon: ChartBar, active: pollActive, onPress: () => setPollActive(v => !v) },
+              { key: 'tags', label: ttx('Tags'), Icon: Hash, active: showTags, onPress: () => setShowTags(v => !v) },
+              { key: 'coauthor', label: ttx('Co-author'), Icon: Users, active: !!coAuthor, onPress: () => { if (coAuthor) { setCoAuthor(null); setCoAuthorResponse(''); } else { setCoAuthorPickerOpen(true); setCoAuthorQuery(''); } } },
             ].map(({ key, label, Icon, active, onPress }) => (
-              <Pressable key={key} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 9, borderRadius: radius.full, backgroundColor: active ? colors.accentMuted : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border }}>
-                <Icon color={active ? colors.accent : colors.textMuted} size={16} weight={active ? 'fill' : 'regular'} />
-                <Text style={{ color: active ? colors.accent : colors.textMuted, fontSize: fontSizes.small, fontWeight: '700' }}>{label}</Text>
-              </Pressable>
+              <ToolChip key={key} label={label} Icon={Icon} active={active} onPress={onPress} />
             ))}
           </View>
 
@@ -1035,6 +1060,16 @@ export default function CreatePostScreen() {
         uri={editingIndex !== null ? imageUris[editingIndex] : null}
         onDone={applyEdit}
         onCancel={() => setEditingIndex(null)}
+      />
+
+      <ActionSheet
+        visible={cameraMenuOpen}
+        onClose={() => setCameraMenuOpen(false)}
+        title={ttx('Camera')}
+        actions={[
+          { key: 'photo', label: ttx('Take a photo'), icon: <Camera color={colors.accent} size={18} />, disabled: images.length >= MAX_PHOTOS || !!video, onPress: () => { setCameraMenuOpen(false); void takePhoto(); } },
+          { key: 'video', label: ttx('Record a video'), icon: <VideoCamera color={colors.accent} size={18} />, disabled: images.length > 0, onPress: () => { setCameraMenuOpen(false); void recordVideo(); } },
+        ]}
       />
 
       <MusicPickerModal

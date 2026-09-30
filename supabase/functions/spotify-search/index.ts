@@ -34,7 +34,11 @@ const CORS = {
 
 /** Long enough to be a real search, short enough not to be a payload. */
 const MAX_QUERY_LENGTH = 200;
-const MAX_RESULTS = 20;
+// Spotify cut /v1/search's maximum limit from 50 to 10 in February 2026.
+// Anything above 10 is a 400 "Invalid limit", which is how music search
+// silently died: every query failed and the composer's Music option showed a
+// raw error.
+const MAX_RESULTS = 10;
 
 // Cached across invocations on a warm instance. Spotify tokens last an hour,
 // so this saves a round trip on most requests; a cold instance just re-fetches.

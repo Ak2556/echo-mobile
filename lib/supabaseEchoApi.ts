@@ -64,6 +64,9 @@ export type LocalImageUpload = {
   base64?: string | null;
   mimeType?: string | null;
   fileName?: string | null;
+  /** Pixel size from the picker; the composer preview uses it for the real shape. */
+  width?: number | null;
+  height?: number | null;
 };
 
 export type LocalVideoUpload = {
