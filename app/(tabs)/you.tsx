@@ -35,6 +35,7 @@ import { fetchRemoteRepostsByUser } from '../../lib/supabaseEchoApi';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { StreakXPBadge } from '../../src/features/feed/ui/StreakXPBadge';
+import { RankCard } from '../../src/features/ranks/ui/RankCard';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { getSessionUserId } from '../../lib/supabaseEchoApi';
@@ -280,6 +281,7 @@ export default function ProfileScreen() {
             <View style={{ alignItems: 'center', marginTop: 20 }}>
               <StreakXPBadge />
             </View>
+            <RankCard />
 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 32, gap: 12 }}>
               <AnimatedPressable

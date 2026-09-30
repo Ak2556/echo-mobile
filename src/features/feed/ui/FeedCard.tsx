@@ -24,6 +24,7 @@ const ACTION_HEIGHT = 42;
 const ACTION_RADIUS = 14;
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { countLabel } from '../../../../lib/a11yCount';
+import { RankMark } from '../../ranks/ui/RankMark';
 import { GestureCard, type GestureCardAction } from '../../../../components/ui/GestureCard';
 import { Avatar } from '../../../../components/ui/Avatar';
 import { showToast } from '../../../../components/ui/Toast';
@@ -608,6 +609,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <Text style={[font.bodySemibold, { fontSize: 14, color: '#fff' }]} numberOfLines={1}>{item.displayName || item.username}</Text>
                     {item.isVerified && <SealCheck color="#fff" size={13} weight="fill" />}
+                    <RankMark userId={item.userId} />
                   </View>
                   <Text style={{ color: item.isPending ? '#60A5FA' : 'rgba(255,255,255,0.72)', fontSize: 11, fontWeight: item.isPending ? '600' : '500', letterSpacing: -0.2 }}>{item.isPending ? 'Pending' : getTimeAgo(item.createdAt)}</Text>
                 </View>
@@ -797,6 +799,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
             <View className="flex-row items-center gap-1" style={{ minWidth: 0 }}>
               <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: -0.3, flexShrink: 1 }]} numberOfLines={1}>{item.displayName || item.username}</Text>
               {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+              <RankMark userId={item.userId} size={14} />
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>

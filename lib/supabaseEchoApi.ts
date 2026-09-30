@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { MyRank } from './ranks';
 import { Platform } from 'react-native';
 import { withTimeout } from './net';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -1921,6 +1922,34 @@ export async function updateRemoteProfile(updates: {
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase.from('profiles').update(updates).eq('id', uid);
   if (error) throw error;
+}
+
+/** The signed-in user's rank, computed live (get_my_rank answers only about auth.uid()). */
+export async function fetchMyRank(): Promise<MyRank | null> {
+  const { data, error } = await supabase.rpc('get_my_rank');
+  if (error) throw error;
+  if (!data) return null;
+  const d = data as { points: number; last_active_at: string | null; breakdown: MyRank['breakdown'] };
+  return { points: d.points ?? 0, lastActiveAt: d.last_active_at ?? null, breakdown: d.breakdown };
+}
+
+export interface AuthorRank { tier: number; activeAt: string | null }
+
+/**
+ * Stored tiers for a batch of authors (refresh_ranks keeps them hourly).
+ * Non-uuid ids (local drafts, seed content) are skipped: one of them in the
+ * `in` filter would fail the whole batch with 22P02.
+ */
+export async function fetchAuthorRanks(ids: string[]): Promise<Record<string, AuthorRank>> {
+  const valid = [...new Set(ids.filter(id => UUID_RE.test(id)))];
+  if (valid.length === 0) return {};
+  const { data, error } = await supabase.from('profiles').select('id, rank_tier, rank_active_at').in('id', valid);
+  if (error) throw error;
+  const out: Record<string, AuthorRank> = {};
+  for (const row of (data ?? []) as { id: string; rank_tier: number | null; rank_active_at: string | null }[]) {
+    out[row.id] = { tier: row.rank_tier ?? 0, activeAt: row.rank_active_at };
+  }
+  return out;
 }
 
 /** Whether another account already holds this handle. The caller's own row

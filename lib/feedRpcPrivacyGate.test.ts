@@ -28,6 +28,7 @@ const MAY_READ_RAW_TABLE = new Map([
   ['public.moderator_remove_echo', 'moderation acts on all content, including private accounts'],
   ['public.resweep_unmoderated_echoes', 'maintenance sweep over everything awaiting moderation'],
   ['public.refresh_user_taste', "computes the caller's own taste vector; already guarded to auth.uid()"],
+  ['public.rank_breakdowns', 'per-person rank totals, never rows; not client-callable; visible_echoes would drop private accounts from the hourly job (auth.uid() is null there)'],
 ]);
 
 /** Latest definition of every function, migrations applied in filename order. */

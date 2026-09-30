@@ -6,6 +6,7 @@ import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, wit
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { Avatar } from '../../../../components/ui/Avatar';
+import { RankMark } from '../../ranks/ui/RankMark';
 import { SpeakButton } from '../../../../components/ui/SpeakButton';
 import { Comment } from '../../../../types/index';
 import { useAppStore } from '../../../../store/useAppStore';
@@ -102,6 +103,7 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
             <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{comment.displayName}</Text>
           </AnimatedPressable>
           {comment.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+          <RankMark userId={comment.userId} />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{'\u00B7'} {getTimeAgo(comment.createdAt)}</Text>
         </View>
 
