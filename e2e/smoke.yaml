@@ -1,31 +1,52 @@
 # Navigation smoke: the app shell loads and every bottom tab renders without
-# crashing. Assumes the dev build is already installed and signed into an
-# account (akashhere12). Run: maestro test e2e/smoke.yaml
+# crashing. Assumes a release build is installed and signed in.
+# Run: maestro test e2e/smoke.yaml
+#
+# Flow (full-screen video) hides the tab bar, so it goes last.
 appId: com.downloadecho.echo
 ---
-- assertVisible: "Home"
-- assertVisible: "Explore"
+# Restart the app (session kept) so every flow starts clean: a previous flow
+# can leave a modal or Flow's full-screen mode open, which deep links do not
+# dismiss. This also exercises cold-start routing for a signed-in user.
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible: "Explore"
+    timeout: 30000
 
 - tapOn: "Explore"
-- assertVisible: "Explore"
+# Explore keeps the last search, so assert the screen, not the topic grid.
+- extendedWaitUntil:
+    visible: "Explore"
+    timeout: 15000
 - takeScreenshot: e2e/shots/explore
 
-- tapOn: "Market"
-- assertVisible: "Market"
-- takeScreenshot: e2e/shots/market
-
 - tapOn: "Chat"
-- assertVisible: "Chat"
+- extendedWaitUntil:
+    visible: "Messages"
+    timeout: 15000
 - takeScreenshot: e2e/shots/chat
 
-- tapOn: "You"
-- assertVisible: "You"
-- takeScreenshot: e2e/shots/you
-
 - tapOn: "Tools"
-- assertVisible: "Tools"
+- extendedWaitUntil:
+    visible: "Open Pomodoro"
+    timeout: 15000
 - takeScreenshot: e2e/shots/tools
 
+- tapOn: "You"
+- extendedWaitUntil:
+    visible: "Edit Profile"
+    timeout: 15000
+- takeScreenshot: e2e/shots/you
+
 - tapOn: "Home"
-- assertVisible: "Home"
+- extendedWaitUntil:
+    visible: "For You"
+    timeout: 15000
 - takeScreenshot: e2e/shots/home
+
+- tapOn: "Flow"
+- extendedWaitUntil:
+    visible: "Share"
+    timeout: 20000
+- takeScreenshot: e2e/shots/flow

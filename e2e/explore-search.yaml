@@ -1,0 +1,46 @@
+# Explore: topics and people render, search returns people, and a result
+# opens a profile. Read-only. Assumes a signed-in release build.
+# Run: maestro test e2e/explore-search.yaml
+#
+# The search field exposes no accessibility label, so it is tapped by
+# position (tracked: add an accessibilityLabel).
+appId: com.downloadecho.echo
+---
+# Restart the app (session kept) so every flow starts clean: a previous flow
+# can leave a modal or Flow's full-screen mode open, which deep links do not
+# dismiss. This also exercises cold-start routing for a signed-in user.
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible: "Explore"
+    timeout: 30000
+
+- tapOn: "Explore"
+
+# Explore keeps the last query; clear it so the topic grid comes back.
+- tapOn:
+    point: 50%,14%
+- eraseText: 30
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "BROWSE TOPICS"
+    timeout: 20000
+- assertVisible: "PEOPLE TO START WITH"
+
+- tapOn:
+    point: 50%,14%
+- inputText: "kav"
+- extendedWaitUntil:
+    visible: "PEOPLE"
+    timeout: 15000
+- assertVisible: "People.*"
+
+# With the keyboard up, the first tap on a result only dismisses it
+# (keyboardShouldPersistTaps). Hide it first so this flow tests the result.
+- hideKeyboard
+- tapOn: "Open Kav's profile"
+- extendedWaitUntil:
+    visible: "Followers"
+    timeout: 15000
+- assertVisible: "@kavish"
+- back

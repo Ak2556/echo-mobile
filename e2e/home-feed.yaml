@@ -1,0 +1,75 @@
+# Home feed: the four filter chips switch, a post opens to its thread, the
+# comments sheet loads, and the comment composer takes text. Non-destructive:
+# the draft is erased and nothing is sent. Assumes a signed-in release build.
+# Run: maestro test e2e/home-feed.yaml
+appId: com.downloadecho.echo
+---
+# Restart the app (session kept) so every flow starts clean: a previous flow
+# can leave a modal or Flow's full-screen mode open, which deep links do not
+# dismiss. This also exercises cold-start routing for a signed-in user.
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible: "Explore"
+    timeout: 30000
+# Cold start restores the last-open tab, which may not be Home.
+- tapOn: "Home"
+
+# Home keeps its scroll position; bring the filter chips back into view.
+- scrollUntilVisible:
+    element: "For You"
+    direction: UP
+    timeout: 20000
+
+
+# Switching a chip restores that feed's own scroll offset, and the chips are
+# not pinned, so they can end up far above the viewport. Scroll back to each
+# chip before tapping it (tracked as a UX finding: pin the chips or reset to top).
+- scrollUntilVisible:
+    element: "For You"
+    direction: UP
+    timeout: 45000
+    speed: 90
+- tapOn: "For You"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Following"
+    direction: UP
+    timeout: 45000
+    speed: 90
+- tapOn: "Following"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Latest"
+    direction: UP
+    timeout: 45000
+    speed: 90
+- tapOn: "Latest"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Trending"
+    direction: UP
+    timeout: 45000
+    speed: 90
+- tapOn: "Trending"
+- waitForAnimationToEnd
+
+# Comments for a known public post (Kav, "Today's night in Kelowna"). The
+# feed's own comment buttons are labelled by count and ambiguous to match, so
+# the comments screen is opened by its route.
+- openLink: echo://comments/4f18aa47-1c12-4aff-aae6-8cc12099ce1b
+- extendedWaitUntil:
+    visible: "Comments"
+    timeout: 15000
+- extendedWaitUntil:
+    visible: "Add a comment..."
+    timeout: 15000
+
+# Composer: type, confirm, erase. Never tap "Send comment".
+- tapOn: "Add a comment..."
+- inputText: "maestro check do not send"
+- assertVisible: "maestro check do not send"
+- assertVisible: "Send comment"
+- eraseText: 40
+- hideKeyboard
+- back
