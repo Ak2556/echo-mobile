@@ -19,6 +19,10 @@ import { emit } from '../../lib/minilink/queue';
 import { drainMiniLink, undoFact } from '../../lib/minilink/drain';
 import { hasApplied } from '../../lib/minilink/ledger';
 import { shouldEmitPurchase, describePostDrain, describeUndo } from '../../lib/minilink/rules';
+import { defaultCurrency, getCurrencySymbol } from '../../lib/currency';
+
+// Money shows in the device region's currency (INR fallback), not a hardcoded "$".
+const CUR = getCurrencySymbol(defaultCurrency());
 
 /**
  * Reverse a delivered purchase fact and report honestly if it didn't happen.
@@ -201,7 +205,7 @@ export default function ShoppingListScreen() {
   };
 
   return (
-    <MiniAppShell title={ttx("AnyList Pro")} subtitle={ttx("Premium Shopping")}>
+    <MiniAppShell title={ttx("Shopping List")} subtitle={ttx("Groceries & errands")}>
       
       {/* Header with List Selector */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -220,7 +224,7 @@ export default function ShoppingListScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Est. Total</Text>
-            <Text style={{ color: colors.text, fontSize: 36, fontWeight: '900', marginTop: 4 }}>${stats.cost.toFixed(2)}</Text>
+            <Text style={{ color: colors.text, fontSize: 36, fontWeight: '900', marginTop: 4 }}>{CUR}{stats.cost.toFixed(2)}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Remaining</Text>
@@ -271,7 +275,7 @@ export default function ShoppingListScreen() {
                 <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
                   {item.price > 0 && (
                     <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginBottom: 4 }}>
-                      ${(item.price * (parseFloat(item.quantity) || 1)).toFixed(2)}
+                      {CUR}{(item.price * (parseFloat(item.quantity) || 1)).toFixed(2)}
                     </Text>
                   )}
                   <Pressable onPress={() => remove(item)} hitSlop={12} style={{ padding: 4, backgroundColor: colors.inputBg, borderRadius: radius.md }}>

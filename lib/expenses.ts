@@ -1,12 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CURRENCY_MAP, type CurrencyCode } from './currency';
+import { CURRENCY_MAP, defaultCurrency, type CurrencyCode } from './currency';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 import { pushExpensesStructured } from './expensesRemote';
 import type { Fact } from './minilink/types';
 import { uuidv4 } from '../store/outbox';
 
 export const TX_KEY = 'mini:expenses';
-export const DEFAULT_EXPENSE_CURRENCY: CurrencyCode = 'USD';
+// The device region's currency (INR fallback), not USD: see defaultCurrency.
+export const DEFAULT_EXPENSE_CURRENCY: CurrencyCode = defaultCurrency();
 export type TxType = 'income' | 'expense' | 'sale' | 'purchase' | 'receipt' | 'payment';
 export type PartyType = 'customer' | 'supplier';
 export type KhataProfile = 'personal' | 'business' | 'farmer';

@@ -9,6 +9,10 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import { ttx } from '../../src/shared/lib/i18n';
+import { defaultCurrency, getCurrencySymbol } from '../../lib/currency';
+
+// Money shows in the device region's currency (INR fallback), not a hardcoded "$".
+const CUR = getCurrencySymbol(defaultCurrency());
 
 const TIP_PRESETS = [0, 5, 10, 15, 18, 20, 25];
 type SplitMode = 'even' | 'shares' | 'exact';
@@ -48,15 +52,15 @@ function SplitPulse({
   const { colors, radius } = useTheme();
   const serviceLoad = total > 0 ? Math.round((extras / total) * 100) : 0;
   const rows = [
-    { label: 'Each', value: `$${fmt(perPerson)}`, detail: mode === 'even' ? 'even split' : mode },
-    { label: 'Extras', value: `$${fmt(extras)}`, detail: `${serviceLoad}% total` },
+    { label: 'Each', value: `${CUR}${fmt(perPerson)}`, detail: mode === 'even' ? 'even split' : mode },
+    { label: 'Extras', value: `${CUR}${fmt(extras)}`, detail: `${serviceLoad}% total` },
     { label: 'Group', value: `${people}`, detail: people === 1 ? 'person' : 'people' },
   ];
   return (
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: accent, fontSize: 18, fontWeight: '900' }}>$</Text>
+          <Text style={{ color: accent, fontSize: 18, fontWeight: '900' }}>{CUR}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Settlement pulse")}</Text>
@@ -123,10 +127,10 @@ export default function BillSplitterScreen() {
     if (total <= 0) { showToast('Enter the bill first', 'Bill Splitter'); return; }
     const lines = [
       'Bill split, Echo',
-      `Subtotal $${fmt(billNum)}${taxNum > 0 ? ` · Tax $${fmt(taxNum)}` : ''} · Tip ${effectiveTip}% ($${fmt(tipAmount)})`,
-      `Total $${fmt(total)}`,
+      `Subtotal ${CUR}${fmt(billNum)}${taxNum > 0 ? ` · Tax ${CUR}${fmt(taxNum)}` : ''} · Tip ${effectiveTip}% (${CUR}${fmt(tipAmount)})`,
+      `Total ${CUR}${fmt(total)}`,
       '',
-      ...people.map(p => `${p.name}: $${fmt(owed(p))}`),
+      ...people.map(p => `${p.name}: ${CUR}${fmt(owed(p))}`),
     ];
     Share.share({ message: lines.join('\n') }).catch(() => {});
   };
@@ -144,7 +148,7 @@ export default function BillSplitterScreen() {
         title={ttx("Split the bill without friction")}
         subtitle={ttx("Tax, tip, shares, exact orders.")}
         metrics={[
-          { label: 'Total', value: `$${fmt(total)}`, detail: 'with extras' },
+          { label: 'Total', value: `${CUR}${fmt(total)}`, detail: 'with extras' },
           { label: 'People', value: `${people.length}`, detail: 'included' },
           { label: 'Mode', value: mode === 'even' ? 'Even' : mode === 'shares' ? 'Shares' : 'Exact', detail: 'split logic' },
         ]}
@@ -155,7 +159,7 @@ export default function BillSplitterScreen() {
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("BILL AMOUNT")}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ color: accent, fontSize: 42, fontWeight: '300', marginRight: 4 }}>$</Text>
+          <Text style={{ color: accent, fontSize: 42, fontWeight: '300', marginRight: 4 }}>{CUR}</Text>
           <TextInput
             value={bill}
             onChangeText={setBill}
@@ -281,7 +285,7 @@ export default function BillSplitterScreen() {
             )}
             {mode === 'exact' && (
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ color: colors.textMuted, fontSize: 14, marginRight: 4 }}>$</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 14, marginRight: 4 }}>{CUR}</Text>
                 <TextInput
                   value={p.exact}
                   onChangeText={v => setPerson(p.id, { exact: v })}
@@ -309,8 +313,8 @@ export default function BillSplitterScreen() {
         {mode === 'exact' && billNum > 0 && Math.abs(exactGap) > 0.009 && (
           <Text style={{ color: exactGap > 0 ? colors.warning : colors.danger, fontSize: 12.5, fontWeight: '700', marginTop: 2 }}>
             {exactGap > 0
-              ? `$${fmt(exactGap)} of the bill still unclaimed`
-              : `Claims exceed the bill by $${fmt(-exactGap)}`}
+              ? `${CUR}${fmt(exactGap)} of the bill still unclaimed`
+              : `Claims exceed the bill by ${CUR}${fmt(-exactGap)}`}
           </Text>
         )}
         {mode === 'exact' && (
@@ -324,9 +328,9 @@ export default function BillSplitterScreen() {
       {mode === 'even' ? (
         <View style={{ backgroundColor: accent, borderRadius: radius.xl, padding: 28, alignItems: 'center', marginBottom: 14, shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 28, shadowOffset: { width: 0, height: 8 } }}>
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{ttx("Each person pays")}</Text>
-          <Text style={{ color: colors.text, fontSize: 60, ...font.displayBlack, letterSpacing: -2, lineHeight: 66 }}>${fmt(total / people.length)}</Text>
+          <Text style={{ color: colors.text, fontSize: 60, ...font.displayBlack, letterSpacing: -2, lineHeight: 66 }}>{CUR}{fmt(total / people.length)}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 6 }}>
-            {ttx("Incl. $")}{fmt(tipAmount / people.length)} {ttx("tip")}{taxNum > 0 ? ` · $${fmt(taxNum / people.length)} tax` : ''}
+            {ttx("Incl.")} {CUR}{fmt(tipAmount / people.length)} {ttx("tip")}{taxNum > 0 ? ` · ${CUR}${fmt(taxNum / people.length)} tax` : ''}
           </Text>
         </View>
       ) : (
@@ -334,7 +338,7 @@ export default function BillSplitterScreen() {
           {people.map((p, i) => (
             <View key={p.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: i < people.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
               <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>{p.name || `Person ${i + 1}`}</Text>
-              <Text style={{ color: accent, fontSize: 20, fontWeight: '800', fontVariant: ['tabular-nums'] }}>${fmt(owed(p))}</Text>
+              <Text style={{ color: accent, fontSize: 20, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{CUR}{fmt(owed(p))}</Text>
             </View>
           ))}
         </GlassPanel>
@@ -350,7 +354,7 @@ export default function BillSplitterScreen() {
         ].map((row, i, arr) => (
           <View key={row.label} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: i < arr.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
             <Text style={{ color: colors.textMuted, fontSize: 15 }}>{row.label}</Text>
-            <Text style={{ color: row.muted ? colors.textSecondary : colors.text, fontSize: 17, fontWeight: '700' }}>${row.value}</Text>
+            <Text style={{ color: row.muted ? colors.textSecondary : colors.text, fontSize: 17, fontWeight: '700' }}>{CUR}{row.value}</Text>
           </View>
         ))}
       </GlassPanel>
@@ -366,17 +370,17 @@ export default function BillSplitterScreen() {
         headline={ttx("Settle without confusion")}
         caption={ttx("Turn a bill into a clean shareable split, group accountability, or expense note.")}
         metrics={[
-          { label: 'Total', value: `$${fmt(total)}` },
+          { label: 'Total', value: `${CUR}${fmt(total)}` },
           { label: 'People', value: `${people.length}` },
           { label: 'Tip', value: `${effectiveTip}%` },
         ]}
         prompt="Check this bill split for fairness and explain it simply for the group."
         shareText={[
-          `Bill total: $${fmt(total)}`,
-          ...people.map(p => `${p.name}: $${fmt(owed(p))}`),
+          `Bill total: ${CUR}${fmt(total)}`,
+          ...people.map(p => `${p.name}: ${CUR}${fmt(owed(p))}`),
         ].join('\n')}
         publishTitle="Bill split"
-        publishBody={`Split a $${fmt(total)} bill between ${people.length} people using ${mode} mode. Tip was ${effectiveTip}%.`}
+        publishBody={`Split a ${CUR}${fmt(total)} bill between ${people.length} people using ${mode} mode. Tip was ${effectiveTip}%.`}
       />
     </MiniAppShell>
   );
