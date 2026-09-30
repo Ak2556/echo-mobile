@@ -1,0 +1,246 @@
+# Route coverage: every static screen opens by deep link and shows its title.
+# Catches a screen that crashes on mount, an unmatched route, or a broken
+# deep-link mapping. Read-only: create-post and delete-account are opened, not
+# submitted. Assumes a signed-in release build.
+# Run: maestro test e2e/routes.yaml
+#
+# Flag-gated screens (salons, quests, badges, office-hours, year-in-echo) are
+# deliberately absent: with their flags off they redirect Home.
+appId: com.downloadecho.echo
+---
+# Restart the app (session kept) so every flow starts clean: a previous flow
+# can leave a modal or Flow's full-screen mode open, which deep links do not
+# dismiss. This also exercises cold-start routing for a signed-in user.
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible: "Explore"
+    timeout: 30000
+
+- openLink: echo://blocked-users
+- extendedWaitUntil:
+    visible: "Blocked Users"
+    timeout: 15000
+- back
+
+- openLink: echo://muted-users
+- extendedWaitUntil:
+    visible: "Muted Users"
+    timeout: 15000
+- back
+
+- openLink: echo://bookmarks
+- extendedWaitUntil:
+    visible: "Bookmarks"
+    timeout: 15000
+- back
+
+- openLink: echo://daily-question
+- extendedWaitUntil:
+    visible: "Daily Question"
+    timeout: 15000
+- back
+
+- openLink: echo://notification-prefs
+- extendedWaitUntil:
+    visible: "Notification Preferences"
+    timeout: 15000
+- back
+
+- openLink: echo://my-reports
+- extendedWaitUntil:
+    visible: "My Reports"
+    timeout: 15000
+- back
+
+- openLink: echo://appeal
+- extendedWaitUntil:
+    visible: "My appeals"
+    timeout: 15000
+- back
+
+- openLink: echo://thinking-partners
+- extendedWaitUntil:
+    visible: "Think like you"
+    timeout: 15000
+- back
+
+- openLink: echo://privacy
+- extendedWaitUntil:
+    visible: "Privacy Policy"
+    timeout: 15000
+- back
+
+- openLink: echo://terms
+- extendedWaitUntil:
+    visible: "Terms of Service"
+    timeout: 15000
+- back
+
+- openLink: echo://legal/child-safety
+- extendedWaitUntil:
+    visible: "Child Safety Standards"
+    timeout: 15000
+- back
+
+- openLink: echo://legal/rules
+- extendedWaitUntil:
+    visible: "A reminder of Echo's rules"
+    timeout: 15000
+- back
+
+- openLink: echo://edit-profile
+- extendedWaitUntil:
+    visible: "Edit Profile"
+    timeout: 15000
+- back
+
+- openLink: echo://followers
+- extendedWaitUntil:
+    visible: "Connections"
+    timeout: 15000
+- back
+
+- openLink: echo://create-post
+- extendedWaitUntil:
+    visible: "New Echo"
+    timeout: 15000
+- back
+
+- openLink: echo://delete-account
+- extendedWaitUntil:
+    visible: "Delete account"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/bill-splitter
+- extendedWaitUntil:
+    visible: "Bill Splitter"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/bmi
+- extendedWaitUntil:
+    visible: "BMI Calculator"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/calculator
+- extendedWaitUntil:
+    visible: "Calculator"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/color-tools
+- extendedWaitUntil:
+    visible: "Color Tools"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/converter
+- extendedWaitUntil:
+    visible: "Converter"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/dice
+- extendedWaitUntil:
+    visible: "Dice & Coin"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/editor
+- extendedWaitUntil:
+    visible: "Editor"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/expenses
+- extendedWaitUntil:
+    visible: "Khata"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/fitness
+- extendedWaitUntil:
+    visible: "Fitness"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/habits
+- extendedWaitUntil:
+    visible: "Habits"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/json-formatter
+- extendedWaitUntil:
+    visible: "JSON Tools"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/learn
+- extendedWaitUntil:
+    visible: "Learn"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/markdown
+- extendedWaitUntil:
+    visible: "Markdown"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/marketplace
+- extendedWaitUntil:
+    visible: "Market"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/notes
+- extendedWaitUntil:
+    visible: "Notes"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/planner
+- extendedWaitUntil:
+    visible: "Planner"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/pomodoro
+- extendedWaitUntil:
+    visible: "Pomodoro"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/shopping-list
+- extendedWaitUntil:
+    visible: "AnyList Pro"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/studio
+- extendedWaitUntil:
+    visible: "Studio"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/tasks
+- extendedWaitUntil:
+    visible: "Tasks"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/voice-memo
+- extendedWaitUntil:
+    visible: "Voice Memo"
+    timeout: 15000
+- back
+
+- openLink: echo://mini-apps/world-clock
+- extendedWaitUntil:
+    visible: "World Clock"
+    timeout: 15000
+- back
