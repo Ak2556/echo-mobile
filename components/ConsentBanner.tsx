@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { usePathname } from 'expo-router';
+import { consentBannerAllowedOn } from '../lib/consentBannerRoutes';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
@@ -22,6 +24,8 @@ import { ttx } from '../src/shared/lib/i18n';
 export function ConsentBanner() {
   const { colors, radius, font } = useTheme();
   const [visible, setVisible] = useState(false);
+  // Not on the sign-in screens, where it covered Log in (lib/consentBannerRoutes).
+  const pathname = usePathname();
 
   useEffect(() => {
     let mounted = true;
@@ -33,7 +37,7 @@ export function ConsentBanner() {
     return () => { mounted = false; };
   }, []);
 
-  if (!visible) return null;
+  if (!visible || !consentBannerAllowedOn(pathname)) return null;
 
   const handleAccept = () => {
     setVisible(false);
@@ -91,18 +95,26 @@ export function ConsentBanner() {
             accessibilityRole="button"
             accessibilityLabel={ttx("Decline analytics")}
             accessibilityHint={ttx("Echo will not collect any usage analytics")}
-            style={({ pressed }) => [
-              styles.btn,
-              {
-                borderColor: colors.border,
-                borderWidth: StyleSheet.hairlineWidth,
-                backgroundColor: pressed ? colors.surfaceHover : 'transparent',
-              },
-            ]}
           >
-            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 14 }]}>
-              {ttx("No thanks")}
-            </Text>
+            {({ pressed }) => (
+              // Layout lives on this inner View, not the Pressable: layout
+              // props on a Pressable's style are dropped in release builds
+              // (NativeWind interop), which clipped this label to "No thank".
+              <View
+                style={[
+                  styles.btn,
+                  {
+                    borderColor: colors.border,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    backgroundColor: pressed ? colors.surfaceHover : 'transparent',
+                  },
+                ]}
+              >
+                <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 14 }]}>
+                  {ttx("No thanks")}
+                </Text>
+              </View>
+            )}
           </Pressable>
 
           <Pressable
@@ -110,16 +122,14 @@ export function ConsentBanner() {
             accessibilityRole="button"
             accessibilityLabel={ttx("Accept analytics")}
             accessibilityHint={ttx("Echo will collect anonymous usage analytics")}
-            style={({ pressed }) => [
-              styles.btn,
-              {
-                backgroundColor: pressed ? colors.accentMuted : colors.accent,
-              },
-            ]}
           >
-            <Text style={[font.bodySemibold, { color: '#fff', fontSize: 14 }]}>
-              {ttx("Accept")}
-            </Text>
+            {({ pressed }) => (
+              <View style={[styles.btn, { backgroundColor: pressed ? colors.accentMuted : colors.accent }]}>
+                <Text style={[font.bodySemibold, { color: '#fff', fontSize: 14 }]}>
+                  {ttx("Accept")}
+                </Text>
+              </View>
+            )}
           </Pressable>
         </View>
       </Animated.View>
