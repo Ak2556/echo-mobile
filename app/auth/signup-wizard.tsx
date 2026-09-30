@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { syncInterests } from '../../lib/supabaseEchoApi';
+import { cleanUsername } from '../../lib/username';
 import {
   View, Text, TextInput, ScrollView, Platform, useWindowDimensions,
   KeyboardAvoidingView, ActivityIndicator, Image, Alert,
@@ -430,7 +431,7 @@ export default function SignupWizard() {
   const [saving, setSaving] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
 
-  const usernameClean = usernameRaw.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+  const usernameClean = cleanUsername(usernameRaw);
   const firstName = displayName.trim().split(' ')[0] || 'you';
   const canStep0 =
     displayName.trim().length >= 1 &&

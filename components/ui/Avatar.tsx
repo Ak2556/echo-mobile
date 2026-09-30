@@ -20,7 +20,7 @@ export function Avatar({
   url,
   size = 44,
   online = false,
-  zoomable = true,
+  zoomable = false,
   squircle = false,
   children,
 }: {
@@ -30,7 +30,11 @@ export function Avatar({
   size?: number;
   /** show the presence dot */
   online?: boolean;
-  /** tap the photo to inspect it fullscreen */
+  /** Tap the photo to inspect it fullscreen. Off by default: an avatar in a
+   *  row or card is a way to reach that person, and a zoomable one swallows the
+   *  tap its parent uses to open their profile. Turn it on only where the photo
+   *  is the subject, like a conversation's info header. Profile headers use
+   *  ProfileAvatar. */
   zoomable?: boolean;
   /** use a rounded square instead of a circle */
   squircle?: boolean;

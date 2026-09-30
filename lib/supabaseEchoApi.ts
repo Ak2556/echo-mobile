@@ -1920,6 +1920,17 @@ export async function updateRemoteProfile(updates: {
   if (error) throw error;
 }
 
+/** Whether another account already holds this handle. The caller's own row
+ *  doesn't count, so re-saving an unchanged profile never trips it. */
+export async function isUsernameTaken(username: string): Promise<boolean> {
+  const uid = await getSessionUserId();
+  let query = supabase.from('profiles').select('id').eq('username', username);
+  if (uid) query = query.neq('id', uid);
+  const { data, error } = await query.limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
+}
+
 /**
  * The signed-in user's age in whole years, or null when no date of birth is on
  * file. The column itself is unreadable by clients on purpose — this RPC is

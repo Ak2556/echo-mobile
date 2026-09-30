@@ -16,7 +16,8 @@ import { useAppStore } from '../store/useAppStore';
 import { WARM_AVATAR_COLORS } from '../lib/avatarPalette';
 import { useTheme } from '../src/shared/lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
-import { fetchRemoteProfile, updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
+import { fetchRemoteProfile, isUsernameTaken, updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
+import { cleanUsername, isAutoUsername, isValidUsername, USERNAME_MAX, USERNAME_MIN } from '../lib/username';
 import { supabase } from '../lib/supabase';
 import { useResponsiveLayout } from '../src/shared/lib/responsive';
 import { ttx } from '../src/shared/lib/i18n';
@@ -166,12 +167,16 @@ export default function EditProfileScreen() {
     }
   };
 
-  const usernameValid = newUsername.trim().length >= 2;
+  // Only a changed handle is held to the rules. A few accounts chose dotted
+  // handles before the rules existed, and saving a bio shouldn't force them
+  // to rename.
+  const usernameChanged = newUsername !== username;
+  const usernameValid = !usernameChanged || isValidUsername(newUsername);
   const bioProgress = newBio.length / BIO_MAX;
   const bioNearLimit = newBio.length > BIO_WARN;
   const completionItems = [
     { label: 'Name', done: !!newDisplayName.trim() },
-    { label: 'Username', done: usernameValid },
+    { label: 'Username', done: usernameValid && !isAutoUsername(newUsername) },
     { label: 'Bio', done: !!newBio.trim() },
     { label: 'Photo', done: !!newAvatarUrl && profilePhotoVisible },
   ];
@@ -179,16 +184,21 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!usernameValid) {
-      Alert.alert('Error', 'Username must be at least 2 characters.');
+      Alert.alert(ttx('Choose a different username'), `${USERNAME_MIN}–${USERNAME_MAX} ${ttx('letters, numbers or underscores')}`);
       return;
     }
     if (isSupabaseRemote()) {
       setSaving(true);
       try {
+        if (usernameChanged && await isUsernameTaken(newUsername)) {
+          Alert.alert(ttx('Choose a different username'), `@${newUsername} ${ttx('is taken')}`);
+          setSaving(false);
+          return;
+        }
         const trimmedMood = newMood.trim().slice(0, MOOD_MAX);
         await updateRemoteProfile({
-          username: newUsername.trim().toLowerCase(),
-          display_name: newDisplayName.trim() || newUsername.trim(),
+          username: newUsername,
+          display_name: newDisplayName.trim() || newUsername,
           bio: newBio.trim(),
           avatar_color: newColor,
           pronouns: newPronouns.trim() ? newPronouns.trim() : null,
@@ -199,14 +209,16 @@ export default function EditProfileScreen() {
           avatar_url: profilePhotoVisible && newAvatarUrl ? newAvatarUrl : null,
         });
       } catch (e) {
-        Alert.alert('Could not save', (e as Error).message);
+        // Someone took the handle between the check and the save.
+        const taken = (e as { code?: string }).code === '23505';
+        Alert.alert(ttx('Could not save'), taken ? `@${newUsername} ${ttx('is taken')}` : (e as Error).message);
         setSaving(false);
         return;
       }
       setSaving(false);
     }
-    setUsername(newUsername.trim());
-    setDisplayName(newDisplayName.trim() || newUsername.trim());
+    setUsername(newUsername);
+    setDisplayName(newDisplayName.trim() || newUsername);
     setBio(newBio.trim());
     setAvatarColor(newColor);
     if (newAvatarUrl) setAvatarUrl(newAvatarUrl);
@@ -294,7 +306,7 @@ export default function EditProfileScreen() {
                   {newDisplayName || newUsername || 'Your profile'}
                 </Text>
                 <Text style={[font.body, { color: colors.textMuted, fontSize: 13, marginTop: 4 }]} numberOfLines={1}>
-                  @{newUsername.trim().toLowerCase() || 'username'}
+                  @{newUsername || 'username'}
                 </Text>
                 {!!newMood.trim() && (
                   <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12, marginTop: 8 }]} numberOfLines={1}>
@@ -381,12 +393,13 @@ export default function EditProfileScreen() {
           </Text>
           <TextInput
             value={newUsername}
-            onChangeText={setNewUsername}
+            onChangeText={v => setNewUsername(cleanUsername(v))}
             placeholder={ttx("username")}
             autoCapitalize="none"
-            maxLength={20}
+            autoCorrect={false}
+            maxLength={USERNAME_MAX}
           />
-          {newUsername.trim().length > 0 && (
+          {usernameChanged && (
             <Text
               style={{
                 fontSize: fontSizes.caption,
@@ -395,7 +408,7 @@ export default function EditProfileScreen() {
                 color: usernameValid ? '#10B981' : colors.danger,
               }}
             >
-              {usernameValid ? 'Username looks good' : 'At least 2 characters required'}
+              {usernameValid ? `@${newUsername}` : `${USERNAME_MIN}–${USERNAME_MAX} ${ttx('letters, numbers or underscores')}`}
             </Text>
           )}
           </View>

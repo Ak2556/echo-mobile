@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'expo-router';
 import { View, Text } from 'react-native';
 import { HeartStraight, SealCheck, ChatCircle } from 'phosphor-react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
@@ -41,6 +42,9 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
   const heartScale = useSharedValue(1);
   const remote = isSupabaseRemote();
   const toggleRemoteLike = useToggleRemoteCommentLike(echoId);
+  const router = useRouter();
+  // A comment written offline carries userId 'me' until it syncs.
+  const openAuthor = () => router.push(comment.userId === 'me' ? '/(tabs)/you' : `/user/${comment.userId}`);
 
   const heartAnim = useAnimatedStyle(() => ({
     transform: [{ scale: heartScale.value }],
@@ -80,19 +84,23 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
       }}
     >
       {showAvatars && (
-        <View style={{ marginRight: 12, marginTop: 2 }}>
-          <Avatar
-            name={comment.displayName}
-            color={comment.avatarColor}
-            url={comment.avatarUrl}
-            size={36}
-          />
-        </View>
+        <AnimatedPressable onPress={openAuthor} haptic="light" accessibilityRole="button" accessibilityLabel={comment.displayName}>
+          <View style={{ marginRight: 12, marginTop: 2 }}>
+            <Avatar
+              name={comment.displayName}
+              color={comment.avatarColor}
+              url={comment.avatarUrl}
+              size={36}
+            />
+          </View>
+        </AnimatedPressable>
       )}
 
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 }}>
-          <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{comment.displayName}</Text>
+          <AnimatedPressable onPress={openAuthor} haptic="none" accessibilityRole="button" accessibilityLabel={comment.displayName}>
+            <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{comment.displayName}</Text>
+          </AnimatedPressable>
           {comment.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{'\u00B7'} {getTimeAgo(comment.createdAt)}</Text>
         </View>
