@@ -59,8 +59,8 @@ import {
 } from './entity';
 import { MINIMUM_AGE, ADULT_AGE } from './ageGate';
 
-export const PRIVACY_UPDATED = 'September 26, 2026';
-export const PRIVACY_VERSION = '3.2';
+export const PRIVACY_UPDATED = 'September 30, 2026';
+export const PRIVACY_VERSION = '3.3';
 
 export const PRIVACY_POLICY_MD = `# Privacy Policy
 
@@ -90,6 +90,7 @@ It is written to be read, not to be survived. If anything here is unclear, ask u
 
 - **Interest and taste signals** — mathematical representations (embeddings) of the content you write and engage with, used to rank your feed and find related posts.
 - **Usage signals** — what you opened and when, for the features you have enabled.
+- **Notification timing** — the hours you usually open Echo and the part of the app you use most, so reminders arrive when you are likely to want them. This is **on by default**; turn it off in **Settings → Privacy → Personalized Notifications** and we delete it. Your first personalized notification also tells you where that switch is.
 
 **We collect automatically:**
 
@@ -114,6 +115,7 @@ We do not collect precise GPS location, calendar, health data from Apple Health 
 | Account, content, messaging | To provide the service you asked for | Contract |
 | Date of birth | Age assurance and child protection | Legal obligation; legitimate interests |
 | Feed ranking and recommendations | To show you relevant content | Legitimate interests — you can switch to the Latest feed |
+| Personalized notification timing | To send reminders at hours you are usually around | Legitimate interests — on by default, off in one tap (Settings → Privacy) |
 | AI features | To answer you and act on your instruction | Consent — asked before first use |
 | Face verification | To confirm a verified badge is a real person | Consent — you choose to apply |
 | Health data backup | Sync across your devices, and coaching | Explicit consent — asked before anything is uploaded |

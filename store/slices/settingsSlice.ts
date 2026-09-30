@@ -201,7 +201,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     readReceipts: b('readReceipts', true), setReadReceipts: s(set, 'readReceipts'),
     allowDownloads: b('allowDownloads', true), setAllowDownloads: s(set, 'allowDownloads'),
     onlineStatus: b('onlineStatus', true), setOnlineStatus: s(set, 'onlineStatus'),
-    personalizedNotifications: b('personalizedNotifications', false), setPersonalizedNotifications: s(set, 'personalizedNotifications'),
+    personalizedNotifications: b('personalizedNotifications', true), setPersonalizedNotifications: s(set, 'personalizedNotifications'),
     dmPrivacy: persistGet<'everyone' | 'followers' | 'nobody'>('dmPrivacy', 'everyone'),
     setDmPrivacy: (v) => { persistSet('dmPrivacy', v); set({ dmPrivacy: v }); },
     activityStatus: b('activityStatus', true), setActivityStatus: s(set, 'activityStatus'),
