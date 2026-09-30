@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
@@ -307,6 +307,15 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
   );
 }
 
+// One name per scope, shared by the chip and the section header under it, so
+// the header names the list actually shown ('forYou' is the Trending chip).
+function feedScopeLabel(
+  scope: 'semantic' | 'forYou' | 'following' | 'latest',
+  t: (key: TranslationKey) => string,
+): string {
+  return scope === 'semantic' ? t('home.forYou') : scope === 'forYou' ? t('home.trending') : scope === 'following' ? t('home.following') : t('home.latest');
+}
+
 function FeedScopeRail({
   feedScope,
   setFeedScope,
@@ -323,7 +332,7 @@ function FeedScopeRail({
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {(['semantic', 'forYou', 'following', 'latest'] as const).map(scope => {
           const active = feedScope === scope;
-          const label = scope === 'semantic' ? t('home.forYou') : scope === 'forYou' ? t('home.trending') : scope === 'following' ? t('home.following') : t('home.latest');
+          const label = feedScopeLabel(scope, t);
           return (
             <Pressable
               key={scope}
@@ -430,8 +439,23 @@ export default function DiscoverScreen() {
   useEffect(() => { pingDailyActivity(); recordAppOpen('feed'); }, []);
 
   const scrollY = useSharedValue(0);
+  // The filter chips live in the list header, so they scroll away with it.
+  // Each feed also has its own length, so after a switch the chips could end
+  // up far above the viewport and switching again meant scrolling all the way
+  // up (2026-09-30 audit). Once the in-list row passes under the header, a
+  // pinned copy shows below it. railY is the row's offset in the list header;
+  // the pinned state flips only on crossings, not on every scroll frame.
+  const railYRef = useRef<number | null>(null);
+  const railPinnedRef = useRef(false);
+  const [railPinned, setRailPinned] = useState(false);
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    scrollY.value = event.nativeEvent.contentOffset.y;
+    const y = event.nativeEvent.contentOffset.y;
+    scrollY.value = y;
+    const pinned = railYRef.current != null && y > railYRef.current;
+    if (pinned !== railPinnedRef.current) {
+      railPinnedRef.current = pinned;
+      setRailPinned(pinned);
+    }
   }, [scrollY]);
 
   const headerHeight = insets.top + (layout.isDesktop ? 64 : NAV_BAR_HEIGHT);
@@ -584,7 +608,9 @@ export default function DiscoverScreen() {
         </Pressable>
       )}
       {!focusedHome && (
-        <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} t={t} />
+        <View onLayout={e => { railYRef.current = e.nativeEvent.layout.y; }}>
+          <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} t={t} />
+        </View>
       )}
       {!focusedHome && storiesEnabled && !remote && (
         <>
@@ -599,7 +625,7 @@ export default function DiscoverScreen() {
         </>
       )}
       <View ref={feedTarget.ref} onLayout={feedTarget.onLayout}>
-        {(feedScope !== 'following' || popularItems.length > 0) && <SectionHeader label={focusedHome ? t('home.fromCommunity') : t('home.topConversations')} sub={focusedHome ? undefined : t('home.liveNow')} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />}
+        {(feedScope !== 'following' || popularItems.length > 0) && <SectionHeader label={focusedHome ? t('home.fromCommunity') : feedScope === 'forYou' ? t('home.topConversations') : feedScopeLabel(feedScope, t)} sub={focusedHome || feedScope !== 'forYou' ? undefined : t('home.liveNow')} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />}
       </View>
     </View>
   );
@@ -711,6 +737,16 @@ export default function DiscoverScreen() {
             }
           />
         </>
+      )}
+
+      {railPinned && !focusedHome && (
+        <View
+          style={{ position: 'absolute', top: headerHeight, left: 0, right: 0, zIndex: 11, backgroundColor: colors.bg, paddingTop: 8 }}
+        >
+          <View style={{ width: '100%', maxWidth: feedMaxWidth, alignSelf: 'center' }}>
+            <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} t={t} />
+          </View>
+        </View>
       )}
 
       <EdgeGlass
