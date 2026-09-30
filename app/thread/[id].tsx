@@ -28,6 +28,7 @@ import { useToggleRemoteBookmark } from '../../src/features/feed/api/useSupabase
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { inferTopics } from '../../lib/echoUX';
 import { ttx } from '../../src/shared/lib/i18n';
+import { countLabel } from '../../lib/a11yCount';
 import { CommentsSheet } from '../../src/features/feed/ui/CommentsSheet';
 
 export default function ThreadDetailScreen() {
@@ -338,9 +339,15 @@ export default function ThreadDetailScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8 }}>
           <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Pressable onPress={() => setCommentsOpen(true)} style={{ padding: 8, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: colors.surface }}>
-              <ChatCircle color={colors.textSecondary} size={20} />
-              <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{item.commentCount ?? 0}</Text>
+            <Pressable
+              onPress={() => setCommentsOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`${ttx('Comment')}, ${countLabel(item.commentCount, ttx('comment'), ttx('comments'))}`}
+            >
+              <View style={{ padding: 8, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: colors.surface }}>
+                <ChatCircle color={colors.textSecondary} size={20} />
+                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{item.commentCount ?? 0}</Text>
+              </View>
             </Pressable>
             <IconButton
               icon={BookmarkSimple}

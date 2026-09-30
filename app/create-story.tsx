@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +19,15 @@ import { ttx } from '../src/shared/lib/i18n';
 
 const STORY_DURATION_HOURS = 24;
 
+// Stories are flagged off (featureFlags.stories). Without the guard, a saved
+// link or a voice route still rendered these screens: create-story showed its
+// composer, and story with no stories to show backed out to wherever the user
+// came from (often Messages).
 export default function CreateStoryScreen() {
+  return <V2FeatureGuard flag="stories"><CreateStoryScreenInner /></V2FeatureGuard>;
+}
+
+function CreateStoryScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes, animation } = useTheme();
   const { username, userId, avatarColor, avatarUrl, displayName, addStory } = useAppStore();

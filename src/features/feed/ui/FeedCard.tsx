@@ -23,6 +23,7 @@ import { GlassRow } from '../../../../components/ui/GlassRow';
 const ACTION_HEIGHT = 42;
 const ACTION_RADIUS = 14;
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
+import { countLabel } from '../../../../lib/a11yCount';
 import { GestureCard, type GestureCardAction } from '../../../../components/ui/GestureCard';
 import { Avatar } from '../../../../components/ui/Avatar';
 import { showToast } from '../../../../components/ui/Toast';
@@ -499,7 +500,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
           icon={<ChatCircle color={colors.textMuted} size={20} />}
           count={item.commentCount || undefined}
           onPress={(e) => { e.stopPropagation?.(); router.push(`/comments/${item.id}`); }}
-          accessibilityLabel={`Comment. ${item.commentCount || 0} comments`}
+          accessibilityLabel={`${ttx('Comment')}, ${countLabel(item.commentCount, ttx('comment'), ttx('comments'))}`}
         />
         <ActionButton
           label="Repost"

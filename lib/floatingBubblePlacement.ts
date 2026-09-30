@@ -30,6 +30,20 @@ export function cornerY(screenH: number): number {
   return screenH - BUBBLE_SIZE - 150;
 }
 
+/**
+ * Home also has the compose "+" (ComposeFAB: 48pt, bottom = insets.bottom + 88).
+ * The plain corner spot overlapped it by ~10pt on the audit device, and the two
+ * stacked buttons covered each feed card's Share. On Home the bubble rests one
+ * FAB height plus a gap higher, and a saved drag can't bring it back down onto
+ * the "+".
+ */
+const COMPOSE_FAB_ROUTES = new Set(['/', '/home']);
+export const COMPOSE_FAB_CLEARANCE = 48 + 16;
+
+export function homeCornerY(screenH: number): number {
+  return cornerY(screenH) - COMPOSE_FAB_CLEARANCE;
+}
+
 export function liftedY(screenH: number): number {
   return Math.round(screenH * LIFTED_FRACTION);
 }
@@ -41,6 +55,9 @@ export function liftedY(screenH: number): number {
  */
 export function restingY(pathname: string, screenH: number, savedY: number): number {
   if (!cornerIsFree(pathname)) return liftedY(screenH);
+  if (COMPOSE_FAB_ROUTES.has(pathname)) {
+    return savedY >= 0 ? Math.min(savedY, homeCornerY(screenH)) : homeCornerY(screenH);
+  }
   return savedY >= 0 ? savedY : cornerY(screenH);
 }
 

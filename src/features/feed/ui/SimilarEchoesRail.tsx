@@ -8,6 +8,7 @@ import { feedbackHaptic } from '../../../../lib/accentDesign';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useTheme } from '../../../shared/lib/theme';
 import { ttx } from '../../../shared/lib/i18n';
+import { countLabel } from '../../../../lib/a11yCount';
 
 interface SimilarEchoesRailProps {
   echoId: string;
@@ -44,26 +45,36 @@ export function SimilarEchoesRail({ echoId, limit = 8 }: SimilarEchoesRailProps)
           contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
           decelerationRate="fast"
         >
-          {(data ?? []).map(item => (
+          {(data ?? []).map(item => {
+            // A plain post has no editorial title and no response, so title
+            // and preview both fell back to the prompt and the card (and the
+            // screen reader) said the same thing twice.
+            const title = item.editorialTitle || item.prompt;
+            const preview = [item.response, item.prompt].find(text => !!text && text !== title);
+            return (
             <Pressable
               key={item.id}
               onPress={() => {
                 if (hapticEnabled) void feedbackHaptic('tap');
                 router.push({ pathname: '/thread/[id]', params: { id: item.id } });
               }}
-              style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              accessibilityRole="button"
             >
+              {/* Layout on an inner View: box props on a Pressable drop out in release builds. */}
+              <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.author, { color: colors.textMuted }]} numberOfLines={1}>
                 @{item.username}
               </Text>
               <Text style={[styles.title, { color: colors.text }]} numberOfLines={3}>
-                {item.editorialTitle || item.prompt}
+                {title}
               </Text>
-              <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={3}>
-                {item.response || item.prompt}
-              </Text>
+              {preview ? (
+                <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={3}>
+                  {preview}
+                </Text>
+              ) : null}
               <View style={styles.statsRow}>
-                <Text style={[styles.stat, { color: colors.textMuted }]}>{item.likes} {ttx("likes")}</Text>
+                <Text style={[styles.stat, { color: colors.textMuted }]}>{countLabel(item.likes, ttx('like'), ttx('likes'))}</Text>
                 {(item.remixCount ?? 0) > 0 && (
                   <View style={styles.remixChip}>
                     <GitBranch color={colors.textMuted} size={11} />
@@ -71,8 +82,10 @@ export function SimilarEchoesRail({ echoId, limit = 8 }: SimilarEchoesRailProps)
                   </View>
                 )}
               </View>
+              </View>
             </Pressable>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
     </View>
