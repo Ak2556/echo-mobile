@@ -45,7 +45,11 @@ export function FloatingMiniApp() {
     mode === 'closed' ||
     pathname.startsWith('/messages/') ||
     pathname.startsWith('/thread/') ||
-    pathname === '/chat'
+    pathname === '/chat' ||
+    // The post composer grows downward as options are added, so no resting
+    // spot stays clear: lifted it sat on the add-on chips, cornered it sat on
+    // the last chip row once a poll or photos were added.
+    pathname === '/create-post'
   ) return null;
   // box-none: this full-screen layer ignores touches except on its children,
   // so the app underneath stays scrollable "alongside" the floating tool.

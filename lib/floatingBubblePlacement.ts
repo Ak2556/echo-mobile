@@ -15,12 +15,8 @@
  */
 export const BUBBLE_SIZE = 54;
 
-/**
- * Screens whose bottom-right corner is free: the tabs (Flow is not: Share lives
- * there) and the composer, whose controls all sit near the top. The lifted spot
- * landed right on the composer's add-on chips and section close buttons.
- */
-const CORNER_FREE = new Set(['/', '/home', '/explore', '/apps', '/you', '/notifications', '/create-post']);
+/** Tab screens whose bottom-right corner is free (Flow is not: Share lives there). */
+const CORNER_FREE = new Set(['/', '/home', '/explore', '/apps', '/you', '/notifications']);
 
 /** Fraction of screen height where the lifted bubble's top edge rests. */
 export const LIFTED_FRACTION = 0.36;

@@ -1033,9 +1033,13 @@ export default function CreatePostScreen() {
               { key: 'poll', label: ttx('Poll'), Icon: ChartBar, active: pollActive, onPress: () => setPollActive(v => !v) },
               { key: 'tags', label: ttx('Tags'), Icon: Hash, active: showTags, onPress: () => setShowTags(v => !v) },
               { key: 'coauthor', label: ttx('Co-author'), Icon: Users, active: !!coAuthor, onPress: () => { if (coAuthor) { setCoAuthor(null); setCoAuthorResponse(''); } else { setCoAuthorPickerOpen(true); setCoAuthorQuery(''); } } },
-            ].map(({ key, label, Icon, active, onPress }) => (
-              <ToolChip key={key} label={label} Icon={Icon} active={active} onPress={onPress} />
-            ))}
+            ]
+              // A poll replaces the text body, and the prompt and co-author live
+              // in that body, so their chips showed "on" with nothing on screen.
+              .filter(({ key }) => !(pollActive && (key === 'prompt' || key === 'coauthor')))
+              .map(({ key, label, Icon, active, onPress }) => (
+                <ToolChip key={key} label={label} Icon={Icon} active={active} onPress={onPress} />
+              ))}
           </View>
 
           <View style={{ height: 32 }} />

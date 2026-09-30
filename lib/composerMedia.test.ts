@@ -50,6 +50,14 @@ describe('composer option wiring', () => {
     expect((composer.match(/textAlignVertical="top"/g) ?? []).length).toBeGreaterThanOrEqual(3);
   });
 
+  it('hides prompt and co-author chips while a poll replaces the body', () => {
+    expect(composer).toMatch(/!\(pollActive && \(key === 'prompt' \|\| key === 'coauthor'\)\)/);
+  });
+
+  it('the mini-app bubble stays off the composer', () => {
+    expect(src('components/mini-apps/FloatingMiniApp.tsx')).toMatch(/pathname === '\/create-post'/);
+  });
+
   it('shows the picked song', () => {
     expect(composer).toMatch(/\{selectedMusic && \(/);
   });

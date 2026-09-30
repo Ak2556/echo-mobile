@@ -23,7 +23,7 @@ const COVERED = {
 
 describe('restingY', () => {
   it('keeps the bottom-right default on tab screens whose corner is free', () => {
-    for (const p of ['/explore', '/apps', '/you', '/notifications', '/create-post']) {
+    for (const p of ['/explore', '/apps', '/you', '/notifications']) {
       expect(restingY(p, H, -1)).toBe(cornerY(H));
     }
   });
