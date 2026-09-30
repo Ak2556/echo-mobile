@@ -1977,6 +1977,25 @@ export async function fetchMyAgeYears(): Promise<number | null> {
 }
 
 /**
+ * Save the signed-in user's date of birth (the one-time AgeConfirmGate for
+ * accounts created before the sign-up age step).
+ *
+ * personalized_notifications travels in the same statement: the minors
+ * trigger only lets it stay on when it can see an adult birthday, and the
+ * setting has been on by default since 20260930130000. validate_date_of_birth
+ * rejects future, implausible and under-18 dates server-side.
+ */
+export async function saveMyDateOfBirth(dobIso: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('profiles')
+    .update({ date_of_birth: dobIso, personalized_notifications: true })
+    .eq('id', uid);
+  if (error) throw error;
+}
+
+/**
  * Store the interests someone picked, replacing whatever was there, then
  * rebuild their taste vector so the next feed already reflects the change.
  * Best effort: a failure here must never block the flow that called it.

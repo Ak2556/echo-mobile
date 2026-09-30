@@ -14,6 +14,7 @@ import { startOutbox } from '../lib/outboxProcessor';
 import { drainMiniLink } from '../lib/minilink/drain';
 import { getAnalyticsConsent } from '../lib/consent';
 import { ConsentBanner } from '../components/ConsentBanner';
+import { AgeConfirmGate } from '../components/onboarding/AgeConfirmGate';
 import { AiConsentSheet } from '../components/ai/AiConsentSheet';
 import { HealthConsentSheet } from '../components/consent/HealthConsentSheet';
 import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
@@ -506,6 +507,8 @@ function RootLayout() {
         <TutorialOverlay />
         <ToastProvider />
         <ConsentBanner />
+        {/* One-time birthday card for accounts created before the age step. */}
+        <AgeConfirmGate />
         <AiConsentSheet />
         <HealthConsentSheet />
         {commandPaletteOpen ? <CommandPalette /> : null}
