@@ -6,6 +6,7 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withSpring, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
 import { usePathname } from 'expo-router';
+import { restingY, shouldPersistDrag } from '../../lib/floatingBubblePlacement';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Waveform, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
@@ -54,12 +55,12 @@ export function FloatingMiniApp() {
       style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9998, elevation: 24 }}
       pointerEvents="box-none"
     >
-      {mode === 'bubble' ? <Bubble /> : <Panel />}
+      {mode === 'bubble' ? <Bubble pathname={pathname} /> : <Panel />}
     </View>
   );
 }
 
-function Bubble() {
+function Bubble({ pathname }: { pathname: string }) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
@@ -78,11 +79,17 @@ function Bubble() {
     : meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? meta.color ?? colors.accent) : colors.accent;
 
   const startX = x >= 0 ? x : SCREEN_W - BUBBLE - 14;
-  // Default to a clean bottom-right FAB position, clear of headers/hero cards
-  // (the old 0.62*H default sat mid-screen and overlapped content).
-  const startY = y >= 0 ? y : SCREEN_H - BUBBLE - 150;
+  // Bottom-right on the tab screens, where that corner is free; lifted up the
+  // right edge everywhere else, where the corner holds real controls
+  // (lib/floatingBubblePlacement).
+  const startY = restingY(pathname, SCREEN_H, y);
+  const persistDrag = shouldPersistDrag(pathname);
   const tx = useSharedValue(startX);
   const ty = useSharedValue(startY);
+  // The bubble outlives navigation: move it when the screen changes.
+  useEffect(() => {
+    ty.value = withSpring(startY, { damping: 18, stiffness: 200 });
+  }, [startY, ty]);
   const offX = useSharedValue(0);
   const offY = useSharedValue(0);
 
@@ -106,7 +113,9 @@ function Bubble() {
       // Snap to the nearest side edge.
       const snapX = tx.value + BUBBLE / 2 < SCREEN_W / 2 ? 6 : SCREEN_W - BUBBLE - 6;
       tx.value = withSpring(snapX, { damping: 18, stiffness: 200 });
-      runOnJS(setPosition)(snapX, ty.value);
+      // Only remembered where the corner is free; on a lifted screen the drag
+      // lasts for the visit, so it cannot move the tab position into a control.
+      if (persistDrag) runOnJS(setPosition)(snapX, ty.value);
     });
   // Long-press starts a hands-free voice session (the mic lives here now, not
   // as a separate button). Tap still opens the app/picker; drag still moves.
