@@ -35,6 +35,12 @@ describe('audit fixes', () => {
     }
   });
 
+  it('L8: Explore search chips keep their 36pt height (layout on an inner View)', () => {
+    const explore = src('app/(tabs)/explore.tsx');
+    expect(explore).not.toMatch(/onPress=\{\(\) => setActiveTab\(tab\)\}\s+style=/);
+    expect(explore).toMatch(/<View\s+style=\{\{\s+minHeight: 36,/);
+  });
+
   it('N2: Flow cards clear the floating tab bar with the shared padding', () => {
     expect(src('src/features/feed/ui/FlowCard.tsx')).toMatch(/paddingBottom: layout\.bottomChromePadding/);
   });

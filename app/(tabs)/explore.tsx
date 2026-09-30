@@ -394,20 +394,27 @@ function SearchResults({
             <AnimatedPressable
               key={tab}
               onPress={() => setActiveTab(tab)}
-              style={{
-                minHeight: 36,
-                paddingHorizontal: 14,
-                borderRadius: 999,
-                backgroundColor: selected ? colors.accent : colors.surface,
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: selected ? colors.accent : colors.border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
             >
-              <Text style={{ color: selected ? '#fff' : colors.textSecondary, fontSize: 13, ...font.bodySemibold, textTransform: 'capitalize' }}>
-                {(tab === 'all' ? t('notif.filterAll') : tab === 'people' ? t('explore.people') : tab === 'echoes' ? t('explore.echoes') : tab === 'topics' ? t('explore.topics') : t('explore.tools'))}{tabCount[tab] !== undefined ? ` ${tabCount[tab]}` : ''}
-              </Text>
+              {/* Layout on an inner View: on the Pressable, minHeight was dropped
+                  in release builds and the chips rendered ~19pt tall. */}
+              <View
+                style={{
+                  minHeight: 36,
+                  paddingHorizontal: 14,
+                  borderRadius: 999,
+                  backgroundColor: selected ? colors.accent : colors.surface,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: selected ? colors.accent : colors.border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ color: selected ? '#fff' : colors.textSecondary, fontSize: 13, ...font.bodySemibold, textTransform: 'capitalize' }}>
+                  {(tab === 'all' ? t('notif.filterAll') : tab === 'people' ? t('explore.people') : tab === 'echoes' ? t('explore.echoes') : tab === 'topics' ? t('explore.topics') : t('explore.tools'))}{tabCount[tab] !== undefined ? ` ${tabCount[tab]}` : ''}
+                </Text>
+              </View>
             </AnimatedPressable>
           );
         })}
