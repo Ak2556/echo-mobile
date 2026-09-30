@@ -20,7 +20,9 @@ export function RankCard() {
   const active = isActiveThisWeek(data.lastActiveAt);
 
   return (
-    <View style={{ marginHorizontal: 16, marginBottom: 16, padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+    // alignSelf: the profile header centres its children, which shrank the
+    // card to its content and wrapped the tier name ("Contrib-utor").
+    <View style={{ alignSelf: 'stretch', marginHorizontal: 16, marginTop: 4, marginBottom: 4, padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: `${current.color}22` }}>
           <Medal color={current.color} size={20} weight="fill" />
