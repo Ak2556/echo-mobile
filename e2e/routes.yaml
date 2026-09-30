@@ -217,7 +217,7 @@ appId: com.downloadecho.echo
 
 - openLink: echo://mini-apps/shopping-list
 - extendedWaitUntil:
-    visible: "AnyList Pro"
+    visible: "AnyList Pro|Shopping List"
     timeout: 15000
 - back
 
