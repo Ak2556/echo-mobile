@@ -36,6 +36,7 @@ import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { userUrl } from '../../lib/echoUrl';
 import { ttx } from '../../src/shared/lib/i18n';
+import { countLabel } from '../../lib/a11yCount';
 import { personName } from '../../lib/personName';
 
 // FlashList still owns the header and scrolling; the grid is the footer.
@@ -242,15 +243,15 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
         ) : null}
 
         <View className="flex-row gap-8 mb-4">
-          <AnimatedPressable style={{ alignItems: "center" }} scaleValue={0.92} haptic="light">
+          <View style={{ alignItems: "center" }} accessible accessibilityLabel={countLabel(echoeCount, ttx('Echo'), ttx('Echoes'))}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{echoeCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Echoes")}</Text>
-          </AnimatedPressable>
-          <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light">
+          </View>
+          <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light" accessibilityRole="button" accessibilityLabel={countLabel(user.followerCount, ttx('follower'), ttx('followers'))}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followerCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Followers")}</Text>
           </AnimatedPressable>
-          <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'following' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light">
+          <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'following' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light" accessibilityRole="button" accessibilityLabel={`${ttx('Following')} ${user.followingCount ?? 0}`}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followingCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Following")}</Text>
           </AnimatedPressable>

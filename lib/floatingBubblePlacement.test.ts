@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BUBBLE_SIZE, cornerY, liftedY, restingY, shouldPersistDrag } from './floatingBubblePlacement';
+import { BUBBLE_SIZE, EDGE_MARGIN, cornerY, homeCornerY, liftedY, restingX, restingY, shouldPersistDrag } from './floatingBubblePlacement';
 
 // The audit device: 1344x2992 px at 3x = 448x997 pt.
 const H = 997;
@@ -23,9 +23,22 @@ const COVERED = {
 
 describe('restingY', () => {
   it('keeps the bottom-right default on tab screens whose corner is free', () => {
-    for (const p of ['/home', '/explore', '/apps', '/you', '/notifications', '/']) {
+    for (const p of ['/explore', '/apps', '/you', '/notifications']) {
       expect(restingY(p, H, -1)).toBe(cornerY(H));
     }
+  });
+
+  it('rests above the compose "+" on Home instead of on top of it', () => {
+    // ComposeFAB top edge = H - insets.bottom - 88 - 48; worst case insets.bottom = 34.
+    const fabTop = H - 34 - 88 - 48;
+    for (const p of ['/home', '/']) {
+      expect(restingY(p, H, -1)).toBe(homeCornerY(H));
+      expect(restingY(p, H, -1) + BUBBLE_SIZE).toBeLessThan(fabTop);
+    }
+  });
+
+  it('a saved drag cannot pull it back onto the "+" on Home', () => {
+    expect(restingY('/home', H, cornerY(H))).toBe(homeCornerY(H));
   });
 
   it('honours the user\'s dragged position on those tabs', () => {
@@ -47,6 +60,19 @@ describe('restingY', () => {
 
   it('stays clear of the header', () => {
     expect(liftedY(H)).toBeGreaterThan(120);
+  });
+});
+
+describe('restingX', () => {
+  const W = 448;
+  it('rests on the left edge on Flow, clear of its right-hand control column', () => {
+    expect(restingX('/watch', W, W - 60)).toBe(EDGE_MARGIN);
+  });
+
+  it('keeps the saved side everywhere else', () => {
+    expect(restingX('/settings', W, 6)).toBe(6);
+    expect(restingX('/explore', W, 6)).toBe(6);
+    expect(restingX('/explore', W, -1)).toBe(W - BUBBLE_SIZE - EDGE_MARGIN);
   });
 });
 

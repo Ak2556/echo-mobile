@@ -268,7 +268,9 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
         locations={[0, 0.5, 1]}
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          paddingTop: 80, paddingBottom: layout.isDesktop ? 32 : (56 + (insets?.bottom || 0) + 16),
+          // Clear the floating tab bar the way every other screen does. The old
+          // 56pt guess left each card's audio line half under the bar.
+          paddingTop: 80, paddingBottom: layout.bottomChromePadding,
           paddingHorizontal: 16, flexDirection: 'row', alignItems: 'flex-end',
           justifyContent: 'space-between', pointerEvents: 'box-none'
         }}

@@ -59,7 +59,7 @@ const BASE_TRANSLATIONS = {
   'home.todayQuestion': "Daily Spark",
   'home.tapToAnswer': 'Tap to answer',
   'home.thoughtForToday': 'Thought for today',
-  'home.dismissThought': "Dismiss today's though",
+  'home.dismissThought': "Dismiss today's thought",
   'home.topConversations': 'Top conversations',
   'home.fromCommunity': 'From the community',
   'home.liveNow': 'Live now',
