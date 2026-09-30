@@ -27,7 +27,7 @@ import { markCheckinSeen } from '../../lib/proactiveCheckin';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
 import { Avatar } from '../../components/ui/Avatar';
-import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
+import { Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
 import { track } from '../../src/shared/lib/analytics';
@@ -59,22 +59,24 @@ function HeaderIconButton({ icon, onPress, label, accent = false }: { icon: Reac
   return (
     <AnimatedPressable
       onPress={onPress}
-      style={{
-        width: 34,
-        height: 34,
+      scaleValue={0.9}
+      haptic="light"
+      accessibilityLabel={label}
+      accessibilityRole="button"
+    >
+      {/* Layout on the inner View: box props on a Pressable drop out in release builds. */}
+      <View style={{
+        width: 36,
+        height: 36,
         borderRadius: 12,
         backgroundColor: accent ? colors.accent : colors.surface,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: accent ? colors.accent : colors.border,
         alignItems: 'center',
         justifyContent: 'center',
-      }}
-      scaleValue={0.9}
-      haptic="light"
-      accessibilityLabel={label}
-      accessibilityRole="button"
-    >
-      {icon}
+      }}>
+        {icon}
+      </View>
     </AnimatedPressable>
   );
 }
@@ -252,28 +254,8 @@ function ChatEmptyLaunchpad({
             </View>
           )}
 
-          <Pressable
-            onPress={() => onPrompt(t('chat.promptPrefix'))}
-            accessibilityRole="button"
-            style={{
-              minHeight: 52,
-              borderRadius: 20,
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.72)',
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.glassBorder,
-              paddingHorizontal: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-            }}
-          >
-            <Text style={[font.body, { flex: 1, color: colors.textMuted, fontSize: 16 }]} numberOfLines={1}>
-              {t('chat.askAnything')}
-            </Text>
-            <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <ArrowUpRight color="#fff" size={17} weight="bold" />
-            </View>
-          </Pressable>
+          {/* No "Ask Echo anything" box here: the real composer is right below,
+              and two text boxes on one screen left people unsure which to use. */}
         </View>
       </View>
 
@@ -885,7 +867,9 @@ export default function ChatScreen() {
     router.push({ pathname: '/share', params: { prompt: lastUser.content, response: lastAi.content } });
   }, [messages, router]);
 
-  const headerHeight = insets.top + (layout.isDesktop ? 92 : 92);
+  // One row. The model picker used to sit alone on a second row, which made
+  // the header 92pt tall and hid the top of the conversation under it.
+  const headerHeight = insets.top + 54;
   const showEmptySuggestions = items.length === 0;
   // Hide the onboarding panel after the first sent message.
   const showFirstChatPanel = showEmptySuggestions && !hasSeenChatEmptyHint;
@@ -944,38 +928,37 @@ export default function ChatScreen() {
           />
           {isStreaming && showTyping && <TypingIndicator />}
         </View>
-        <View style={{ paddingBottom: layout.bottomChromePadding, backgroundColor: colors.bg }}>
+        {/* Clear the floating tab bar itself. bottomChromePadding is for
+            content that scrolls under the bar and left an empty band here. */}
+        <View style={{ paddingBottom: layout.bottomBarClearance, backgroundColor: colors.bg }}>
           {showShareNudge ? (
             <Animated.View
               entering={animation(FadeIn.duration(200))}
               style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingBottom: 8 }]}
             >
-              <AnimatedPressable
-                onPress={handleShare}
-                haptic="medium"
-                style={{
+              <AnimatedPressable onPress={handleShare} haptic="medium" accessibilityRole="button">
+                {/* Layout on the inner View. On the AnimatedPressable it dropped
+                    out in release builds and the text collapsed to nothing,
+                    leaving an empty green bar with an arrow. */}
+                <View style={{
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 10,
                   borderRadius: 14,
                   backgroundColor: colors.accent,
                   paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  shadowColor: colors.accent,
-                  shadowOpacity: 0.35,
-                  shadowRadius: 14,
-                  shadowOffset: { width: 0, height: 6 },
-                }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.onAccent, fontSize: 14, fontWeight: '700', letterSpacing: 0 }}>
-                    Draft ready
-                  </Text>
-                  <Text style={{ color: colors.onAccent, opacity: 0.78, fontSize: 12, marginTop: 2 }}>
-                    Turn this conversation into an Echo.
-                  </Text>
+                  paddingVertical: 12,
+                }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 14 }]}>
+                      {ttx('Draft ready')}
+                    </Text>
+                    <Text style={{ color: colors.onAccent, opacity: 0.8, fontSize: 12, marginTop: 2 }}>
+                      {ttx('Turn this conversation into an Echo.')}
+                    </Text>
+                  </View>
+                  <ArrowUpRight color={colors.onAccent} size={18} weight="bold" />
                 </View>
-                <ArrowUpRight color={colors.onAccent} size={18} weight="bold" />
               </AnimatedPressable>
             </Animated.View>
           ) : null}
@@ -1015,41 +998,21 @@ export default function ChatScreen() {
                   <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
                     <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Echo</Text>
                   </View>
-                  <Pressable onPress={() => router.push('/messages' as Href)} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Messages</Text>
+                  <Pressable onPress={() => router.push('/messages' as Href)} accessibilityRole="button">
+                    <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>{ttx('Messages')}</Text>
+                    </View>
                   </Pressable>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
-                  <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={t('nav.newEcho')} onPress={handleNewChat} />
+                  <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={ttx('New chat')} onPress={handleNewChat} />
                   <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
-                  <HeaderIconButton icon={<ShareNetwork color="#fff" size={18} />} label={t('common.share')} onPress={handleShare} accent />
+                  {/* Share left the header: it duplicated the "Draft ready" button
+                      under the conversation, and on an empty chat it only raised
+                      a "Nothing to share" alert while styled as the main action. */}
+                  <HeaderIconButton icon={<Lightning color={colors.accent} size={16} weight="fill" />} label={`${ttx('AI model')}: ${modelLabel(aiModel)}`} onPress={() => setModelSheetOpen(true)} />
                 </View>
-              </View>
-    
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ flex: 1 }} />
-                  <Pressable
-                    onPress={() => setModelSheetOpen(true)}
-                    style={{
-                      minHeight: 38,
-                      width: layout.isPhone ? 46 : undefined,
-                      borderRadius: 999,
-                      backgroundColor: colors.surface,
-                      borderWidth: StyleSheet.hairlineWidth,
-                      borderColor: colors.border,
-                      paddingHorizontal: layout.isPhone ? 0 : 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    <Lightning color={colors.accent} size={14} weight="fill" />
-                    {!layout.isPhone ? (
-                      <Text style={{ color: colors.textSecondary, ...font.bodyBold, fontSize: 12 }}>{modelLabel(aiModel)}</Text>
-                    ) : null}
-                  </Pressable>
               </View>
             </Animated.View>
     

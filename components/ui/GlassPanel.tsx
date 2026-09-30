@@ -67,6 +67,13 @@ interface GlassPanelProps {
    * every LiquidGlass surface is in exactly that position.
    */
   reflection?: boolean;
+  /**
+   * The panel sits over other content (a sheet, drawer or menu). On Android,
+   * expo-blur draws nothing without experimentalBlurMethod, so a non-clear
+   * panel was only a 30% tint and the screen behind read straight through
+   * it. Overlays there get a near-opaque surface instead.
+   */
+  overlay?: boolean;
 }
 
 export function GlassPanel({
@@ -85,6 +92,7 @@ export function GlassPanel({
   chrome = true,
   clear = false,
   reflection = true,
+  overlay = false,
 }: GlassPanelProps) {
   const { colors, radius, glass } = useTheme();
   const performance = usePerformanceProfile(performanceMode);
@@ -99,7 +107,8 @@ export function GlassPanel({
 
   // Premium fill and border colors
   const defaultFill = colors.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)';
-  const fill = tintOverride ?? (clear ? null : defaultFill);
+  const androidOverlay = overlay && !clear && Platform.OS === 'android';
+  const fill = tintOverride ?? (androidOverlay ? opaqueSurface(colors.surface) : clear ? null : defaultFill);
   const fallback = fallbackTint ?? colors.surface;
   const border = colors.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.5)';
   const innerShadow = colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)';
@@ -205,4 +214,11 @@ export function GlassPanel({
       <View style={[contentStyle]}>{children}</View>
     </View>
   );
+}
+
+/** '#18181B' → 'rgba(24,24,27,0.96)'. Anything that is not #rrggbb passes through. */
+function opaqueSurface(hex: string): string {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) return hex;
+  return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},0.96)`;
 }

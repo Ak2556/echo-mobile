@@ -64,6 +64,7 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
       >
         {/* Action card — glass sheet over the dimmed content */}
         <GlassPanel
+          overlay
           borderRadius={22}
           style={{
             shadowColor: '#000',
@@ -172,6 +173,7 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
 
         {/* Cancel — separate glass pill */}
         <GlassPanel
+          overlay
           borderRadius={18}
           style={{
             marginTop: 10,

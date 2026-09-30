@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet, Platform } from 'react-native';
 import { ArrowUp, Stop } from 'phosphor-react-native';
-import { GlassPanel } from '../ui/GlassPanel';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -74,12 +73,14 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
   const sendBg = isStop ? colors.danger : canSend ? colors.accent : colors.surfaceHover;
 
   return (
-    <GlassPanel
+    // A plain row, not a GlassPanel: the panel drew a full-width bordered,
+    // bevelled box around a pill that is already a rounded surface, so the
+    // composer read as a box inside a box.
+    <View
       style={{
-        overflow: 'hidden',
         paddingHorizontal: 12,
         paddingTop: 6,
-        paddingBottom: 8,
+        paddingBottom: 6,
       }}
     >
       <View
@@ -140,7 +141,12 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
             disabled={!isStop && !canSend}
             depth="deep"
             fadeOnPress
-            style={{
+            scaleValue={0.88}
+            haptic="none"
+            accessibilityRole="button"
+            accessibilityLabel={isStop ? 'Stop' : 'Send'}
+          >
+            <View style={{
               width: 44,
               height: 42,
               borderRadius: 21,
@@ -149,18 +155,16 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
               justifyContent: 'center',
               borderWidth: (!isStop && !canSend) ? StyleSheet.hairlineWidth : 0,
               borderColor: colors.glassBorder,
-            }}
-            scaleValue={0.88}
-            haptic="none"
-          >
-            {isStop ? (
-              <Stop color="#fff" size={18} weight="fill" />
-            ) : (
-              <ArrowUp color={canSend ? '#fff' : colors.textMuted} size={20} weight="bold" />
-            )}
+            }}>
+              {isStop ? (
+                <Stop color="#fff" size={18} weight="fill" />
+              ) : (
+                <ArrowUp color={canSend ? '#fff' : colors.textMuted} size={20} weight="bold" />
+              )}
+            </View>
           </AnimatedPressable>
         </Animated.View>
       </View>
-    </GlassPanel>
+    </View>
   );
 }

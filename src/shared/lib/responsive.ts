@@ -50,6 +50,10 @@ export function useResponsiveLayout() {
     const chromeRadius = isDesktop ? 16 : isTablet ? 18 : 20;
     const topChromePadding = isDesktop ? 20 : 0;
     const bottomChromePadding = isDesktop ? 32 : 110 + (insets.bottom || 0);
+    // For a control fixed above the floating tab bar (the chat composer): the
+    // bar's own height (app/(tabs)/_layout.tsx tabHeight) plus most of the
+    // 36pt glass fade EdgeGlass draws above it, so the control is not blurred.
+    const bottomBarClearance = isDesktop ? 12 : (isTablet ? 64 : 56) + (insets.bottom || 0) + 30;
     const navigationKind: NavigationKind = isDesktop
       ? 'desktop-sidebar'
       : isTablet
@@ -95,6 +99,7 @@ export function useResponsiveLayout() {
       chromeRadius,
       topChromePadding,
       bottomChromePadding,
+      bottomBarClearance,
       contentStyle,
       wideContentStyle,
       formStyle,
