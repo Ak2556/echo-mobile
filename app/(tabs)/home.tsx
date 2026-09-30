@@ -15,7 +15,8 @@ import Animated, {
 import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { EchoWordmark } from '../../components/ui/EchoWordmark';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowUpRight, Bell, Waveform, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
+import { ArrowUpRight, At, Bell, Waveform, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
+import { isAutoUsername } from '../../lib/username';
 import { AdCard } from "../../src/features/feed/ui/AdCard";
 import { useRandomAd } from "../../src/features/feed/api/useAds";
 import { FeedCard } from '../../src/features/feed/ui/FeedCard';
@@ -52,7 +53,7 @@ import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTutorialTarget } from '../../hooks/useTutorialTarget';
 import { useTutorialStore } from '../../store/tutorialStore';
-import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
+import { ttx, useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
 import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/dailyThoughts';
 import { personName } from '../../lib/personName';
 
@@ -307,6 +308,39 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
   );
 }
 
+// Accounts from before the onboarding gate still carry a generated handle like
+// @user_kavish_17583, shown publicly on every post (2026-09-30 audit: 24 of 48
+// profiles). This asks once per Home visit until they pick one; it goes away
+// on its own when Edit Profile saves a real handle.
+function ChooseHandleCard({ username }: { username: string }) {
+  const router = useRouter();
+  const { colors, font, fontSizes, lineHeights } = useTheme();
+  const layout = useResponsiveLayout();
+  return (
+    <View style={{ marginHorizontal: layout.gutter, marginTop: 6, marginBottom: 12 }}>
+      <AnimatedPressable
+        onPress={() => router.push('/edit-profile')}
+        haptic="light"
+        accessibilityRole="button"
+        accessibilityLabel={`${ttx('Choose your username')}. @${username}`}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+          <View style={{ width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}1F` }}>
+            <At color={colors.accent} size={20} weight="bold" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.body }]}>{ttx('Choose your username')}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 2 }} numberOfLines={2}>
+              {ttx('People see you as')} @{username}
+            </Text>
+          </View>
+          <ArrowUpRight color={colors.textMuted} size={18} weight="bold" />
+        </View>
+      </AnimatedPressable>
+    </View>
+  );
+}
+
 function FeedScopeRail({
   feedScope,
   setFeedScope,
@@ -552,6 +586,7 @@ export default function DiscoverScreen() {
         name={personName({ displayName, username })}
         t={t}
       />
+      {isAutoUsername(username) && <ChooseHandleCard username={username} />}
       {/* A single interest-tuned thought, once a day, dismissible with ✕. */}
       {!focusedHome && <DailyThought />}
       {/* New users get ONE clear next action instead of three competing cards

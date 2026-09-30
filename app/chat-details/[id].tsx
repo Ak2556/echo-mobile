@@ -130,7 +130,7 @@ export default function ChatDetailsScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Identity */}
         <View style={{ alignItems: 'center', paddingVertical: 22, gap: 10 }}>
-          <Avatar name={name} color={conv?.otherAvatarColor} url={isGroup ? undefined : conv?.otherAvatarUrl ?? undefined} size={84}>
+          <Avatar name={name} color={conv?.otherAvatarColor} url={isGroup ? undefined : conv?.otherAvatarUrl ?? undefined} size={84} zoomable>
             {isGroup ? <Users color="#fff" size={32} weight="fill" /> : undefined}
           </Avatar>
           <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack, letterSpacing: -0.3 }}>{name}</Text>

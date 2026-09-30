@@ -25,7 +25,6 @@ const ACTION_RADIUS = 14;
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { GestureCard, type GestureCardAction } from '../../../../components/ui/GestureCard';
 import { Avatar } from '../../../../components/ui/Avatar';
-import { ZoomableImageViewer } from '../../../../components/ui/ZoomableImageViewer';
 import { showToast } from '../../../../components/ui/Toast';
 import { warmAvatarColor } from '../../../../lib/avatarPalette';
 import { MusicNote, ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, GitBranch, Trash } from 'phosphor-react-native';
@@ -186,7 +185,6 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
   const [shareOpen, setShareOpen] = useState(false);
   const [repostSheetOpen, setRepostSheetOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
-  const [avatarViewerOpen, setAvatarViewerOpen] = useState(false);
   const toggleMute = useAppStore(s => s.toggleMute);
   const isMuted = useAppStore(s => s.isMuted);
   const notInterestedIds = useAppStore(s => s.notInterestedIds);
@@ -393,14 +391,6 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         onRemix={handleQuoteRepost}
       />
       <ActionSheet visible={menuSheetOpen} onClose={() => setMenuSheetOpen(false)} subtitle={`@${item.username}`} actions={menuActions} />
-      {item.avatarUrl && !avatarError ? (
-        <ZoomableImageViewer
-          visible={avatarViewerOpen}
-          uris={[item.avatarUrl]}
-          title={item.displayName || item.username}
-          onClose={() => setAvatarViewerOpen(false)}
-        />
-      ) : null}
     </>
   );
 
@@ -595,22 +585,17 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
                 haptic="none"
                 performanceMode="hot"
               >
+                {/* The whole identity row opens the author's profile. The photo
+                    used to open full screen instead; that belongs on the
+                    profile itself (ProfileAvatar), not in the feed. */}
                 {item.avatarUrl && !avatarError ? (
-                  <Pressable
-                    onPress={(event) => {
-                      event.stopPropagation?.();
-                      setAvatarViewerOpen(true);
-                    }}
-                    style={{ width: 34, height: 34, borderRadius: 17 }}
-                  >
-                    <Image
-                      source={{ uri: item.avatarUrl }}
-                      style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}
-                      contentFit="cover"
-                      cachePolicy="memory-disk"
-                      onError={() => setAvatarError(true)}
-                    />
-                  </Pressable>
+                  <Image
+                    source={{ uri: item.avatarUrl }}
+                    style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    onError={() => setAvatarError(true)}
+                  />
                 ) : (
                   <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: warmAvatarColor(item.avatarColor, item.username), alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}>
                     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
@@ -773,14 +758,9 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         <View className={`flex-row items-center ${compactFeed ? 'mb-2' : 'mb-3'}`} style={{ gap: 0 }}>
           {showAvatars && (
             <AnimatedPressable
-              onPress={(e) => {
-                e.stopPropagation?.();
-                if (item.avatarUrl && !avatarError) {
-                  setAvatarViewerOpen(true);
-                  return;
-                }
-                router.push(`/user/${item.userId}`);
-              }}
+              onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
+              accessibilityRole="button"
+              accessibilityLabel={item.displayName || item.username}
               depth="medium"
               fadeOnPress
               haptic="light"
