@@ -1023,7 +1023,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={DownloadSimple} label={ttx("Allow Downloads")} subtitle={ttx("Let others save your photos and videos to their device. Turning this off hides the save option on everything you have posted.")} right={SwitchEl(s.allowDownloads, handleAllowDownloads)} />
             {divider}
-            <SettingsRow theme={theme} icon={BellRinging} iconColor={colors.accent} label={ttx("Personalized Notifications")} subtitle={ttx("Let Echo learn your best times and interests to time reminders. Off by default; no profiling until you turn it on.")} right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
+            <SettingsRow theme={theme} icon={BellRinging} iconColor={colors.accent} label={ttx("Personalized Notifications")} subtitle={ttx("Echo learns when you usually open the app, and what you use most, to time reminders. Turn off anytime.")} right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
             {divider}
             <SettingsRow theme={theme} icon={Heartbeat} iconColor={colors.accent} label={ttx("Back up health data")} subtitle={ttx("Store Fitness data (weight, meals, water, workouts) on Echo's servers for sync and coaching. Off keeps it on this device only.")} right={SwitchEl(healthConsentGranted, handleHealthConsent)} />
             {divider}

@@ -32,41 +32,46 @@ function pick<T>(arr: T[]): T {
 }
 
 // Interest-matched copy, keyed by the user's top surface.
+//
+// Every line has to be true for whoever receives it. These go to people who
+// did nothing to trigger them, so a line can invite ("see what's new") but not
+// report ("someone is waiting for your reply", "someone is stalking your
+// profile"): that is invented social proof, which Play's policy on deceptive
+// notifications forbids and which is the fastest way to get uninstalled. No
+// health or therapy claims either (see the 2026-09-22 legal review).
 const SURFACE_COPY: Record<string, () => string> = {
   daily: () => pick([
-    "Today's question is live. Prove you have the best take.",
-    "Everyone is wrong today. Come correct them.",
-    "The daily question is waiting for your brilliant, unfiltered opinion.",
+    "Today's question is up. What's your take?",
+    "Two minutes, one question, your honest answer.",
+    "Today's daily question is waiting. Answer, then see what everyone said.",
   ]),
   dm: () => pick([
-    "You left them on read, didn't you?",
-    "Someone is literally waiting for your reply right now.",
-    "Your DMs are getting dusty. Go say hi.",
+    "Anyone you've been meaning to message? Now's a good time.",
+    "Your chats are one tap away.",
+    "Say hi to someone you haven't talked to in a while.",
   ]),
   feed: () => pick([
-    "Your timeline is getting spicy today. Don't miss out.",
-    "People are posting things you're probably going to disagree with.",
-    "Fresh drama (or profound thoughts) just landed in your feed.",
+    "See what people have been posting on Echo.",
+    "Catch up on your feed.",
+    "Got a thought worth sharing? Post it.",
   ]),
   chat: () => pick([
-    "Our AI is bored. Come talk to it.",
-    "Need a late-night therapy session? Echo is ready.",
+    "Got a thought to untangle? Talk it through with Echo.",
+    "Stuck on something? Ask Echo.",
     "Got a weird thought? Drop it in the chat.",
   ]),
   tools: () => pick([
-    "Your productivity is begging for attention.",
     "A minute to move one thing forward. You got this.",
-    "Stop procrastinating. Your tools are a tap away.",
+    "Your tools are a tap away.",
+    "Tick one small thing off today.",
   ]),
   marketplace: () => pick([
-    "Someone is probably selling exactly what you need.",
-    "New listings dropped. Time to impulse buy.",
-    "Window shopping is free. Check out the marketplace.",
+    "Have something to sell? List it on Echo.",
+    "Browse the marketplace.",
   ]),
   profile: () => pick([
-    "Someone is stalking your profile. Go see who.",
-    "Your clout is rising. See who engaged with your work today.",
-    "You're kind of a big deal today.",
+    "See how your posts are doing.",
+    "Check in on your profile and recent posts.",
   ]),
 };
 
@@ -126,6 +131,15 @@ Deno.serve(async (req: Request) => {
     for (const a of (ans ?? []) as { user_id: string }[]) answered.add(a.user_id);
   }
 
+  // Personalized nudges are on by default (20260930130000), so the first one a
+  // person receives says how to switch them off. Anyone with an earlier
+  // personal_nudge row has already been told.
+  const { data: seen } = await supabase
+    .from('notifications').select('user_id')
+    .eq('type', 'personal_nudge')
+    .in('user_id', rows.map(r => r.user_id));
+  const toldBefore = new Set(((seen ?? []) as { user_id: string }[]).map(n => n.user_id));
+
   const notifications = rows.map((row) => {
     let surface = row.top_surface && SURFACE_COPY[row.top_surface] ? row.top_surface : 'chat';
     // If their interest is the daily question but they already answered, pivot.
@@ -144,7 +158,10 @@ Deno.serve(async (req: Request) => {
       // Occasion nudges have no surface of their own; route them to the feed so
       // the tap still lands somewhere sensible.
       target_kind: trigger.kind === 'surface' ? surface : 'feed',
-      preview: occasionBody ?? (SURFACE_COPY[surface] ?? SURFACE_COPY.chat)(),
+      preview: withFirstNudgeNotice(
+        occasionBody ?? (SURFACE_COPY[surface] ?? SURFACE_COPY.chat)(),
+        !toldBefore.has(row.user_id),
+      ),
     };
   });
 
@@ -154,6 +171,11 @@ Deno.serve(async (req: Request) => {
 
   return json({ sent: notifications.length, hour: nowHour }, 200);
 });
+
+/** The one-time "where to turn this off" line on a person's first nudge. */
+export function withFirstNudgeNotice(body: string, first: boolean): string {
+  return first ? `${body} Turn these off anytime in Settings → Privacy.` : body;
+}
 
 function json(payload: unknown, status: number): Response {
   return new Response(JSON.stringify(payload), {

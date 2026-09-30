@@ -50,16 +50,16 @@ function pick<T>(arr: T[]): T {
 // tones — tease, hype, warm — so repeat exposure doesn't get old.
 const SURFACE_POOL: Record<string, Line[]> = {
   dm: [
-    { title: 'Echo', body: 'A conversation is quietly waiting for you to be interesting. Go deliver.' },
-    { title: 'Your DMs', body: 'Someone said something and now it’s marinating in unread limbo. Reply?' },
-    { title: 'Echo', body: 'Leaving people on read is a personality — just not a good one. Pop back in.' },
-    { title: 'Your DMs', body: 'Your inbox is gathering dust and mild resentment. Both fixable.' },
-    { title: 'Echo', body: 'Somewhere, a typing bubble gave up on you. Revive it.' },
+    { title: 'Echo', body: 'Got something to say? Your people are a tap away.' },
+    { title: 'Your DMs', body: 'Anyone you’ve been meaning to message? Now’s a good time.' },
+    { title: 'Echo', body: 'Your chats are one tap away.' },
+    { title: 'Your DMs', body: 'Say hi to someone you haven’t talked to in a while.' },
+    { title: 'Echo', body: 'Pick up a conversation where you left off.' },
     { title: 'Echo', body: 'Say something clever. Or just say “lol”. We don’t judge (much).' },
   ],
   daily: [
     { title: 'Daily Question', body: 'Today’s question is spicier than usual. Two minutes, big opinions.' },
-    { title: 'Daily Question', body: 'Everyone’s answering but you. Suspicious. Add your take before the reveal.' },
+    { title: 'Daily Question', body: 'Add your take, then see what everyone else said.' },
     { title: 'Daily Question', body: 'Have a hot take? Perfect, we have a place for exactly that.' },
     { title: 'Daily Question', body: 'Today’s question walked in and immediately started drama. Weigh in.' },
     { title: 'Daily Question', body: 'Answer now, or read everyone else’s genius later and quietly seethe.' },
@@ -87,18 +87,18 @@ const SURFACE_POOL: Record<string, Line[]> = {
     { title: 'Echo', body: 'Your future self is quietly begging you to open one small tool.' },
   ],
   marketplace: [
-    { title: 'Marketplace', body: 'New listings dropped. Window-shopping counts as a hobby, right?' },
-    { title: 'Marketplace', body: 'Something good just got listed. Look now, regret never.' },
-    { title: 'Marketplace', body: 'The marketplace restocked. Your willpower is officially on trial.' },
-    { title: 'Marketplace', body: 'Fresh finds just appeared. Purely for research, obviously.' },
-    { title: 'Marketplace', body: 'Someone’s selling exactly the thing you didn’t know you needed.' },
+    { title: 'Marketplace', body: 'Window-shopping counts as a hobby, right? Browse the marketplace.' },
+    { title: 'Marketplace', body: 'Have something you don’t use? List it in a minute.' },
+    { title: 'Marketplace', body: 'See what’s for sale near you.' },
+    { title: 'Marketplace', body: 'Browse the marketplace. Purely for research, obviously.' },
+    { title: 'Marketplace', body: 'Selling something? Post it where your friends already are.' },
   ],
   profile: [
-    { title: 'Echo', body: 'People have been poking around your work today. Go see who.' },
-    { title: 'Echo', body: 'Your notifications have gossip. The good kind. Take a peek.' },
-    { title: 'Echo', body: 'Your profile’s been getting visitors. Nosy, flattering, both.' },
-    { title: 'Echo', body: 'Something’s happening on your page and you’re missing the party.' },
-    { title: 'Echo', body: 'The numbers moved. Could be nothing. Could be your moment. Look.' },
+    { title: 'Echo', body: 'See how your recent posts are doing.' },
+    { title: 'Echo', body: 'Check in on your profile.' },
+    { title: 'Echo', body: 'Your profile is your corner of Echo. Give it a look.' },
+    { title: 'Echo', body: 'Post something new and see who responds.' },
+    { title: 'Echo', body: 'Got a thought worth sharing? Your profile is waiting for it.' },
   ],
 };
 
