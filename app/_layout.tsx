@@ -268,8 +268,11 @@ function RootLayout() {
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);
   const router = useRouter();
 
-  // Load Inter in the background. System font is the fallback while loading;
-  // swap-in flicker is briefer than any splash gate.
+  // Native builds embed these fonts (expo-font plugin in app.json), so they
+  // exist before the first frame. This load is for web. On Android it used to
+  // be the only source: text laid out at startup was measured with the system
+  // font, then drawn in wider Inter once it arrived, which cut off the last
+  // letter of the tab labels, the consent banner and Flow's tabs.
   useFonts({
     Inter_400Regular,
     Inter_500Medium,
