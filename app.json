@@ -172,6 +172,7 @@
       ],
       "./plugins/withAndroidEntryPoints",
       "./plugins/withAndroidReleaseSigning",
+      "./plugins/withHighRefreshRate",
       "./plugins/withEchoContactCard",
       "./plugins/withIosSceneLifecycle",
       "./plugins/withIosPodDeploymentTarget",
