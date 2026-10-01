@@ -9,6 +9,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { MediaGrid } from './MediaGrid';
+import { ZoomableImageViewer } from '../../../../components/ui/ZoomableImageViewer';
 import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
 import { LinkifiedText } from './LinkifiedText';
@@ -185,6 +186,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
   const [likeCount, setLikeCount] = useState(item.likes);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [repostSheetOpen, setRepostSheetOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const toggleMute = useAppStore(s => s.toggleMute);
@@ -200,10 +202,18 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
     setLikeCount(item.likes);
   }, [item.id, item.isLiked, item.likes]);
 
+  // A photo post's thread page is the same photo, title and actions again, so
+  // tapping the card shows the photo full screen instead of opening it.
+  const isPhotoPost = item.postType === 'photo' && (item.mediaUris?.length ?? 0) > 0;
+
   const handleMainPress = useCallback(() => {
     if (remote) void recordRemoteEchoView(item.id);
+    if (isPhotoPost) {
+      setPhotoOpen(true);
+      return;
+    }
     onPress?.();
-  }, [remote, item.id, onPress]);
+  }, [remote, item.id, onPress, isPhotoPost]);
 
   const toggleBookmarkPress = () => {
     if (remote) {
@@ -291,7 +301,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
   const cardMargin = layout.isDesktop ? 20 : layout.isTablet ? 18 : 16;
 
   const isHero =
-    (item.postType === 'photo' && (item.mediaUris?.length ?? 0) > 0) ||
+    isPhotoPost ||
     (item.postType === 'video' && !!item.videoUri);
 
   const menuActions: ActionItem[] = [
@@ -393,6 +403,15 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         onRemix={handleQuoteRepost}
       />
       <ActionSheet visible={menuSheetOpen} onClose={() => setMenuSheetOpen(false)} subtitle={`@${item.username}`} actions={menuActions} />
+      {photoOpen && (
+        <ZoomableImageViewer
+          visible
+          uris={item.mediaUris!}
+          initialIndex={0}
+          canDownload={item.allowDownloads !== false}
+          onClose={() => setPhotoOpen(false)}
+        />
+      )}
     </>
   );
 
