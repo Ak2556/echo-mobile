@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Platform, StyleSheet, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { DynamicReflection } from './DynamicReflection';
 import { useTheme, GLASS_INTENSITY } from '../../src/shared/lib/theme';
 import { PerformanceMode, usePerformanceProfile } from '../../src/shared/lib/performance';
 
@@ -106,12 +105,14 @@ export function GlassPanel({
   const blurIntensity = Math.min(baseIntensity, performance.maxBlurIntensity);
 
   // Premium fill and border colors
-  const defaultFill = colors.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)';
+  // One light, see-through tint over the blur (owner request 2026-10-01:
+  // more transparent, a single layer). It used to be a 30% black wash plus a
+  // moving sheen and an inner highlight stacked on top.
+  const defaultFill = colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.25)';
   const androidOverlay = overlay && !clear && Platform.OS === 'android';
   const fill = tintOverride ?? (androidOverlay ? opaqueSurface(colors.surface) : clear ? null : defaultFill);
   const fallback = fallbackTint ?? colors.surface;
   const border = colors.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.5)';
-  const innerShadow = colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)';
   
   // Outer container handles layout and shadows (unclipped)
   const outerStyle: ViewStyle = {
@@ -153,44 +154,14 @@ export function GlassPanel({
               flat wash sitting between the content and the blur. */}
           {fill ? <View style={[StyleSheet.absoluteFill, { backgroundColor: fill }]} /> : null}
 
-          {/* Dynamic Device Reflection — a light source that moves with the device,
-              which is a thing a tinted plastic tile does and a pane of glass does
-              not. Never drawn on a clear panel. */}
-          {reflection && !clear ? (
-            <DynamicReflection intensity={colors.isDark ? 0.7 : 1} />
-          ) : null}
         </View>
 
+        {/* The edge is a plain hairline, not a bevel plus an inner highlight. */}
         {chrome && (
-          <>
-            {/* 1px Inner stroke to create the bevel effect */}
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  borderRadius,
-                  borderWidth: StyleSheet.hairlineWidth * 2,
-                  borderColor: border,
-                  pointerEvents: 'none',
-                },
-              ]}
-            />
-
-            {/* Soft Inner Highlight at the top edge */}
-            <View
-              style={{
-                position: 'absolute',
-                top: 1,
-                left: 1,
-                right: 1,
-                height: 1,
-                backgroundColor: innerShadow,
-                borderTopLeftRadius: borderRadius - 1,
-                borderTopRightRadius: borderRadius - 1,
-                pointerEvents: 'none',
-              }}
-            />
-          </>
+          <View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, { borderRadius, borderWidth: StyleSheet.hairlineWidth, borderColor: border }]}
+          />
         )}
 
         <View style={[{ zIndex: 2 }, contentStyle]}>{children}</View>

@@ -17,3 +17,17 @@ describe('performance regressions', () => {
     expect(src).toMatch(/tx\.value = withTiming\(snapX, BUBBLE_GLIDE\);/);
   });
 });
+
+describe('no live blur per list row', () => {
+  it('feed card action buttons are static GlassChips, not LiquidGlass', () => {
+    // ~46 live blur views (one per button) made Home janky on 72-99% of frames.
+    const card = readFileSync('src/features/feed/ui/FeedCard.tsx', 'utf8');
+    expect(card).toMatch(/<GlassChip\s/);
+    expect(card).not.toMatch(/<LiquidGlass/);
+  });
+
+  it('GlassChip never mounts a BlurView or a Skia surface', () => {
+    const chip = readFileSync('components/ui/GlassChip.tsx', 'utf8');
+    expect(chip).not.toMatch(/from 'expo-blur'|react-native-skia|<LiquidGlass|<GlassPanel/);
+  });
+});

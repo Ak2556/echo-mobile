@@ -13,7 +13,7 @@ import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
 import { LinkifiedText } from './LinkifiedText';
 import { ReactionBar } from './ReactionBar';
-import { LiquidGlass } from '../../../../components/ui/LiquidGlass';
+import { GlassChip } from '../../../../components/ui/GlassChip';
 import { GlassRow } from '../../../../components/ui/GlassRow';
 
 /**
@@ -434,18 +434,12 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
     >
-      <LiquidGlass
+      {/* Static glass, not LiquidGlass: one live blur per button was the Home
+          feed's scroll lag (components/ui/GlassChip.tsx has the numbers). */}
+      <GlassChip
         borderRadius={ACTION_RADIUS}
-        variant="medium"
-        performanceMode="control"
+        tint={active ? color : undefined}
         style={{ flex: 1 }}
-        clear
-        // Only an active button takes a fill, and only because the state has to be
-        // legible at a glance. An idle one is left completely clear: no wash, no
-        // reflection, nothing between you and the card but the blur and the
-        // refractive edge.
-        tintOverride={active ? `${color}2E` : undefined}
-        fallbackTint={active ? `${color}1F` : colors.surfaceHover}
         contentStyle={{
           flex: 1,
           paddingHorizontal: 8,
@@ -469,7 +463,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
             {formatCount(count)}
           </Text>
         ) : null}
-      </LiquidGlass>
+      </GlassChip>
     </AnimatedPressable>
   );
 

@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeGlassView, isNativeGlassAvailable } from './nativeGlass';
-import { buildRamp, type RampLayer } from './edgeGlassRamp';
+import type { RampLayer } from './edgeGlassRamp';
 import { useTheme } from '../../src/shared/lib/theme';
 import { usePerformanceProfile, type PerformanceMode } from '../../src/shared/lib/performance';
 
@@ -36,15 +36,6 @@ const DEFAULT_FADE = 36;
  *  at rest has to start below it, or it renders inside the blur. */
 export const EDGE_GLASS_FADE = DEFAULT_FADE;
 
-/**
- * Android's cap.
- *
- * expo-blur only really blurs on Android through `experimentalBlurMethod`, and
- * that path renders each pass into an offscreen bitmap. Four of those under a
- * scrolling feed is how a mid-range Android gets hot — the same budget that kept
- * settings.tsx and the feed cards off the shader tier.
- */
-const ANDROID_LAYER_CAP = 2;
 
 function withAlpha(hex: string, alpha: number): string {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
@@ -92,13 +83,12 @@ export function EdgeGlass({
     profile.useBlur && isNativeGlassAvailable() ? NativeGlassView : null;
 
   const total = height + fadeLength;
-  const ramp = buildRamp(
-    profile.surfaceTier,
-    profile.maxBlurIntensity,
-    height,
-    total,
-    Platform.OS === 'android' ? ANDROID_LAYER_CAP : undefined,
-  );
+  // One blur layer over the bar, not a ramp of 2-4 stacked layers reaching into
+  // the fade (owner request 2026-10-01: a single layer). The tint gradient
+  // below still eases the edge out into the content.
+  const ramp: RampLayer[] = profile.surfaceTier !== 'solid' && profile.maxBlurIntensity > 0
+    ? [{ depth: height, intensity: Math.round(profile.maxBlurIntensity * 0.4) }]
+    : [];
 
   // The host is taller than the bar so the fade has somewhere to live. Android
   // clips children to their parent's bounds, so the tail cannot simply overflow.
@@ -136,7 +126,9 @@ export function EdgeGlass({
   // of it is — that line was clearly there on Android. So the hold releases just
   // inside the bar and the falloff is stepped to approximate an ease rather than a
   // straight ramp; the eye finds a slope change far harder to see than a kink.
-  const wash = colors.isDark ? 0.55 : 0.6;
+  // Light and see-through: the single blur layer carries legibility, so the
+  // wash only tints it (was 0.55 / 0.6 over a stack of blur layers).
+  const wash = colors.isDark ? 0.18 : 0.22;
   const tailFraction = 1 - barFraction;
   const washColors = [
     withAlpha(base, wash),

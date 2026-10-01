@@ -51,23 +51,25 @@ describe('EdgeGlass', () => {
     expect(screen.getByText('Echo')).toBeTruthy();
   });
 
-  it('stacks four blur layers on the shader tier', () => {
+  // One blur layer, not a stacked ramp (owner request 2026-10-01: a single,
+  // more transparent layer).
+  it('draws a single blur layer on the shader tier', () => {
     const { container } = render(
       <EdgeGlass edge="top" height={90}>
         <Text>Echo</Text>
       </EdgeGlass>,
     );
-    expect(blurLayers(container)).toHaveLength(4);
+    expect(blurLayers(container)).toHaveLength(1);
   });
 
-  it('drops to three on the blur tier', () => {
+  it('draws a single blur layer on the blur tier', () => {
     profile.surfaceTier = 'blur';
     const { container } = render(
       <EdgeGlass edge="bottom" height={90}>
         <Text>Tabs</Text>
       </EdgeGlass>,
     );
-    expect(blurLayers(container)).toHaveLength(3);
+    expect(blurLayers(container)).toHaveLength(1);
   });
 
   it('draws no blur at all on the solid tier', () => {
