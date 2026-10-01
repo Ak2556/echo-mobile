@@ -191,7 +191,10 @@
       "policy": "fingerprint"
     },
     "updates": {
-      "url": "https://u.expo.dev/a743cf66-7ec4-4ff0-ad2a-4088398b5654"
+      "url": "https://u.expo.dev/a743cf66-7ec4-4ff0-ad2a-4088398b5654",
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      }
     }
   }
 }
