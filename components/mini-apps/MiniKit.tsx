@@ -37,76 +37,56 @@ export interface MiniDeckMetric {
 export function MiniCommandDeck({
   accent,
   title,
-  subtitle,
   metrics,
-  chips = [],
-  compact = false,
 }: {
   accent: string;
+  /** Read out to screen readers; no longer drawn. */
   title: string;
-  subtitle: string;
+  /** Kept for call sites; no longer drawn. */
+  subtitle?: string;
   metrics: MiniDeckMetric[];
   chips?: string[];
   compact?: boolean;
 }) {
   const { colors, font, radius } = useTheme();
+  // A slim strip of the three numbers that matter. It used to be a ~400px card:
+  // a slogan headline that restated the app header ("Your execution queue",
+  // "Priorities, dates, action."), then three boxed tiles each with a
+  // two-word caption, all before the first piece of actual content.
   return (
-    <GlassPanel
-      variant="medium"
-      borderRadius={compact ? radius.xl : radius.card + 8}
-      elevated={!compact}
-      style={{ marginBottom: compact ? 10 : 16, borderColor: `${accent}38` }}
-      contentStyle={{ padding: compact ? 11 : 16 }}
+    <View
+      accessible
+      accessibilityLabel={`${title}. ${metrics.slice(0, 3).map(m => `${m.label} ${m.value}`).join(', ')}`}
+      style={{
+        flexDirection: 'row',
+        marginBottom: 14,
+        paddingVertical: 12,
+        borderRadius: radius.card,
+        backgroundColor: colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.glassBorder,
+      }}
     >
-      <LinearGradient
-        colors={[`${accent}22`, colors.isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.52)', 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: compact ? 9 : 12 }}>
-        <View style={{ width: compact ? 5 : 6, alignSelf: 'stretch', minHeight: compact ? 38 : 62, borderRadius: radius.full, backgroundColor: accent }} />
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[font.display, { color: colors.text, fontSize: compact ? 16 : 21, lineHeight: compact ? 20 : 26 }]} numberOfLines={compact ? 1 : 2}>
-            {title}
+      {metrics.slice(0, 3).map((metric, i) => (
+        <View
+          key={metric.label}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            paddingHorizontal: 14,
+            borderLeftWidth: i === 0 ? 0 : StyleSheet.hairlineWidth,
+            borderLeftColor: colors.glassBorder,
+          }}
+        >
+          <Text style={[font.display, { color: accent, fontSize: 20, lineHeight: 24 }]} numberOfLines={1}>
+            {metric.value}
           </Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: compact ? 11.2 : 12.5, lineHeight: compact ? 15 : 17, marginTop: 3 }]} numberOfLines={compact ? 1 : 2}>
-            {subtitle}
+          <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>
+            {metric.label}
           </Text>
         </View>
-      </View>
-
-      <View style={{ flexDirection: 'row', gap: compact ? 6 : 8, marginTop: compact ? 10 : 15 }}>
-        {metrics.slice(0, 3).map(metric => (
-          <View
-            key={metric.label}
-            style={{
-              flex: 1,
-              minHeight: compact ? 48 : 70,
-              borderRadius: compact ? radius.md : radius.card,
-              padding: compact ? 8 : 11,
-              backgroundColor: colors.surfaceHover,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.glassBorder,
-            }}
-          >
-            <Text style={[font.display, { color: accent, fontSize: compact ? 16 : 22, lineHeight: compact ? 18 : 25 }]} numberOfLines={1}>
-              {metric.value}
-            </Text>
-            <Text style={[font.bodySemibold, { color: colors.text, fontSize: compact ? 10.2 : 11.5, marginTop: compact ? 1 : 3 }]} numberOfLines={1}>
-              {metric.label}
-            </Text>
-            {metric.detail && !compact ? (
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 10.5, marginTop: 1 }]} numberOfLines={1}>
-                {metric.detail}
-              </Text>
-            ) : null}
-          </View>
-        ))}
-      </View>
-
-    </GlassPanel>
+      ))}
+    </View>
   );
 }
 

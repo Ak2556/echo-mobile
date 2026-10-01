@@ -13,6 +13,15 @@ export function shouldEmitPurchase(item: ShoppingItem, nextChecked: boolean): bo
   return true;
 }
 
+/**
+ * What a checked-off item cost: price × quantity, the same total the list
+ * shows. Logging only the unit price put 45.5 in Expenses for "2 × 45.50".
+ */
+export function purchaseAmount(item: ShoppingItem): number {
+  const qty = parseFloat(item.quantity);
+  return Math.round(item.price * (Number.isFinite(qty) && qty > 0 ? qty : 1) * 100) / 100;
+}
+
 /** What the post-drain toast should say, given whether this fact actually landed. */
 export interface PostDrainToast {
   message: string;

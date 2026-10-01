@@ -51,6 +51,21 @@ function partitionStyle(resolved: any): { outer: Record<string, any>; inner: Rec
   return { outer, inner, hasBox: Object.keys(inner).length > 0 };
 }
 
+// Keys that give the touchable a size of its own for the inner box to fill.
+const SIZING_KEYS = ['flex', 'flexGrow', 'flexBasis', 'alignSelf', 'width', 'height', 'minWidth', 'minHeight', 'aspectRatio', 'position'];
+
+/**
+ * On the animated (heavy) path the inner box fills the touchable only when the
+ * touchable has a size to fill. With no size, a `flex: 1` child of an animated
+ * touchable stretched it to ~12,000px in Release (Dice's Roll and Flip buttons,
+ * measured with `dumpsys activity top`), hiding everything below. A
+ * content-sized box needs no fill. The lite path never showed this and keeps
+ * `flex: 1`.
+ */
+function fillFor(outer: Record<string, any>) {
+  return SIZING_KEYS.some(key => outer[key] !== undefined) ? styles.fill : null;
+}
+
 interface AnimatedPressableProps extends PressableProps {
   /** When set, the Pressable scales to this value on press-in. Setting any
    *  of `scaleValue`, `depth`, or `tilt3D` opts into the heavy
@@ -325,7 +340,7 @@ function HeavyPressable({
         style={[outer, animStyle]}
         {...props}
       >
-        <View style={[inner, styles.fill]}>{children}</View>
+        <View style={[inner, fillFor(outer)]}>{children}</View>
       </AnimatedPress>
     );
   }

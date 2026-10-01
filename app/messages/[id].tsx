@@ -77,6 +77,7 @@ import { usePresenceTracking } from '../../lib/presence';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/echoUrl';
 import { ttx } from '../../src/shared/lib/i18n';
+import { playbackEnded } from '../../lib/audioPlayback';
 
 /**
  * A failed 1:1 send. "Try again" is wrong when the recipient has no device to
@@ -578,7 +579,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress, sessionToke
       const player = createAudioPlayer(source);
       subRef.current = player.addListener('playbackStatusUpdate', status => {
         if (typeof status.currentTime === 'number') setPosition(status.currentTime);
-        if (status.didJustFinish) stop();
+        if (playbackEnded(status)) stop();
       });
       try { player.setPlaybackRate(speed); } catch { /* best effort */ }
       player.play();

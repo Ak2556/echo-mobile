@@ -11,6 +11,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Plus, Minus, CheckCircle, CircleDashed, Fire, X, Camera, Images, Clock, NotePencil, Bell } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
+import { HabitMarkerIcon, habitMarkerLabel } from '../../components/mini-apps/HabitMarkerIcon';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
@@ -393,9 +394,9 @@ function AddHabitModal({ initial, onSave, onClose }: {
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('ICON')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {HABIT_MARKERS.map(e => (
-                <Pressable key={e} onPress={() => setMarker(e)}>
+                <Pressable key={e} onPress={() => setMarker(e)} accessibilityRole="button" accessibilityLabel={tt(habitMarkerLabel(e))} accessibilityState={{ selected: marker === e }}>
                   <View style={{ width: 48, height: 48, borderRadius: radius.card, backgroundColor: marker === e ? color + '22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: marker === e ? 2 : StyleSheet.hairlineWidth, borderColor: marker === e ? color : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ color: marker === e ? color : colors.textMuted, fontSize: 12, fontWeight: '800' }}>{e}</Text>
+                    <HabitMarkerIcon marker={e} color={marker === e ? color : colors.textMuted} size={22} />
                   </View>
                 </Pressable>
               ))}
@@ -687,22 +688,6 @@ export default function HabitsApp() {
         </GlassPanel>
       )}
 
-      <EdgeFeaturePanel
-        appName="Habits"
-        accent={colors.accent}
-        headline={tt('Make consistency social')}
-        caption={tt('Share streaks, compare progress, and turn proof-backed habits into public updates.')}
-        metrics={[
-          { label: tt('Today'), value: `${doneToday}/${dueToday.length}` },
-          { label: tt('Best streak'), value: `${bestStreak}` },
-          { label: tt('Proofs'), value: `${proofCount}` },
-        ]}
-        prompt="Review my habit streaks and help me choose the smallest realistic next action for today."
-        shareText={`Habit progress: ${doneToday}/${dueToday.length} habits done today, best streak ${bestStreak} days, ${proofCount} proof notes/photos saved.`}
-        publishTitle="Habit progress"
-        publishBody={`Today I completed ${doneToday} of ${dueToday.length} scheduled habits. My best active streak is ${bestStreak} days, with ${proofCount} proof-backed check-ins.`}
-      />
-
       {active.length === 0 && archived.length === 0 && (
         <MiniEmptyState
           accent={colors.accent}
@@ -732,7 +717,7 @@ export default function HabitsApp() {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Pressable onPress={() => setHeatmapFor(heatmapFor === habit.id ? null : habit.id)}>
                   <View style={{ width: 52, height: 52, borderRadius: radius.card, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
-                    <Text style={{ color: habit.color, fontSize: 13, fontWeight: '800' }}>{habit.marker}</Text>
+                    <HabitMarkerIcon marker={habit.marker} color={habit.color} size={24} />
                   </View>
                 </Pressable>
                 <Pressable onPress={() => setDetailId(habit.id)} style={{ flex: 1 }}>
@@ -810,7 +795,7 @@ export default function HabitsApp() {
             <Pressable key={habit.id} onPress={() => setDetailId(habit.id)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
                 <View style={{ width: 34, height: 34, borderRadius: radius.md, backgroundColor: habit.color + '14', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ color: habit.color, fontSize: 10.5, fontWeight: '800' }}>{habit.marker}</Text>
+                  <HabitMarkerIcon marker={habit.marker} color={habit.color} size={17} />
                 </View>
                 <Text style={{ color: colors.textSecondary, fontSize: 14.5, fontWeight: '600', flex: 1 }} numberOfLines={1}>{habit.name}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{habit.completedDates.length} {tt('total')}</Text>
@@ -819,6 +804,23 @@ export default function HabitsApp() {
           ))}
         </View>
       )}
+
+      {/* Echo actions sit after the content, not between a summary and the list it summarises. */}
+      <EdgeFeaturePanel
+        appName="Habits"
+        accent={colors.accent}
+        headline={tt('Make consistency social')}
+        caption={tt('Share streaks, compare progress, and turn proof-backed habits into public updates.')}
+        metrics={[
+          { label: tt('Today'), value: `${doneToday}/${dueToday.length}` },
+          { label: tt('Best streak'), value: `${bestStreak}` },
+          { label: tt('Proofs'), value: `${proofCount}` },
+        ]}
+        prompt="Review my habit streaks and help me choose the smallest realistic next action for today."
+        shareText={`Habit progress: ${doneToday}/${dueToday.length} habits done today, best streak ${bestStreak} days, ${proofCount} proof notes/photos saved.`}
+        publishTitle="Habit progress"
+        publishBody={`Today I completed ${doneToday} of ${dueToday.length} scheduled habits. My best active streak is ${bestStreak} days, with ${proofCount} proof-backed check-ins.`}
+      />
 
       {detailHabit && !editHabit && (
         <HabitDetail

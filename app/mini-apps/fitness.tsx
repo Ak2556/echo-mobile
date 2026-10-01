@@ -1013,22 +1013,6 @@ export default function FitnessApp() {
         ))}
       </GlassPanel>
 
-      <EdgeFeaturePanel
-        appName="Fitness"
-        accent={colors.accent}
-        headline={ttx("Fitness that turns into momentum")}
-        caption={ttx("Share progress, compare consistency, and convert training data into better next steps.")}
-        metrics={[
-          { label: 'Calories', value: `${Math.round(totals.calories)}` },
-          { label: 'Workouts', value: `${weekCount}/${doc.goals.workoutsPerWeek}` },
-          { label: 'Streak', value: `${streak}` },
-        ]}
-        prompt="Review my meals, workouts, and progress, then give me the next realistic adjustment for this week."
-        shareText={`Fitness progress: ${Math.round(totals.calories)}/${doc.goals.calories} kcal today, ${weekCount}/${doc.goals.workoutsPerWeek} workouts this week, ${streak} week streak.`}
-        publishTitle="Fitness progress"
-        publishBody={`Today I logged ${Math.round(totals.calories)} kcal and ${Math.round(totals.protein)}g protein. This week I completed ${weekCount} of ${doc.goals.workoutsPerWeek} workouts with a ${streak}-week streak.`}
-      />
-
       {/* ── Meals ── */}
       {tab === 'meals' && (
         <>
@@ -1501,6 +1485,23 @@ export default function FitnessApp() {
           )}
         </>
       )}
+
+      {/* Echo actions sit after the content, not between a summary and the list it summarises. */}
+      <EdgeFeaturePanel
+        appName="Fitness"
+        accent={colors.accent}
+        headline={ttx("Fitness that turns into momentum")}
+        caption={ttx("Share progress, compare consistency, and convert training data into better next steps.")}
+        metrics={[
+          { label: 'Calories', value: `${Math.round(totals.calories)}` },
+          { label: 'Workouts', value: `${weekCount}/${doc.goals.workoutsPerWeek}` },
+          { label: 'Streak', value: `${streak}` },
+        ]}
+        prompt="Review my meals, workouts, and progress, then give me the next realistic adjustment for this week."
+        shareText={`Fitness progress: ${Math.round(totals.calories)}/${doc.goals.calories} kcal today, ${weekCount}/${doc.goals.workoutsPerWeek} workouts this week, ${streak} week streak.`}
+        publishTitle="Fitness progress"
+        publishBody={`Today I logged ${Math.round(totals.calories)} kcal and ${Math.round(totals.protein)}g protein. This week I completed ${weekCount} of ${doc.goals.workoutsPerWeek} workouts with a ${streak}-week streak.`}
+      />
 
       {showAddMeal && (
         <AddMealModal

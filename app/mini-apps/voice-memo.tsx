@@ -30,6 +30,7 @@ import { showToast } from '../../components/ui/Toast';
 import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/miniAppMedia';
 import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/voiceMemos';
 import { ttx } from '../../src/shared/lib/i18n';
+import { playbackEnded } from '../../lib/audioPlayback';
 
 async function playbackCandidates(memo: Memo): Promise<string[]> {
   const candidates: string[] = [];
@@ -73,13 +74,16 @@ export default function VoiceMemoApp() {
     opacity: pulseScale.value > 1.05 ? 0.8 : 1,
   }));
 
-  useEffect(() => {
-    return () => {
-      playbackSubscriptionRef.current?.remove();
-      sound?.remove();
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [sound]);
+  // Unmount only. This used to depend on [sound], so the setSound() in
+  // playMemo ran the previous render's cleanup, which removed the listener
+  // just attached to the new player: a finished memo kept showing Pause.
+  const soundRef = useRef<AudioPlayer | null>(null);
+  useEffect(() => { soundRef.current = sound; }, [sound]);
+  useEffect(() => () => {
+    playbackSubscriptionRef.current?.remove();
+    soundRef.current?.remove();
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, []);
 
   const startRecording = async () => {
     const { status } = await requestRecordingPermissionsAsync();
@@ -149,7 +153,7 @@ export default function VoiceMemoApp() {
       try {
         const nextSound = createAudioPlayer({ uri });
         playbackSubscriptionRef.current = nextSound.addListener('playbackStatusUpdate', status => {
-          if (status.didJustFinish) {
+          if (playbackEnded(status)) {
             setPlayingId(null);
             playbackSubscriptionRef.current?.remove();
             playbackSubscriptionRef.current = null;
@@ -286,22 +290,6 @@ export default function VoiceMemoApp() {
         </Text>
       </GlassPanel>
 
-      <EdgeFeaturePanel
-        appName="Voice Memo"
-        accent={accent}
-        headline={ttx("Capture before the idea disappears")}
-        caption={ttx("Use voice notes as raw material for prompts, posts, decisions, and follow-ups.")}
-        metrics={[
-          { label: 'Memos', value: `${memos.length}` },
-          { label: 'Minutes', value: `${Math.round(memos.reduce((sum, memo) => sum + memo.duration, 0) / 60)}` },
-          { label: 'Latest', value: memos[0] ? formatMemoTime(memos[0].duration) : '0:00' },
-        ]}
-        prompt="Help me turn my latest voice memo into a clear note, next action, or Echo draft."
-        shareText={`Voice memo progress: ${memos.length} recordings saved, ${formatMemoTime(memos.reduce((sum, memo) => sum + memo.duration, 0))} captured.`}
-        publishTitle="Voice memo progress"
-        publishBody={`I captured ${memos.length} voice memos totaling ${formatMemoTime(memos.reduce((sum, memo) => sum + memo.duration, 0))}.`}
-      />
-
       {/* Memo list */}
       {memos.length === 0 ? (
         <MiniEmptyState
@@ -366,6 +354,23 @@ export default function VoiceMemoApp() {
           </Animated.View>
         ))
       )}
+      {/* Echo actions sit after the content, not between a summary and the list it summarises. */}
+      <EdgeFeaturePanel
+        appName="Voice Memo"
+        accent={accent}
+        headline={ttx("Capture before the idea disappears")}
+        caption={ttx("Use voice notes as raw material for prompts, posts, decisions, and follow-ups.")}
+        metrics={[
+          { label: 'Memos', value: `${memos.length}` },
+          { label: 'Minutes', value: `${Math.round(memos.reduce((sum, memo) => sum + memo.duration, 0) / 60)}` },
+          { label: 'Latest', value: memos[0] ? formatMemoTime(memos[0].duration) : '0:00' },
+        ]}
+        prompt="Help me turn my latest voice memo into a clear note, next action, or Echo draft."
+        shareText={`Voice memo progress: ${memos.length} recordings saved, ${formatMemoTime(memos.reduce((sum, memo) => sum + memo.duration, 0))} captured.`}
+        publishTitle="Voice memo progress"
+        publishBody={`I captured ${memos.length} voice memos totaling ${formatMemoTime(memos.reduce((sum, memo) => sum + memo.duration, 0))}.`}
+      />
+
     </MiniAppShell>
   );
 }

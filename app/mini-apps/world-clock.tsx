@@ -16,11 +16,15 @@ import {
   loadWorldClockCities,
   saveWorldClockCities,
   searchWorldClockLocations,
+  zoneLabel,
 } from '../../lib/worldClock';
 import { ttx } from '../../src/shared/lib/i18n';
 
-function getTimeInZone(timezone: string) {
-  const now = new Date();
+// `at` is passed in, not read here: with the React Compiler on, a component
+// that reads the clock itself is memoized on its props and never re-renders
+// with a new time (the clocks froze until something else changed).
+function getTimeInZone(timezone: string, at: number) {
+  const now = new Date(at);
   try {
     const time = now.toLocaleTimeString('en-US', { timeZone: timezone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     const date = now.toLocaleDateString('en-US', { timeZone: timezone, weekday: 'short', month: 'short', day: 'numeric' });
@@ -52,7 +56,7 @@ export default function WorldClockScreen() {
   const accent = colors.accent;
   const [cities, setCities] = useState<WorldClockCity[]>([]);
   const [weather, setWeather] = useState<Record<string, WeatherSnapshot | null>>({});
-  const [, setTick] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<WorldClockCity[]>([]);
   const [adding, setAdding] = useState(false);
@@ -63,7 +67,7 @@ export default function WorldClockScreen() {
   }, []));
 
   useEffect(() => {
-    const timer = setInterval(() => setTick(value => value + 1), 1000);
+    const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -102,7 +106,7 @@ export default function WorldClockScreen() {
     flag: '⌖',
     source: 'local',
   }), [localTimezone]);
-  const local = getTimeInZone(localTimezone);
+  const local = getTimeInZone(localTimezone, now);
   const localWeather = weather.local;
   const isLocalDay = local.hour >= 6 && local.hour < 20;
 
@@ -176,7 +180,7 @@ export default function WorldClockScreen() {
           </Text>
           <View style={{ gap: 8 }}>
             {results.slice(0, 6).map(city => (
-              <LocationResult key={`${city.id}-${city.timezone}`} city={city} onAdd={() => addCity(city)} />
+              <LocationResult key={`${city.id}-${city.timezone}`} city={city} now={now} onAdd={() => addCity(city)} />
             ))}
             {results.length === 0 && !searching ? (
               <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 18 }]}>
@@ -192,6 +196,7 @@ export default function WorldClockScreen() {
           <CityCard
             key={`${city.id}-${city.timezone}`}
             city={city}
+            now={now}
             weather={weather[city.id]}
             onRemove={() => removeCity(city.id)}
           />
@@ -210,7 +215,7 @@ export default function WorldClockScreen() {
           { label: 'Weather', value: `${Object.values(weather).filter(Boolean).length}` },
         ]}
         prompt={`Find a good meeting time across these locations: ${cities.map(city => city.name).join(', ')}.`}
-        shareText={`World clock: ${cities.map(city => `${city.name} ${getTimeInZone(city.timezone).time.slice(0, 5)}`).join(' · ')}`}
+        shareText={`World clock: ${cities.map(city => `${city.name} ${getTimeInZone(city.timezone, now).time.slice(0, 5)}`).join(' · ')}`}
         publishTitle="Time zone plan"
         publishBody={`Planning across ${cities.length} locations with time and weather context.`}
       />
@@ -236,16 +241,16 @@ function WeatherBadge({ snapshot, fallback }: { snapshot?: WeatherSnapshot | nul
   );
 }
 
-function LocationResult({ city, onAdd }: { city: WorldClockCity; onAdd: () => void }) {
+function LocationResult({ city, now, onAdd }: { city: WorldClockCity; now: number; onAdd: () => void }) {
   const { colors, font, radius } = useTheme();
-  const clock = getTimeInZone(city.timezone);
+  const clock = getTimeInZone(city.timezone, now);
   return (
     <Pressable onPress={onAdd} accessibilityRole="button" accessibilityLabel={`Add ${city.name}`}>
       <View style={{ minHeight: 56, borderRadius: radius.lg, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
         <Text style={{ fontSize: 24 }}>{city.flag}</Text>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[font.bodyBold, { color: colors.text, fontSize: 14.5 }]} numberOfLines={1}>{city.name}</Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]} numberOfLines={1}>{city.region} · {city.timezone}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]} numberOfLines={1}>{zoneLabel(city, now)} · {city.timezone}</Text>
         </View>
         <Text style={[font.display, { color: colors.text, fontSize: 20 }]}>{clock.time.slice(0, 5)}</Text>
       </View>
@@ -253,9 +258,9 @@ function LocationResult({ city, onAdd }: { city: WorldClockCity; onAdd: () => vo
   );
 }
 
-function CityCard({ city, weather, onRemove }: { city: WorldClockCity; weather?: WeatherSnapshot | null; onRemove: () => void }) {
+function CityCard({ city, now, weather, onRemove }: { city: WorldClockCity; now: number; weather?: WeatherSnapshot | null; onRemove: () => void }) {
   const { colors, font, radius } = useTheme();
-  const clock = getTimeInZone(city.timezone);
+  const clock = getTimeInZone(city.timezone, now);
   const day = clock.hour >= 6 && clock.hour < 20;
   const tone = day ? colors.warning : colors.textMuted;
   return (
@@ -271,7 +276,7 @@ function CityCard({ city, weather, onRemove }: { city: WorldClockCity; weather?:
               <Text style={{ color: tone, fontSize: 10.2, ...font.bodyBold }}>{timeOfDay(clock.hour)}</Text>
             </View>
           </View>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{clock.date} · {city.region}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{clock.date} · {zoneLabel(city, now)}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 7 }}>
             <WeatherInline snapshot={weather} />
           </View>

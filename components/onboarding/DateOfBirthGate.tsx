@@ -122,17 +122,18 @@ export function DateOfBirthGate() {
             <Text style={{ color: colors.danger, fontSize: 14, marginTop: 14, textAlign: 'center' }}>{error}</Text>
           ) : null}
 
-          {/* Wrapper View owns the fill so cssInterop cannot drop the background. */}
-          <View style={{ marginTop: 24, borderRadius: radius.lg, backgroundColor: colors.accent, opacity: saving ? 0.7 : 1 }}>
-            <Pressable
-              onPress={submit}
-              disabled={saving}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ paddingVertical: 15, alignItems: 'center', opacity: pressed ? 0.9 : 1 })}
-            >
-              {saving
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx('Continue')}</Text>}
+          {/* Wrapper Views own the fill and the padding; the Pressable stays
+              bare. The same button shape in ConsentSheet lost its style-function
+              padding in Release and collapsed to a thin bar. */}
+          <View style={{ marginTop: 24, borderRadius: radius.lg, backgroundColor: colors.accent, opacity: saving ? 0.7 : 1, overflow: 'hidden' }}>
+            <Pressable onPress={submit} disabled={saving} accessibilityRole="button" accessibilityLabel={ttx('Continue')}>
+              {({ pressed }) => (
+                <View style={{ paddingVertical: 15, alignItems: 'center', opacity: pressed ? 0.9 : 1 }}>
+                  {saving
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx('Continue')}</Text>}
+                </View>
+              )}
             </Pressable>
           </View>
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { shouldEmitPurchase, describePostDrain, describeUndo } from './rules';
+import { shouldEmitPurchase, describePostDrain, describeUndo, purchaseAmount } from './rules';
 import type { ShoppingItem } from '../shoppingList';
 
 const item = (over: Partial<ShoppingItem> = {}): ShoppingItem => ({
@@ -60,5 +60,18 @@ describe('describeUndo', () => {
     expect(message).toBeTruthy();
     expect(message?.toLowerCase()).toContain("couldn't remove");
     expect(message?.toLowerCase()).not.toContain('removed from');
+  });
+});
+
+describe('purchaseAmount', () => {
+  it('logs price × quantity, matching the list total', () => {
+    expect(purchaseAmount(item({ price: 45.5, quantity: '2' }))).toBe(91);
+    expect(purchaseAmount(item({ price: 0.1, quantity: '3' }))).toBe(0.3);
+  });
+
+  it('treats a blank or invalid quantity as one', () => {
+    expect(purchaseAmount(item({ price: 80, quantity: '' }))).toBe(80);
+    expect(purchaseAmount(item({ price: 80, quantity: 'a few' }))).toBe(80);
+    expect(purchaseAmount(item({ price: 80, quantity: '0' }))).toBe(80);
   });
 });

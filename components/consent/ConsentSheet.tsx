@@ -53,24 +53,28 @@ export function ConsentSheet({ gate, icon, title, paragraphs, allowLabel, declin
               <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{ttx("Read the privacy policy")}</Text>
             </Pressable>
 
-            {/* Wrapper View owns the fill; the Pressable stays bare so cssInterop
-                cannot drop the background and hide the white label. */}
-            <View style={{ marginTop: 12, borderRadius: radius.lg, backgroundColor: colors.accent }}>
-              <Pressable
-                onPress={() => gate.answer(true)}
-                accessibilityRole="button"
-                style={({ pressed }) => ({ paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.9 : 1 })}
-              >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx(allowLabel)}</Text>
+            {/* Wrapper Views own the fill AND the padding; the Pressables stay
+                bare. A style function on the Pressable was dropped in Release
+                too, which collapsed both buttons to a thin bar with the label
+                pinned left and a 20px-tall "Keep on this device". */}
+            <View style={{ marginTop: 12, borderRadius: radius.lg, backgroundColor: colors.accent, overflow: 'hidden' }}>
+              <Pressable onPress={() => gate.answer(true)} accessibilityRole="button" accessibilityLabel={ttx(allowLabel)}>
+                {({ pressed }) => (
+                  <View style={{ paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.9 : 1 }}>
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx(allowLabel)}</Text>
+                  </View>
+                )}
               </Pressable>
             </View>
-            <Pressable
-              onPress={() => gate.answer(false)}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ marginTop: 6, paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.6 : 1 })}
-            >
-              <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 15 }}>{ttx(declineLabel)}</Text>
-            </Pressable>
+            <View style={{ marginTop: 6 }}>
+              <Pressable onPress={() => gate.answer(false)} accessibilityRole="button" accessibilityLabel={ttx(declineLabel)}>
+                {({ pressed }) => (
+                  <View style={{ paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.6 : 1 }}>
+                    <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 15 }}>{ttx(declineLabel)}</Text>
+                  </View>
+                )}
+              </Pressable>
+            </View>
           </View>
         </SafeAreaView>
       </View>

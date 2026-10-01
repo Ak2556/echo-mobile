@@ -1005,10 +1005,9 @@ export default function PomodoroScreen() {
             onPress={() => switchMode(m)}
             style={{ flex: 1 }}
           >
-            <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: mode === m ? modeColor(m, colors) : 'transparent' }}>
-              <Text style={{ color: mode === m ? colors.bgPure : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{MODE_META[m].marker}</Text>
-              <Text style={{ color: mode === m ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: 11, marginTop: 2 }}>
-                {tt(MODE_META[m].label.split(' ')[0])} · {minutesFor(m)}m
+            <View style={{ paddingVertical: 12, borderRadius: radius.md, alignItems: 'center', backgroundColor: mode === m ? modeColor(m, colors) : 'transparent' }}>
+              <Text style={{ color: mode === m ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: 13 }}>
+                {tt(MODE_META[m].label.split(' ')[0])} · {m === 'focus' && draftTotalSecs ? Math.round(draftTotalSecs / 60) : minutesFor(m)}m
               </Text>
             </View>
           </Pressable>
@@ -1206,23 +1205,6 @@ export default function PomodoroScreen() {
         </View>
       </GlassPanel>
 
-      <EdgeFeaturePanel
-        appId="pomodoro"
-        appName="Pomodoro"
-        accent={accent}
-        headline={tt('Focus becomes visible progress')}
-        caption={tt('Turn deep work cycles into proof, accountability, and a next-action plan.')}
-        metrics={[
-          { label: tt('Today'), value: `${stats.count}/${stats.goal}` },
-          { label: tt('Focus min'), value: `${stats.minutes}` },
-          { label: tt('Day streak'), value: `${streak}` },
-        ]}
-        prompt="Use my focus sessions to plan the next 3 actions and help me protect the next deep-work block."
-        shareText={`Pomodoro: ${stats.count} focus sessions today (${stats.minutes} min), ${streak}-day goal streak.`}
-        publishTitle="Focus progress"
-        publishBody={`I completed ${stats.count} focus sessions today — ${stats.minutes} minutes of deep work, on a ${streak}-day streak.`}
-      />
-
       {/* Today's log */}
       {todaySessions.length > 0 && (
         <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ overflow: 'hidden' }} style={{ marginTop: 14 }}>
@@ -1241,6 +1223,24 @@ export default function PomodoroScreen() {
           ))}
         </GlassPanel>
       )}
+
+      {/* Echo actions sit after the content, not between a summary and the list it summarises. */}
+      <EdgeFeaturePanel
+        appId="pomodoro"
+        appName="Pomodoro"
+        accent={accent}
+        headline={tt('Focus becomes visible progress')}
+        caption={tt('Turn deep work cycles into proof, accountability, and a next-action plan.')}
+        metrics={[
+          { label: tt('Today'), value: `${stats.count}/${stats.goal}` },
+          { label: tt('Focus min'), value: `${stats.minutes}` },
+          { label: tt('Day streak'), value: `${streak}` },
+        ]}
+        prompt="Use my focus sessions to plan the next 3 actions and help me protect the next deep-work block."
+        shareText={`Pomodoro: ${stats.count} focus sessions today (${stats.minutes} min), ${streak}-day goal streak.`}
+        publishTitle="Focus progress"
+        publishBody={`I completed ${stats.count} focus sessions today — ${stats.minutes} minutes of deep work, on a ${streak}-day streak.`}
+      />
 
       {showSettings && (
         <SettingsSheet
