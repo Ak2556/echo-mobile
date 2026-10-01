@@ -42,3 +42,13 @@ describe('pressable layout', () => {
     expect(heavy).not.toMatch(/<View style=\{\[inner, styles\.fill\]\}>/);
   });
 });
+
+describe('voice memo playback', () => {
+  it('the player listener is only removed on unmount', () => {
+    // The cleanup depended on [sound]; setSound() in playMemo ran it and
+    // removed the listener just attached, so a finished memo showed Pause.
+    const src = readFileSync('app/mini-apps/voice-memo.tsx', 'utf8');
+    expect(src).not.toMatch(/playbackSubscriptionRef\.current\?\.remove\(\);\s*sound\?\.remove\(\);[\s\S]{0,120}\}, \[sound\]\);/);
+    expect(src).toMatch(/useEffect\(\(\) => \(\) => \{\s*playbackSubscriptionRef\.current\?\.remove\(\);[\s\S]*?\}, \[\]\);/);
+  });
+});

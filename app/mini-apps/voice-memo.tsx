@@ -74,13 +74,16 @@ export default function VoiceMemoApp() {
     opacity: pulseScale.value > 1.05 ? 0.8 : 1,
   }));
 
-  useEffect(() => {
-    return () => {
-      playbackSubscriptionRef.current?.remove();
-      sound?.remove();
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [sound]);
+  // Unmount only. This used to depend on [sound], so the setSound() in
+  // playMemo ran the previous render's cleanup, which removed the listener
+  // just attached to the new player: a finished memo kept showing Pause.
+  const soundRef = useRef<AudioPlayer | null>(null);
+  useEffect(() => { soundRef.current = sound; }, [sound]);
+  useEffect(() => () => {
+    playbackSubscriptionRef.current?.remove();
+    soundRef.current?.remove();
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, []);
 
   const startRecording = async () => {
     const { status } = await requestRecordingPermissionsAsync();
