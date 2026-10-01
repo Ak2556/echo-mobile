@@ -108,7 +108,7 @@ export function GlassPanel({
   // One light, see-through tint over the blur (owner request 2026-10-01:
   // more transparent, a single layer). It used to be a 30% black wash plus a
   // moving sheen and an inner highlight stacked on top.
-  const defaultFill = colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.35)';
+  const defaultFill = colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.25)';
   const androidOverlay = overlay && !clear && Platform.OS === 'android';
   const fill = tintOverride ?? (androidOverlay ? opaqueSurface(colors.surface) : clear ? null : defaultFill);
   const fallback = fallbackTint ?? colors.surface;

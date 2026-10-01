@@ -34,7 +34,7 @@ export function GlassChip({
   children?: React.ReactNode;
 }) {
   const { colors } = useTheme();
-  const fill = tint ? `${tint}22` : colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.4)';
+  const fill = tint ? `${tint}1A` : colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.28)';
   const edge = tint ? `${tint}4D` : colors.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
 
   return (

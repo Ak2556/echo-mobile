@@ -128,7 +128,7 @@ export function EdgeGlass({
   // straight ramp; the eye finds a slope change far harder to see than a kink.
   // Light and see-through: the single blur layer carries legibility, so the
   // wash only tints it (was 0.55 / 0.6 over a stack of blur layers).
-  const wash = colors.isDark ? 0.28 : 0.32;
+  const wash = colors.isDark ? 0.18 : 0.22;
   const tailFraction = 1 - barFraction;
   const washColors = [
     withAlpha(base, wash),
