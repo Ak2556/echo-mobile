@@ -1086,7 +1086,7 @@ export default function SignupWizard() {
 
               <View style={{ paddingBottom: 16 }}>
                 <AnimatedPressable
-                  onPress={() => goToStep(2)}
+                  onPress={() => goToStep(STEP.BIO)}
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
@@ -1141,7 +1141,7 @@ export default function SignupWizard() {
 
               <View style={{ paddingBottom: 16, gap: 12 }}>
                 <AnimatedPressable
-                  onPress={() => goToStep(3)}
+                  onPress={() => goToStep(STEP.INTERESTS)}
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
@@ -1155,7 +1155,7 @@ export default function SignupWizard() {
                 </AnimatedPressable>
 
                 <AnimatedPressable
-                  onPress={() => goToStep(3)}
+                  onPress={() => goToStep(STEP.INTERESTS)}
                   scaleValue={0.97}
                   haptic="light"
                   style={{ alignItems: 'center', paddingVertical: 8 }}
@@ -1208,7 +1208,7 @@ export default function SignupWizard() {
                     if (selectedInterests.length < 3) {
                       showToast(`Pick ${3 - selectedInterests.length} more to continue`, 'More');
                     } else {
-                      goToStep(4);
+                      goToStep(STEP.ARCHETYPE);
                     }
                   }}
                   scaleValue={0.97}
@@ -1227,7 +1227,7 @@ export default function SignupWizard() {
                 </AnimatedPressable>
 
                 <AnimatedPressable
-                  onPress={() => goToStep(4)}
+                  onPress={() => goToStep(STEP.ARCHETYPE)}
                   scaleValue={0.97}
                   haptic="light"
                   style={{ alignItems: 'center', paddingVertical: 8 }}
