@@ -3,7 +3,7 @@ import { View, Text, useWindowDimensions, ActivityIndicator, Pressable, ScrollVi
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
-  useAnimatedStyle, useSharedValue, withSpring, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
+  useAnimatedStyle, useSharedValue, withSpring, withTiming, Easing, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
 import { usePathname } from 'expo-router';
 import { restingX, restingY, shouldPersistDrag } from '../../lib/floatingBubblePlacement';
@@ -30,6 +30,8 @@ const CATALOG_BY_ID = new Map<string, (typeof MINI_APP_CATALOG)[number]>(
 );
 
 const BUBBLE = 54;
+/** No overshoot: the bubble moves and stops (see the position effect below). */
+const BUBBLE_GLIDE = { duration: 220, easing: Easing.out(Easing.cubic) };
 
 export function FloatingMiniApp() {
   const mode = useFloatingApp(s => s.mode);
@@ -91,9 +93,11 @@ function Bubble({ pathname }: { pathname: string }) {
   const tx = useSharedValue(startX);
   const ty = useSharedValue(startY);
   // The bubble outlives navigation: move it when the screen changes.
+  // A glide, not a spring: the spring overshot and settled every time the
+  // screen changed or a drag ended, which read as the bubble bouncing.
   useEffect(() => {
-    tx.value = withSpring(startX, { damping: 18, stiffness: 200 });
-    ty.value = withSpring(startY, { damping: 18, stiffness: 200 });
+    tx.value = withTiming(startX, BUBBLE_GLIDE);
+    ty.value = withTiming(startY, BUBBLE_GLIDE);
   }, [startX, startY, tx, ty]);
   const offX = useSharedValue(0);
   const offY = useSharedValue(0);
@@ -117,7 +121,7 @@ function Bubble({ pathname }: { pathname: string }) {
     .onEnd(() => {
       // Snap to the nearest side edge.
       const snapX = tx.value + BUBBLE / 2 < SCREEN_W / 2 ? 6 : SCREEN_W - BUBBLE - 6;
-      tx.value = withSpring(snapX, { damping: 18, stiffness: 200 });
+      tx.value = withTiming(snapX, BUBBLE_GLIDE);
       // Only remembered where the corner is free; on a lifted screen the drag
       // lasts for the visit, so it cannot move the tab position into a control.
       if (persistDrag) runOnJS(setPosition)(snapX, ty.value);
