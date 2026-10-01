@@ -6,6 +6,7 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../src/shared/lib/theme';
+import { countWords } from '../../lib/wordCount';
 import { ttx } from '../../src/shared/lib/i18n';
 
 const SAMPLE = `# Hello, Markdown!
@@ -123,7 +124,7 @@ export default function MarkdownScreen() {
   });
   const [tab, setTab] = useState<'edit' | 'preview'>('edit');
 
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const words = countWords(text);
   const chars = text.length;
 
   const ClearBtn = (

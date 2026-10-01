@@ -192,3 +192,51 @@ export function flagFromCountryCode(code?: string): string {
 function slug(input: string): string {
   return input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `${Date.now()}`;
 }
+
+/**
+ * Summer-time abbreviations for the presets that observe daylight saving.
+ * The presets store the standard one ('EST', 'GMT'), which is wrong for half
+ * the year.
+ */
+const DST_LABELS: Record<string, string> = {
+  'new-york': 'EDT',
+  'toronto': 'EDT',
+  'chicago': 'CDT',
+  'los-angeles': 'PDT',
+  'london': 'BST',
+  'paris': 'CEST',
+  'berlin': 'CEST',
+  'cairo': 'EEST',
+  'sydney': 'AEDT',
+};
+
+/** Minutes east of UTC for `timezone` at `at`. */
+function utcOffsetMinutes(timezone: string, at: number): number {
+  const parts = new Date(at).toLocaleString('en-US', {
+    timeZone: timezone, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+  });
+  const m = /(\d+)\/(\d+)\/(\d+),?\s+(\d+):(\d+)/.exec(parts);
+  if (!m) return 0;
+  const [, mo, d, y, h, mi] = m.map(Number);
+  const wall = Date.UTC(y, mo - 1, d, h % 24, mi);
+  return Math.round((wall - Math.floor(at / 60000) * 60000) / 60000);
+}
+
+function inDaylightSaving(timezone: string, at: number): boolean {
+  const year = new Date(at).getUTCFullYear();
+  const jan = utcOffsetMinutes(timezone, Date.UTC(year, 0, 1));
+  const jul = utcOffsetMinutes(timezone, Date.UTC(year, 6, 1));
+  return jan !== jul && utcOffsetMinutes(timezone, at) === Math.max(jan, jul);
+}
+
+/** The label shown under a city: its zone abbreviation for `at`, or a searched place's region. */
+export function zoneLabel(city: WorldClockCity, at: number): string {
+  const summer = DST_LABELS[city.id];
+  if (!summer) return city.region;
+  try {
+    return inDaylightSaving(city.timezone, at) ? summer : city.region;
+  } catch {
+    return city.region;
+  }
+}

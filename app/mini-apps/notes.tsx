@@ -7,18 +7,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import {
-  Archive, CheckSquare, Clock, Copy, FileText, FolderOpen, FunnelSimple,
-  MagnifyingGlass, NotePencil, Plus, PushPin, ShareNetwork, Waveform, Star,
-  Tag, TextB, Trash, X,
+  Archive, ArrowUpRight, BookOpenText, CheckSquare, Copy, DotsThree, Flask, FolderOpen,
+  Lightbulb, ListBullets, MagnifyingGlass, NotePencil, Plus, PushPin, ShareNetwork,
+  SortAscending, Star, Tag, TextH, Trash, UsersThree, X,
 } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useI18n } from '../../src/shared/lib/i18n';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
-import { MiniChip, MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { ActionSheet, type ActionItem } from '../../components/common/ActionSheet';
 import { showToast } from '../../components/ui/Toast';
 import { NOTE_COLORS, Note, loadNotes, saveNotes } from '../../lib/notes';
+import { countWords } from '../../lib/wordCount';
 
 type NoteView = 'active' | 'pinned' | 'favorites' | 'checklists' | 'archive' | 'all';
 type SortMode = 'recent' | 'oldest' | 'title';
@@ -112,10 +113,6 @@ function formatDate(iso: string) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-function countWords(text: string) {
-  return text.trim() ? text.trim().split(/\s+/).length : 0;
-}
-
 // Strip list/checkbox/heading markup so the card preview reads as prose
 // instead of showing literal "- [ ]" and "##" tokens. Checked items get a ✓.
 function previewText(body: string) {
@@ -170,6 +167,15 @@ function applyTemplate(template: NoteTemplate): Note {
   };
 }
 
+const TEMPLATE_ICONS: Record<string, (color: string) => React.ReactNode> = {
+  'blank': c => <NotePencil color={c} size={16} weight="bold" />,
+  'task-plan': c => <CheckSquare color={c} size={16} weight="bold" />,
+  'meeting': c => <UsersThree color={c} size={16} weight="bold" />,
+  'idea': c => <Lightbulb color={c} size={16} weight="bold" />,
+  'journal': c => <BookOpenText color={c} size={16} weight="bold" />,
+  'research': c => <Flask color={c} size={16} weight="bold" />,
+};
+
 function NoteEditor({
   note,
   onSave,
@@ -179,7 +185,7 @@ function NoteEditor({
   onSave: (n: Note) => void;
   onClose: () => void;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const isNew = !note;
@@ -189,9 +195,11 @@ function NoteEditor({
   const [folder, setFolder] = useState(note?.folder ?? 'Inbox');
   const [tags, setTags] = useState((note?.tags ?? []).join(', '));
   const [kind, setKind] = useState<NonNullable<Note['kind']>>(noteKind(note ?? applyTemplate(TEMPLATES[0])));
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const stats = checklistStats(body);
   const words = countWords(body);
+  const showTemplates = isNew && !title.trim() && !body.trim();
 
   const save = () => {
     if (!title.trim() && !body.trim()) { onClose(); return; }
@@ -206,7 +214,8 @@ function NoteEditor({
       archived: note?.archived,
       folder: folder.trim() || 'Inbox',
       tags: normalizeTags(tags),
-      kind,
+      // There is no kind picker any more: a plain note with checkboxes is a checklist.
+      kind: kind === 'note' && stats.total > 0 ? 'checklist' : kind,
       createdAt: note?.createdAt ?? now,
       updatedAt: now,
     });
@@ -225,371 +234,223 @@ function NoteEditor({
     setColor(template.color);
   };
 
+  const pill = {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 6,
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+  };
+
+  const tools = [
+    { key: 'checkbox', label: tt('Add checkbox'), icon: <CheckSquare color={colors.textSecondary} size={20} />, insert: '- [ ] ' },
+    { key: 'heading', label: tt('Heading'), icon: <TextH color={colors.textSecondary} size={20} />, insert: '## ' },
+    { key: 'bullet', label: tt('Bullet'), icon: <ListBullets color={colors.textSecondary} size={20} />, insert: '- ' },
+  ];
+
   return (
     <Modal animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { save(); onClose(); }}>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 16,
-            paddingTop: insets.top + 8,
-            paddingBottom: 12,
-            borderBottomWidth: StyleSheet.hairlineWidth,
-            borderBottomColor: colors.glassBorder,
-          }}>
-            <AnimatedPressable onPress={() => { save(); onClose(); }} scaleValue={0.9} haptic="light">
-              <Text style={{ color, fontSize: 15, fontWeight: '800' }}>{tt('Done')}</Text>
-            </AnimatedPressable>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', gap: 9, paddingHorizontal: 14 }}
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: insets.top + 8, paddingBottom: 10 }}>
+            <Pressable onPress={() => { save(); onClose(); }} hitSlop={10} accessibilityRole="button" accessibilityLabel={tt('Done')}>
+              <View style={{ paddingVertical: 6, paddingRight: 8 }}>
+                <Text style={[font.bodyBold, { color: colors.accent, fontSize: 16 }]}>{tt('Done')}</Text>
+              </View>
+            </Pressable>
+            <View style={{ flex: 1 }} />
+            <Pressable
+              onPress={() => setPaletteOpen(open => !open)}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={tt('Note color')}
+              accessibilityState={{ expanded: paletteOpen }}
             >
+              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: color, borderWidth: 2, borderColor: colors.glassBorder }} />
+            </Pressable>
+          </View>
+
+          {paletteOpen ? (
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, paddingBottom: 12 }}>
               {NOTE_COLORS.map((c, ci) => (
                 <Pressable
                   key={c}
-                  onPress={() => setColor(c)}
+                  onPress={() => { setColor(c); setPaletteOpen(false); }}
                   accessibilityRole="button"
-                  accessibilityLabel={`Note color ${ci + 1}`}
+                  accessibilityLabel={`${tt('Note color')} ${ci + 1}`}
                   accessibilityState={{ selected: color === c }}
                   hitSlop={6}
                 >
-                  <View style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: radius.md,
-                    backgroundColor: c,
-                    borderWidth: color === c ? 3 : 0,
-                    borderColor: colors.bgPure,
-                    transform: [{ scale: color === c ? 1.15 : 1 }],
-                  }} />
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c, borderWidth: color === c ? 3 : 0, borderColor: colors.text }} />
                 </Pressable>
               ))}
-            </ScrollView>
-            <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light">
-              <X color={colors.textMuted} size={20} />
-            </AnimatedPressable>
-          </View>
-
-          <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <View style={{ width: 42, height: 42, borderRadius: radius.card, backgroundColor: `${color}22`, alignItems: 'center', justifyContent: 'center' }}>
-                {kind === 'checklist' ? <CheckSquare color={color} size={22} weight="bold" /> : <NotePencil color={color} size={22} weight="bold" />}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                  {isNew ? tt('Capture note') : tt('Edit note')}
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
-                  {words} {tt('words')} · {body.length} {tt('chars')}{stats.total ? ` · ${stats.done}/${stats.total} ${tt('done')}` : ''}
-                </Text>
-              </View>
             </View>
+          ) : null}
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
-              {TEMPLATES.filter(t => t.id !== 'blank').map(template => (
-                <Pressable
-                  key={template.id}
-                  onPress={() => applyNoteTemplate(template)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    paddingHorizontal: 12,
-                    paddingVertical: 9,
-                    borderRadius: radius.full,
-                    backgroundColor: colors.surface,
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: colors.glassBorder,
-                  }}
-                >
-                  <Waveform color={template.color} size={14} weight="fill" />
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt(template.label)}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 6, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+            {showTemplates ? (
+              <View style={{ marginBottom: 14 }}>
+                <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: 12, marginBottom: 8 }]}>{tt('Start from')}</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                  {TEMPLATES.filter(t => t.id !== 'blank').map(template => (
+                    <Pressable key={template.id} onPress={() => applyNoteTemplate(template)} accessibilityRole="button" accessibilityLabel={tt(template.label)}>
+                      <View style={[pill, { backgroundColor: `${template.color}1F` }]}>
+                        {TEMPLATE_ICONS[template.id]?.(template.color)}
+                        <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{tt(template.label)}</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
 
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder={tt('Note title')}
+              placeholder={tt('Title')}
               placeholderTextColor={colors.textMuted}
-              style={{ color: colors.text, fontSize: 28, fontWeight: '900', marginBottom: 16, padding: 0 }}
+              style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 34, padding: 0 }]}
               multiline
             />
 
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800', marginBottom: 6 }}>{tt('Folder')}</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+              <View style={pill}>
+                <FolderOpen color={colors.textMuted} size={15} />
                 <TextInput
                   value={folder}
                   onChangeText={setFolder}
                   placeholder={tt('Inbox')}
                   placeholderTextColor={colors.textMuted}
-                  style={{
-                    color: colors.text,
-                    fontSize: 14,
-                    paddingHorizontal: 13,
-                    paddingVertical: 11,
-                    borderRadius: radius.card,
-                    backgroundColor: colors.surface,
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: colors.glassBorder,
-                  }}
+                  accessibilityLabel={tt('Folder')}
+                  style={[font.body, { color: colors.textSecondary, fontSize: 13, padding: 0, minWidth: 48 }]}
                 />
               </View>
-              <View style={{ flex: 1.5 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800', marginBottom: 6 }}>{tt('Tags')}</Text>
+              <View style={[pill, { flex: 1 }]}>
+                <Tag color={colors.textMuted} size={15} />
                 <TextInput
                   value={tags}
                   onChangeText={setTags}
-                  placeholder="launch, ideas"
+                  placeholder={tt('Add tags')}
                   placeholderTextColor={colors.textMuted}
                   autoCapitalize="none"
-                  style={{
-                    color: colors.text,
-                    fontSize: 14,
-                    paddingHorizontal: 13,
-                    paddingVertical: 11,
-                    borderRadius: radius.card,
-                    backgroundColor: colors.surface,
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: colors.glassBorder,
-                  }}
+                  accessibilityLabel={tt('Tags')}
+                  style={[font.body, { flex: 1, color: colors.textSecondary, fontSize: 13, padding: 0 }]}
                 />
               </View>
-            </View>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
-              {[
-                { id: 'note', label: 'Note', icon: <FileText color={kind === 'note' ? colors.bgPure : colors.textMuted} size={14} /> },
-                { id: 'checklist', label: 'Checklist', icon: <CheckSquare color={kind === 'checklist' ? colors.bgPure : colors.textMuted} size={14} /> },
-                { id: 'meeting', label: 'Meeting', icon: <Clock color={kind === 'meeting' ? colors.bgPure : colors.textMuted} size={14} /> },
-                { id: 'idea', label: 'Idea', icon: <Waveform color={kind === 'idea' ? colors.bgPure : colors.textMuted} size={14} /> },
-                { id: 'journal', label: 'Journal', icon: <TextB color={kind === 'journal' ? colors.bgPure : colors.textMuted} size={14} /> },
-                { id: 'research', label: 'Research', icon: <FolderOpen color={kind === 'research' ? colors.bgPure : colors.textMuted} size={14} /> },
-              ].map(item => (
-                <MiniChip
-                  key={item.id}
-                  accent={color}
-                  label={tt(item.label)}
-                  active={kind === item.id}
-                  onPress={() => setKind(item.id as NonNullable<Note['kind']>)}
-                  icon={item.icon}
-                />
-              ))}
-            </ScrollView>
-
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-              <AnimatedPressable onPress={() => append('- [ ] ')} haptic="light" style={{ flex: 1 }}>
-                <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt('Add checkbox')}</Text>
-                </GlassPanel>
-              </AnimatedPressable>
-              <AnimatedPressable onPress={() => append('## ')} haptic="light" style={{ flex: 1 }}>
-                <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt('Heading')}</Text>
-                </GlassPanel>
-              </AnimatedPressable>
-              <AnimatedPressable onPress={() => append('- ')} haptic="light" style={{ flex: 1 }}>
-                <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt('Bullet')}</Text>
-                </GlassPanel>
-              </AnimatedPressable>
             </View>
 
             <TextInput
               value={body}
               onChangeText={setBody}
-              placeholder={tt('Start writing, paste research, plan tasks, or make a checklist...')}
+              placeholder={tt('Start writing…')}
               placeholderTextColor={colors.textMuted}
-              style={{
-                color: colors.text,
-                fontSize: 16,
-                lineHeight: 26,
-                padding: 16,
-                minHeight: 330,
-                borderRadius: radius.card,
-                backgroundColor: colors.surface,
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: colors.glassBorder,
-                textAlignVertical: 'top',
-              }}
+              style={[font.body, { color: colors.text, fontSize: 16.5, lineHeight: 26, marginTop: 18, padding: 0, minHeight: 320, textAlignVertical: 'top' }]}
               multiline
               autoFocus={isNew}
             />
           </ScrollView>
+
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            paddingHorizontal: 12,
+            paddingTop: 8,
+            paddingBottom: Math.max(insets.bottom, 8),
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: colors.glassBorder,
+          }}>
+            {tools.map(tool => (
+              <Pressable key={tool.key} onPress={() => append(tool.insert)} accessibilityRole="button" accessibilityLabel={tool.label} hitSlop={4}>
+                <View style={{ width: 44, height: 40, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' }}>{tool.icon}</View>
+              </Pressable>
+            ))}
+            <View style={{ flex: 1 }} />
+            <Text style={[font.body, { color: colors.textMuted, fontSize: 12.5, paddingRight: 6 }]}>
+              {stats.total ? `${stats.done}/${stats.total} ${tt('done')} · ` : ''}{words} {words === 1 ? tt('word') : tt('words')}
+            </Text>
+          </View>
         </KeyboardAvoidingView>
       </View>
     </Modal>
   );
 }
 
-function NoteCard({
-  note,
-  onOpen,
-  onPin,
-  onFavorite,
-  onArchive,
-  onDuplicate,
-  onShare,
-  onPublish,
-  onDelete,
-}: {
-  note: Note;
-  onOpen: () => void;
-  onPin: () => void;
-  onFavorite: () => void;
-  onArchive: () => void;
-  onDuplicate: () => void;
-  onShare: () => void;
-  onPublish: () => void;
-  onDelete: () => void;
-}) {
-  const { colors, radius } = useTheme();
+function NoteCard({ note, onOpen, onMore }: { note: Note; onOpen: () => void; onMore: () => void }) {
+  const { colors, radius, font } = useTheme();
   const { tt } = useI18n();
   const stats = checklistStats(note.body);
-  const words = countWords(note.body);
-  const progress = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
-  const kind = noteKind(note);
-  const tags = note.tags ?? [];
+  const progress = stats.total ? stats.done / stats.total : 0;
+  const preview = previewText(note.body);
+  const meta = [formatDate(note.updatedAt), folderName(note), ...(note.tags ?? []).slice(0, 2).map(tag => `#${tag}`)].join(' · ');
 
   return (
     <Pressable
       onPress={onOpen}
-      style={({ pressed }) => ({
+      onLongPress={onMore}
+      delayLongPress={300}
+      accessibilityRole="button"
+      accessibilityLabel={`${note.title}. ${meta}`}
+      style={({ pressed }) => ({ opacity: pressed ? 0.82 : 1 })}
+    >
+      <View style={{
+        flexDirection: 'row',
         borderRadius: radius.card,
         overflow: 'hidden',
-        transform: [{ scale: pressed ? 0.985 : 1 }],
-      })}
-    >
-      <GlassPanel
-        variant="medium"
-        borderRadius={radius.card}
-        elevated
-        tintOverride={colors.isDark ? 'rgba(20,18,14,0.86)' : 'rgba(255,255,255,0.88)'}
-        style={{ borderColor: `${note.color}55` }}
-        contentStyle={{ padding: 16 }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-          <View style={{ width: 42, height: 42, borderRadius: radius.card, backgroundColor: `${note.color}22`, alignItems: 'center', justifyContent: 'center' }}>
-            {kind === 'checklist' ? <CheckSquare color={note.color} size={22} weight="bold" /> : <NotePencil color={note.color} size={22} weight="bold" />}
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', flex: 1 }} numberOfLines={1}>
-                {note.title}
-              </Text>
-              {note.pinned ? <PushPin color={note.color} size={15} weight="fill" /> : null}
-              {note.favorite ? <Star color={colors.warning} size={15} weight="fill" /> : null}
-            </View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }} numberOfLines={1}>
-              {folderName(note)} · {formatDate(note.updatedAt)} · {words} {tt('words')}
-            </Text>
-          </View>
-        </View>
-
-        {note.body ? (
-          <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 13 }} numberOfLines={4}>
-            {previewText(note.body)}
-          </Text>
-        ) : null}
-
-        {stats.total > 0 ? (
-          <View style={{ marginTop: 14 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{tt('Checklist')}</Text>
-              <Text style={{ color: note.color, fontSize: 12, fontWeight: '900' }}>{stats.done}/{stats.total} · {progress}%</Text>
-            </View>
-            <View style={{ height: 7, borderRadius: radius.full, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-              <View style={{ width: `${progress}%`, height: '100%', backgroundColor: note.color, borderRadius: radius.full }} />
-            </View>
-          </View>
-        ) : null}
-
-        {tags.length > 0 ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 13 }}>
-            {tags.slice(0, 4).map(tag => (
-              <View key={tag} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 5, borderRadius: radius.full, backgroundColor: colors.surface }}>
-                <Tag color={colors.textMuted} size={11} />
-                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>{tag}</Text>
+        backgroundColor: colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.glassBorder,
+      }}>
+        <View style={{ width: 4, backgroundColor: note.color }} />
+        <View style={{ flex: 1, minWidth: 0, paddingVertical: 14, paddingLeft: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16.5, flexShrink: 1 }]} numberOfLines={1}>{note.title}</Text>
+            {note.pinned ? <PushPin color={note.color} size={13} weight="fill" /> : null}
+            {note.favorite ? <Star color={colors.warning} size={13} weight="fill" /> : null}
+            <View style={{ flex: 1 }} />
+            <Pressable onPress={onMore} hitSlop={12} accessibilityRole="button" accessibilityLabel={tt('Note actions')}>
+              <View style={{ paddingHorizontal: 12, paddingVertical: 2 }}>
+                <DotsThree color={colors.textMuted} size={20} weight="bold" />
               </View>
-            ))}
+            </Pressable>
           </View>
-        ) : null}
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 }}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8, alignItems: 'center' }}
-            style={{ flex: 1 }}
-          >
-            {[
-              { key: 'pin', label: note.pinned ? tt('Unpin note') : tt('Pin note'), icon: <PushPin color={note.pinned ? note.color : colors.textMuted} size={16} weight={note.pinned ? 'fill' : 'regular'} />, onPress: onPin },
-              { key: 'favorite', label: note.favorite ? tt('Remove favorite') : tt('Add to favorites'), icon: <Star color={note.favorite ? colors.warning : colors.textMuted} size={16} weight={note.favorite ? 'fill' : 'regular'} />, onPress: onFavorite },
-              { key: 'share', label: tt('Share note'), icon: <ShareNetwork color={colors.textMuted} size={16} />, onPress: onShare },
-              { key: 'copy', label: tt('Duplicate note'), icon: <Copy color={colors.textMuted} size={16} />, onPress: onDuplicate },
-              { key: 'archive', label: note.archived ? tt('Restore note') : tt('Archive note'), icon: <Archive color={note.archived ? note.color : colors.textMuted} size={16} />, onPress: onArchive },
-              { key: 'delete', label: tt('Delete note'), icon: <Trash color={colors.textMuted} size={16} />, onPress: onDelete },
-            ].map(action => (
-              <AnimatedPressable
-                key={action.key}
-                onPress={action.onPress}
-                haptic="light"
-                accessibilityRole="button"
-                accessibilityLabel={action.label}
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: radius.card,
-                  backgroundColor: colors.surface,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.glassBorder,
-                }}
-              >
-                {action.icon}
-              </AnimatedPressable>
-            ))}
-          </ScrollView>
-          <AnimatedPressable
-            onPress={onPublish}
-            haptic="medium"
-            accessibilityRole="button"
-            accessibilityLabel={tt('Publish note as an Echo')}
-            style={{
-              paddingHorizontal: 13,
-              height: 34,
-              borderRadius: radius.card,
-              backgroundColor: `${note.color}22`,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: `${note.color}55`,
-            }}
-          >
-            <Text style={{ color: note.color, fontSize: 12, fontWeight: '900' }}>Echo</Text>
-          </AnimatedPressable>
+          {preview ? (
+            <Text style={[font.body, { color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 4, paddingRight: 14 }]} numberOfLines={3}>
+              {preview}
+            </Text>
+          ) : null}
+
+          {stats.total > 0 ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, paddingRight: 14 }}>
+              <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+                <View style={{ width: `${Math.round(progress * 100)}%`, height: '100%', backgroundColor: note.color }} />
+              </View>
+              <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: 11.5 }]}>{stats.done}/{stats.total}</Text>
+            </View>
+          ) : null}
+
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 8, paddingRight: 14 }]} numberOfLines={1}>{meta}</Text>
         </View>
-      </GlassPanel>
+      </View>
     </Pressable>
   );
 }
 
 export default function NotesApp() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const { tt } = useI18n();
   const router = useRouter();
-    const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [editing, setEditing] = useState<Note | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [search, setSearch] = useState('');
   const [view, setView] = useState<NoteView>('active');
   const [folderFilter, setFolderFilter] = useState('All');
   const [sortMode, setSortMode] = useState<SortMode>('recent');
+  const [menuNote, setMenuNote] = useState<Note | null>(null);
   const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
   const didVoiceRef = React.useRef(false);
 
@@ -628,7 +489,6 @@ export default function NotesApp() {
   const pinnedCount = activeNotes.filter(note => note.pinned).length;
   const favoriteCount = activeNotes.filter(note => note.favorite).length;
   const checklistCount = activeNotes.filter(note => checklistStats(note.body).total > 0).length;
-  const totalWords = activeNotes.reduce((sum, note) => sum + countWords(note.body), 0);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -700,34 +560,58 @@ export default function NotesApp() {
     router.push({ pathname: '/create-post', params: { prefillTitle: n.title, prefillBody: n.body } });
   };
 
+  const SORT_LABELS: Record<SortMode, string> = { recent: 'Recent', oldest: 'Oldest', title: 'A–Z' };
+  const nextSort: Record<SortMode, SortMode> = { recent: 'oldest', oldest: 'title', title: 'recent' };
+
+  // Pinned notes get their own section, except where the view is already
+  // about one kind of note.
+  const sectioned = view !== 'pinned' && view !== 'archive' && filtered.some(n => n.pinned) && filtered.some(n => !n.pinned);
+  const sections = sectioned
+    ? [
+      { key: 'pinned', label: tt('Pinned'), notes: filtered.filter(n => n.pinned) },
+      { key: 'notes', label: tt('Notes'), notes: filtered.filter(n => !n.pinned) },
+    ]
+    : [{ key: 'all', label: '', notes: filtered }];
+
+  const menuActions: ActionItem[] = menuNote ? [
+    { key: 'pin', label: menuNote.pinned ? tt('Unpin note') : tt('Pin note'), icon: <PushPin color={colors.text} size={18} />, onPress: () => mutateNote(menuNote.id, n => ({ ...n, pinned: !n.pinned }), menuNote.pinned ? tt('Unpinned') : tt('Pinned')) },
+    { key: 'favorite', label: menuNote.favorite ? tt('Remove favorite') : tt('Add to favorites'), icon: <Star color={colors.text} size={18} />, onPress: () => mutateNote(menuNote.id, n => ({ ...n, favorite: !n.favorite }), menuNote.favorite ? tt('Removed favorite') : tt('Favorited')) },
+    { key: 'share', label: tt('Share note'), icon: <ShareNetwork color={colors.text} size={18} />, onPress: () => shareNote(menuNote) },
+    { key: 'duplicate', label: tt('Duplicate note'), icon: <Copy color={colors.text} size={18} />, onPress: () => duplicateNote(menuNote) },
+    { key: 'publish', label: tt('Publish note as an Echo'), icon: <ArrowUpRight color={colors.text} size={18} />, onPress: () => publishAsEcho(menuNote) },
+    { key: 'archive', label: menuNote.archived ? tt('Restore note') : tt('Archive note'), icon: <Archive color={colors.text} size={18} />, onPress: () => mutateNote(menuNote.id, n => ({ ...n, archived: !n.archived, pinned: n.archived ? n.pinned : false }), menuNote.archived ? tt('Restored') : tt('Archived')) },
+    { key: 'delete', label: tt('Delete note'), icon: <Trash color="#EF4444" size={18} />, destructive: true, onPress: () => deleteNote(menuNote.id) },
+  ] : [];
+
   const NewBtn = (
     <AnimatedPressable
       onPress={() => openNew()}
-      scaleValue={0.88}
+      scaleValue={0.9}
       haptic="medium"
-      style={{ backgroundColor: colors.accent, borderRadius: radius.card, paddingHorizontal: 14, paddingVertical: 9, flexDirection: 'row', alignItems: 'center', gap: 7 }}
+      accessibilityLabel={tt('New note')}
+      style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}
     >
-      <Plus color={colors.bgPure} size={16} weight="bold" />
-      <Text style={{ color: colors.bgPure, fontWeight: '900', fontSize: 14 }}>{tt('New')}</Text>
+      <Plus color={colors.bgPure} size={20} weight="bold" />
     </AnimatedPressable>
   );
+
+  const filters: { id: NoteView; label: string; count?: number }[] = [
+    { id: 'active', label: 'All notes' },
+    { id: 'pinned', label: 'Pinned', count: pinnedCount },
+    { id: 'favorites', label: 'Favorites', count: favoriteCount },
+    { id: 'checklists', label: 'Checklists', count: checklistCount },
+    { id: 'archive', label: 'Archive' },
+  ];
 
   return (
     <MiniAppShell
       title={tt('Notes')}
-      subtitle={activeNotes.length > 0 ? `${activeNotes.length} ${tt('active')} · ${totalWords} ${tt('words')}` : tt('Capture ideas, tasks, research')}
+      subtitle={activeNotes.length > 0 ? `${activeNotes.length} ${activeNotes.length === 1 ? tt('note') : tt('notes')}` : tt('Capture ideas, tasks, research')}
       headerRight={NewBtn}
       bottomPad={56}
     >
-      {/* The command deck repeated what the header already says — "4 active ·
-          794 words" in the subtitle, then Active 4 and Words 794 again in the
-          deck — and cost roughly a quarter of the screen to do it, pushing the
-          notes themselves below the fold. The header carries the counts. */}
-
-
-      {/* Templates help when there is nothing to look at yet. Once notes exist
-          they are permanent clutter above the content, and the header's + already
-          creates one. */}
+      {/* Templates help when there is nothing to look at yet; once notes exist
+          the header's + and the editor's "Start from" row cover them. */}
       {notes.length === 0 ? (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 9, paddingBottom: 14 }}>
         {TEMPLATES.map(template => (
@@ -744,9 +628,9 @@ export default function NotesApp() {
               borderColor: template.id === 'blank' ? colors.glassBorder : `${template.color}55`,
             }}
           >
-            <Waveform color={template.color} size={18} weight={template.id === 'blank' ? 'regular' : 'fill'} />
-            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', marginTop: 9 }}>{tt(template.label)}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
+            {TEMPLATE_ICONS[template.id]?.(template.id === 'blank' ? colors.textSecondary : template.color)}
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, marginTop: 9 }]}>{tt(template.label)}</Text>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>
               {tt(template.folder)}
             </Text>
           </AnimatedPressable>
@@ -754,55 +638,63 @@ export default function NotesApp() {
       </ScrollView>
       ) : null}
 
-      <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11, gap: 10 }} style={{ marginBottom: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, height: 46, borderRadius: radius.full, backgroundColor: colors.surface, marginBottom: 12 }}>
         <MagnifyingGlass color={colors.textMuted} size={18} />
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder={tt('Search notes, tags, folders...')}
+          placeholder={tt('Search notes')}
           placeholderTextColor={colors.textMuted}
-          style={{ flex: 1, color: colors.text, fontSize: 15, padding: 0 }}
+          style={[font.body, { flex: 1, color: colors.text, fontSize: 15, padding: 0 }]}
         />
         {search.length > 0 ? (
-          <Pressable onPress={() => setSearch('')}><X color={colors.textMuted} size={16} /></Pressable>
+          <Pressable onPress={() => setSearch('')} hitSlop={10} accessibilityRole="button" accessibilityLabel={tt('Clear search')}>
+            <X color={colors.textMuted} size={16} />
+          </Pressable>
         ) : null}
-      </GlassPanel>
+        <Pressable
+          onPress={() => setSortMode(mode => nextSort[mode])}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`${tt('Sort')}: ${tt(SORT_LABELS[sortMode])}`}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 10, borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.glassBorder }}>
+            <SortAscending color={colors.textSecondary} size={16} />
+            <Text style={[font.bodyBold, { color: colors.textSecondary, fontSize: 12.5 }]}>{tt(SORT_LABELS[sortMode])}</Text>
+          </View>
+        </Pressable>
+      </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 10 }}>
-        {[
-          { id: 'active', label: 'Active', icon: <FileText color={view === 'active' ? colors.bgPure : colors.textMuted} size={14} /> },
-          { id: 'pinned', label: 'Pinned', icon: <PushPin color={view === 'pinned' ? colors.bgPure : colors.textMuted} size={14} /> },
-          { id: 'favorites', label: 'Favorites', icon: <Star color={view === 'favorites' ? colors.bgPure : colors.textMuted} size={14} /> },
-          { id: 'checklists', label: 'Checklists', icon: <CheckSquare color={view === 'checklists' ? colors.bgPure : colors.textMuted} size={14} /> },
-          { id: 'archive', label: 'Archive', icon: <Archive color={view === 'archive' ? colors.bgPure : colors.textMuted} size={14} /> },
-          { id: 'all', label: 'All', icon: <FunnelSimple color={view === 'all' ? colors.bgPure : colors.textMuted} size={14} /> },
-        ].map(item => (
-          <MiniChip key={item.id} accent={colors.accent} label={tt(item.label)} active={view === item.id} onPress={() => setView(item.id as NoteView)} icon={item.icon} />
-        ))}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16, alignItems: 'center' }}>
+        {filters.filter(f => f.count === undefined || f.count > 0 || view === f.id).map(f => {
+          const active = view === f.id;
+          return (
+            <Pressable key={f.id} onPress={() => setView(f.id)} accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={tt(f.label)}>
+              <View style={{ height: 34, paddingHorizontal: 14, borderRadius: radius.full, justifyContent: 'center', backgroundColor: active ? colors.text : colors.surface }}>
+                <Text style={[font.bodyBold, { color: active ? colors.bg : colors.textSecondary, fontSize: 13 }]}>
+                  {tt(f.label)}{f.count ? ` ${f.count}` : ''}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+        {folders.length > 1 ? (
+          <>
+            <View style={{ width: StyleSheet.hairlineWidth, height: 20, backgroundColor: colors.glassBorder, marginHorizontal: 2 }} />
+            {folders.map(folder => {
+              const active = folderFilter === folder;
+              return (
+                <Pressable key={folder} onPress={() => setFolderFilter(folder)} accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={`${tt('Folder')} ${tt(folder)}`}>
+                  <View style={{ height: 34, paddingHorizontal: 12, borderRadius: radius.full, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: active ? `${colors.accent}33` : 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.glassBorder }}>
+                    <FolderOpen color={active ? colors.accent : colors.textMuted} size={13} />
+                    <Text style={[font.bodyBold, { color: active ? colors.accent : colors.textMuted, fontSize: 12.5 }]}>{tt(folder)}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </>
+        ) : null}
       </ScrollView>
-
-      {/* Nothing to filter or reorder below a handful of notes in one folder. */}
-      {folders.length > 0 || notes.length > 4 ? (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
-        {folders.map(folder => (
-          <MiniChip
-            key={folder}
-            accent={colors.accent}
-            label={tt(folder)}
-            active={folderFilter === folder}
-            onPress={() => setFolderFilter(folder)}
-            icon={<FolderOpen color={folderFilter === folder ? colors.bgPure : colors.textMuted} size={14} />}
-          />
-        ))}
-        {[
-          { id: 'recent', label: 'Recent' },
-          { id: 'oldest', label: 'Oldest' },
-          { id: 'title', label: 'A-Z' },
-        ].map(mode => (
-          <MiniChip key={mode.id} accent={colors.accent} label={tt(mode.label)} active={sortMode === mode.id} onPress={() => setSortMode(mode.id as SortMode)} />
-        ))}
-      </ScrollView>
-      ) : null}
 
       {filtered.length === 0 ? (
         <MiniEmptyState
@@ -814,24 +706,23 @@ export default function NotesApp() {
           onAction={search ? undefined : () => openNew()}
         />
       ) : (
-        <View style={{ gap: 12 }}>
-          {filtered.map((note, i) => (
-            <Animated.View key={note.id} entering={FadeInDown.delay(Math.min(i * 35, 220)).duration(220)}>
-              <NoteCard
-                note={note}
-                onOpen={() => openNote(note)}
-                onPin={() => mutateNote(note.id, n => ({ ...n, pinned: !n.pinned }), note.pinned ? tt('Unpinned') : tt('Pinned'))}
-                onFavorite={() => mutateNote(note.id, n => ({ ...n, favorite: !n.favorite }), note.favorite ? tt('Removed favorite') : tt('Favorited'))}
-                onArchive={() => mutateNote(note.id, n => ({ ...n, archived: !n.archived, pinned: n.archived ? n.pinned : false }), note.archived ? tt('Restored') : tt('Archived'))}
-                onDuplicate={() => duplicateNote(note)}
-                onShare={() => shareNote(note)}
-                onPublish={() => publishAsEcho(note)}
-                onDelete={() => deleteNote(note.id)}
-              />
-            </Animated.View>
+        <View style={{ gap: 18 }}>
+          {sections.map(section => (
+            <View key={section.key} style={{ gap: 10 }}>
+              {section.label ? (
+                <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', marginLeft: 4 }]}>{section.label}</Text>
+              ) : null}
+              {section.notes.map((note, i) => (
+                <Animated.View key={note.id} entering={FadeInDown.delay(Math.min(i * 30, 180)).duration(200)}>
+                  <NoteCard note={note} onOpen={() => openNote(note)} onMore={() => setMenuNote(note)} />
+                </Animated.View>
+              ))}
+            </View>
           ))}
         </View>
       )}
+
+      <ActionSheet visible={!!menuNote} onClose={() => setMenuNote(null)} subtitle={menuNote?.title} actions={menuActions} />
 
       {showEditor ? (
         <NoteEditor note={editing} onSave={saveNote} onClose={() => setShowEditor(false)} />

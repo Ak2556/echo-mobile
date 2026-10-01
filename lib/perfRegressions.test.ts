@@ -31,3 +31,14 @@ describe('no live blur per list row', () => {
     expect(chip).not.toMatch(/from 'expo-blur'|react-native-skia|<LiquidGlass|<GlassPanel/);
   });
 });
+
+describe('pressable layout', () => {
+  it('an animated pressable with no size does not stretch its box', () => {
+    // A `flex: 1` box inside an unsized animated touchable stretched Dice's
+    // Roll and Flip buttons to ~12,000px and hid the rest of the screen.
+    const src = readFileSync('components/ui/AnimatedPressable.tsx', 'utf8');
+    const heavy = src.slice(src.indexOf('function HeavyPressable'));
+    expect(heavy).toMatch(/<View style=\{\[inner, fillFor\(outer\)\]\}>/);
+    expect(heavy).not.toMatch(/<View style=\{\[inner, styles\.fill\]\}>/);
+  });
+});

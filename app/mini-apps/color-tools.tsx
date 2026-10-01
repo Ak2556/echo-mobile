@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet , Clipboard } from 'react-native';
+import { parseHexInput } from '../../lib/hexInput';
 import { Check, Copy, FloppyDisk, Shuffle } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
@@ -110,9 +111,9 @@ export default function ColorToolsScreen() {
   const textColor = rgb && lum(rgb.r,rgb.g,rgb.b) > 0.179 ? colors.text : colors.bgPure;
 
   const applyHex = (h: string) => {
-    const c = h.startsWith('#') ? h : `#${h}`;
-    setInputHex(c);
-    if (/^#[0-9A-Fa-f]{6}$/.test(c)) setHex(c);
+    const { display, color } = parseHexInput(h);
+    setInputHex(display);
+    if (color) setHex(color);
   };
   const copyVal = (v: string) => { Clipboard.setString(v); setCopied(v); setTimeout(()=>setCopied(''),2000); };
   const randomize = () => { const c = RANDOMS[Math.floor(Math.random()*RANDOMS.length)]; setHex(c); setInputHex(c); };
