@@ -25,7 +25,6 @@ function getDice(colors: { danger: string; warning: string; success: string; acc
   ];
 }
 
-type DieItem = ReturnType<typeof getDice>[number];
 
 interface HistoryEntry { die: string; result: number; color: string; ts: number }
 
@@ -54,40 +53,6 @@ function DieFace({ value, sides, color }: { value: number; sides: number; color:
     <View style={{ width: 100, height: 100, borderRadius: radius.card, backgroundColor: color + '18', borderWidth: 2.5, borderColor: color + '55', alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ color, fontSize: 36, ...font.displayBlack, letterSpacing: -1 }}>{value}</Text>
     </View>
-  );
-}
-
-function ChancePulse({ accent, selectedDie, diceCount, history }: { accent: string; selectedDie: DieItem; diceCount: number; history: HistoryEntry[] }) {
-  const { colors, radius } = useTheme();
-  const max = selectedDie.sides * diceCount;
-  const average = ((selectedDie.sides + 1) / 2) * diceCount;
-  const coinFlips = history.filter(item => item.die === 'Coin').length;
-  const stats = [
-    { label: 'Range', value: `${diceCount}-${max}`, detail: 'possible' },
-    { label: 'Average', value: `${average % 1 ? average.toFixed(1) : average}`, detail: 'expected' },
-    { label: 'Coin', value: `${coinFlips}`, detail: 'flips' },
-  ];
-  return (
-    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
-          <DiceSix color={accent} size={22} weight="duotone" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Chance board")}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Rolls, odds, record.")}</Text>
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {stats.map(stat => (
-          <View key={stat.label} style={{ flex: 1, minHeight: 62, borderRadius: radius.lg, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-            <Text style={{ color: accent, fontSize: 17, fontWeight: '900' }} numberOfLines={1}>{stat.value}</Text>
-            <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '900', marginTop: 4 }}>{stat.label}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', marginTop: 1 }}>{stat.detail}</Text>
-          </View>
-        ))}
-      </View>
-    </GlassPanel>
   );
 }
 
@@ -157,7 +122,6 @@ export default function DiceApp() {
         ]}
         chips={['Games', 'Draws', 'Group proof']}
       />
-      <ChancePulse accent={selectedDie.color} selectedDie={selectedDie} diceCount={diceCount} history={history} />
       {/* Die selector */}
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SELECT DIE")}</Text>

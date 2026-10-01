@@ -688,22 +688,6 @@ export default function HabitsApp() {
         </GlassPanel>
       )}
 
-      <EdgeFeaturePanel
-        appName="Habits"
-        accent={colors.accent}
-        headline={tt('Make consistency social')}
-        caption={tt('Share streaks, compare progress, and turn proof-backed habits into public updates.')}
-        metrics={[
-          { label: tt('Today'), value: `${doneToday}/${dueToday.length}` },
-          { label: tt('Best streak'), value: `${bestStreak}` },
-          { label: tt('Proofs'), value: `${proofCount}` },
-        ]}
-        prompt="Review my habit streaks and help me choose the smallest realistic next action for today."
-        shareText={`Habit progress: ${doneToday}/${dueToday.length} habits done today, best streak ${bestStreak} days, ${proofCount} proof notes/photos saved.`}
-        publishTitle="Habit progress"
-        publishBody={`Today I completed ${doneToday} of ${dueToday.length} scheduled habits. My best active streak is ${bestStreak} days, with ${proofCount} proof-backed check-ins.`}
-      />
-
       {active.length === 0 && archived.length === 0 && (
         <MiniEmptyState
           accent={colors.accent}
@@ -820,6 +804,23 @@ export default function HabitsApp() {
           ))}
         </View>
       )}
+
+      {/* Echo actions sit after the content, not between a summary and the list it summarises. */}
+      <EdgeFeaturePanel
+        appName="Habits"
+        accent={colors.accent}
+        headline={tt('Make consistency social')}
+        caption={tt('Share streaks, compare progress, and turn proof-backed habits into public updates.')}
+        metrics={[
+          { label: tt('Today'), value: `${doneToday}/${dueToday.length}` },
+          { label: tt('Best streak'), value: `${bestStreak}` },
+          { label: tt('Proofs'), value: `${proofCount}` },
+        ]}
+        prompt="Review my habit streaks and help me choose the smallest realistic next action for today."
+        shareText={`Habit progress: ${doneToday}/${dueToday.length} habits done today, best streak ${bestStreak} days, ${proofCount} proof notes/photos saved.`}
+        publishTitle="Habit progress"
+        publishBody={`Today I completed ${doneToday} of ${dueToday.length} scheduled habits. My best active streak is ${bestStreak} days, with ${proofCount} proof-backed check-ins.`}
+      />
 
       {detailHabit && !editHabit && (
         <HabitDetail

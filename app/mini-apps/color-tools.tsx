@@ -60,42 +60,20 @@ function mix(hex: string, amount: number, target = 255) {
   );
 }
 
-function ColorIntelligencePanel({ hex, saved }: { hex: string; saved: string[] }) {
+function ColorIntelligencePanel({ hex }: { hex: string; saved: string[] }) {
   const { colors, radius } = useTheme();
-  const rgb = hexToRgb(hex);
-  const hsl = rgb ? rgbToHsl(rgb.r, rgb.g, rgb.b) : null;
-  const whiteContrast = rgb ? (1.05 / (lum(rgb.r, rgb.g, rgb.b) + 0.05)) : 0;
-  const blackContrast = rgb ? ((lum(rgb.r, rgb.g, rgb.b) + 0.05) / 0.05) : 0;
-  const bestText = whiteContrast >= blackContrast ? 'White' : 'Black';
-  const system = hsl ? (hsl.s < 18 ? 'Neutral' : hsl.l < 30 ? 'Deep' : hsl.l > 72 ? 'Soft' : 'Vivid') : 'Draft';
   const shades = [mix(hex, 0.66), mix(hex, 0.34), hex.toUpperCase(), mix(hex, 0.22, 0), mix(hex, 0.44, 0)];
+  // Just the scale. The card also repeated the stat strip above it (contrast,
+  // saved count) behind a "Palette intelligence" headline.
   return (
-    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${hex}55` }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: hex, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Palette intelligence")}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Contrast, tone, scale.")}</Text>
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {[
-          { label: 'Text', value: bestText },
-          { label: 'Tone', value: system },
-          { label: 'Saved', value: `${saved.length}` },
-        ].map(item => (
-          <View key={item.label} style={{ flex: 1, minHeight: 58, borderRadius: radius.lg, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-            <Text style={{ color: hex, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>{item.value}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900', textTransform: 'uppercase', marginTop: 5 }}>{item.label}</Text>
-          </View>
-        ))}
-      </View>
+    <View style={{ marginBottom: 14 }}>
+      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("TINTS & SHADES")}</Text>
       <View style={{ flexDirection: 'row', gap: 6, height: 42 }}>
         {shades.map(shade => (
           <View key={shade} style={{ flex: 1, borderRadius: radius.md, backgroundColor: shade, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
         ))}
       </View>
-    </GlassPanel>
+    </View>
   );
 }
 
@@ -177,22 +155,6 @@ export default function ColorToolsScreen() {
         </GlassPanel>
       )}
 
-      <EdgeFeaturePanel
-        appName="Color Tools"
-        accent={colors.accent}
-        headline={ttx("Make palettes usable")}
-        caption={ttx("Share accessible color specs, post a palette decision, or ask Echo for UI usage guidance.")}
-        metrics={[
-          { label: 'HEX', value: hex.toUpperCase() },
-          { label: 'RGB', value: rgb ? `${rgb.r},${rgb.g},${rgb.b}` : '-' },
-          { label: 'Saved', value: `${saved.length}` },
-        ]}
-        prompt={`Suggest an accessible UI palette and usage rules around ${hex}.`}
-        shareText={rgb && hsl ? `${hex.toUpperCase()} · rgb(${rgb.r}, ${rgb.g}, ${rgb.b}) · hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%) · ${contrast(hex)}` : hex}
-        publishTitle="Color decision"
-        publishBody={`Selected ${hex.toUpperCase()} for a design direction. Contrast: ${contrast(hex)}.`}
-      />
-
       {/* Saved */}
       {saved.length > 0 && (
         <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
@@ -224,6 +186,23 @@ export default function ColorToolsScreen() {
           </View>
         </GlassPanel>
       ))}
+      {/* Echo actions sit after the content, not between a summary and the list it summarises. */}
+      <EdgeFeaturePanel
+        appName="Color Tools"
+        accent={colors.accent}
+        headline={ttx("Make palettes usable")}
+        caption={ttx("Share accessible color specs, post a palette decision, or ask Echo for UI usage guidance.")}
+        metrics={[
+          { label: 'HEX', value: hex.toUpperCase() },
+          { label: 'RGB', value: rgb ? `${rgb.r},${rgb.g},${rgb.b}` : '-' },
+          { label: 'Saved', value: `${saved.length}` },
+        ]}
+        prompt={`Suggest an accessible UI palette and usage rules around ${hex}.`}
+        shareText={rgb && hsl ? `${hex.toUpperCase()} · rgb(${rgb.r}, ${rgb.g}, ${rgb.b}) · hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%) · ${contrast(hex)}` : hex}
+        publishTitle="Color decision"
+        publishBody={`Selected ${hex.toUpperCase()} for a design direction. Contrast: ${contrast(hex)}.`}
+      />
+
     </MiniAppShell>
   );
 }

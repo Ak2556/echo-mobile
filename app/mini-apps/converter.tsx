@@ -4,7 +4,6 @@ import { ArrowsLeftRight } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../src/shared/lib/theme';
 import { ttx } from '../../src/shared/lib/i18n';
 
@@ -61,33 +60,6 @@ function convertTemp(val: number, from: string, to: string): number {
   return to === '°Celsius' ? c : to === '°Fahrenheit' ? c * 9 / 5 + 32 : c + 273.15;
 }
 
-function ConversionPulse({ accent, category, from, to, input, result }: { accent: string; category: string; from: string; to: string; input: string; result: string }) {
-  const { colors, radius, font } = useTheme();
-  const valid = result !== '-';
-  return (
-    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
-          <ArrowsLeftRight color={accent} size={20} weight="bold" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Conversion cockpit")}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Exact answer, reusable context.")}</Text>
-        </View>
-      </View>
-      <View style={{ borderRadius: radius.lg, padding: 14, backgroundColor: valid ? `${accent}14` : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: valid ? `${accent}44` : colors.glassBorder }}>
-        <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900', textTransform: 'uppercase', marginBottom: 5 }}>{category}</Text>
-        <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>
-          {input || '0'} {from}
-        </Text>
-        <Text style={{ color: accent, fontSize: 24, ...font.displayBlack, marginTop: 4 }} numberOfLines={1} adjustsFontSizeToFit>
-          {result} {to}
-        </Text>
-      </View>
-    </GlassPanel>
-  );
-}
-
 export default function ConverterScreen() {
   const { colors, radius, font } = useTheme();
   const [catIdx, setCatIdx] = useState(0);
@@ -131,25 +103,6 @@ export default function ConverterScreen() {
       </ScrollView>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <MiniCommandDeck
-          accent={accent}
-          title={ttx("Universal quick converter")}
-          subtitle={ttx("Units, formula, shareable answer.")}
-          metrics={[
-            { label: 'Category', value: cat.marker, detail: cat.name },
-            { label: 'From', value: cat.units[fromIdx]?.label ?? '-', detail: 'source' },
-            { label: 'To', value: cat.units[toIdx]?.label ?? '-', detail: 'target' },
-          ]}
-          chips={['Length', 'Data', 'Energy', 'Pressure']}
-        />
-        <ConversionPulse
-          accent={accent}
-          category={cat.name}
-          from={cat.units[fromIdx]?.label ?? '-'}
-          to={cat.units[toIdx]?.label ?? '-'}
-          input={input}
-          result={result}
-        />
         {/* FROM */}
         <GlassPanel variant="medium" borderRadius={radius.card} style={{ borderColor: accent + '55', borderWidth: 1 }} contentStyle={{ padding: 20 }}>
           <Text style={{ color: accent, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("FROM")}</Text>

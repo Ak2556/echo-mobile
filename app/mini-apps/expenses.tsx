@@ -20,10 +20,11 @@ import { useI18n } from '../../src/shared/lib/i18n';
 import { showToast } from '../../components/ui/Toast';
 import { CURRENCIES, formatPrice, getCurrencySymbol, type CurrencyCode } from '../../lib/currency';
 import {
-  DEFAULT_EXPENSE_CURRENCY, EXPENSE_CATS, INCOME_CATS, ExpensesDoc, Transaction, TxType, categoryMarker, Party, PartyType, KhataProfile,
+  DEFAULT_EXPENSE_CURRENCY, EXPENSE_CATS, INCOME_CATS, ExpensesDoc, Transaction, TxType, Party, PartyType, KhataProfile,
   currentMonthKey, formatDate, loadExpensesDoc, monthKey, monthLabel,
   saveExpensesDoc, shiftMonth, transactionsToCsv, pnlToCsv, daybookToCsv, gstReportToCsv, generatePdfHtml
 } from '../../lib/expenses';
+import { MoneyCategoryIcon } from '../../components/mini-apps/MoneyCategoryIcon';
 
 const PROFILE_TERM: Record<KhataProfile, any> = {
   personal: {
@@ -182,7 +183,7 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
                 {cats.map(c => (
                   <Pressable key={c.label} onPress={() => { setCategory(c.label); setError(''); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.md, backgroundColor: category === c.label ? colors.accent + '22' : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: category === c.label ? 1.5 : StyleSheet.hairlineWidth, borderColor: category === c.label ? colors.accent : colors.glassBorder }}>
-                      <Text style={{ color: category === c.label ? colors.accent : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{c.marker}</Text>
+                      <MoneyCategoryIcon category={c.label} color={category === c.label ? colors.accent : colors.textMuted} size={15} />
                       <Text style={{ color: category === c.label ? colors.accent : colors.text, fontWeight: '600', fontSize: 13 }}>{tt(c.label)}</Text>
                     </View>
                   </Pressable>
@@ -762,7 +763,7 @@ export default function ExpensesApp() {
           <Animated.View key={tx.id} entering={FadeInDown.delay(Math.min(i, 8) * 40).duration(220)} style={{ marginBottom: 10 }}>
             <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}>
               <View style={{ width: 48, height: 48, borderRadius: radius.card, backgroundColor: iconColor + '18', borderWidth: 1, borderColor: iconColor + '33', alignItems: 'center', justifyContent: 'center' }}>
-                {tx.invoiceNo ? <FileText color={iconColor} size={20} weight="fill" /> : <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>{categoryMarker(tx.category)}</Text>}
+                {tx.invoiceNo ? <FileText color={iconColor} size={20} weight="fill" /> : <MoneyCategoryIcon category={tx.category} color={iconColor} size={20} />}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{tt(title)}</Text>
