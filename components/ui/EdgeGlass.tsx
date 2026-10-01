@@ -136,7 +136,9 @@ export function EdgeGlass({
   // of it is — that line was clearly there on Android. So the hold releases just
   // inside the bar and the falloff is stepped to approximate an ease rather than a
   // straight ramp; the eye finds a slope change far harder to see than a kink.
-  const wash = colors.isDark ? 0.55 : 0.6;
+  // Lighter and more transparent than it was (0.55 / 0.6): the live blur
+  // underneath carries legibility, so the wash only tints it.
+  const wash = colors.isDark ? 0.4 : 0.45;
   const tailFraction = 1 - barFraction;
   const washColors = [
     withAlpha(base, wash),
