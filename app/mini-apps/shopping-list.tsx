@@ -18,11 +18,13 @@ import { ttx } from '../../src/shared/lib/i18n';
 import { emit } from '../../lib/minilink/queue';
 import { drainMiniLink, undoFact } from '../../lib/minilink/drain';
 import { hasApplied } from '../../lib/minilink/ledger';
-import { shouldEmitPurchase, describePostDrain, describeUndo } from '../../lib/minilink/rules';
+import { shouldEmitPurchase, describePostDrain, describeUndo, purchaseAmount } from '../../lib/minilink/rules';
 import { defaultCurrency, getCurrencySymbol } from '../../lib/currency';
+import { loadExpensesDoc } from '../../lib/expenses';
 
-// Money shows in the device region's currency (INR fallback), not a hardcoded "$".
-const CUR = getCurrencySymbol(defaultCurrency());
+// Money shows in the currency chosen in Expenses, which is where checked-off
+// items are logged; the device region's (INR fallback) until that loads.
+const DEFAULT_CUR = getCurrencySymbol(defaultCurrency());
 
 /**
  * Reverse a delivered purchase fact and report honestly if it didn't happen.
@@ -58,6 +60,7 @@ export default function ShoppingListScreen() {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('Produce');
   const [filter, setFilter] = useState('All');
+  const [cur, setCur] = useState(DEFAULT_CUR);
   
   const [isAdding, setIsAdding] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -65,6 +68,10 @@ export default function ShoppingListScreen() {
 
   const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
   const didVoiceRef = React.useRef(false);
+
+  useFocusEffect(React.useCallback(() => {
+    loadExpensesDoc().then(doc => setCur(getCurrencySymbol(doc.currency))).catch(() => {});
+  }, []));
 
   useFocusEffect(React.useCallback(() => {
     loadShoppingData().then((loaded) => {
@@ -157,7 +164,7 @@ export default function ShoppingListScreen() {
     // slow or failing delivery cannot make the checkbox feel laggy.
     const fact = emit('purchase', 'shopping-list', item.id, {
       label: item.name,
-      amount: item.price,
+      amount: purchaseAmount(item),
       category: item.category,
     });
     if (!fact) return;
@@ -224,7 +231,7 @@ export default function ShoppingListScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Est. Total</Text>
-            <Text style={{ color: colors.text, fontSize: 36, fontWeight: '900', marginTop: 4 }}>{CUR}{stats.cost.toFixed(2)}</Text>
+            <Text style={{ color: colors.text, fontSize: 36, fontWeight: '900', marginTop: 4 }}>{cur}{stats.cost.toFixed(2)}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Remaining</Text>
@@ -275,7 +282,7 @@ export default function ShoppingListScreen() {
                 <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
                   {item.price > 0 && (
                     <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginBottom: 4 }}>
-                      {CUR}{(item.price * (parseFloat(item.quantity) || 1)).toFixed(2)}
+                      {cur}{(item.price * (parseFloat(item.quantity) || 1)).toFixed(2)}
                     </Text>
                   )}
                   <Pressable onPress={() => remove(item)} hitSlop={12} style={{ padding: 4, backgroundColor: colors.inputBg, borderRadius: radius.md }}>

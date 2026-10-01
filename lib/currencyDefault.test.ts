@@ -33,10 +33,17 @@ describe('the audited screens', () => {
 
   it('no hardcoded "$" money in Bill Splitter or Shopping List', () => {
     for (const f of ['app/mini-apps/bill-splitter.tsx', 'app/mini-apps/shopping-list.tsx']) {
-      const src = read(f);
-      expect(src, f).not.toMatch(/\$\$\{|>\$\{|>\$</);
-      expect(src, f).toMatch(/const CUR = getCurrencySymbol\(defaultCurrency\(\)\)/);
+      expect(read(f), f).not.toMatch(/\$\$\{|>\$\{|>\$</);
     }
+    expect(read('app/mini-apps/bill-splitter.tsx')).toMatch(/const CUR = getCurrencySymbol\(defaultCurrency\(\)\)/);
+  });
+
+  it('Shopping List shows the currency Expenses logs in', () => {
+    // Checked-off items are logged to Expenses, so the list follows its
+    // currency: it showed "$" while Khata recorded the same item in ₹.
+    const src = read('app/mini-apps/shopping-list.tsx');
+    expect(src).toMatch(/const DEFAULT_CUR = getCurrencySymbol\(defaultCurrency\(\)\)/);
+    expect(src).toMatch(/loadExpensesDoc\(\)\.then\(doc => setCur\(getCurrencySymbol\(doc\.currency\)\)\)/);
   });
 
   it('the Khata default is the device currency, not USD', () => {

@@ -9,6 +9,7 @@ import {
   getHabitStreak, isScheduledOn, todayStr,
 } from '../../lib/habits';
 import { ttx } from '../../src/shared/lib/i18n';
+import { HabitMarkerIcon } from './HabitMarkerIcon';
 
 function monthDays(year: number, month: number): (string | null)[] {
   const first = new Date(year, month, 1);
@@ -69,7 +70,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: insets.top + 8, paddingBottom: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
           <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: habit.color, fontSize: 12, fontWeight: '800' }}>{habit.marker}</Text>
+            <HabitMarkerIcon marker={habit.marker} color={habit.color} size={20} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontSize: 19, ...font.displayBlack }} numberOfLines={1}>{habit.name}</Text>

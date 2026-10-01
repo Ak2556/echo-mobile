@@ -73,6 +73,9 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
   const [newPartyName, setNewPartyName] = useState('');
   const [invoiceNo, setInvoiceNo] = useState('');
   const [taxAmount, setTaxAmount] = useState('');
+  // Shown inline: a toast renders behind this full-screen modal, so a failed
+  // Save looked like the button did nothing.
+  const [error, setError] = useState('');
   
   const isKhata = type === 'sale' || type === 'purchase' || type === 'receipt' || type === 'payment';
   const cats = (type === 'expense' || type === 'purchase' || type === 'payment') ? EXPENSE_CATS : INCOME_CATS;
@@ -80,8 +83,8 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
 
   const submit = () => {
     const num = parseFloat(amount.replace(/,/g, ''));
-    if (!num || num <= 0) { showToast(tt('Enter a valid amount'), tt('Error')); return; }
-    if (!category && !isKhata) { showToast(tt('Pick a category'), tt('Required')); return; }
+    if (!num || num <= 0) { setError(tt('Enter a valid amount')); return; }
+    if (!category && !isKhata) { setError(tt('Pick a category')); return; }
     
     let createdParty: Party | undefined;
     let finalPartyId = partyId;
@@ -132,7 +135,7 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('AMOUNT')}</Text>
             <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }} style={{ borderColor: colors.accent + '44' }}>
               <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '900', marginRight: 8 }}>{getCurrencySymbol(currency)}</Text>
-              <TextInput value={amount} onChangeText={setAmount} placeholder="0.00" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" autoFocus style={{ flex: 1, color: colors.text, fontSize: 28, fontWeight: '800', paddingVertical: 14 }} />
+              <TextInput value={amount} onChangeText={v => { setAmount(v); setError(''); }} placeholder="0.00" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" autoFocus style={{ flex: 1, color: colors.text, fontSize: 28, fontWeight: '800', paddingVertical: 14 }} />
             </GlassPanel>
           </View>
 
@@ -177,7 +180,7 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('CATEGORY')}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {cats.map(c => (
-                  <Pressable key={c.label} onPress={() => setCategory(c.label)}>
+                  <Pressable key={c.label} onPress={() => { setCategory(c.label); setError(''); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.md, backgroundColor: category === c.label ? colors.accent + '22' : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: category === c.label ? 1.5 : StyleSheet.hairlineWidth, borderColor: category === c.label ? colors.accent : colors.glassBorder }}>
                       <Text style={{ color: category === c.label ? colors.accent : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{c.marker}</Text>
                       <Text style={{ color: category === c.label ? colors.accent : colors.text, fontWeight: '600', fontSize: 13 }}>{tt(c.label)}</Text>
@@ -193,6 +196,10 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('NOTE (optional)')}</Text>
             <TextInput value={note} onChangeText={setNote} placeholder={tt('What was this for?')} placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
           </View>
+
+          {error ? (
+            <Text accessibilityLiveRegion="polite" style={{ color: colors.danger, fontSize: 14, fontWeight: '700', textAlign: 'center' }}>{error}</Text>
+          ) : null}
 
           <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: radius.card, paddingVertical: 16, alignItems: 'center', shadowColor: colors.accent, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
             <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{tt('Save Entry')}</Text>

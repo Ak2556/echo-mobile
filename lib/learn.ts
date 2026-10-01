@@ -3,6 +3,7 @@ import { type CurrencyCode } from './currency';
 import { createNote } from './notes';
 import { loadPlanner, plannerToday, savePlanner, type PlannerItem } from './planner';
 import { loadTasks, saveTasks, todayTaskDate, type TaskItem } from './tasks';
+import { localDayKey, shiftDayKey } from './localDate';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 
 export const LEARN_KEY = 'mini:learn';
@@ -251,6 +252,11 @@ export interface LearningGoal {
   studyMinutes: number;
   streak: number;
   lastStudiedAt?: string;
+  /**
+   * What the goal looked like before a ticked step credited today's study,
+   * so unticking that same step can take the credit back.
+   */
+  studyCredit?: { day: string; taskId: string; streak: number; studyMinutes: number; lastStudiedAt?: string };
 }
 
 export const LEARNING_CATEGORIES = [
@@ -312,7 +318,7 @@ function templateModules(goal: Pick<LearningGoal, 'title' | 'mode' | 'level' | '
     description,
     status: index === 0 ? 'active' : 'locked',
     tasks: [
-      { id: `${Date.now()}-${index}-lesson`, title: index === 0 ? `Study ${subject} for ${goal.targetOutcome || 'the target'}` : `Complete ${title.toLowerCase()}`, type: 'lesson', done: false },
+      { id: `${Date.now()}-${index}-lesson`, title: index === 0 ? `Study the core ideas of ${subject}` : `Complete ${title.toLowerCase()}`, type: 'lesson', done: false },
       { id: `${Date.now()}-${index}-practice`, title: teacherMode ? 'Create one assignment or prompt' : 'Do one active practice rep', type: 'practice', done: false },
       { id: `${Date.now()}-${index}-review`, title: 'Write the key mistake or insight', type: 'review', done: false },
     ],
@@ -577,6 +583,7 @@ function normalize(raw: unknown): LearningGoal[] {
       studyMinutes: typeof item.studyMinutes === 'number' ? item.studyMinutes : 0,
       streak: typeof item.streak === 'number' ? item.streak : 0,
       lastStudiedAt: typeof item.lastStudiedAt === 'string' ? item.lastStudiedAt : undefined,
+      studyCredit: item.studyCredit && typeof item.studyCredit === 'object' ? item.studyCredit as LearningGoal['studyCredit'] : undefined,
     }));
 }
 
@@ -848,7 +855,25 @@ export function buildEchoPartnerPrompt(goal: LearningGoal, action: EchoLearningP
   ].join('\n');
 }
 
+/**
+ * The streak after studying today. Continues from yesterday, holds if today
+ * already counted, and otherwise restarts at 1. Days are local, not UTC:
+ * slicing the ISO string put a 04:00 IST session on the previous day.
+ */
+function streakAfterStudy(goal: LearningGoal): number {
+  const today = todayTaskDate();
+  const last = goal.lastStudiedAt ? localDayKey(new Date(goal.lastStudiedAt)) : undefined;
+  if (last === today) return goal.streak;
+  if (last === shiftDayKey(today, -1)) return goal.streak + 1;
+  return 1;
+}
+
+function studiedToday(goal: LearningGoal): boolean {
+  return !!goal.lastStudiedAt && localDayKey(new Date(goal.lastStudiedAt)) === todayTaskDate();
+}
+
 export function toggleLearningTask(goal: LearningGoal, moduleId: string, taskId: string): LearningGoal {
+  const wasDone = goal.modules.find(module => module.id === moduleId)?.tasks.find(task => task.id === taskId)?.done ?? false;
   const modules = goal.modules.map(module => {
     if (module.id !== moduleId) return module;
     const tasks = module.tasks.map(task => task.id === taskId ? { ...task, done: !task.done } : task);
@@ -860,14 +885,29 @@ export function toggleLearningTask(goal: LearningGoal, moduleId: string, taskId:
     ...module,
     status: module.status === 'completed' ? 'completed' as const : index === Math.max(firstOpenIndex, 0) ? 'active' as const : 'locked' as const,
   }));
-  const studiedToday = goal.lastStudiedAt?.slice(0, 10) === todayTaskDate();
+  const now = new Date().toISOString();
+  const today = todayTaskDate();
+
+  if (wasDone) {
+    // Unticking is not studying. If this step earned today's credit and
+    // nothing has been logged since, put the goal back how it was.
+    const credit = goal.studyCredit;
+    const undo = credit && credit.day === today && credit.taskId === taskId
+      && goal.studyMinutes === credit.studyMinutes + goal.dailyMinutes;
+    return undo
+      ? { ...goal, modules: nextModules, streak: credit.streak, studyMinutes: credit.studyMinutes, lastStudiedAt: credit.lastStudiedAt, studyCredit: undefined, updatedAt: now }
+      : { ...goal, modules: nextModules, updatedAt: now };
+  }
+
+  if (studiedToday(goal)) return { ...goal, modules: nextModules, lastStudiedAt: now, updatedAt: now };
   return {
     ...goal,
     modules: nextModules,
-    studyMinutes: goal.studyMinutes + (studiedToday ? 0 : goal.dailyMinutes),
-    streak: studiedToday ? goal.streak : goal.streak + 1,
-    lastStudiedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    studyMinutes: goal.studyMinutes + goal.dailyMinutes,
+    streak: streakAfterStudy(goal),
+    lastStudiedAt: now,
+    studyCredit: { day: today, taskId, streak: goal.streak, studyMinutes: goal.studyMinutes, lastStudiedAt: goal.lastStudiedAt },
+    updatedAt: now,
   };
 }
 
@@ -941,7 +981,6 @@ export function toggleMilestone(goal: LearningGoal, milestoneId: string): Learni
 
 export function addLearningSession(goal: LearningGoal, input: { title: string; minutes: number; focus: string; notes?: string }): LearningGoal {
   const now = new Date().toISOString();
-  const studiedToday = goal.lastStudiedAt?.slice(0, 10) === todayTaskDate();
   const session: LearningSession = {
     id: `${Date.now()}`,
     title: input.title.trim() || `${input.minutes}m ${goal.title} session`,
@@ -954,7 +993,7 @@ export function addLearningSession(goal: LearningGoal, input: { title: string; m
     ...goal,
     sessions: [session, ...goal.sessions],
     studyMinutes: goal.studyMinutes + session.minutes,
-    streak: studiedToday ? goal.streak : goal.streak + 1,
+    streak: streakAfterStudy(goal),
     lastStudiedAt: now,
     updatedAt: now,
   };

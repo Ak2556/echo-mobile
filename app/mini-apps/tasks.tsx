@@ -128,6 +128,18 @@ export default function TasksScreen() {
     showToast(reminderId ? tt('Task added · reminder set') : tt('Task added'), tt('Tasks'));
   };
 
+  // Apply against the latest list, so an Undo pressed after other edits
+  // doesn't roll those back.
+  const updateLatest = (change: (prev: TaskItem[]) => TaskItem[]) => {
+    setTasks(prev => {
+      const next = change(prev);
+      void saveTasks(next);
+      return next;
+    });
+  };
+
+  // Done tasks leave every tab and there is no completed view, so a mis-tap
+  // used to make a task unreachable. Both offer Undo instead.
   const toggle = (task: TaskItem) => {
     tap('light');
     const done = !task.done;
@@ -135,11 +147,24 @@ export default function TasksScreen() {
     update(tasks.map(item => item.id === task.id
       ? { ...item, done, reminderId: done ? undefined : item.reminderId, updatedAt: new Date().toISOString() }
       : item));
+    if (done) {
+      showToast(tt('Task done'), '✓', {
+        label: tt('Undo'),
+        onPress: () => updateLatest(prev => prev.map(item => item.id === task.id ? { ...item, done: false, updatedAt: new Date().toISOString() } : item)),
+      });
+    }
   };
 
   const remove = (task: TaskItem) => {
     void cancelTaskReminder(task.reminderId);
+    const index = tasks.findIndex(item => item.id === task.id);
     update(tasks.filter(item => item.id !== task.id));
+    showToast(tt('Task deleted'), '', {
+      label: tt('Undo'),
+      onPress: () => updateLatest(prev => prev.some(item => item.id === task.id)
+        ? prev
+        : [...prev.slice(0, index), { ...task, reminderId: undefined }, ...prev.slice(index)]),
+    });
   };
 
   const openDetail = (task: TaskItem) => {
