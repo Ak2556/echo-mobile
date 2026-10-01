@@ -57,26 +57,15 @@ describe('compactFeed default', () => {
 });
 
 /**
- * Glass off by default meant most people never saw the app's own material.
- *
- * `resolvePerformanceProfile` computes
- * `forceSolid = !glassTheme || dataSaver || osReduceTransparency || deviceTier === 'low'`,
- * and the solid tier renders ZERO blur layers — `LAYER_COUNT.solid` is 0, so
- * buildRamp returns an empty array and EdgeGlass paints only its wash gradient.
- * The result is a flat scrim with the feed sharp behind it, which is exactly
- * what the tab bar looked like: you could read a username straight through it.
- *
- * Turning it on does not endanger weak hardware. `deviceTier === 'low'` still
- * forces solid on its own, as do Data Saver and the OS reduce-transparency
- * setting, so the three guards that actually protect a cheap phone are
- * untouched — this only stops a capable device defaulting to the fallback
- * built for an incapable one.
+ * Glass is off by default (owner, 2026-10-01: performance first, effects are
+ * opt-in). Off selects the solid tier, which EdgeGlass now draws as an opaque
+ * bar, so the feed no longer reads through the header and tab bar.
  */
 describe('glassTheme default', () => {
   beforeEach(() => { stored.clear(); });
 
-  it('is on for anyone who has not chosen', () => {
-    expect(build().glassTheme).toBe(true);
+  it('is off for anyone who has not chosen', () => {
+    expect(build().glassTheme).toBe(false);
   });
 
   it('yields to an explicit choice in either direction', () => {

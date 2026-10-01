@@ -1106,7 +1106,7 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Show Preview Cards")} subtitle={ttx("Show response previews in feed")} right={SwitchEl(s.showPreviewCards, s.setShowPreviewCards)} />
             {divider}
             <SettingsRow theme={theme} icon={Lightning} label={ttx("Reduce Animations")} subtitle={ttx("Minimize motion effects")} right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
-            <SettingsRow theme={theme} icon={Drop} label={ttx("Glass Theme")} subtitle={ttx("Enable blurred backgrounds (requires high-end device)")} right={SwitchEl(s.glassTheme, s.setGlassTheme)} />
+            <SettingsRow theme={theme} icon={Drop} label={ttx("Glass Theme")} subtitle={ttx("Blurred backgrounds. Off is fastest; turn on if your phone stays smooth")} right={SwitchEl(s.glassTheme, s.setGlassTheme)} />
           </GlassPanel>
         </Animated.View>}
 

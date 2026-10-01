@@ -86,7 +86,12 @@ export function EdgeGlass({
   // One blur layer over the bar, not a ramp of 2-4 stacked layers reaching into
   // the fade (owner request 2026-10-01: a single layer). The tint gradient
   // below still eases the edge out into the content.
-  const ramp: RampLayer[] = profile.surfaceTier !== 'solid' && profile.maxBlurIntensity > 0
+  // No live blur on Android, ever (owner, 2026-10-01: performance first). A
+  // dimezis BlurView re-renders everything behind it on every scrolled frame:
+  // it cost ~6 ms of GPU per frame on Home (median 23 ms -> 17 ms without it).
+  // iOS keeps it: UIVisualEffectView is composited by the system.
+  const blurs = Platform.OS !== 'android' && profile.surfaceTier !== 'solid' && profile.maxBlurIntensity > 0;
+  const ramp: RampLayer[] = blurs
     ? [{ depth: height, intensity: Math.round(profile.maxBlurIntensity * 0.4) }]
     : [];
 
@@ -128,7 +133,10 @@ export function EdgeGlass({
   // straight ramp; the eye finds a slope change far harder to see than a kink.
   // Light and see-through: the single blur layer carries legibility, so the
   // wash only tints it (was 0.55 / 0.6 over a stack of blur layers).
-  const wash = colors.isDark ? 0.18 : 0.22;
+  // Without a blur under it the bar has to be the surface: at 0.22 the feed
+  // read straight through it — post text under the header, a post's like and
+  // comment chips under the tab icons ("Home 2", "Explore 1").
+  const wash = NativeGlass || blurs ? (colors.isDark ? 0.18 : 0.22) : 0.96;
   const tailFraction = 1 - barFraction;
   const washColors = [
     withAlpha(base, wash),
