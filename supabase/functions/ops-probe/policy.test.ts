@@ -6,8 +6,10 @@ import {
   STUCK_WINDOW_HOURS,
   alertBody,
   interpretModeration,
+  interpretQueues,
   interpretStuck,
   overallStatus,
+  QUEUE_STALE_MINUTES,
   shouldAlert,
   stuckWindow,
   type CheckResult,
@@ -201,5 +203,48 @@ describe('the alert storm this is meant to prevent', () => {
       { ok: false, alerted: true, ran_at: new Date(NOW - 60 * MIN).toISOString() },
     ];
     expect(shouldAlert(history, NOW)).toBe(true);
+  });
+});
+
+describe('interpretQueues', () => {
+  // 2026-10-02: the job layer ran for three days with no worker secret. Every
+  // queue grew (62 pushes, 4 posts awaiting moderation) while the sweeper cron
+  // reported success each minute. The oldest waiting job is what shows it.
+  const q = (name: string, depth: number, ageMin: number | null) => ({
+    queue_name: name,
+    depth,
+    oldest_enqueued_at: ageMin === null ? null : new Date(NOW - ageMin * MIN).toISOString(),
+  });
+
+  it('passes when every queue is empty or fresh', () => {
+    const r = interpretQueues([q('push', 0, null), q('moderation', 2, 1)], null, NOW);
+    expect(r).toMatchObject({ check: 'job_queues', ok: true });
+  });
+
+  it('fails when any queue has a job waiting longer than the limit', () => {
+    const r = interpretQueues([q('push', 62, 3 * 24 * 60), q('moderation', 4, 25), q('media_gc', 1, 2)], null, NOW);
+    expect(r.ok).toBe(false);
+    expect(r.detail).toContain('push 62 waiting, oldest 3d');
+    expect(r.detail).toContain('moderation 4 waiting, oldest 25m');
+    expect(r.detail).not.toContain('media_gc');
+  });
+
+  it('treats exactly the limit as still fresh', () => {
+    expect(interpretQueues([q('push', 1, QUEUE_STALE_MINUTES)], null, NOW).ok).toBe(true);
+    expect(interpretQueues([q('push', 1, QUEUE_STALE_MINUTES + 1)], null, NOW).ok).toBe(false);
+  });
+
+  it('counts the dead-letter queue like any other: a parked job is lost work', () => {
+    expect(interpretQueues([q('dlq', 1, 60)], null, NOW).ok).toBe(false);
+  });
+
+  it('fails when the health query fails, because unknown is not healthy', () => {
+    const r = interpretQueues(null, 'permission denied for function job_queue_health', NOW);
+    expect(r).toMatchObject({ ok: false });
+    expect(r.detail).toContain('query failed');
+  });
+
+  it('fails when no queues come back at all', () => {
+    expect(interpretQueues([], null, NOW).ok).toBe(false);
   });
 });
