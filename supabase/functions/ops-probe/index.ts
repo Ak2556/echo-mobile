@@ -12,6 +12,9 @@
 //                 quota is not spent, and the model id is still served. This is
 //                 the check that would have caught the month-long outage, the
 //                 credit-less OpenRouter account, and a delisted model.
+//   job_queues  — every pgmq queue's oldest waiting job. A queue nothing
+//                 drains looks healthy everywhere else: the sweeper cron
+//                 "succeeds" each minute even when its kick returns early.
 //   stuck_posts — count posts that are still hidden with no verdict recorded
 //                 twenty minutes after they were written. Uses real user posts,
 //                 so it needs no synthetic content in anyone's feed.
@@ -30,6 +33,7 @@ import { moderateContent } from "../embed-echo/moderation.ts";
 import {
   alertBody,
   interpretModeration,
+  interpretQueues,
   interpretStuck,
   overallStatus,
   shouldAlert as shouldAlertFrom,
@@ -81,6 +85,12 @@ async function checkStuckPosts(supabase: any): Promise<CheckResult> {
     .gt("created_at", window.since)
     .lt("created_at", window.before);
   return interpretStuck(count ?? null, error ? error.message : null);
+}
+
+// deno-lint-ignore no-explicit-any
+async function checkQueues(supabase: any): Promise<CheckResult> {
+  const { data, error } = await supabase.rpc("job_queue_health");
+  return interpretQueues(data ?? null, error ? error.message : null, Date.now());
 }
 
 /**
@@ -145,6 +155,7 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
   const results: CheckResult[] = [];
+  results.push(await checkQueues(supabase));
   results.push(await checkStuckPosts(supabase));
   results.push(await checkModeration());
 

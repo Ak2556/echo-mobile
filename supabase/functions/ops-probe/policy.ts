@@ -63,6 +63,44 @@ export function interpretStuck(count: number | null, errorMessage?: string | nul
   };
 }
 
+/** A job waiting longer than this means nothing is draining its queue. */
+export const QUEUE_STALE_MINUTES = 10;
+
+export interface QueueHealthRow {
+  queue_name: string;
+  depth: number;
+  oldest_enqueued_at: string | null;
+}
+
+function ago(ms: number): string {
+  const m = Math.floor(ms / 60_000);
+  if (m < 60) return m + "m";
+  const h = Math.floor(m / 60);
+  return h < 24 ? h + "h" : Math.floor(h / 24) + "d";
+}
+
+/**
+ * What the job queues say. A queue whose oldest job has waited past the limit
+ * is not being drained — the job layer ran for three days on 2026-09-29 with no
+ * worker secret, so the sweeper's kick returned silently every minute while
+ * pushes and moderation piled up. The dead-letter queue counts too: a job
+ * parked there is work that will never happen on its own.
+ */
+export function interpretQueues(rows: QueueHealthRow[] | null, errorMessage: string | null, now: number): CheckResult {
+  if (errorMessage) return { check: "job_queues", ok: false, detail: "query failed: " + errorMessage };
+  if (!rows || !rows.length) return { check: "job_queues", ok: false, detail: "no queues reported" };
+  const stale: string[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r.oldest_enqueued_at || !r.depth) continue;
+    const age = now - new Date(r.oldest_enqueued_at).getTime();
+    if (age > QUEUE_STALE_MINUTES * 60_000) stale.push(r.queue_name + " " + r.depth + " waiting, oldest " + ago(age));
+  }
+  return stale.length
+    ? { check: "job_queues", ok: false, detail: stale.join("; ") }
+    : { check: "job_queues", ok: true, detail: rows.length + " queues draining" };
+}
+
 /**
  * Alert on the way into failure, then stay quiet.
  *
