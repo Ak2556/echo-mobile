@@ -127,6 +127,36 @@ export function alertBody(failures: CheckResult[]): string {
 }
 
 /**
+ * The same failures as an email, uncut. Email is the second channel because
+ * push alone fails with the thing it reports on: on 2026-09-29 the push jobs
+ * were themselves stuck in the queue the probe was warning about.
+ */
+export function alertEmail(failures: CheckResult[], ranAt: string): { subject: string; text: string } {
+  return {
+    subject: "Echo probe failed: " + failures.map(function (f) { return f.check; }).join(", "),
+    text: failures.map(function (f) { return f.check + ": " + f.detail; }).join("\n\n") +
+      "\n\nRun at " + ranAt + ". History is in public.probe_runs; this repeats every " +
+      REALERT_AFTER_MINUTES / 60 + " hours while the failure lasts.",
+  };
+}
+
+/** OPS_ALERT_EMAIL as a list. Anything without an @ is a typo, not a recipient. */
+export function alertRecipients(raw: string | undefined): string[] {
+  return (raw || "").split(",").map(function (s) { return s.trim(); }).filter(function (s) {
+    return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s);
+  });
+}
+
+/**
+ * Whether this run counts as having alerted. Recording an alert that reached
+ * nobody starts the re-alert window anyway, so a failure whose push and email
+ * both failed would stay silent for three hours instead of retrying next run.
+ */
+export function alertDelivered(devicesNotified: number, emailed: boolean): boolean {
+  return devicesNotified > 0 || emailed;
+}
+
+/**
  * Always HTTP 200, with the verdict in the body.
  *
  * Returning 503 on a failing check seemed more honest until it was tested:

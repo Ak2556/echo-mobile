@@ -5,6 +5,9 @@ import {
   STUCK_AFTER_MINUTES,
   STUCK_WINDOW_HOURS,
   alertBody,
+  alertDelivered,
+  alertEmail,
+  alertRecipients,
   interpretModeration,
   interpretQueues,
   interpretStuck,
@@ -156,6 +159,43 @@ describe('alertBody', () => {
   it('fits on a lock screen', () => {
     const body = alertBody([fail('moderation', 'x'.repeat(400))]);
     expect(body.length).toBe(ALERT_BODY_LIMIT);
+  });
+});
+
+describe('alertEmail', () => {
+  const fail = (check: string, detail: string): CheckResult => ({ check, ok: false, detail });
+
+  it('names every failed check in the subject', () => {
+    const mail = alertEmail([fail('job_queues', 'a'), fail('moderation', 'b')], '2026-10-03T08:00:00.000Z');
+    expect(mail.subject).toBe('Echo probe failed: job_queues, moderation');
+  });
+
+  it('carries the full detail the lock screen had to cut', () => {
+    const long = 'x'.repeat(400);
+    const mail = alertEmail([fail('moderation', long)], '2026-10-03T08:00:00.000Z');
+    expect(mail.text).toContain('moderation: ' + long);
+    expect(mail.text).toContain('2026-10-03T08:00:00.000Z');
+  });
+});
+
+describe('alertRecipients', () => {
+  it('reads a comma-separated list and drops anything that is not an address', () => {
+    expect(alertRecipients(' a@x.com, ,b@y.org,nope ')).toEqual(['a@x.com', 'b@y.org']);
+  });
+
+  it('is empty when unset', () => {
+    expect(alertRecipients(undefined)).toEqual([]);
+    expect(alertRecipients('')).toEqual([]);
+  });
+});
+
+describe('alertDelivered', () => {
+  // Recording an alert nobody received starts the three-hour quiet window, so a
+  // failure whose push and email both bounced would stay silent until then.
+  it('counts as alerted only when some channel reached someone', () => {
+    expect(alertDelivered(0, false)).toBe(false);
+    expect(alertDelivered(2, false)).toBe(true);
+    expect(alertDelivered(0, true)).toBe(true);
   });
 });
 
