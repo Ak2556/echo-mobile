@@ -183,6 +183,17 @@ Deno.serve(async (req: Request) => {
   }
   if (!SERVICE_ROLE_KEY) return json({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, 500);
 
+  // {"test_alert": true} sends one email and stops: no checks, no probe_runs
+  // row. An alert channel nobody has seen deliver is the thing this probe
+  // exists to distrust, so it needs a way to be seen working.
+  const body = await req.json().catch(() => ({}));
+  if (body && body.test_alert === true) {
+    const emailed = await alertByEmail([
+      { check: "test", ok: false, detail: "Test alert. The ops-probe email channel works; no action needed." },
+    ]);
+    return json({ test_alert: true, emailed });
+  }
+
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
   const results: CheckResult[] = [];
