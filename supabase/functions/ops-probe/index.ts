@@ -19,9 +19,11 @@
 //                 twenty minutes after they were written. Uses real user posts,
 //                 so it needs no synthetic content in anyone's feed.
 //
-// A failure pushes straight to the moderators' devices, because the GitHub
-// healthcheck asks for every fifteen minutes and is throttled to every three to
-// five hours, and it reports by opening an issue nobody is paged by.
+// A failure pushes straight to the moderators' devices and emails
+// OPS_ALERT_EMAIL — two channels, since push can fail with the very outage it
+// reports. Not left to the GitHub healthcheck: it asks for every fifteen
+// minutes, is throttled to every three to five hours, and reports by opening
+// an issue nobody is paged by.
 //
 // Called by pg_cron with x-ops-probe-secret. Deploy with --no-verify-jwt is not
 // needed: the cron sends the Vault service key as Authorization for the gateway,
@@ -32,6 +34,9 @@ import { timingSafeEqual } from "../_shared/timingSafeEqual.ts";
 import { moderateContent } from "../embed-echo/moderation.ts";
 import {
   alertBody,
+  alertDelivered,
+  alertEmail,
+  alertRecipients,
   interpretModeration,
   interpretQueues,
   interpretStuck,
@@ -45,6 +50,11 @@ import {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const PROBE_SECRET = Deno.env.get("OPS_PROBE_SECRET") ?? "";
+// Email channel, via Resend (downloadecho.com is already verified there).
+// Unset, the probe still pushes; it just has one channel instead of two.
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const ALERT_TO = alertRecipients(Deno.env.get("OPS_ALERT_EMAIL"));
+const ALERT_FROM = Deno.env.get("OPS_ALERT_FROM") || "Echo ops <alerts@downloadecho.com>";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -130,6 +140,27 @@ async function alertModerators(supabase: any, failures: CheckResult[]): Promise<
   return list.length;
 }
 
+/** Email the same failures, uncut. Returns whether Resend accepted the message. */
+async function alertByEmail(failures: CheckResult[]): Promise<boolean> {
+  if (!RESEND_API_KEY || !ALERT_TO.length) return false;
+  const mail = alertEmail(failures, new Date().toISOString());
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: ALERT_FROM, to: ALERT_TO, subject: mail.subject, text: mail.text }),
+    });
+    if (!res.ok) {
+      console.error("[ops-probe] alert email failed:", res.status, (await res.text()).slice(0, 200));
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[ops-probe] alert email failed:", (e as Error).message);
+    return false;
+  }
+}
+
 /** This check's recent history, newest first, for the alert decision in policy.ts. */
 // deno-lint-ignore no-explicit-any
 async function shouldAlert(supabase: any, check: string): Promise<boolean> {
@@ -163,11 +194,19 @@ Deno.serve(async (req: Request) => {
   const failures = outcome.failures;
   let alerted = false;
   let pushed = 0;
+  let emailed = false;
   if (failures.length) {
     const wanted = await Promise.all(failures.map((f) => shouldAlert(supabase, f.check)));
     if (wanted.some(Boolean)) {
-      pushed = await alertModerators(supabase, failures);
-      alerted = true;
+      // Independent channels: a push outage must not stop the email.
+      [pushed, emailed] = await Promise.all([
+        alertModerators(supabase, failures).catch((e: Error) => {
+          console.error("[ops-probe] push alert failed:", e.message);
+          return 0;
+        }),
+        alertByEmail(failures),
+      ]);
+      alerted = alertDelivered(pushed, emailed);
     }
   }
 
@@ -182,5 +221,6 @@ Deno.serve(async (req: Request) => {
     checks: results,
     alerted,
     devices_notified: pushed,
+    emailed,
   }, outcome.status);
 });
