@@ -1,3 +1,5 @@
+import { scrubBreadcrumb, scrubEvent } from './sentryScrub';
+
 interface CaptureContext {
   tags?: Record<string, string | number | boolean>;
   extra?: Record<string, unknown>;
@@ -32,6 +34,10 @@ export function initMonitoring(): void {
       enableNativeNagger: false,
       tracesSampleRate: 0.2,
       environment: process.env.NODE_ENV ?? 'development',
+      sendDefaultPii: false,
+      beforeBreadcrumb: scrubBreadcrumb,
+      beforeSend: scrubEvent,
+      beforeSendTransaction: scrubEvent,
     });
     initialised = true;
   } catch (e) {
