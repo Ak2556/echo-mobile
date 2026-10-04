@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { ActivityIndicator, Pressable, Text, View, AppState } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, Play, WifiSlash } from 'phosphor-react-native';
+import { Eye, Pause, Play, SpeakerHigh, SpeakerSlash, WifiSlash } from 'phosphor-react-native';
+import { scrubFraction } from '../../../../lib/composerMedia';
 import { probePlayerCreated, probePlayerReleased, probeTrace } from '../../../../lib/devVideoProbe';
 import { useVideoMountPolicy } from '../lib/videoMountPolicy';
 import { FIRST_FRAME_GRACE_MS, useFirstFrameWatchdog } from '../lib/firstFrameWatchdog';
@@ -67,6 +68,13 @@ interface VideoPreviewProps {
    * must stay paused until the user says otherwise.
    */
   paused?: boolean;
+  /**
+   * Composer-style transport: tap to pause, a sound toggle and a scrub bar.
+   * Local to this player. The feed leaves it off because there a tap navigates
+   * and the global mute rules, but a clip you are about to post needs to be
+   * checked with sound and scrubbed to the frame you care about.
+   */
+  controls?: boolean;
 }
 
 const VIDEO_PREVIEW_TIMEOUT_MS = 45_000;
@@ -121,7 +129,7 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, ec
 }
 
 // Full video player (dev client / production build)
-function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount, echoId, autoplay = false, paused = false }: VideoPreviewProps) {
+function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount, echoId, autoplay = false, paused = false, controls = false }: VideoPreviewProps) {
   const { VideoView, useVideoPlayer } = ExpoVideoModule!;
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
@@ -153,7 +161,31 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   // condition rather than a one-off player.pause() — otherwise the next effect
   // run (a mute toggle, a status change, a re-render) restarts the video and
   // the pause looks broken.
-  const shouldPlay = isActive && !paused;
+  // Controls mode: the user's own pause/sound choice replaces the global mute,
+  // so a preview can be heard without changing the app-wide setting.
+  const [userPaused, setUserPaused] = useState(false);
+  const [userSound, setUserSound] = useState(false);
+  const shouldPlay = isActive && !paused && !(controls && userPaused);
+  const playerMuted = controls ? !userSound || !isActive : isGlobalMuted || !isActive;
+
+  const [progress, setProgress] = useState(0);
+  const [barWidth, setBarWidth] = useState(0);
+  useEffect(() => {
+    if (!controls) return;
+    try { player.timeUpdateEventInterval = 0.25; } catch { /* older runtimes */ }
+    const sub = player.addListener('timeUpdate', ({ currentTime }: { currentTime: number }) => {
+      const d = Number(player.duration) || 0;
+      setProgress(d > 0 ? Math.min(1, Math.max(0, currentTime / d)) : 0);
+    });
+    return () => sub.remove();
+  }, [controls, player]);
+  const seekTo = (x: number) => {
+    const d = Number(player.duration) || 0;
+    if (!d) return;
+    const f = scrubFraction(x, barWidth);
+    player.currentTime = f * d;
+    setProgress(f);
+  };
 
   // THROWAWAY, with the probe. 'error' has two very different causes — a real
   // player error or the 45s timeout expiring with the state still 'loading' —
@@ -168,12 +200,12 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   useEffect(() => { setLoadState('loading'); setFailReason(''); setSawFirstFrame(false); }, [uri]);
 
   useEffect(() => {
-    player.muted = isGlobalMuted || !isActive;
+    player.muted = playerMuted;
     if (loadState === 'ready') {
       if (shouldPlay) player.play();
       else player.pause();
     }
-  }, [shouldPlay, isActive, isGlobalMuted, loadState, player]);
+  }, [shouldPlay, isActive, playerMuted, loadState, player]);
 
   useEffect(() => {
     const initialState = loadStateFromStatus(player.status);
@@ -284,7 +316,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
    * element was this one — so the mute button reported success and changed
    * nothing the user could hear, and tap-to-pause lost to `autoplay loop`.
    */
-  const fallbackMuted = isGlobalMuted || !isActive;
+  const fallbackMuted = playerMuted;
   useEffect(() => {
     if (loadState !== 'error') return;
     const web = webRef.current;
@@ -301,7 +333,14 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   }, [loadState, fallbackMuted, shouldPlay]);
 
   return (
-    <Pressable onPress={onPress} disabled={!onPress} pointerEvents={onPress ? 'auto' : 'box-none'} style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#09090B' }}>
+    <Pressable
+      onPress={controls ? () => setUserPaused(p => !p) : onPress}
+      disabled={!controls && !onPress}
+      pointerEvents={controls || onPress ? 'auto' : 'box-none'}
+      accessibilityRole={controls ? 'button' : undefined}
+      accessibilityLabel={controls ? ttx(userPaused ? 'Play video' : 'Pause video') : undefined}
+      style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#09090B' }}
+    >
       <VideoView
         player={player}
         style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
@@ -370,6 +409,40 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
           <Eye size={13} color="#fff" />
           <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{formatViewCount(viewCount)}</Text>
         </View>
+      )}
+
+      {controls && loadState === 'ready' && (
+        <>
+          {userPaused && (
+            <View pointerEvents="none" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
+                <Play color="#fff" size={24} weight="fill" />
+              </View>
+            </View>
+          )}
+          <Pressable
+            onPress={() => setUserSound(v => !v)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={ttx(userSound ? 'Mute preview' : 'Play sound')}
+            style={{ position: 'absolute', top: 10, right: 10, width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {userSound ? <SpeakerHigh color="#fff" size={18} weight="fill" /> : <SpeakerSlash color="#fff" size={18} weight="fill" />}
+          </Pressable>
+          <Pressable
+            onLayout={e => setBarWidth(e.nativeEvent.layout.width)}
+            onPressIn={e => seekTo(e.nativeEvent.locationX)}
+            onTouchMove={e => seekTo(e.nativeEvent.locationX)}
+            hitSlop={{ top: 14, bottom: 6 }}
+            accessibilityRole="adjustable"
+            accessibilityLabel={ttx("Seek")}
+            style={{ position: 'absolute', left: 10, right: 10, bottom: 8, height: 18, justifyContent: 'center' }}
+          >
+            <View style={{ height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' }}>
+              <View style={{ width: `${progress * 100}%`, height: 3, borderRadius: 2, backgroundColor: '#fff' }} />
+            </View>
+          </Pressable>
+        </>
       )}
     </Pressable>
   );
