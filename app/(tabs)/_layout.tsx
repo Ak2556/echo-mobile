@@ -404,7 +404,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
       style={{ zIndex: 100 }}
       contentStyle={{ paddingBottom: insets.bottom }}
     >
-        <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5 }}>
+        <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5, width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center' }}>
           {visibleRoutes.map(route => {
             const isFocused = state.routes[state.index].name === route.name;
             const IconComp = TAB_ICONS[route.name];
