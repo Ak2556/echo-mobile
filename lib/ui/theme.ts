@@ -1,3 +1,5 @@
+import { useColorScheme } from 'react-native';
+import { resolveIsDark } from './appearance';
 import { useAppStore } from '../../store/useAppStore';
 import { usePresenceStore } from '../social/presence';
 import { buildFontPreset } from './fontPresets';
@@ -382,7 +384,9 @@ export const getPairedTheme = (themeName: ThemeName, wantDark: boolean): BaseThe
 
 export function useTheme() {
   const themeName = useAppStore(s => s.theme);
-  const darkMode = useAppStore(s => s.darkMode);
+  const appearance = useAppStore(s => s.appearance);
+  const systemScheme = useColorScheme();
+  const darkMode = resolveIsDark(appearance, systemScheme);
   const accentColor = useAppStore(s => s.accentColor);
   const pureBlackBg = useAppStore(s => s.pureBlackBackground);
   const fontSize = useAppStore(s => s.fontSize);

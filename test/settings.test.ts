@@ -64,6 +64,11 @@ describe('Settings State & Mutators', () => {
 
     getS().setDarkMode(false);
     expect(getS().darkMode).toBe(false);
+    // The legacy switch (voice commands) is an explicit choice, so it overrides 'system'.
+    expect(getS().appearance).toBe('light');
+
+    getS().setAppearance('system');
+    expect(getS().appearance).toBe('system');
 
     getS().setPureBlackBackground(false);
     expect(getS().pureBlackBackground).toBe(false);
