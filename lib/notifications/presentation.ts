@@ -115,7 +115,7 @@ export function summaryTextFor(type: string, preview?: string | null): string {
 
 /** Where tapping a notification should land. */
 export type NotificationDestination =
-  | 'profile' | 'thread' | 'dm' | 'daily' | 'appeal' | 'appeal-decision' | 'reports' | 'rules' | 'none';
+  | 'profile' | 'thread' | 'dm' | 'daily' | 'appeal' | 'appeal-decision' | 'reports' | 'rules' | 'tasks' | 'none';
 
 export function destinationFor(type: string): NotificationDestination {
   switch (type) {
@@ -132,6 +132,8 @@ export function destinationFor(type: string): NotificationDestination {
     // Reviewed in the dashboard; a hidden echo would not open in a thread.
     case 'report_urgent': return 'none';
     case 'rules_reminder': return 'rules';
+    // target_id is a task, not an echo: the default below would open a thread that does not exist.
+    case 'social_task_update': return 'tasks';
     default: return 'thread';
   }
 }

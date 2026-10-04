@@ -105,7 +105,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
     }, 1000);
     // Backgrounded rest still ends loudly.
     void Notifications.scheduleNotificationAsync({
-      content: { title: 'Rest over', body: `Back to ${exercise.name}.`, sound: true },
+      content: { title: 'Rest over', body: `Back to ${exercise.name}.`, sound: true, data: { kind: 'workout_rest' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: routine.restSec },
     }).then(id => { restNotifRef.current = id; }).catch(() => {});
   };

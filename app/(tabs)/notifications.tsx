@@ -6,11 +6,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList as _FlashList } from '@shopify/flash-list';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import { Bell, Checks, Trash } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { destinationFor, summaryTextFor } from '../../lib/notifications/presentation';
+import { tapRoute } from '../../lib/notifications/tapTarget';
 import { NOTIFICATION_FILTERS, matchesFilter, type NotificationFilter } from '../../lib/notifications/filters';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -251,36 +253,12 @@ export default function NotificationsScreen() {
     } else {
       storeMarkRead(n.id);
     }
-    switch (destinationFor(n.type)) {
-      case 'profile':
-        if (n.fromUserId) router.push(`/user/${n.fromUserId}`);
-        break;
-      case 'appeal-decision':
-        // DSA Art. 17/20: statement of reasons + appeal the moderation decision.
-        if (n.targetId) router.push({ pathname: '/appeal', params: { decisionId: n.targetId } });
-        break;
-      case 'appeal':
-        router.push('/appeal');
-        break;
-      case 'reports':
-        router.push('/my-reports');
-        break;
-      case 'rules':
-        router.push('/legal/rules' as never);
-        break;
-      case 'dm':
-        if (n.targetId) router.push(`/messages/${n.targetId}`);
-        break;
-      case 'daily':
-        // targetId here is a daily_answers row, not an echo.
-        router.push('/daily-question');
-        break;
-      case 'thread':
-        if (n.targetId) router.push(`/thread/${n.targetId}`);
-        break;
-      case 'none':
-        break;
-    }
+    // The same table a push tap uses (lib/notifications/tapTarget.ts), so the two
+    // cannot disagree about where a kind goes. A nudge or an urgent report has no
+    // screen of its own: tapping its row in the inbox stays in the inbox.
+    if (destinationFor(n.type) === 'none') return;
+    const route = tapRoute({ kind: n.type, targetId: n.targetId, actorId: n.fromUserId });
+    if (route) router.push(route as Href);
   };
 
   return (

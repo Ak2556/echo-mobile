@@ -68,6 +68,7 @@ export async function schedulePomodoroTimerNotification(nextMode: PomodoroMode, 
         title: line.title,
         body: line.body,
         sound: true,
+        data: { kind: 'pomodoro_done' },
         interruptionLevel: 'active',
       },
       trigger: {

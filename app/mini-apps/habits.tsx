@@ -58,6 +58,7 @@ async function syncReminder(habit: Habit): Promise<void> {
         title: habit.name,
         body: 'Time to keep the streak going.',
         sound: true,
+        data: { kind: 'habit_reminder' },
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -87,6 +88,7 @@ async function syncAlarm(habit: Habit): Promise<void> {
         title: habit.name,
         body: 'Custom alarm',
         sound: true,
+        data: { kind: 'habit_reminder' },
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
