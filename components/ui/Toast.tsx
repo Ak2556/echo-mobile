@@ -26,9 +26,9 @@ import {
   TextT,
   WarningCircle,
 } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { MOTION } from '../../lib/ui/motion';
-import { usePerformanceProfile } from '../../src/shared/lib/performance';
+import { usePerformanceProfile } from '../../lib/ui/performance';
 
 export interface ToastAction {
   label: string;

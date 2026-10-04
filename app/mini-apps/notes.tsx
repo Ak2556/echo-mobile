@@ -11,8 +11,8 @@ import {
   Lightbulb, ListBullets, MagnifyingGlass, NotePencil, Plus, PushPin, ShareNetwork,
   SortAscending, Star, Tag, TextH, Trash, UsersThree, X,
 } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
-import { useI18n } from '../../src/shared/lib/i18n';
+import { useTheme } from '../../lib/ui/theme';
+import { useI18n } from '../../lib/i18n/i18n';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { MiniEmptyState } from '../../components/mini-apps/MiniKit';

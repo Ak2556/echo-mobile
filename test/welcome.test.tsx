@@ -45,7 +45,7 @@ vi.mock('../lib/supabaseEchoApi', () => ({
 vi.mock('../lib/retention/firstRunQuestion', () => ({
   getFirstRunFallbackQuestion: () => ({ id: 'fallback', prompt: 'What mattered today?' }),
 }));
-vi.mock('../src/shared/lib/analytics', () => ({ track: vi.fn() }));
+vi.mock('../lib/core/analytics', () => ({ track: vi.fn() }));
 
 const setHasCompletedFirstRun = vi.fn();
 
@@ -69,7 +69,7 @@ const storeState: Record<string, unknown> = {
 vi.mock('../store/useAppStore', () => ({
   useAppStore: (sel: (s: Record<string, unknown>) => unknown) => sel(storeState),
 }));
-vi.mock('../src/shared/lib/i18n', () => ({ useI18n: () => ({ t: (k: string) => k }), ttx: (k: string) => k }));
+vi.mock('../lib/i18n/i18n', () => ({ useI18n: () => ({ t: (k: string) => k }), ttx: (k: string) => k }));
 
 describe('welcome first-run', () => {
   beforeEach(() => { registerForPush.mockClear(); });

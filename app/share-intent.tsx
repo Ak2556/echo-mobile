@@ -5,7 +5,7 @@ import { useShareIntentContext } from 'expo-share-intent';
 import { ChatCircle, NotePencil, PaperPlaneTilt } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
-import { useTheme } from '../src/shared/lib/theme';
+import { useTheme } from '../lib/ui/theme';
 import { showToast } from '../components/ui/Toast';
 import { createNote } from '../lib/mini-apps/notes';
 

@@ -13,7 +13,7 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { ExerciseDemo } from '../../components/mini-apps/ExerciseDemo';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
   FitnessDoc, Meal, MealKind, MEAL_KINDS, Workout, WorkoutExercise, WeightEntry,
@@ -29,7 +29,7 @@ import { WorkoutSession } from '../../components/mini-apps/WorkoutSession';
 import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/mini-apps/exerciseLibrary';
 import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods, foodById } from '../../lib/mini-apps/foodDatabase';
 import { searchOnlineFoods } from '../../lib/mini-apps/foodApi';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 type Tab = 'meals' | 'workouts' | 'progress' | 'library';
 

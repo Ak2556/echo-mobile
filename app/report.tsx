@@ -12,8 +12,8 @@ import { REPORT_REASONS as REASONS, URGENT_REPORT_REASONS } from '../lib/feed/re
 import { submitRemoteReport } from '../lib/supabaseEchoApi';
 import { buildDisclosure } from '../lib/e2ee/report';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
-import { useTheme } from '../src/shared/lib/theme';
-import { ttx } from '../src/shared/lib/i18n';
+import { useTheme } from '../lib/ui/theme';
+import { ttx } from '../lib/i18n/i18n';
 
 
 export default function ReportScreen() {

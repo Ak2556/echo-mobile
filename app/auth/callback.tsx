@@ -3,7 +3,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { consumeAuthCallbackUrl } from '../../lib/auth/callback';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { captureException } from '../../lib/core/monitoring';
 
 /**

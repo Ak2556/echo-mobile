@@ -10,7 +10,7 @@ import Animated, {
   runOnJS,
   SharedValue
 } from 'react-native-reanimated';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { localDayKey } from '../../lib/core/localDate';
 
 const ITEM_HEIGHT = 44;

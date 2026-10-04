@@ -6,7 +6,7 @@ import {
   Users, Waveform, MagnifyingGlass, X, Crown, SignOut, BellSlash, UserPlus,
 } from 'phosphor-react-native';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { Avatar } from '../../components/ui/Avatar';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -18,7 +18,7 @@ import {
   setGroupMemberRole, updateGroupMeta, leaveGroup, setDMPref,
   searchRemoteUsers, type GroupMember, type UserSearchHit, type RemoteConversation,
 } from '../../lib/supabaseEchoApi';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 async function suggestGroupName(memberNames: string[]): Promise<string | null> {
   let acc = '';

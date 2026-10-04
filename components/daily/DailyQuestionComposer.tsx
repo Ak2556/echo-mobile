@@ -6,13 +6,13 @@ import { Check, Flame } from 'phosphor-react-native';
 import { TextInput } from '../ui/TextInput';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
-import { useTheme } from '../../src/shared/lib/theme';
-import { useI18n } from '../../src/shared/lib/i18n';
+import { useTheme } from '../../lib/ui/theme';
+import { useI18n } from '../../lib/i18n/i18n';
 import { SpeakButton } from '../ui/SpeakButton';
 import { submitDailyAnswer, type DailyQuestion } from '../../lib/supabaseEchoApi';
 import { isAppOnline } from '../../lib/core/net';
 import { outbox } from '../../store/outbox';
-import { track } from '../../src/shared/lib/analytics';
+import { track } from '../../lib/core/analytics';
 
 export const MAX_ANSWER_LENGTH = 600;
 

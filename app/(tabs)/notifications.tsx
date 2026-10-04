@@ -15,11 +15,11 @@ import { NOTIFICATION_FILTERS, matchesFilter, type NotificationFilter } from '..
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../src/shared/lib/theme';
-import { useI18n } from '../../src/shared/lib/i18n';
+import { useTheme } from '../../lib/ui/theme';
+import { useI18n } from '../../lib/i18n/i18n';
 import { setReadableNotifications } from '../../lib/voice/readNotifications';
 import { Notification } from '../../types';
-import { useResponsiveLayout } from '../../src/shared/lib/responsive';
+import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import {
   useRemoteNotifications,

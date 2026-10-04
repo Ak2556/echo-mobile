@@ -8,9 +8,9 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Phone as PhoneIcon, ArrowClockwise } from 'phosphor-react-native';
 import { refreshAuthSession, sendPhoneOtp, verifyPhoneOtp } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
-import { useTheme } from '../../src/shared/lib/theme';
-import { useResponsiveLayout } from '../../src/shared/lib/responsive';
-import { useI18n } from '../../src/shared/lib/i18n';
+import { useTheme } from '../../lib/ui/theme';
+import { useResponsiveLayout } from '../../lib/ui/responsive';
+import { useI18n } from '../../lib/i18n/i18n';
 
 const RESEND_COOLDOWN_S = 30;
 

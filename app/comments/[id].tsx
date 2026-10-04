@@ -3,9 +3,9 @@ import { Text, KeyboardAvoidingView, Platform } from 'react-native';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams } from 'expo-router';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
-import { CommentsPanel } from '../../src/features/feed/ui/CommentsPanel';
-import { useTheme } from '../../src/shared/lib/theme';
-import { ttx } from '../../src/shared/lib/i18n';
+import { CommentsPanel } from '../../components/feed/CommentsPanel';
+import { useTheme } from '../../lib/ui/theme';
+import { ttx } from '../../lib/i18n/i18n';
 
 /**
  * Full-screen comments — reached from a notification, a deep link, or the

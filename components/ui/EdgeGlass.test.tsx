@@ -12,7 +12,7 @@ import { Text } from 'react-native';
  * that fails to render its own buttons.
  */
 
-import type { PerformanceProfile } from '../../src/shared/lib/performance';
+import type { PerformanceProfile } from '../../lib/ui/performance';
 
 const profile: PerformanceProfile = {
   reduceMotion: false,
@@ -24,7 +24,7 @@ const profile: PerformanceProfile = {
   surfaceTier: 'shader',
 };
 
-vi.mock('../../src/shared/lib/performance', () => ({
+vi.mock('../../lib/ui/performance', () => ({
   usePerformanceProfile: () => profile,
 }));
 

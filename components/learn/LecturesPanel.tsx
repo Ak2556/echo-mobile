@@ -3,7 +3,7 @@ import { View, Text, Pressable, ActivityIndicator, Modal, TextInput, Alert } fro
 import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { FilmSlate, LinkSimple, Plus, Trash, X } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../ui/Toast';
 import {
   MAX_LECTURE_BYTES,

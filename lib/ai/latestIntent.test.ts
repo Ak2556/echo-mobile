@@ -143,7 +143,7 @@ describe('wiring', () => {
   const read = (p: string) => readFileSync(resolve(__dirname, '..', '..', p), 'utf8');
 
   it('the toggles go through latest-intent and no longer use a TanStack retry', () => {
-    const social = read('src/features/feed/api/useSupabaseSocial.ts');
+    const social = read('hooks/useSupabaseSocial.ts');
     for (const [intent, call] of [
       ['likeIntent', 'setRemoteLike'],
       ['bookmarkIntent', 'setRemoteBookmark'],

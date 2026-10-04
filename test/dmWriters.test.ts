@@ -21,7 +21,7 @@ function files(dir: string): string[] {
 
 describe('direct message writers', () => {
   it('only lib/e2ee/messages.ts inserts into direct_messages or calls send_encrypted_dm', () => {
-    const offenders = ['lib', 'src', 'hooks', 'app', 'components', 'store']
+    const offenders = ['lib', 'hooks', 'app', 'components', 'store']
       .flatMap(files)
       .filter(file => {
         const code = readFileSync(join(ROOT, file), 'utf8');

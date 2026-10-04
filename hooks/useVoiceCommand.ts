@@ -17,7 +17,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { AI_CONSENT_DECLINED_MESSAGE, ensureAiConsent } from '../lib/privacy/aiConsent';
 import { showToast } from '../components/ui/Toast';
-import { ttx } from '../src/shared/lib/i18n';
+import { ttx } from '../lib/i18n/i18n';
 import { Platform } from 'react-native';
 import {
   useAudioRecorder,

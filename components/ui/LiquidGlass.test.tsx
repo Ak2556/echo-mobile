@@ -11,7 +11,7 @@ import { Text } from 'react-native';
  * never throw.
  */
 
-import type { PerformanceProfile } from '../../src/shared/lib/performance';
+import type { PerformanceProfile } from '../../lib/ui/performance';
 
 // Mutable between tests, so the type must stay wide rather than narrowing to the
 // literal the initial value happens to have.
@@ -25,7 +25,7 @@ const profile: PerformanceProfile = {
   surfaceTier: 'shader',
 };
 
-vi.mock('../../src/shared/lib/performance', () => ({
+vi.mock('../../lib/ui/performance', () => ({
   usePerformanceProfile: () => profile,
 }));
 

@@ -71,6 +71,6 @@ describe('composer option wiring', () => {
   });
 
   it('a local video that cannot preview never falls back to a WebView', () => {
-    expect(src('src/features/feed/ui/VideoPreview.tsx')).toMatch(/loadState === 'error' && !isLocalUri/);
+    expect(src('components/feed/VideoPreview.tsx')).toMatch(/loadState === 'error' && !isLocalUri/);
   });
 });

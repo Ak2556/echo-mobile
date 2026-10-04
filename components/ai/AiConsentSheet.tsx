@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sparkle } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { ConsentSheet } from '../consent/ConsentSheet';
 import { answerAiConsent, useAiConsent } from '../../lib/privacy/aiConsent';
 

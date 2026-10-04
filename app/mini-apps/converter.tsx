@@ -4,8 +4,8 @@ import { ArrowsLeftRight } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { useTheme } from '../../src/shared/lib/theme';
-import { ttx } from '../../src/shared/lib/i18n';
+import { useTheme } from '../../lib/ui/theme';
+import { ttx } from '../../lib/i18n/i18n';
 
 interface Unit { label: string; toBase: number }
 interface Category { name: string; marker: string; units: Unit[] }

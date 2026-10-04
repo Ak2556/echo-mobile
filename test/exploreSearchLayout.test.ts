@@ -30,6 +30,6 @@ describe('Explore search', () => {
   });
 
   it('the search field has an accessible name', () => {
-    expect(read('src/features/feed/ui/SearchBar.tsx')).toMatch(/accessibilityLabel=\{placeholder\}/);
+    expect(read('components/feed/SearchBar.tsx')).toMatch(/accessibilityLabel=\{placeholder\}/);
   });
 });

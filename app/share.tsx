@@ -6,11 +6,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CheckCircle, Eye, FloppyDisk, Globe, GitBranch, Lock, MagicWand, PaperPlaneTilt, ShieldCheck } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../src/shared/lib/theme';
+import { useTheme } from '../lib/ui/theme';
 import { FeedItem } from '../types';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { getSessionUserId } from '../lib/supabaseEchoApi';
-import { usePublishRemoteEcho } from '../src/features/feed/api/useSupabaseSocial';
+import { usePublishRemoteEcho } from '../hooks/useSupabaseSocial';
 import { coerceFeedItem } from '../lib/feed/localFeedSeed';
 import { consumePendingPublishContext, peekPendingPublishContext } from '../lib/feed/publishContext';
 import { randomUUID } from 'expo-crypto';
@@ -29,8 +29,8 @@ import {
 } from '../lib/feed/echoUX';
 import { rewriteEditorial, EditorialAction } from '../lib/feed/editorial';
 import { getPerspectiveLabel } from '../lib/ai/perspectives';
-import { track } from '../src/shared/lib/analytics';
-import { ttx } from '../src/shared/lib/i18n';
+import { track } from '../lib/core/analytics';
+import { ttx } from '../lib/i18n/i18n';
 
 const SHARE_DRAFT_KEY = 'echo/share-draft';
 

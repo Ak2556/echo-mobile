@@ -4,8 +4,8 @@ import { Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Sharing from 'expo-sharing';
 import { ImageSquare, VideoCamera, SlidersHorizontal } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
-import { PhotoEditor } from '../../src/features/feed/ui/PhotoEditor';
+import { useTheme } from '../../lib/ui/theme';
+import { PhotoEditor } from '../../components/feed/PhotoEditor';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 
 export default function EditorApp() {

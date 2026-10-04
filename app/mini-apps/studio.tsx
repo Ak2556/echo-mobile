@@ -15,12 +15,12 @@ import {
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../../components/ui/Toast';
 import { CameraCapture, CameraCaptureType, loadCameraCaptures, saveCameraCaptures } from '../../lib/media/cameraCaptures';
 import { uploadMiniAppMedia } from '../../lib/mini-apps/miniAppMedia';
-import { ttx } from '../../src/shared/lib/i18n';
-import { PhotoEditor } from '../../src/features/feed/ui/PhotoEditor';
+import { ttx } from '../../lib/i18n/i18n';
+import { PhotoEditor } from '../../components/feed/PhotoEditor';
 
 type Mode = CameraCaptureType;
 type CaptureIntent = 'proof' | 'progress' | 'listing' | 'document';

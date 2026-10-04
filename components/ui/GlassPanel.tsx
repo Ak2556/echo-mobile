@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Platform, StyleSheet, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useTheme, GLASS_INTENSITY } from '../../src/shared/lib/theme';
-import { PerformanceMode, usePerformanceProfile } from '../../src/shared/lib/performance';
+import { useTheme, GLASS_INTENSITY } from '../../lib/ui/theme';
+import { PerformanceMode, usePerformanceProfile } from '../../lib/ui/performance';
 
 type GlassVariant = keyof typeof GLASS_INTENSITY;
 

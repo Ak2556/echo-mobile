@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, Text, View } from 'react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { persistGet, persistSet } from '../../store/persist';
 import { WORKER_URL } from '../../lib/routing/workerUrl';
 

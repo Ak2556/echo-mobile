@@ -23,7 +23,7 @@ import { resolve } from 'node:path';
  */
 
 const SOURCES = [
-  'src/shared/lib/i18n.ts',
+  'lib/i18n/i18n.ts',
   'lib/i18n/i18nPhrases.ts',
   'lib/i18n/i18nGenerated.ts',
 ];

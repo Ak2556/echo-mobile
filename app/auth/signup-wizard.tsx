@@ -23,13 +23,13 @@ import { refreshAuthSession, useAuth, sendEmailOtp, verifyEmailOtp } from '../..
 import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
-import { track, identify } from '../../src/shared/lib/analytics';
-import { useTheme } from '../../src/shared/lib/theme';
-import { useResponsiveLayout } from '../../src/shared/lib/responsive';
+import { track, identify } from '../../lib/core/analytics';
+import { useTheme } from '../../lib/ui/theme';
+import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { WARM_AVATAR_COLORS } from '../../lib/social/avatarPalette';
 import { MINIMUM_AGE, checkDateOfBirth, ageRejectionMessage } from '../../constants/legal/ageGate';
 import { APP_LANGUAGES } from '../../lib/i18n/languages';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 import { personName } from '../../lib/social/personName';
 
 const ACCENT = '#E06030';

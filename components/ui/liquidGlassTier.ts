@@ -1,4 +1,4 @@
-import type { SurfaceTier } from '../../src/shared/lib/performance';
+import type { SurfaceTier } from '../../lib/ui/performance';
 
 /**
  * Which surface a LiquidGlass instance should actually draw.

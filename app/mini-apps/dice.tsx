@@ -10,8 +10,8 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useTheme } from '../../src/shared/lib/theme';
-import { ttx } from '../../src/shared/lib/i18n';
+import { useTheme } from '../../lib/ui/theme';
+import { ttx } from '../../lib/i18n/i18n';
 
 // Warm editorial palette (lib/social/avatarPalette.ts) — one hue per die.
 function getDice(colors: { danger: string; warning: string; success: string; accent: string; textSecondary: string; textMuted: string }) {

@@ -3,8 +3,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Alert 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import { Check, SkipForward, Trophy, X } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
-import { tap } from '../../src/shared/lib/haptics';
+import { useTheme } from '../../lib/ui/theme';
+import { tap } from '../../lib/ui/haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { ExerciseDemo } from './ExerciseDemo';
 import { EXERCISES, EXERCISE_CATALOG } from '../../lib/mini-apps/exerciseLibrary';
@@ -12,7 +12,7 @@ import {
   Routine, Workout, WorkoutExercise,
   bestLiftFor, detectPRs, lastLiftFor, workoutVolume,
 } from '../../lib/mini-apps/fitness';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 interface ExerciseState {
   weight: string;

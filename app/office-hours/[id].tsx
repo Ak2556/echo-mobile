@@ -9,7 +9,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { TextInput } from '../../components/ui/TextInput';
 import { showToast } from '../../components/ui/Toast';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { V2FeatureGuard } from '../../components/common/V2FeatureGuard';
 import {
   fetchOfficeHour,
@@ -20,7 +20,7 @@ import {
   type OfficeHour,
   type OfficeHourQuestion,
 } from '../../lib/supabaseEchoApi';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 function OfficeHourDetailScreenInner() {
   const router = useRouter();

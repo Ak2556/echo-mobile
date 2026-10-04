@@ -4,13 +4,13 @@ import { useRouter } from 'expo-router';
 import { Link, ShareNetwork, PaperPlaneTilt, Image as ImageIcon } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from './ActionSheet';
 import { echoUrl } from '../../lib/routing/echoUrl';
-import { tap } from '../../src/shared/lib/haptics';
-import { useTheme } from '../../src/shared/lib/theme';
+import { tap } from '../../lib/ui/haptics';
+import { useTheme } from '../../lib/ui/theme';
 import { FeedItem } from '../../types';
-import { ShareableEchoCard } from '../../src/features/feed/ui/ShareableEchoCard';
+import { ShareableEchoCard } from '../feed/ShareableEchoCard';
 import { shareEchoAsImage } from '../../lib/media/shareEchoImage';
-import { track } from '../../src/shared/lib/analytics';
-import { ttx } from '../../src/shared/lib/i18n';
+import { track } from '../../lib/core/analytics';
+import { ttx } from '../../lib/i18n/i18n';
 
 interface ShareSheetProps {
   visible: boolean;
