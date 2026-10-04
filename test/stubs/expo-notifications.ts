@@ -31,3 +31,5 @@ export const scheduleNotificationAsync = async () => 'stub-id';
 export const cancelScheduledNotificationAsync = async () => {};
 export const setNotificationChannelAsync = async () => {};
 export const setNotificationHandler = () => {};
+export const getPresentedNotificationsAsync = async () => [];
+export const dismissNotificationAsync = async () => {};

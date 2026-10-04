@@ -3148,6 +3148,25 @@ export async function dismissRemoteNotification(notificationId: string): Promise
   if (error) throw error;
 }
 
+/**
+ * Clear a conversation's DM notifications from the inbox once its thread has
+ * been opened: the messages themselves are the thing now on screen. Soft, like
+ * dismissRemoteNotification, and background: a failure is logged, not thrown.
+ */
+export async function dismissConversationNotifications(conversationId: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read_at: now, dismissed_at: now })
+    .eq('user_id', uid)
+    .eq('type', 'dm')
+    .eq('target_id', conversationId)
+    .is('dismissed_at', null);
+  if (error) captureException(error, { tags: { fn: 'dismissConversationNotifications' } });
+}
+
 export async function markAllRemoteNotificationsRead(): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) return;

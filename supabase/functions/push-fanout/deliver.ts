@@ -6,7 +6,7 @@
 // return { skipped }; a send returns every ticket's outcome.
 
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
-import { dmPushBody } from './copy.ts';
+import { pushBody, pushTitle } from './copy.ts';
 import { pruneDeadTokens, sendToExpo, tokensByUser } from '../_shared/expoPush.ts';
 import type { TicketOutcome } from '../_shared/expoTickets.ts';
 // Shared with the app so the channel/category ids can never drift apart: the
@@ -30,13 +30,6 @@ export interface PushNotification {
 }
 
 export type DeliveryResult = { skipped: string } | { outcome: TicketOutcome };
-
-const REACTION_EMOJI: Record<string, string> = {
-  mind_blown: '🤯',
-  taking_notes: '📝',
-  agree: '💯',
-  disagree: '🤔',
-};
 
 // deno-lint-ignore no-explicit-any
 export async function deliverNotification(db: SupabaseClient<any, any, any>, body: PushNotification): Promise<DeliveryResult> {
@@ -102,8 +95,8 @@ export async function deliverNotification(db: SupabaseClient<any, any, any>, bod
 
   const actorData = actorResult.status === 'fulfilled' ? actorResult.value.data : null;
   const actorName = actorData?.display_name || actorData?.username || 'Someone';
-  const title = titleFor(body.type, actorName, body.preview);
-  const message = messageFor(body.type, actorName, body.preview);
+  const title = pushTitle(body.type, actorName, body.preview);
+  const message = pushBody(body.type, actorName, body.preview);
 
   // data payload routes the tap. The client tap handler reads `kind` +
   // `target_id` from here and routes accordingly.
@@ -149,145 +142,4 @@ export async function deliverNotification(db: SupabaseClient<any, any, any>, bod
   await pruneDeadTokens(db, outcome.dead);
 
   return { outcome };
-}
-
-// Pick a random variant so the same event never reads the same twice.
-function pick(arr: string[]): string {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-// Voice: playful, a little cheeky, never corporate — a ping should feel like a
-// friend narrating your day, not a system alert. Content-carrying types (dm,
-// comment, mention, quote) keep the real text as the body; the title gets the
-// personality.
-function titleFor(t: string, actorName: string, preview?: string | null): string {
-  switch (t) {
-    case 'like': return pick([
-      `${actorName} smashed the like button`,
-      `Your echo is doing numbers rn`,
-      `${actorName} agrees with your take`,
-      `The dopamine hit you ordered 💌 (${actorName} liked your post)`,
-      `${actorName} tapped that little heart. Taste: impeccable.`,
-      `Warning: ${actorName} caught feelings for your echo`,
-    ]);
-    case 'comment': return pick([
-      `${actorName} entered the chat`,
-      `${actorName} has thoughts. Lots of them.`,
-      `${actorName} slid a comment under your echo`,
-      `Drama alert: ${actorName} replied`,
-      `${actorName} couldn’t scroll past without commenting`,
-    ]);
-    case 'follow': return pick([
-      `${actorName} followed you. Don't let the clout get to your head.`,
-      `New follower: ${actorName}. The fan club grows.`,
-      `${actorName} just signed up for your content. Bold move.`,
-      `You're famous now. Wave to ${actorName}.`,
-      `${actorName} is officially in your corner`,
-    ]);
-    case 'repost': return pick([
-      `${actorName} liked your echo enough to steal it (nicely)`,
-      `${actorName} gave your words a bigger stage`,
-      `Going viral? ${actorName} just re-echoed you.`,
-      `${actorName} put your echo on their page. Flattery.`,
-    ]);
-    case 'mention': return pick([
-      `${actorName} name-dropped you`,
-      `${actorName} pulled you into the mess`,
-      `Your ears burning? ${actorName} tagged you.`,
-      `${actorName} dragged you into the conversation`,
-    ]);
-    case 'friend_post': return pick([
-      `Drop everything, ${actorName} just posted`,
-      `${actorName} dropped a banger (probably)`,
-      `Fresh tea from ${actorName} ☕️`,
-      `${actorName} is active rn. Go look.`,
-      `Catch up on ${actorName}'s latest`,
-    ]);
-    case 'friend_answer': return pick([
-      `${actorName} answered today's question`,
-      `${actorName} just answered`,
-      `${actorName} took today's question`,
-    ]);
-    case 'dm': return pick([
-      `${actorName} slid into your DMs`,
-      `${actorName} sent a little something 🤫`,
-      `Ping! ${actorName} wants your attention`,
-      `Secret message from ${actorName}`,
-    ]);
-    case 'reaction': {
-      const emoji = preview ? REACTION_EMOJI[preview] : '';
-      if (!emoji) return `${actorName} reacted to your echo`;
-      return pick([
-        `${actorName} reacted ${emoji}`,
-        `${emoji} incoming from ${actorName}`,
-        `${actorName} hit your echo with that ${emoji} energy`,
-      ]);
-    }
-    case 'bookmark': return pick([
-      `${actorName} saved your echo. It's a keeper.`,
-      `${actorName} filed your echo under "worth it"`,
-      `${actorName} is keeping your echo forever. No pressure.`,
-      `${actorName} bookmarked you. Museum-grade content.`,
-    ]);
-    case 'quote': return pick([
-      `${actorName} took your echo and ran with it`,
-      `${actorName} riffed on your echo`,
-      `${actorName} built an empire on your words`,
-      `${actorName} had a lot to say about your post`,
-    ]);
-    // The answer itself is the draw — show it, don't describe it.
-    case 'friend_answer':
-      return preview && preview.trim() ? preview.trim() : 'Go read it.';
-
-    case 'daily_react': {
-      const emoji = preview ? preview.trim().split(/\s+/)[0] : '';
-      if (!emoji) return `${actorName} reacted to your answer`;
-      return pick([
-        `${emoji} ${actorName} felt something about your answer`,
-        `${actorName} is judging your answer with ${emoji}`,
-      ]);
-    }
-    case 'personal_nudge': return pick([
-      `We miss you. Mostly.`,
-      `Your daily dose of Echo`,
-      `We’re literally waiting for you`,
-      `Don't make us beg. Open the app.`,
-      `psst... 🤫`,
-    ]);
-    case 'report_urgent': return 'Urgent report: act within 2 hours';
-    case 'rules_reminder': return "A reminder of Echo's rules";
-    default: return 'Echo';
-  }
-}
-
-function messageFor(t: string, actorName: string, preview?: string | null): string {
-  switch (t) {
-    // A sealed DM arrives with no preview (fn_dm_push_notify); never a blank push.
-    case 'dm':
-      return dmPushBody(preview);
-    // Content-carrying: show the real text.
-    case 'comment':
-    case 'mention':
-    case 'quote':
-    case 'friend_post':
-      return (preview ?? '').slice(0, 140);
-    case 'daily_react': {
-      // Drop the leading emoji token; show the answer snippet as the body.
-      const parts = (preview ?? '').trim().split(/\s+/);
-      return parts.slice(1).join(' ').slice(0, 140);
-    }
-    case 'personal_nudge':
-    case 'report_urgent':
-      return (preview ?? '').slice(0, 140);
-    case 'rules_reminder':
-      return "What's not allowed, and what happens when the rules are broken. Tap to read.";
-    // Title-only social pings get a little day-making flavor in the body.
-    case 'like': return pick(['Good echo, apparently.', 'You cooked.', 'Certified good post.', 'The people have spoken.', '']);
-    case 'follow': return pick(['Tap to see who.', 'Somebody has taste.', 'Go say hi.', 'Your reach is reaching.', '']);
-    case 'repost': return pick(['Your words, wider reach.', 'Going places.', 'Spreading like good gossip.', '']);
-    case 'reaction': return pick(['Tap to see the reaction.', 'Someone felt that.', 'That hit different.', '']);
-    case 'bookmark': return pick(['Saved for a rainy day.', 'Filed under keepers.', 'Someone’s a fan.', '']);
-    default:
-      return '';
-  }
 }

@@ -23,8 +23,12 @@ export function clearActiveConversation(id: string): void {
   if (activeConversationId === id) activeConversationId = null;
 }
 
+/** True when this push is a DM for conversation `id`. */
+export function isDmFor(data: Record<string, unknown> | null | undefined, id: string): boolean {
+  return !!data && data.kind === 'dm' && data.target_id === id;
+}
+
 /** True when this push is a DM for the thread that is open on screen. */
 export function isChatOpen(data: Record<string, unknown> | null | undefined): boolean {
-  if (!activeConversationId || !data) return false;
-  return data.kind === 'dm' && data.target_id === activeConversationId;
+  return !!activeConversationId && isDmFor(data, activeConversationId);
 }
