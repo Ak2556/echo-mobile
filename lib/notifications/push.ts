@@ -7,16 +7,22 @@ import { captureException } from '../core/monitoring';
 import { persistGet, persistSet } from '../../store/persist';
 import { registerNotificationChannels } from './channels';
 import { registerNotificationCategories } from './categories';
+import { isChatOpen } from './activeChat';
 import { recordPushOffer, shouldOfferPush, type PushOfferHistory } from '../retention/pushPromptPolicy';
 
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-    }),
+    handleNotification: async (notification) => {
+      // The thread you are already in does not need a banner, chime and badge
+      // for a message you are looking at.
+      const quiet = isChatOpen(notification.request.content.data);
+      return {
+        shouldShowBanner: !quiet,
+        shouldShowList: !quiet,
+        shouldPlaySound: !quiet,
+        shouldSetBadge: !quiet,
+      };
+    },
   });
 }
 
