@@ -364,6 +364,9 @@ export default function CreatePostScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['videos'],
       quality: 0.6,
+      // iOS shows the system trim bar, capped at videoMaxDuration. Android's
+      // picker has no video editing UI and ignores this.
+      allowsEditing: true,
       videoMaxDuration: MAX_VIDEO_DURATION_MS / 1000,
       videoExportPreset: Platform.OS === 'ios'
         ? ImagePicker.VideoExportPreset.H264_1280x720
@@ -385,6 +388,7 @@ export default function CreatePostScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['videos'],
+      allowsEditing: true,
       videoMaxDuration: MAX_VIDEO_DURATION_MS / 1000,
       videoQuality: Platform.OS === 'ios'
         ? ImagePicker.UIImagePickerControllerQualityType.IFrame1280x720
@@ -913,6 +917,7 @@ export default function CreatePostScreen() {
                     height={Math.round(videoBoxWidth / composerMediaAspect(video.width, video.height))}
                     borderRadius={radius.card}
                     autoplay
+                    controls
                   />
                 )}
               </View>
