@@ -66,3 +66,28 @@ export function splitMediaForModeration(urls: readonly (string | null | undefine
 
   return { images, videos, unchecked };
 }
+
+export interface HttpSplit {
+  /** http(s) URLs a model can fetch. */
+  fetchable: string[];
+  /** Anything else (data:, file:, garbage). Cannot be judged, so cannot be waved through. */
+  unfetchable: string[];
+}
+
+/**
+ * Split image URLs into what a classifier can fetch and what it cannot. Unlike
+ * splitMediaForModeration this does not look at the extension: an avatar from a
+ * sign-in provider often has none, and the model decides whether it is an image.
+ */
+export function splitHttpUrls(urls: readonly (string | null | undefined)[] | null | undefined): HttpSplit {
+  const fetchable: string[] = [];
+  const unfetchable: string[] = [];
+  for (const url of urls ?? []) {
+    if (typeof url !== 'string') continue;
+    const trimmed = url.trim();
+    if (!trimmed) continue;
+    if (/^https?:\/\//i.test(trimmed)) fetchable.push(trimmed);
+    else unfetchable.push(trimmed);
+  }
+  return { fetchable, unfetchable };
+}
