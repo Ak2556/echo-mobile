@@ -2,6 +2,7 @@ import { timingSafeEqual } from './timingSafeEqual';
 import { Hono } from 'hono';
 import { AwsClient } from 'aws4fetch';
 import { UUID_PATTERN, dmConversationFromKey, mediaHeaders, presignTtl, uploadPathAllowed } from './mediaPolicy';
+import { BUCKET_NAMES, OBJECT_SIZE_CAPS, sweepOversized, type BucketName } from './sizeCaps';
 
 type Bindings = {
   /** Supabase project URL. Set via `wrangler secret put SUPABASE_URL`. */
@@ -24,6 +25,13 @@ type Bindings = {
   MINI_APP_MEDIA_BUCKET: R2Bucket;
   MARKETPLACE_PHOTOS_BUCKET: R2Bucket;
   LEARN_LECTURES_BUCKET: R2Bucket;
+
+  /**
+   * "true" makes the scheduled size sweep delete oversized uploads. Anything else
+   * only logs what it would delete, which is how a new ceiling is first checked
+   * against what is already stored. Set in wrangler.toml [vars].
+   */
+  SIZE_SWEEP_ENFORCE?: string;
 };
 
 type Vars = { user_id: string; access_token: string };
@@ -40,8 +48,7 @@ const UPLOAD_URL_TTL_SECONDS = 15 * 60;
 
 const app = new Hono<{ Bindings: Bindings; Variables: Vars }>();
 
-const ALLOWED_BUCKETS = ['avatars', 'echo-media', 'dm-media', 'mini-app-media', 'marketplace-photos', 'learn-lectures'] as const;
-type BucketName = (typeof ALLOWED_BUCKETS)[number];
+const ALLOWED_BUCKETS = BUCKET_NAMES;
 
 function bucketBinding(env: Bindings, name: BucketName): R2Bucket {
   switch (name) {
@@ -684,4 +691,29 @@ app.get('/learn-lecture-url', async (c) => {
   return c.json({ kind: 'upload', url: signed.url, expiresIn: LECTURE_URL_TTL_SECONDS });
 });
 
-export default app;
+/**
+ * Scheduled: delete user uploads over their bucket's ceiling (see sizeCaps.ts).
+ * One bucket failing is logged and does not stop the rest.
+ */
+async function sweepOversizedUploads(env: Bindings): Promise<void> {
+  const enforce = env.SIZE_SWEEP_ENFORCE === 'true';
+  for (const name of ALLOWED_BUCKETS) {
+    try {
+      const r = await sweepOversized(bucketBinding(env, name), OBJECT_SIZE_CAPS[name], enforce);
+      for (const o of r.oversized) {
+        console.warn(`[size-sweep] ${enforce ? 'deleted' : 'would delete'} ${name}/${o.key} (${o.size} bytes, cap ${OBJECT_SIZE_CAPS[name]})`);
+      }
+      console.log(`[size-sweep] ${name}: scanned ${r.scanned}, oversized ${r.oversized.length}, deleted ${r.deleted}${enforce ? '' : ' (log-only)'}`);
+    } catch (err) {
+      console.error(`[size-sweep] ${name} failed:`, err instanceof Error ? err.message : String(err));
+    }
+  }
+}
+
+// The default export stays the Hono app (tests call app.request); the Workers
+// runtime reads `scheduled` off the same object.
+export default Object.assign(app, {
+  scheduled(_event: ScheduledController, env: Bindings, ctx: ExecutionContext) {
+    ctx.waitUntil(sweepOversizedUploads(env));
+  },
+});
