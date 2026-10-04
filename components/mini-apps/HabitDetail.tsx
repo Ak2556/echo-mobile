@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Archive, CaretLeft, CaretRight, PencilSimple, Trash, X, Clock } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import {
   Habit, bestHabitStreak, completionRate, formatCheckInTime,
   getHabitStreak, isScheduledOn, todayStr,
 } from '../../lib/mini-apps/habits';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 import { HabitMarkerIcon } from './HabitMarkerIcon';
 
 function monthDays(year: number, month: number): (string | null)[] {

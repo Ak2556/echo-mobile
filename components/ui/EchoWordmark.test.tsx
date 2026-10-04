@@ -15,7 +15,7 @@ import { render } from '@testing-library/react';
  */
 
 const theme = { colors: { text: '#EFEFEF', accent: '#7A8B4E' } };
-vi.mock('../../src/shared/lib/theme', () => ({ useTheme: () => theme }));
+vi.mock('../../lib/ui/theme', () => ({ useTheme: () => theme }));
 
 import { EchoWordmark } from './EchoWordmark';
 

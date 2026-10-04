@@ -32,7 +32,7 @@ const ROOT = join(__dirname, '..');
 // The live file the app imports. This pointed at lib/i18n.ts, which has not
 // existed since the shared/ move, so every run died on the first read and the
 // generated table stayed empty.
-const I18N = join(ROOT, 'src', 'shared', 'lib', 'i18n.ts');
+const I18N = join(ROOT, 'lib', 'i18n', 'i18n.ts');
 const LANGS = join(ROOT, 'lib', 'i18n', 'languages.ts');
 const OUT = join(ROOT, 'lib', 'i18n', 'i18nGenerated.ts');
 

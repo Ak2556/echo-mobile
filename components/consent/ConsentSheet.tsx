@@ -2,8 +2,8 @@ import React from 'react';
 import { Modal, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useTheme } from '../../src/shared/lib/theme';
-import { ttx } from '../../src/shared/lib/i18n';
+import { useTheme } from '../../lib/ui/theme';
+import { ttx } from '../../lib/i18n/i18n';
 import type { ConsentGate } from '../../lib/privacy/consentGate';
 
 interface ConsentSheetProps {

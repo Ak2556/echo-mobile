@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, Pressable, FlatList, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
 import { X, MagnifyingGlass, MusicNote, WarningCircle } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { searchSpotify, SpotifyTrack } from '../../lib/mini-apps/spotify';
 import { Image } from 'expo-image';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 export interface Song {
   title: string;

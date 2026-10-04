@@ -18,16 +18,16 @@ import { useCommandPalette } from '../../lib/ui/commandPalette';
 import { streamEchoAI } from '../../lib/ai/api';
 import { isLocalTool } from '../../lib/ai/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/ai/localToolFlow';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { ToolCallCard, ToolCallItem } from './ToolCallCard';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { LiquidGlass } from '../ui/LiquidGlass';
 import { IconBadge } from '../ui/IconBadge';
-import { usePerformanceProfile } from '../../src/shared/lib/performance';
+import { usePerformanceProfile } from '../../lib/ui/performance';
 import { useAppStore } from '../../store/useAppStore';
 import { assistantLanguageInstruction } from '../../lib/i18n/languages';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 type Item =
   | { kind: 'text'; id: string; role: 'user' | 'assistant'; content: string }

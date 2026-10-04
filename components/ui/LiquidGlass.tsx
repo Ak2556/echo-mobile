@@ -3,12 +3,12 @@ import { View, StyleSheet, type ViewStyle, type LayoutChangeEvent } from 'react-
 import { GlassPanel } from './GlassPanel';
 import { NativeGlassView, isNativeGlassAvailable } from './nativeGlass';
 import { resolveSurface } from './liquidGlassTier';
-import { useTheme, GLASS_INTENSITY } from '../../src/shared/lib/theme';
+import { useTheme, GLASS_INTENSITY } from '../../lib/ui/theme';
 import {
   usePerformanceProfile,
   type PerformanceMode,
   type SurfaceTier,
-} from '../../src/shared/lib/performance';
+} from '../../lib/ui/performance';
 
 /**
  * A translucent surface that costs what the device can afford.
@@ -31,7 +31,7 @@ import {
  */
 
 // ── Lazy native (OTA-safe: never touched at module load on builds lacking it) ──
-// Mirrors the guard in src/features/feed/ui/PhotoEditor.tsx, the only other Skia
+// Mirrors the guard in components/feed/PhotoEditor.tsx, the only other Skia
 // caller. A JS update can reach a binary built before this dependency existed, and
 // a bare import there is a crash on launch rather than a missing effect.
 let Sk: any = null;

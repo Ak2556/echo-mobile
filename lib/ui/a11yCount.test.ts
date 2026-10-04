@@ -16,17 +16,17 @@ describe('countLabel', () => {
 // 2026-09-30 audit, low-severity items.
 describe('audit fixes', () => {
   it('L2: the dismiss label is spelled right', () => {
-    expect(src('src/shared/lib/i18n.ts')).toMatch(/'home\.dismissThought': "Dismiss today's thought"/);
+    expect(src('lib/i18n/i18n.ts')).toMatch(/'home\.dismissThought': "Dismiss today's thought"/);
   });
 
   it('L3/L5: count buttons say what they count', () => {
-    expect(src('src/features/feed/ui/FeedCard.tsx')).not.toMatch(/Comment\. \$\{item\.commentCount \|\| 0\} comments/);
+    expect(src('components/feed/FeedCard.tsx')).not.toMatch(/Comment\. \$\{item\.commentCount \|\| 0\} comments/);
     expect(src('app/thread/[id].tsx')).toMatch(/countLabel\(item\.commentCount/);
     expect(src('app/user/[id].tsx')).toMatch(/countLabel\(user\.followerCount/);
   });
 
   it('L6: a similar-conversation card never repeats its title as the preview', () => {
-    expect(src('src/features/feed/ui/SimilarEchoesRail.tsx')).toMatch(/\.find\(text => !!text && text !== title\)/);
+    expect(src('components/feed/SimilarEchoesRail.tsx')).toMatch(/\.find\(text => !!text && text !== title\)/);
   });
 
   it('L12: story screens are behind the stories flag like the other flagged-off routes', () => {
@@ -42,6 +42,6 @@ describe('audit fixes', () => {
   });
 
   it('N2: Flow cards clear the floating tab bar with the shared padding', () => {
-    expect(src('src/features/feed/ui/FlowCard.tsx')).toMatch(/paddingBottom: layout\.bottomChromePadding/);
+    expect(src('components/feed/FlowCard.tsx')).toMatch(/paddingBottom: layout\.bottomChromePadding/);
   });
 });

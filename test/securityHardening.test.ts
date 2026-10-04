@@ -160,7 +160,7 @@ describe('rate limits', () => {
 
   it('the allowlist is exactly the actions the app checks client-side', () => {
     const used = new Set<string>();
-    for (const file of ['lib', 'src', 'app', 'hooks', 'components'].flatMap(sourceFiles)) {
+    for (const file of ['lib', 'app', 'hooks', 'components'].flatMap(sourceFiles)) {
       for (const m of readFileSync(join(ROOT, file), 'utf8').matchAll(/checkRemoteAppRateLimit\(\s*'([\w-]+)'/g)) used.add(m[1]);
     }
     expect([...used].sort()).toEqual([...allowlist].sort());
@@ -651,7 +651,7 @@ describe('client writes are limited to the columns the app writes', () => {
     const call = new RegExp(`\\.from\\(\\s*'${table}'\\s*\\)\\s*\\.${method}\\(\\s*\\{([^}]*)\\}`, 'g');
     const keys = new Set<string>();
     let calls = 0;
-    for (const file of ['lib', 'src', 'app', 'hooks', 'components', 'store'].flatMap(sourceFiles)) {
+    for (const file of ['lib', 'app', 'hooks', 'components', 'store'].flatMap(sourceFiles)) {
       for (const m of readFileSync(join(ROOT, file), 'utf8').matchAll(call)) {
         calls++;
         for (const k of m[1].matchAll(/(\w+)\s*:/g)) keys.add(k[1]);

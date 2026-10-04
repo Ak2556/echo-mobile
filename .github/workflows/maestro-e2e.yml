@@ -35,8 +35,9 @@ on:
       # Skip the ~20 minute Android build for changes that cannot affect it.
       - 'app/**'
       - 'components/**'
-      - 'src/**'
+      - 'hooks/**'
       - 'lib/**'
+      - 'store/**'
       - 'constants/**'
       - 'assets/**'
       - 'e2e/**'

@@ -14,14 +14,14 @@ import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { WARM_AVATAR_COLORS } from '../lib/social/avatarPalette';
-import { useTheme } from '../src/shared/lib/theme';
+import { useTheme } from '../lib/ui/theme';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { fetchRemoteProfile, isUsernameTaken, updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
 import { cleanUsername, isAutoUsername, isValidUsername, USERNAME_MAX, USERNAME_MIN } from '../lib/social/username';
 import { supabase } from '../lib/supabase';
-import { useResponsiveLayout } from '../src/shared/lib/responsive';
-import { ttx } from '../src/shared/lib/i18n';
-import { PhotoEditor } from '../src/features/feed/ui/PhotoEditor';
+import { useResponsiveLayout } from '../lib/ui/responsive';
+import { ttx } from '../lib/i18n/i18n';
+import { PhotoEditor } from '../components/feed/PhotoEditor';
 
 // The picker offers the canonical warm identity palette. It previously held
 // raw Tailwind hues, which meant a freshly-edited profile could set a colour

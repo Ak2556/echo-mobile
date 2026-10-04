@@ -5,9 +5,9 @@ import { Trash } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { countWords } from '../../lib/mini-apps/wordCount';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 const SAMPLE = `# Hello, Markdown!
 

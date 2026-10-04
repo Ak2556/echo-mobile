@@ -27,7 +27,7 @@ import { SessionsPanel } from '../../components/learn/SessionsPanel';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { showToast } from '../../components/ui/Toast';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { CURRENCIES, formatPrice, type CurrencyCode } from '../../lib/mini-apps/currency';
 import { CURATED_LEARNING_TOPICS, createLearningGoalFromTopic, type CuratedLearningTopic } from '../../lib/mini-apps/learningTopicLibrary';
 import {
@@ -77,7 +77,7 @@ import {
   type LearningMode,
   type LearningSettings,
 } from '../../lib/mini-apps/learn';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 const LEVELS: { id: LearningLevel; label: string }[] = [
   { id: 'beginner', label: 'Beginner' },

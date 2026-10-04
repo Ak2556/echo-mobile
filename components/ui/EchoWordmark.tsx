@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Image } from 'expo-image';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 
 /**
  * The Echo lockup: the mark from the app icon, then the name.

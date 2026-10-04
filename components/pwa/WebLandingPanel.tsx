@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, Platform, Text, View, useWindowDimensions } from 'react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 
 /**
  * What downloadecho.com says about itself before you sign in.

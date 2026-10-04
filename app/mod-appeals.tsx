@@ -8,9 +8,9 @@ import { Clock, Scales, CheckCircle, XCircle, Warning, SealCheck } from 'phospho
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
-import { useTheme } from '../src/shared/lib/theme';
+import { useTheme } from '../lib/ui/theme';
 import { fetchPendingAppeals, resolveAppeal, type PendingAppeal } from '../lib/supabaseEchoApi';
-import { ttx } from '../src/shared/lib/i18n';
+import { ttx } from '../lib/i18n/i18n';
 
 function slaColor(daysRemaining: number): string {
   if (daysRemaining <= 2) return '#EF4444';

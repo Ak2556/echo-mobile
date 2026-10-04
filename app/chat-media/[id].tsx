@@ -4,9 +4,9 @@ import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, LinkSimple, Images as ImagesIcon } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { fetchConversationMedia, type ConversationMedia } from '../../lib/supabaseEchoApi';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 import { useAuth } from '../../lib/auth';
 
 export default function ChatMediaScreen() {

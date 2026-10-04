@@ -7,11 +7,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChartLineUp, Flame, Heart, Confetti } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { useTheme } from '../src/shared/lib/theme';
+import { useTheme } from '../lib/ui/theme';
 import { GRADIENTS } from '../lib/ui/accentDesign';
 import { fetchOrComputeYearWrap, type YearWrap } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
-import { ttx } from '../src/shared/lib/i18n';
+import { ttx } from '../lib/i18n/i18n';
 
 /**
  * Year in Echo — Spotify-Wrapped-style recap of your year.

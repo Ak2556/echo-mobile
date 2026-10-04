@@ -5,8 +5,8 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeGlassView, isNativeGlassAvailable } from './nativeGlass';
 import type { RampLayer } from './edgeGlassRamp';
-import { useTheme } from '../../src/shared/lib/theme';
-import { usePerformanceProfile, type PerformanceMode } from '../../src/shared/lib/performance';
+import { useTheme } from '../../lib/ui/theme';
+import { usePerformanceProfile, type PerformanceMode } from '../../lib/ui/performance';
 
 /**
  * The glass under a header or a tab bar.

@@ -40,7 +40,7 @@ function walk(dir: string): string[] {
   return out;
 }
 
-const files = [...walk(join(ROOT, 'app')), ...walk(join(ROOT, 'components')), ...walk(join(ROOT, 'src'))];
+const files = [...walk(join(ROOT, 'app')), ...walk(join(ROOT, 'components'))];
 
 describe('screen chrome uses the edge treatment', () => {
   it('finds the source files at all', () => {

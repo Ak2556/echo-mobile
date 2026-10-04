@@ -9,7 +9,7 @@
  * currently-installed APK would crash every user at startup.
  *
  * Same guard the other native optional dependency uses (see the Skia require in
- * src/features/feed/ui/PhotoEditor.tsx and components/ui/LiquidGlass.tsx).
+ * components/feed/PhotoEditor.tsx and components/ui/LiquidGlass.tsx).
  *
  * `useSpeechEvent` has to stay callable unconditionally — it is a hook, and
  * React requires the same hooks in the same order on every render. When the

@@ -10,14 +10,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Brain, UsersThree, Lightning } from 'phosphor-react-native';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { useThinkingPartners } from '../hooks/queries/useThinkingPartners';
-import { useToggleRemoteFollow } from '../src/features/feed/api/useSupabaseSocial';
+import { useToggleRemoteFollow } from '../hooks/useSupabaseSocial';
 import { GRADIENTS, ACCENT_COLORS, accentShadow, feedbackHaptic } from '../lib/ui/accentDesign';
 import { useAppStore } from '../store/useAppStore';
 import { ErrorState, classifyError } from '../components/common/ErrorState';
-import { track } from '../src/shared/lib/analytics';
+import { track } from '../lib/core/analytics';
 import type { ThinkingPartnerMode } from '../lib/supabaseEchoApi';
 import type { User } from '../types';
-import { ttx } from '../src/shared/lib/i18n';
+import { ttx } from '../lib/i18n/i18n';
 
 type Partner = User & { affinity: number };
 

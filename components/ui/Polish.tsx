@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View, ViewStyle } from 'react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 
 export function SectionTitle({ title, caption, right }: { title: string; caption?: string; right?: React.ReactNode }) {
   const { colors, font } = useTheme();

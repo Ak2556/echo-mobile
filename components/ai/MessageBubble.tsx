@@ -5,9 +5,9 @@ import { BlurView } from 'expo-blur';
 import Markdown from 'react-native-markdown-display';
 import { Copy } from 'phosphor-react-native';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
-import { tap } from '../../src/shared/lib/haptics';
+import { tap } from '../../lib/ui/haptics';
 import { isTtsAvailable, toggleSpeak, useTtsStore } from '../../lib/mini-apps/tts';
 
 async function copyToClipboard(text: string) {

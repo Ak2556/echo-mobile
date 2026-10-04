@@ -3,8 +3,8 @@ import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, type Href } from 'expo-router';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
-import { useTheme } from '../../src/shared/lib/theme';
-import { useI18n } from '../../src/shared/lib/i18n';
+import { useTheme } from '../../lib/ui/theme';
+import { useI18n } from '../../lib/i18n/i18n';
 import {
   RULES_REMINDER_INTRO,
   RULES_REMINDER_SECTIONS,

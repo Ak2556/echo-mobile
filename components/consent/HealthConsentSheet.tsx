@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heartbeat } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { ConsentSheet } from './ConsentSheet';
 import { answerHealthConsent, useHealthConsent } from '../../lib/privacy/healthConsent';
 
