@@ -27,6 +27,7 @@ import { markCheckinSeen } from '../../lib/ai/proactiveCheckin';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
 import { Avatar } from '../../components/ui/Avatar';
+import { wantsToPost } from '../../lib/ai/postIntent';
 import { Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/feed/publishContext';
@@ -873,7 +874,11 @@ export default function ChatScreen() {
   const showEmptySuggestions = items.length === 0;
   // Hide the onboarding panel after the first sent message.
   const showFirstChatPanel = showEmptySuggestions && !hasSeenChatEmptyHint;
-  const showShareNudge = !isStreaming && messages.some(m => m.role === 'user') && messages.some(m => m.role === 'assistant');
+  const hasExchange = messages.some(m => m.role === 'user') && messages.some(m => m.role === 'assistant');
+  const lastUserText = [...messages].reverse().find(m => m.role === 'user')?.content;
+  // A plain conversation stays a conversation. The banner appears only once the
+  // user has asked to post/draft/share; any chat can still be shared from the header.
+  const showShareNudge = !isStreaming && hasExchange && wantsToPost(lastUserText);
 
   const emptyChatState = showEmptySuggestions ? (
     <ChatEmptyLaunchpad
@@ -1008,9 +1013,11 @@ export default function ChatScreen() {
                   <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
                   <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={ttx('New chat')} onPress={handleNewChat} />
                   <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
-                  {/* Share left the header: it duplicated the "Draft ready" button
-                      under the conversation, and on an empty chat it only raised
-                      a "Nothing to share" alert while styled as the main action. */}
+                  {/* Shown only when there is a conversation and the "Draft ready"
+                      banner is not already offering the same thing. */}
+                  {hasExchange && !showShareNudge && !isStreaming ? (
+                    <HeaderIconButton icon={<ArrowUpRight color={colors.textSecondary} size={18} />} label={ttx('Share as Echo')} onPress={handleShare} />
+                  ) : null}
                   <HeaderIconButton icon={<Lightning color={colors.accent} size={16} weight="fill" />} label={`${ttx('AI model')}: ${modelLabel(aiModel)}`} onPress={() => setModelSheetOpen(true)} />
                 </View>
               </View>
