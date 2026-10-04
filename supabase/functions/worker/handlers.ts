@@ -5,6 +5,7 @@
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { deliverNotification } from '../push-fanout/deliver.ts';
 import { judgeEcho } from '../embed-echo/judge.ts';
+import { judgeAvatar, judgeListing, type MediaJudgeResult } from '../embed-echo/judgeMedia.ts';
 import { entitlementFor, type RcSubscriber } from '../revenuecat-webhook/entitlements.ts';
 import { judgeRequest } from '../verify-identity/judge.ts';
 import { runErasure } from '../delete-account/erasure.ts';
@@ -76,6 +77,32 @@ const moderation: Handler = async (msg, ctx) => {
       // quota on a post that is already decided.
       await ctx.report(`${r.kind} for ${echoId}: ${r.error}`);
       return;
+    default:
+      return;
+  }
+};
+
+/**
+ * A marketplace listing or a profile avatar: judge it, and hide a listing or
+ * clear an avatar that fails. Unavailable means no verdict was reached, so the
+ * job is retried; the queue's backoff and dead-letter rules apply as for echoes.
+ */
+const mediaModeration: Handler = async (msg, ctx) => {
+  const kind = String(msg.kind ?? '');
+  let r: MediaJudgeResult;
+  if (kind === 'listing') {
+    r = await judgeListing(ctx.db, String(msg.id));
+  } else if (kind === 'avatar') {
+    r = await judgeAvatar(ctx.db, String(msg.id), String(msg.url ?? ''));
+  } else {
+    await ctx.report(`media_moderation: unknown kind ${JSON.stringify(kind)}`);
+    return;
+  }
+  switch (r.kind) {
+    case 'unavailable':
+      throw new Error(`media moderation unavailable${r.error ? `: ${r.error}` : ''}`);
+    case 'verdict_not_saved':
+      throw new Error(`verdict not saved: ${r.error}`);
     default:
       return;
   }
@@ -190,6 +217,7 @@ const mediaGc: Handler = async (msg, ctx) => {
 export const HANDLERS: Record<string, Handler> = {
   push,
   moderation,
+  media_moderation: mediaModeration,
   entitlements,
   broadcast,
   verification,

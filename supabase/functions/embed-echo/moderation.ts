@@ -156,7 +156,7 @@ const VISION_SYSTEM_PROMPT =
  * Cloudflare worker, so the model fetches them directly and the function never
  * has to download and re-encode megabytes of image data.
  */
-export async function moderateImages(urls: string[]): Promise<ModerationResult> {
+async function moderateImageChunk(urls: string[]): Promise<ModerationResult> {
   if (urls.length === 0) return { ok: true, categories: [] };
 
   const apiKey = Deno.env.get("OPENROUTER_API_KEY");
@@ -185,7 +185,7 @@ export async function moderateImages(urls: string[]): Promise<ModerationResult> 
           { role: "system", content: VISION_SYSTEM_PROMPT },
           {
             role: "user",
-            content: urls.slice(0, MAX_IMAGES_PER_CALL).map((url) => ({
+            content: urls.map((url) => ({
               type: "image_url",
               image_url: { url },
             })),
@@ -217,6 +217,21 @@ export async function moderateImages(urls: string[]): Promise<ModerationResult> 
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Classify uploaded images, at most MAX_IMAGES_PER_CALL per model call.
+ *
+ * This used to send the first four and silently ignore the rest, so the fifth
+ * photo of a listing (up to six are allowed) was never looked at. Every chunk is
+ * judged; the first one that is flagged or unavailable decides.
+ */
+export async function moderateImages(urls: string[]): Promise<ModerationResult> {
+  for (let i = 0; i < urls.length; i += MAX_IMAGES_PER_CALL) {
+    const result = await moderateImageChunk(urls.slice(i, i + MAX_IMAGES_PER_CALL));
+    if (!result.ok) return result;
+  }
+  return { ok: true, categories: [] };
 }
 
 // ── Video ───────────────────────────────────────────────────────────────────

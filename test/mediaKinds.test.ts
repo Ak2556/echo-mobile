@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { splitMediaForModeration } from '../supabase/functions/embed-echo/mediaKinds';
+import { splitHttpUrls, splitMediaForModeration } from '../supabase/functions/embed-echo/mediaKinds';
 
 describe('splitMediaForModeration', () => {
   it('picks out the images a classifier can read', () => {
@@ -48,5 +48,33 @@ describe('splitMediaForModeration', () => {
     expect(splitMediaForModeration(null)).toEqual({ images: [], videos: [], unchecked: [] });
     expect(splitMediaForModeration(undefined)).toEqual({ images: [], videos: [], unchecked: [] });
     expect(splitMediaForModeration([null, undefined, '', '   '])).toEqual({ images: [], videos: [], unchecked: [] });
+  });
+});
+
+describe('splitHttpUrls', () => {
+  it('keeps http(s) URLs whatever their extension, as avatars from sign-in providers have none', () => {
+    const { fetchable, unfetchable } = splitHttpUrls([
+      'https://lh3.googleusercontent.com/a/ACg8ocJxyz=s96-c',
+      'https://echo-mobile.at3236129.workers.dev/media/avatars/u/avatar.jpg?v=3',
+      ' http://cdn.example.com/p.png ',
+    ]);
+    expect(fetchable).toHaveLength(3);
+    expect(fetchable[2]).toBe('http://cdn.example.com/p.png');
+    expect(unfetchable).toEqual([]);
+  });
+
+  it('sets aside what a model cannot fetch, instead of dropping it', () => {
+    const { fetchable, unfetchable } = splitHttpUrls([
+      'data:image/png;base64,iVBORw0KGgo=',
+      'file:///var/mobile/tmp/x.jpg',
+      'not a url',
+    ]);
+    expect(fetchable).toEqual([]);
+    expect(unfetchable).toHaveLength(3);
+  });
+
+  it('shrugs off empty and malformed input', () => {
+    expect(splitHttpUrls(null)).toEqual({ fetchable: [], unfetchable: [] });
+    expect(splitHttpUrls([null, undefined, '', '  '])).toEqual({ fetchable: [], unfetchable: [] });
   });
 });
