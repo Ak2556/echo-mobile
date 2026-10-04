@@ -32,7 +32,7 @@ vi.mock('phosphor-react-native', () => ({
   MagnifyingGlassPlus: () => null,
 }));
 
-import { MediaGrid } from './MediaGrid';
+import { MediaGrid, isTabletPortrait } from './MediaGrid';
 import { MEDIA_FADE_MS, mediaPlaceholderTint } from './mediaPlaceholder';
 
 const uris = (n: number) => Array.from({ length: n }, (_, i) => `https://cdn.invalid/p${i}.jpg`);
@@ -94,5 +94,13 @@ describe('MediaGrid image loading', () => {
   it('renders nothing for an empty list rather than an empty frame', () => {
     const { container } = render(<MediaGrid uris={[]} />);
     expect(imagesIn(container).length).toBe(0);
+  });
+});
+
+describe('isTabletPortrait', () => {
+  it('is true for an iPad held upright, false for landscape and phones', () => {
+    expect(isTabletPortrait(820, 1180)).toBe(true);
+    expect(isTabletPortrait(1180, 820)).toBe(false);
+    expect(isTabletPortrait(390, 844)).toBe(false);
   });
 });

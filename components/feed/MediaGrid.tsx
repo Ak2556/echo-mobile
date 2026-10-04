@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Pressable, Text, StyleSheet,
+  View, Pressable, Text, StyleSheet, useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { MagnifyingGlassPlus } from 'phosphor-react-native';
@@ -43,8 +43,20 @@ function GridImage({ uri }: { uri: string }) {
   );
 }
 
+/**
+ * A single photo is a fixed 240pt tall, which is a fine frame in a phone-width
+ * column and a 2.3:1 sliver in the ~565pt column an iPad shows in portrait.
+ * There it takes a 3:4 frame, capped so it never grows past ~62% of the screen.
+ * Landscape iPad keeps the fixed height: its two columns are narrow enough.
+ */
+export function isTabletPortrait(width: number, height: number): boolean {
+  return Math.min(width, height) >= 744 && height > width;
+}
+
 export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridProps) {
   const { radius } = useTheme();
+  const { width: winW, height: winH } = useWindowDimensions();
+  const tallSingle = !height && isTabletPortrait(winW, winH);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const count = uris.length;
 
@@ -61,7 +73,13 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
     <>
       {/* 1 image */}
       {count === 1 && (
-        <Pressable onPress={() => open(0)} style={{ borderRadius: height ? 0 : radius.card, overflow: 'hidden', height: height ?? 240 }}>
+        <Pressable
+          onPress={() => open(0)}
+          style={[
+            { borderRadius: height ? 0 : radius.card, overflow: 'hidden' },
+            tallSingle ? { width: '100%', aspectRatio: 3 / 4, maxHeight: winH * 0.62 } : { height: height ?? 240 },
+          ]}
+        >
           <GridImage uri={uris[0]} />
           <ZoomHint />
         </Pressable>
