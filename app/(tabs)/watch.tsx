@@ -1,8 +1,10 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { VideoProbeOverlay } from '../../components/dev/VideoProbeOverlay';
 import { View, Text, Pressable, RefreshControl, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+import { fetchRemoteEchoById } from '../../lib/supabaseEchoApi';
 import { FlowCard } from '../../components/feed/FlowCard';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
 import { useInfiniteVideoFeed, type FlowSort } from '../../hooks/useFeed';
@@ -72,7 +74,20 @@ export default function WatchScreen() {
     isFetchingNextPage,
   } = useInfiniteVideoFeed(sort);
   
-  const feed = feedData?.pages.flat() ?? [];
+  // A tap on a friend's "just posted" notification lands here with that video's
+  // id (lib/notifications/tapTarget.ts): it plays first, and the feed follows.
+  const { echoId } = useLocalSearchParams<{ echoId?: string }>();
+  const pinnedId = typeof echoId === 'string' && echoId ? echoId : undefined;
+  const { data: pinnedItem } = useQuery({
+    queryKey: ['echo', pinnedId],
+    queryFn: () => fetchRemoteEchoById(pinnedId!),
+    enabled: !!pinnedId,
+    staleTime: 60_000,
+  });
+  const baseFeed = feedData?.pages.flat() ?? [];
+  const feed = pinnedItem && pinnedItem.postType === 'video'
+    ? [pinnedItem, ...baseFeed.filter(entry => entry.id !== pinnedItem.id)]
+    : baseFeed;
   const listRef = useRef<any>(null);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -88,6 +103,21 @@ export default function WatchScreen() {
   // null the active video mid-scroll.
   const feedRef = useRef(feed);
   feedRef.current = feed;
+
+  // Back to the top when a different video is asked for, so it is the one on screen.
+  useEffect(() => {
+    if (pinnedItem?.id) listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [pinnedItem?.id]);
+
+  // The id is for one arrival. Leaving the tab drops it, or Flow would put the
+  // same video first every time the person came back.
+  const pinnedIdRef = useRef(pinnedId);
+  pinnedIdRef.current = pinnedId;
+  useFocusEffect(
+    useCallback(() => () => {
+      if (pinnedIdRef.current) router.setParams({ echoId: undefined });
+    }, [router]),
+  );
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: { item?: any }[] }) => {
     const first = viewableItems?.find((v) => v?.item?.id)?.item;

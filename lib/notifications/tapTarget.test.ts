@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NOTIFICATION_TYPES } from './presentation';
-import { INBOX, PUSH_ONLY_KINDS, tapRoute, tapRouteFromPush, tapRouteOrInbox } from './tapTarget';
+import { INBOX, PUSH_ONLY_KINDS, flowRoute, resolveTapRoute, tapRoute, tapRouteFromPush, tapRouteOrInbox } from './tapTarget';
 
 const ID = '3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c';
 const OTHER = '9a1c2d3e-4b5f-4a6b-8c7d-0e1f2a3b4c5d';
@@ -175,5 +175,38 @@ describe('every notification the app schedules can be tapped to somewhere', () =
   it('gives every one a kind the resolver knows', () => {
     const lost = sites.filter((s) => !s.kind || tapRoute({ kind: s.kind, targetId: ID }) === null).map((s) => `${s.file} (${s.kind})`);
     expect(lost).toEqual([]);
+  });
+});
+
+
+describe('a friend\'s new video opens in Flow', () => {
+  const post = { kind: 'friend_post', targetId: ID };
+  const flow = { pathname: '/(tabs)/watch', params: { echoId: ID } };
+
+  it('goes to Flow, opened on that echo, when the post is a video', async () => {
+    expect(await resolveTapRoute(post, async () => true)).toEqual(flow);
+    expect(flowRoute(ID)).toEqual(flow);
+  });
+
+  it('keeps the thread for a text or photo post', async () => {
+    expect(await resolveTapRoute(post, async () => false)).toEqual({ pathname: '/thread/[id]', params: { id: ID } });
+  });
+
+  it('falls back to the thread when the lookup fails or is slow', async () => {
+    const thread = { pathname: '/thread/[id]', params: { id: ID } };
+    expect(await resolveTapRoute(post, async () => { throw new Error('offline'); })).toEqual(thread);
+    expect(await resolveTapRoute(post, () => new Promise<boolean>(() => {}), 20)).toEqual(thread);
+  });
+
+  it('does not ask about kinds that always open their thread', async () => {
+    let asked = 0;
+    const isVideo = async () => { asked++; return true; };
+    await resolveTapRoute({ kind: 'comment', targetId: ID }, isVideo);
+    await resolveTapRoute({ kind: 'like', targetId: ID }, isVideo);
+    expect(asked).toBe(0);
+  });
+
+  it('a friend_post with no usable id goes where it did before, not to Flow', async () => {
+    expect(await resolveTapRoute({ kind: 'friend_post', targetId: '../x' }, async () => true)).toBe(INBOX);
   });
 });
