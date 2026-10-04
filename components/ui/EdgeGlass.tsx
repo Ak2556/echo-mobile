@@ -79,6 +79,12 @@ export interface EdgeGlassProps {
   backdropStyle?: StyleProp<ViewStyle>;
   style?: ViewStyle;
   performanceMode?: PerformanceMode;
+  /**
+   * 'dark' draws the bar as a black scrim whatever the app theme is. For a screen
+   * that is a full-bleed video, where a white wash over the picture reads as a
+   * pale slab; the caller then sets its own icon and label colours to match.
+   */
+  tone?: 'auto' | 'dark';
 }
 
 export function EdgeGlass({
@@ -91,8 +97,10 @@ export function EdgeGlass({
   backdropStyle,
   style,
   performanceMode = 'default',
+  tone = 'auto',
 }: EdgeGlassProps) {
   const { colors } = useTheme();
+  const dark = tone === 'dark' || colors.isDark;
   const profile = usePerformanceProfile(performanceMode);
   // Bound to a local so TypeScript can narrow it into the JSX below.
   const NativeGlass =
@@ -135,7 +143,7 @@ export function EdgeGlass({
   const start = edge === 'top' ? { x: 0.5, y: 0 } : { x: 0.5, y: 1 };
   const end = edge === 'top' ? { x: 0.5, y: 1 } : { x: 0.5, y: 0 };
 
-  const base = colors.isDark ? colors.bg : '#FFFFFF';
+  const base = tone === 'dark' ? '#000000' : colors.isDark ? colors.bg : '#FFFFFF';
   const barFraction = height / total;
 
   // Flat across the bar, then eased out across the tail.
@@ -152,7 +160,7 @@ export function EdgeGlass({
   // Without a blur under it the bar has to be the surface: at 0.22 the feed
   // read straight through it — post text under the header, a post's like and
   // comment chips under the tab icons ("Home 2", "Explore 1").
-  const wash = glassWash(edge, Boolean(NativeGlass || blurs), colors.isDark);
+  const wash = glassWash(edge, Boolean(NativeGlass || blurs), dark);
   const tailFraction = 1 - barFraction;
   const washColors = [
     withAlpha(base, wash),
@@ -177,12 +185,12 @@ export function EdgeGlass({
         {NativeGlass ? (
           <NativeGlass
             glassEffectStyle="regular"
-            colorScheme={colors.isDark ? 'dark' : 'light'}
+            colorScheme={dark ? 'dark' : 'light'}
             tintColor={tintColor}
             style={bar}
           />
         ) : (
-          <BlurRamp edge={edge} layers={ramp} dark={colors.isDark} />
+          <BlurRamp edge={edge} layers={ramp} dark={dark} />
         )}
 
         <LinearGradient

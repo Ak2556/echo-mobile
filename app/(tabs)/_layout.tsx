@@ -393,6 +393,12 @@ function FloatingTabBar(props: BottomTabBarProps) {
     }
   };
 
+  // Reverb is full-bleed video: the bar goes dark with white icons, like the video
+  // it sits on, instead of a pale slab across the bottom of the picture.
+  const onVideoTab = state.routes[state.index].name === 'watch';
+  const activeTint = onVideoTab ? '#FFFFFF' : colors.accent;
+  const idleTint = onVideoTab ? 'rgba(255,255,255,0.62)' : colors.textMuted;
+
   const longPressMenuRoute = visibleRoutes.find(r => r.name === longPressKey)?.name;
   const longPressActionList = longPressMenuRoute ? longPressActions(longPressMenuRoute) : null;
 
@@ -403,6 +409,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
       height={tabHeight + insets.bottom}
       style={{ zIndex: 100 }}
       contentStyle={{ paddingBottom: insets.bottom }}
+      tone={onVideoTab ? 'dark' : 'auto'}
     >
         <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5, width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center' }}>
           {visibleRoutes.map(route => {
@@ -410,7 +417,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
             const IconComp = TAB_ICONS[route.name];
             if (!IconComp) return null;
 
-            const color = isFocused ? colors.accent : colors.textMuted;
+            const color = isFocused ? activeTint : idleTint;
             const badgeCount = badges[route.name] ?? 0;
 
             return (
@@ -468,7 +475,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
                 <Text
                   style={{
                     ...font.bodySemibold,
-                    color: isFocused ? colors.accent : colors.textMuted,
+                    color: isFocused ? activeTint : idleTint,
                     fontSize: labelSize,
                     lineHeight: lineHeights.caption,
                     marginTop: 1,
