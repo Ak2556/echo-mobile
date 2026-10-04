@@ -23,9 +23,25 @@ export interface ExpoTicket {
  * Every device a user can be reached on. `push_tokens` is the real store, one
  * row per device; installs older than it still write only the legacy
  * `profiles.push_token`, so that is included until those installs are gone.
+ *
+ * `skipIos` drops iOS devices: Expo has no APNs credentials for the app, so
+ * every send to one comes back InvalidCredentials, and each daily broadcast
+ * then filed a "reached 20 of 21 devices" report that paged the owner every
+ * three hours. It is not a general InvalidCredentials filter on purpose: that
+ * error from an Android token is a dead FCM credential, which once looked like
+ * success for weeks and must stay loud. A legacy token is dropped too when it
+ * is the same device as a skipped one.
  */
-export function deviceTokens(rows: { token: string | null }[], legacy: string | null | undefined): string[] {
-  const all = [...rows.map((r) => r.token), legacy];
+export function deviceTokens(
+  rows: { token: string | null; platform?: string | null }[],
+  legacy: string | null | undefined,
+  opts: { skipIos?: boolean } = {},
+): string[] {
+  const skipped = new Set(
+    opts.skipIos ? rows.filter((r) => r.platform === 'ios').map((r) => r.token) : [],
+  );
+  const kept = rows.filter((r) => !skipped.has(r.token)).map((r) => r.token);
+  const all = [...kept, legacy && skipped.has(legacy) ? null : legacy];
   return [...new Set(all.filter((t): t is string => typeof t === 'string' && EXPO_TOKEN.test(t)))];
 }
 
