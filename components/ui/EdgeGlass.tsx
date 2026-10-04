@@ -44,6 +44,22 @@ function withAlpha(hex: string, alpha: number): string {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
+/**
+ * Base opacity of the white (or dark) wash over the glass.
+ *
+ * The bottom bar sits on a few icons and reads well at 0.22. A header carries
+ * the wordmark and two icons directly over whatever photo is scrolling under
+ * it, and at 0.22 a sharp post photo showed through the whole bar (owner,
+ * 2026-10-04: footer good, header too transparent). So the top edge is
+ * markedly more opaque; the blur and the tail fade still do the softening.
+ * Without any blur the bar has to be the surface itself.
+ */
+export function glassWash(edge: 'top' | 'bottom', blurred: boolean, isDark: boolean): number {
+  if (!blurred) return 0.96;
+  if (edge === 'top') return isDark ? 0.62 : 0.72;
+  return isDark ? 0.18 : 0.22;
+}
+
 export interface EdgeGlassProps {
   /** Which screen edge this is pinned to. Decides which way the fade runs. */
   edge: 'top' | 'bottom';
@@ -136,7 +152,7 @@ export function EdgeGlass({
   // Without a blur under it the bar has to be the surface: at 0.22 the feed
   // read straight through it — post text under the header, a post's like and
   // comment chips under the tab icons ("Home 2", "Explore 1").
-  const wash = NativeGlass || blurs ? (colors.isDark ? 0.18 : 0.22) : 0.96;
+  const wash = glassWash(edge, Boolean(NativeGlass || blurs), colors.isDark);
   const tailFraction = 1 - barFraction;
   const washColors = [
     withAlpha(base, wash),
