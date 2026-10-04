@@ -18,8 +18,9 @@ compatibility_date = "2024-03-20"
 [vars]
 # Account id is not a secret, but it is environment-specific.
 R2_ACCOUNT_ID = "5f35370a3c9265072a8ae6c47b22dd46"
-# Log-only until the first sweep has been read. See src/sizeCaps.ts.
-SIZE_SWEEP_ENFORCE = "false"
+# Deletes user uploads over their bucket's size ceiling. See src/sizeCaps.ts.
+# "false" makes the sweep log what it would delete and delete nothing.
+SIZE_SWEEP_ENFORCE = "true"
 
 # Deletes user uploads over their bucket's size ceiling; presigned PUTs cannot carry one.
 [triggers]
