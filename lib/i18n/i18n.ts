@@ -10,7 +10,7 @@ const BASE_TRANSLATIONS = {
   'nav.home': 'Home',
   'nav.explore': 'Explore',
   'nav.market': 'Market',
-  'nav.watch': 'Flow',
+  'nav.watch': 'Clips',
   'nav.chat': 'Chat',
   'nav.you': 'You',
   'nav.alerts': 'Alerts',

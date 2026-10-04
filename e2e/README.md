@@ -31,7 +31,7 @@ maestro test e2e/                  # whole suite
 
 ## Which flow runs where
 
-| Flow | Needs a signed-in account | Runs in CI |
+| Clips | Needs a signed-in account | Runs in CI |
 |---|---|---|
 | `ci-launch.yaml` | no | yes, on every PR touching app code |
 | `smoke.yaml` | yes | no |
