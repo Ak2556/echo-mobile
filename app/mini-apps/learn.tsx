@@ -28,8 +28,8 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../src/shared/lib/theme';
-import { CURRENCIES, formatPrice, type CurrencyCode } from '../../lib/currency';
-import { CURATED_LEARNING_TOPICS, createLearningGoalFromTopic, type CuratedLearningTopic } from '../../lib/learningTopicLibrary';
+import { CURRENCIES, formatPrice, type CurrencyCode } from '../../lib/mini-apps/currency';
+import { CURATED_LEARNING_TOPICS, createLearningGoalFromTopic, type CuratedLearningTopic } from '../../lib/mini-apps/learningTopicLibrary';
 import {
   addOneOnOnePackage,
   addOneOnOneSlot,
@@ -76,7 +76,7 @@ import {
   type LearningLevel,
   type LearningMode,
   type LearningSettings,
-} from '../../lib/learn';
+} from '../../lib/mini-apps/learn';
 import { ttx } from '../../src/shared/lib/i18n';
 
 const LEVELS: { id: LearningLevel; label: string }[] = [

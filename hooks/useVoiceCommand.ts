@@ -15,7 +15,7 @@
 // all, the original record-and-upload path still runs unchanged.
 
 import { useCallback, useRef, useState } from 'react';
-import { AI_CONSENT_DECLINED_MESSAGE, ensureAiConsent } from '../lib/aiConsent';
+import { AI_CONSENT_DECLINED_MESSAGE, ensureAiConsent } from '../lib/privacy/aiConsent';
 import { showToast } from '../components/ui/Toast';
 import { ttx } from '../src/shared/lib/i18n';
 import { Platform } from 'react-native';
@@ -42,7 +42,7 @@ import { dispatchVoiceIntent } from '../lib/voice/dispatch';
 import { matchLocalIntent } from '../lib/voice/localIntent';
 import { toSpeechLocale } from '../lib/voice/voiceLocale';
 import { trySocialIntent } from '../lib/voice/socialIntents';
-import { speak, stopSpeaking } from '../lib/tts';
+import { speak, stopSpeaking } from '../lib/mini-apps/tts';
 import { VOICE_INTENTS, type VoicePhase, type VoiceResult } from '../lib/voice/types';
 
 // iOS records linear-PCM WAV (universally accepted by the speech model); Android

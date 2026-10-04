@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '../../../../lib/supabase';
-import { isSupabaseRemote } from '../../../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../../../lib/core/remoteConfig';
 
 export interface AdItem {
   id: string;

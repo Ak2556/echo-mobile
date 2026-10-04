@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { matchLocalIntent } from '../lib/voice/localIntent';
 import { resolvePerformanceProfile } from '../src/shared/lib/performance';
-import { resolveDeviceTier } from '../lib/deviceTier';
+import { resolveDeviceTier } from '../lib/ui/deviceTier';
 import { resolveSurface } from '../components/ui/liquidGlassTier';
 import { decideSwipe, resist } from '../components/ui/gestureCardSwipe';
 import { buildActions, dispatch } from '../components/ui/gestureCardA11y';

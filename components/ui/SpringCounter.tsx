@@ -7,7 +7,7 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import { useAppStore } from '../../store/useAppStore';
-import { MOTION } from '../../lib/motion';
+import { MOTION } from '../../lib/ui/motion';
 import { PerformanceMode, usePerformanceProfile } from '../../src/shared/lib/performance';
 
 interface SpringCounterProps {

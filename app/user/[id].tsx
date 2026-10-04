@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { SpeakButton } from '../../components/ui/SpeakButton';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { safeBack } from '../../lib/safeBack';
+import { safeBack } from '../../lib/routing/safeBack';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import {
@@ -25,7 +25,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { useFeed } from '../../src/features/feed/api/useFeed';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { useQuery } from '@tanstack/react-query';
 import { fetchRemoteRepostsByUser } from '../../lib/supabaseEchoApi';
@@ -33,12 +33,12 @@ import { useActiveVideoTracking } from '../../hooks/useActiveVideoTracking';
 import { useToggleRemoteFollow } from '../../src/features/feed/api/useSupabaseSocial';
 import { useToggleRemoteBlock, useToggleRemoteMute } from '../../hooks/queries/useBlockMute';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
-import { buildCreatorProfile } from '../../lib/echoUX';
-import { userUrl } from '../../lib/echoUrl';
+import { buildCreatorProfile } from '../../lib/feed/echoUX';
+import { userUrl } from '../../lib/routing/echoUrl';
 import { ttx } from '../../src/shared/lib/i18n';
-import { countLabel } from '../../lib/a11yCount';
+import { countLabel } from '../../lib/ui/a11yCount';
 import { ProfileRank } from '../../src/features/ranks/ui/ProfileRank';
-import { personName } from '../../lib/personName';
+import { personName } from '../../lib/social/personName';
 
 // FlashList still owns the header and scrolling; the grid is the footer.
 const EMPTY_LIST: any[] = [];

@@ -10,7 +10,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import {
   VerificationState, getVerificationState, randomPose, submitVerification,
-} from '../lib/verificationApi';
+} from '../lib/social/verificationApi';
 import { ttx } from '../src/shared/lib/i18n';
 
 type Phase = 'loading' | 'intro' | 'preview' | 'submitting' | 'approved' | 'pending' | 'rejected';

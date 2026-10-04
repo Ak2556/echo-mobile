@@ -13,7 +13,7 @@ import { useTheme } from '../src/shared/lib/theme';
 import { showToast } from '../components/ui/Toast';
 import {
   VerificationQueueItem, decideVerification, listVerificationQueue,
-} from '../lib/verificationApi';
+} from '../lib/social/verificationApi';
 import { ttx } from '../src/shared/lib/i18n';
 
 function VerificationCard({ item, onDecide }: {

@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { useTheme } from '../../../shared/lib/theme';
 import { useAppStore } from '../../../../store/useAppStore';
-import { MOTION } from '../../../../lib/motion';
+import { MOTION } from '../../../../lib/ui/motion';
 import { useToggleEchoReaction, useToggleCommentReaction } from '../api/useSupabaseSocial';
 import { track } from '../../../shared/lib/analytics';
 import type { EchoReaction, ReactionCounts } from '../../../../types/index';
@@ -19,7 +19,7 @@ import type { EchoReaction, ReactionCounts } from '../../../../types/index';
  * affordance still lets the viewer pick).
  */
 
-// Warm editorial palette (lib/avatarPalette.ts) — one tint per reaction.
+// Warm editorial palette (lib/social/avatarPalette.ts) — one tint per reaction.
 const REACTION_META: Record<EchoReaction, { shortLabel: string; label: string; tint: string }> = {
   mind_blown:   { shortLabel: 'Insight', label: 'insightful',   tint: '#8B5E7D' },
   taking_notes: { shortLabel: 'Notes',   label: 'taking notes', tint: '#B08536' },

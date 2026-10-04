@@ -2,9 +2,9 @@ import React from 'react';
 import { Heartbeat } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { ConsentSheet } from './ConsentSheet';
-import { answerHealthConsent, useHealthConsent } from '../../lib/healthConsent';
+import { answerHealthConsent, useHealthConsent } from '../../lib/privacy/healthConsent';
 
-/** The one-time question before health data leaves the device (lib/healthConsent.ts). */
+/** The one-time question before health data leaves the device (lib/privacy/healthConsent.ts). */
 export function HealthConsentSheet() {
   const { colors } = useTheme();
   return (

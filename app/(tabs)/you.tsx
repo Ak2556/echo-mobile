@@ -33,11 +33,11 @@ import { FeedItem } from '../../types';
 import { useQuery } from '@tanstack/react-query';
 import { fetchRemoteRepostsByUser } from '../../lib/supabaseEchoApi';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
-import { buildCreatorProfile } from '../../lib/echoUX';
+import { buildCreatorProfile } from '../../lib/feed/echoUX';
 import { StreakXPBadge } from '../../src/features/feed/ui/StreakXPBadge';
 import { RankCard } from '../../src/features/ranks/ui/RankCard';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { getSessionUserId } from '../../lib/supabaseEchoApi';
 
 const COMPACT_TEXT_SCALE = 1.15;

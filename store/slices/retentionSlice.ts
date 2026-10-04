@@ -1,7 +1,7 @@
 import { persistGet, persistSet } from '../persist';
 
 // Retention state: XP, current streak, last active day. MMKV-persisted so
-// state survives app restart. Lib helpers in `lib/retention.ts` consume
+// state survives app restart. Lib helpers in `lib/retention/retention.ts` consume
 // this and components subscribe via the `useRetention()` hook.
 
 export interface RetentionSlice {

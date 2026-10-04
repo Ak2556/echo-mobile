@@ -6,7 +6,7 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../src/shared/lib/theme';
-import { countWords } from '../../lib/wordCount';
+import { countWords } from '../../lib/mini-apps/wordCount';
 import { ttx } from '../../src/shared/lib/i18n';
 
 const SAMPLE = `# Hello, Markdown!

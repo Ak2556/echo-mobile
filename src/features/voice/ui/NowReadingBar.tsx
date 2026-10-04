@@ -5,7 +5,7 @@ import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { SpeakerHigh, Pause, Play, X } from 'phosphor-react-native';
 import { useTheme } from '../../../shared/lib/theme';
 import { tap } from '../../../shared/lib/haptics';
-import { pauseSpeaking, resumeSpeaking, stopSpeaking, useTtsStore } from '../../../../lib/tts';
+import { pauseSpeaking, resumeSpeaking, stopSpeaking, useTtsStore } from '../../../../lib/mini-apps/tts';
 import { ttx } from '../../../shared/lib/i18n';
 
 /**

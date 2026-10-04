@@ -7,7 +7,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import {
   Habit, bestHabitStreak, completionRate, formatCheckInTime,
   getHabitStreak, isScheduledOn, todayStr,
-} from '../../lib/habits';
+} from '../../lib/mini-apps/habits';
 import { ttx } from '../../src/shared/lib/i18n';
 import { HabitMarkerIcon } from './HabitMarkerIcon';
 

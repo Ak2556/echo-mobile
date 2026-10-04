@@ -3,7 +3,7 @@ import { TextInput, Pressable } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { MagnifyingGlass, X } from 'phosphor-react-native';
 import { useTheme } from '../../../shared/lib/theme';
-import { MOTION } from '../../../../lib/motion';
+import { MOTION } from '../../../../lib/ui/motion';
 
 interface SearchBarProps {
   value: string;

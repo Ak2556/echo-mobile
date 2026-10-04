@@ -18,8 +18,8 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { ActionSheet, type ActionItem } from '../../components/common/ActionSheet';
 import { showToast } from '../../components/ui/Toast';
-import { NOTE_COLORS, Note, loadNotes, saveNotes } from '../../lib/notes';
-import { countWords } from '../../lib/wordCount';
+import { NOTE_COLORS, Note, loadNotes, saveNotes } from '../../lib/mini-apps/notes';
+import { countWords } from '../../lib/mini-apps/wordCount';
 
 type NoteView = 'active' | 'pinned' | 'favorites' | 'checklists' | 'archive' | 'all';
 type SortMode = 'recent' | 'oldest' | 'title';

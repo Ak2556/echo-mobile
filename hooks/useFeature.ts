@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
-import { isFeatureEnabled, subscribeToFlags } from '../lib/remoteFlags';
-import type { FeatureFlag } from '../lib/featureFlags';
+import { isFeatureEnabled, subscribeToFlags } from '../lib/core/remoteFlags';
+import type { FeatureFlag } from '../lib/core/featureFlags';
 
 /**
  * Read a feature flag, re-rendering when it changes remotely.

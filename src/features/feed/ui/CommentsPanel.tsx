@@ -9,7 +9,7 @@ import { MentionSuggestions, applyMentionPick } from './MentionSuggestions';
 import { EmptyState } from '../../../../components/common/EmptyState';
 import { useAppStore } from '../../../../store/useAppStore';
 import { Comment } from '../../../../types';
-import { isSupabaseRemote } from '../../../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../../../lib/core/remoteConfig';
 import { useEchoComments, useAddRemoteComment } from '../../../../hooks/queries/useEchoComments';
 import { useTheme } from '../../../shared/lib/theme';
 import { ttx } from '../../../shared/lib/i18n';

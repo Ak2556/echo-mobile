@@ -3,12 +3,12 @@ import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from
 import { useRouter } from 'expo-router';
 import { GitBranch } from 'phosphor-react-native';
 import { useSimilarEchoes } from '../api/useFeed';
-import { isSupabaseRemote } from '../../../../lib/remoteConfig';
-import { feedbackHaptic } from '../../../../lib/accentDesign';
+import { isSupabaseRemote } from '../../../../lib/core/remoteConfig';
+import { feedbackHaptic } from '../../../../lib/ui/accentDesign';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useTheme } from '../../../shared/lib/theme';
 import { ttx } from '../../../shared/lib/i18n';
-import { countLabel } from '../../../../lib/a11yCount';
+import { countLabel } from '../../../../lib/ui/a11yCount';
 
 interface SimilarEchoesRailProps {
   echoId: string;

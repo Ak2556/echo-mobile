@@ -4,7 +4,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { safeBack } from '../../lib/safeBack';
+import { safeBack } from '../../lib/routing/safeBack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookmarkSimple, ChatCircle, DotsThreeOutline, Flag, NotePencil, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
@@ -12,7 +12,7 @@ import { Avatar } from '../../components/ui/Avatar';
 import { SpeakButton } from '../../components/ui/SpeakButton';
 import { IconButton } from '../../components/ui/IconButton';
 import { fetchRemoteEchoById, setPinnedEcho, deleteRemoteEcho } from '../../lib/supabaseEchoApi';
-import { friendlyWriteError } from '../../lib/mutationErrors';
+import { friendlyWriteError } from '../../lib/core/mutationErrors';
 import { showToast } from '../../components/ui/Toast';
 import { LikeButton } from '../../src/features/feed/ui/LikeButton';
 import { MediaGrid } from '../../src/features/feed/ui/MediaGrid';
@@ -23,12 +23,12 @@ import { SimilarEchoesRail } from '../../src/features/feed/ui/SimilarEchoesRail'
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useFeed } from '../../src/features/feed/api/useFeed';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useToggleRemoteBookmark } from '../../src/features/feed/api/useSupabaseSocial';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
-import { inferTopics } from '../../lib/echoUX';
+import { inferTopics } from '../../lib/feed/echoUX';
 import { ttx } from '../../src/shared/lib/i18n';
-import { countLabel } from '../../lib/a11yCount';
+import { countLabel } from '../../lib/ui/a11yCount';
 import { CommentsSheet } from '../../src/features/feed/ui/CommentsSheet';
 
 export default function ThreadDetailScreen() {

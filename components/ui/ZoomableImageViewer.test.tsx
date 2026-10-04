@@ -11,7 +11,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 const saveMediaToDevice = vi.hoisted(() => vi.fn());
 const showToast = vi.hoisted(() => vi.fn());
 
-vi.mock('../../lib/mediaDownload', () => ({ saveMediaToDevice }));
+vi.mock('../../lib/media/mediaDownload', () => ({ saveMediaToDevice }));
 vi.mock('./Toast', () => ({ showToast }));
 
 import { ZoomableImageViewer } from './ZoomableImageViewer';

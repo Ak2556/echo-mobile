@@ -1,4 +1,4 @@
-import { purgeLegacyMessageStore, registerQueryClient } from '../lib/localDataReset';
+import { purgeLegacyMessageStore, registerQueryClient } from '../lib/core/localDataReset';
 import { useEffect } from 'react';
 import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
@@ -6,13 +6,13 @@ import { AppState, Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../src/shared/lib/analytics';
-import { recordAppOpen, noteNudgeOpened, ensureNudgesScheduled } from '../lib/personalNudges';
-import { pingDailyActivity } from '../lib/retention';
-import { cancelLegacyProactiveNudges } from '../lib/proactiveNudges';
-import { captureException, initMonitoring, wrapRoot } from '../lib/monitoring';
-import { startOutbox } from '../lib/outboxProcessor';
+import { recordAppOpen, noteNudgeOpened, ensureNudgesScheduled } from '../lib/ai/personalNudges';
+import { pingDailyActivity } from '../lib/retention/retention';
+import { cancelLegacyProactiveNudges } from '../lib/ai/proactiveNudges';
+import { captureException, initMonitoring, wrapRoot } from '../lib/core/monitoring';
+import { startOutbox } from '../lib/core/outboxProcessor';
 import { drainMiniLink } from '../lib/minilink/drain';
-import { getAnalyticsConsent } from '../lib/consent';
+import { getAnalyticsConsent } from '../lib/privacy/consent';
 import { ConsentBanner } from '../components/ConsentBanner';
 import { AgeConfirmGate } from '../components/onboarding/AgeConfirmGate';
 import { AiConsentSheet } from '../components/ai/AiConsentSheet';
@@ -23,28 +23,28 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { Fraunces_400Regular, Fraunces_400Regular_Italic, Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import { QueryClient, MutationCache } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { mmkvPersister } from '../lib/queryPersister';
+import { mmkvPersister } from '../lib/core/queryPersister';
 import { ToastProvider, showToast } from '../components/ui/Toast';
-import { friendlyWriteError, isAuthSessionError } from '../lib/mutationErrors';
+import { friendlyWriteError, isAuthSessionError } from '../lib/core/mutationErrors';
 import { CommandPalette } from '../components/ai/CommandPalette';
-import { useCommandPalette } from '../lib/commandPalette';
+import { useCommandPalette } from '../lib/ui/commandPalette';
 import { AuthListenerProvider, useAuth, signOut } from '../lib/auth';
 import { ShareIntentProvider, useShareIntentContext } from 'expo-share-intent';
 import { useAppStore } from '../store/useAppStore';
 import { ServiceWorkerRegistrar } from '../components/pwa/ServiceWorkerRegistrar';
 import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
 import { database } from '../src/shared/database';
-import { usePresenceTracking } from '../lib/presence';
+import { usePresenceTracking } from '../lib/social/presence';
 import { persistGet, persistSet, persistDelete, storageHydrate } from '../store/persist';
-import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
+import { parseEchoUniversalLink, safeRouteId } from '../lib/routing/urlSafety';
 import { handleNotificationReply } from '../lib/notifications/handleReplyResponse';
-import { initNotificationSurface, registerPushAndStoreToken } from '../lib/push';
-import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
+import { initNotificationSurface, registerPushAndStoreToken } from '../lib/notifications/push';
+import { PomodoroRuntimeHost } from '../lib/mini-apps/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
 import { VoiceControl } from '../src/features/voice/ui/VoiceControl';
 import { NowReadingBar } from '../src/features/voice/ui/NowReadingBar';
-import { isPublicRoute } from '../lib/publicRoutes';
-import { refreshRemoteFlags } from '../lib/remoteFlags';
+import { isPublicRoute } from '../lib/routing/publicRoutes';
+import { refreshRemoteFlags } from '../lib/core/remoteFlags';
 import { enableFreeze } from 'react-native-screens';
 import '../global.css';
 
@@ -313,7 +313,7 @@ function RootLayout() {
   // users within one resume instead of one release.
   //
   // A failure here is deliberately silent: refreshRemoteFlags keeps the last
-  // known values, and the compiled defaults in lib/featureFlags.ts sit under
+  // known values, and the compiled defaults in lib/core/featureFlags.ts sit under
   // those, so the worst case is the app behaving exactly as it shipped.
   useEffect(() => {
     // Throttled so this never becomes a round trip on every resume — someone

@@ -20,7 +20,7 @@ import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../src/shared/lib/theme';
 import { fetchMyAppeals, submitAppeal, submitDecisionAppeal, fetchModerationDecision, type MyAppeal, type ModerationDecision } from '../lib/supabaseEchoApi';
 import { ErrorState, classifyError } from '../components/common/ErrorState';
-import { safeBack } from '../lib/safeBack';
+import { safeBack } from '../lib/routing/safeBack';
 import { ttx } from '../src/shared/lib/i18n';
 
 // `tone` resolves to a theme token at render so status color adapts per theme.

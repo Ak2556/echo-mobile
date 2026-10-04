@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import {
   fetchRemoteFollowers,
   fetchRemoteFollowingProfiles,
   fetchMyFollowSets,
 } from '../../lib/supabaseEchoApi';
 import { User } from '../../types';
-import { SupabaseProfileRow } from '../../lib/mapSupabaseEcho';
+import { SupabaseProfileRow } from '../../lib/feed/mapSupabaseEcho';
 
 // A user in a followers/following list, annotated with the viewer's relationship:
 //   isFollowing — the viewer follows this user

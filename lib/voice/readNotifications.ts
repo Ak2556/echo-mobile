@@ -2,8 +2,8 @@
 // here; the voice read_notifications intent reads them aloud. Same decoupled
 // pattern as readFeed.
 
-import { speakSequence } from '../tts';
-import type { AppLanguageCode } from '../languages';
+import { speakSequence } from '../mini-apps/tts';
+import type { AppLanguageCode } from '../i18n/languages';
 
 let current: string[] = [];
 

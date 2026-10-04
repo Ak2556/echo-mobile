@@ -1,4 +1,4 @@
-import type { ShoppingItem } from '../shoppingList';
+import type { ShoppingItem } from '../mini-apps/shoppingList';
 
 /**
  * Whether checking this item off should be reported as a purchase.

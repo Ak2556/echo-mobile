@@ -12,7 +12,7 @@ import Animated, {
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { SpringCounter } from '../../../../components/ui/SpringCounter';
 import { useAppStore } from '../../../../store/useAppStore';
-import { ACCENT_SPRING, feedbackHaptic } from '../../../../lib/accentDesign';
+import { ACCENT_SPRING, feedbackHaptic } from '../../../../lib/ui/accentDesign';
 
 interface RemixButtonProps {
   echoId: string;

@@ -15,7 +15,7 @@ import {
   setSlotActive,
   type TutorPackage,
   type TutorSlot,
-} from '../../lib/learnApi';
+} from '../../lib/mini-apps/learnApi';
 
 /**
  * What a tutor sells, and when they are free.

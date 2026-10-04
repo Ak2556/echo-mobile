@@ -2,7 +2,7 @@
  * Subscription plan definitions.
  *
  * Used by:
- *   - lib/purchases.ts (returns the user's current plan)
+ *   - lib/ai/purchases.ts (returns the user's current plan)
  *   - supabase/functions/echo-ai (applies the right rate-limit ceiling)
  *   - app/upgrade.tsx (renders the paywall card)
  *

@@ -5,7 +5,7 @@
  * Google Play requires social apps to publish standards against child sexual
  * abuse and exploitation (CSAE), offer an in-app way to report it, and name a
  * contact. The in-app report reason is 'Child sexual abuse or exploitation'
- * (lib/reportReasons.ts); it hides the reported post at once and alerts every
+ * (lib/feed/reportReasons.ts); it hides the reported post at once and alerts every
  * moderator (20260922130000_launch_legal_gaps.sql).
  */
 

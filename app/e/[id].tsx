@@ -1,5 +1,5 @@
 import { useLocalSearchParams, Redirect } from 'expo-router';
-import { safeRouteId } from '../../lib/urlSafety';
+import { safeRouteId } from '../../lib/routing/urlSafety';
 
 // Public deep-link target. Forwards to the existing thread view.
 export default function EchoDeepLink() {

@@ -10,7 +10,7 @@ import { useFollow } from '../../../../hooks/queries/useFollow';
 import { useTheme } from '../../../shared/lib/theme';
 import { track } from '../../../shared/lib/analytics';
 import { ttx } from '../../../shared/lib/i18n';
-import { personName } from '../../../../lib/personName';
+import { personName } from '../../../../lib/social/personName';
 
 interface UserRowProps {
   user: User;

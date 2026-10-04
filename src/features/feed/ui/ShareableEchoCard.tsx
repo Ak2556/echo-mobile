@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { View, Text } from 'react-native';
 import { FeedItem } from '../../../../types/index';
 import { useTheme } from '../../../shared/lib/theme';
-import { warmAvatarColor } from '../../../../lib/avatarPalette';
+import { warmAvatarColor } from '../../../../lib/social/avatarPalette';
 
 interface ShareableEchoCardProps {
   item: FeedItem;

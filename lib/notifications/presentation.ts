@@ -43,7 +43,7 @@ export const SYSTEM_TYPES = new Set<string>([
   'report_urgent', 'rules_reminder',
 ]);
 
-/** Warm editorial palette (lib/avatarPalette.ts) — one hue per type. */
+/** Warm editorial palette (lib/social/avatarPalette.ts) — one hue per type. */
 export const TYPE_COLOR: Record<string, string> = {
   like: '#A04E4E',
   comment: '#4E7A8B',

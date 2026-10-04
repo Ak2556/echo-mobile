@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, X } from 'phosphor-react-native';
 import { IconButton } from './IconButton';
 import { useTheme } from '../../src/shared/lib/theme';
-import { safeBack } from '../../lib/safeBack';
+import { safeBack } from '../../lib/routing/safeBack';
 
 interface ScreenHeaderProps {
   title?: string;

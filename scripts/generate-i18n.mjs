@@ -3,7 +3,7 @@
 //
 // Runs every English UI string (BASE_TRANSLATIONS in lib/i18n.ts) through the
 // same model the app uses (Gemini via OpenRouter) for every supported language,
-// and writes lib/i18nGenerated.ts. This gives all languages offline, zero-cost,
+// and writes lib/i18n/i18nGenerated.ts. This gives all languages offline, zero-cost,
 // zero-latency translations for the whole UI. Hand-authored strings still win at
 // runtime (see lib/i18n.ts precedence), so this only fills the rest.
 //
@@ -20,7 +20,7 @@
 //
 //   Add --only=ta,ar for a subset, --dry to validate extraction without calling.
 //
-// The generator MERGES with lib/i18nGenerated.ts, so partial runs (e.g. resuming
+// The generator MERGES with lib/i18n/i18nGenerated.ts, so partial runs (e.g. resuming
 // after a provider rate limit) accumulate. Re-run whenever you add UI strings.
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -33,8 +33,8 @@ const ROOT = join(__dirname, '..');
 // existed since the shared/ move, so every run died on the first read and the
 // generated table stayed empty.
 const I18N = join(ROOT, 'src', 'shared', 'lib', 'i18n.ts');
-const LANGS = join(ROOT, 'lib', 'languages.ts');
-const OUT = join(ROOT, 'lib', 'i18nGenerated.ts');
+const LANGS = join(ROOT, 'lib', 'i18n', 'languages.ts');
+const OUT = join(ROOT, 'lib', 'i18n', 'i18nGenerated.ts');
 
 const API_KEY = process.env.OPENROUTER_API_KEY;
 const GEN_SECRET = process.env.I18N_GEN_SECRET;

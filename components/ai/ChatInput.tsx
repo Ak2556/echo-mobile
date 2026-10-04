@@ -6,7 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
-import { MOTION } from '../../lib/motion';
+import { MOTION } from '../../lib/ui/motion';
 
 interface ChatInputProps {
   onSend: (message: string) => void;

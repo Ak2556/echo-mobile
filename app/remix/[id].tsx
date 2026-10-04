@@ -8,10 +8,10 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchRemoteEchoById, fetchEchoConversationSnapshot } from '../../lib/supabaseEchoApi';
-import { setPendingPublishContext } from '../../lib/publishContext';
-import { GRADIENTS, ACCENT_COLORS, DISPLAY_TYPE, accentShadow, feedbackHaptic } from '../../lib/accentDesign';
+import { setPendingPublishContext } from '../../lib/feed/publishContext';
+import { GRADIENTS, ACCENT_COLORS, DISPLAY_TYPE, accentShadow, feedbackHaptic } from '../../lib/ui/accentDesign';
 import { track } from '../../src/shared/lib/analytics';
-import { PERSPECTIVE_DESCRIPTIONS, PERSPECTIVE_LABELS, PERSPECTIVE_TYPES, isValidSourceUrl } from '../../lib/perspectives';
+import { PERSPECTIVE_DESCRIPTIONS, PERSPECTIVE_LABELS, PERSPECTIVE_TYPES, isValidSourceUrl } from '../../lib/ai/perspectives';
 import type { ChatMessage, PerspectiveType } from '../../types';
 import { ttx } from '../../src/shared/lib/i18n';
 

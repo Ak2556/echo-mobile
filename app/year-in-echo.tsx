@@ -8,7 +8,7 @@ import { ChartLineUp, Flame, Heart, Confetti } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../src/shared/lib/theme';
-import { GRADIENTS } from '../lib/accentDesign';
+import { GRADIENTS } from '../lib/ui/accentDesign';
 import { fetchOrComputeYearWrap, type YearWrap } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../src/shared/lib/i18n';

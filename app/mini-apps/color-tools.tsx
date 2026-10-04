@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet , Clipboard } from 'react-native';
-import { parseHexInput } from '../../lib/hexInput';
+import { parseHexInput } from '../../lib/mini-apps/hexInput';
 import { Check, Copy, FloppyDisk, Shuffle } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';

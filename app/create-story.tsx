@@ -8,13 +8,13 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { ArrowLeft, PaperPlaneTilt, Lightning, Broadcast, Clock } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Avatar } from '../components/ui/Avatar';
-import { warmAvatarColor } from '../lib/avatarPalette';
+import { warmAvatarColor } from '../lib/social/avatarPalette';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../src/shared/lib/theme';
 import { Story } from '../types';
-import { playSoundEffect } from '../lib/sound';
-import { isSupabaseRemote } from '../lib/remoteConfig';
+import { playSoundEffect } from '../lib/ui/sound';
+import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { ttx } from '../src/shared/lib/i18n';
 
 const STORY_DURATION_HOURS = 24;

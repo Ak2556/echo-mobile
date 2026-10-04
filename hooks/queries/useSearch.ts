@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { searchRemoteProfiles, searchRemoteEchoes } from '../../lib/supabaseEchoApi';
 import { FeedItem, User } from '../../types';
 

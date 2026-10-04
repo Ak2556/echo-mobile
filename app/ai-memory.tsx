@@ -9,7 +9,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
-import { clearMemory, forgetPreference, loadMemory, MemoryItem, updatePreference } from '../lib/aiMemory';
+import { clearMemory, forgetPreference, loadMemory, MemoryItem, updatePreference } from '../lib/ai/aiMemory';
 import { useTheme } from '../src/shared/lib/theme';
 import { ttx } from '../src/shared/lib/i18n';
 

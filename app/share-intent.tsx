@@ -7,7 +7,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useTheme } from '../src/shared/lib/theme';
 import { showToast } from '../components/ui/Toast';
-import { createNote } from '../lib/notes';
+import { createNote } from '../lib/mini-apps/notes';
 
 /**
  * Something was shared to Echo from another app.

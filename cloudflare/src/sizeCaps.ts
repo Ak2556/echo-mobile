@@ -32,11 +32,11 @@ const MB = 1024 * 1024;
  * Each ceiling is the largest thing the app itself will send, plus headroom, so
  * enforcing it never removes a legitimate upload:
  *   avatars       resized to 512 px on the phone
- *   echo-media    ECHO_MEDIA_BUCKET_BYTES, 50 MB (lib/videoUploadGuard.ts)
+ *   echo-media    ECHO_MEDIA_BUCKET_BYTES, 50 MB (lib/media/videoUploadGuard.ts)
  *   dm-media      same media pickers as posts
  *   mini-app-media  studio clips run to two minutes of camera-original video
  *   marketplace-photos  listing photos
- *   learn-lectures  MAX_LECTURE_BYTES, 500 MB (lib/learnApi.ts)
+ *   learn-lectures  MAX_LECTURE_BYTES, 500 MB (lib/mini-apps/learnApi.ts)
  */
 export const OBJECT_SIZE_CAPS: Record<BucketName, number> = {
   avatars: 5 * MB,

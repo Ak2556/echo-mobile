@@ -8,14 +8,14 @@ import {
   setRemoteRepost,
 } from '../../../../lib/supabaseEchoApi';
 import type { PerspectiveType } from '../../../../types/index';
-import { patchBookmarkCaches, patchFollowCaches, patchLikeCaches, patchRepostCaches } from '../../../../lib/queryCache';
-import { awardXp } from '../../../../lib/retention';
+import { patchBookmarkCaches, patchFollowCaches, patchLikeCaches, patchRepostCaches } from '../../../../lib/core/queryCache';
+import { awardXp } from '../../../../lib/retention/retention';
 import type { EchoReaction } from '../../../../types/index';
-import { isAppOnline } from '../../../../lib/net';
+import { isAppOnline } from '../../../../lib/core/net';
 import { outbox } from '../../../../store/outbox';
-import { isTransientError } from '../../../../lib/mutationErrors';
-import { publishOrQueue } from '../../../../lib/publishEcho';
-import { createLatestIntent } from '../../../../lib/latestIntent';
+import { isTransientError } from '../../../../lib/core/mutationErrors';
+import { publishOrQueue } from '../../../../lib/feed/publishEcho';
+import { createLatestIntent } from '../../../../lib/ai/latestIntent';
 
 // Toggles send the user's LATEST tap, one request at a time per item, and
 // retry transient failures inside that turn (lib/latestIntent). No TanStack

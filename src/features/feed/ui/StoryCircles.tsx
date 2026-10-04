@@ -7,7 +7,7 @@ import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { Avatar } from '../../../../components/ui/Avatar';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useTheme } from '../../../shared/lib/theme';
-import { isSupabaseRemote } from '../../../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../../../lib/core/remoteConfig';
 
 export function StoryCircles() {
   const router = useRouter();

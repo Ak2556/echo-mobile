@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../lib/auth';
 import { track } from '../src/shared/lib/analytics';
-import { TARGET_CATEGORIES, getTargetCategory } from '../lib/targetCategories';
+import { TARGET_CATEGORIES, getTargetCategory } from '../lib/retention/targetCategories';
 import { useResponsiveLayout } from '../src/shared/lib/responsive';
 import { useTheme } from '../src/shared/lib/theme';
 import { useAppStore } from '../store/useAppStore';

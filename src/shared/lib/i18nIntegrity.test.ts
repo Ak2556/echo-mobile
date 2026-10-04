@@ -20,7 +20,7 @@ import { join } from 'node:path';
 const TRAILING_VIRAMA = /[्্੍્୍்్್്]$/;
 
 async function generated() {
-  const { GENERATED } = await import('../../../lib/i18nGenerated');
+  const { GENERATED } = await import('../../../lib/i18n/i18nGenerated');
   return GENERATED as Record<string, Record<string, string>>;
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../lib/auth';
-import { getRememberedStartRoute } from '../lib/navigationMemory';
+import { getRememberedStartRoute } from '../lib/routing/navigationMemory';
 
 /**
  * Initial route. Reads auth status from the central store and renders the

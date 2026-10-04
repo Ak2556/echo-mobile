@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { getDeviceTier } from '../../../../lib/deviceTier';
+import { getDeviceTier } from '../../../../lib/ui/deviceTier';
 
 /**
  * Decides whether a video card should hold a native player at all.

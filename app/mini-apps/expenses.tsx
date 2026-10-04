@@ -18,12 +18,12 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useI18n } from '../../src/shared/lib/i18n';
 import { showToast } from '../../components/ui/Toast';
-import { CURRENCIES, formatPrice, getCurrencySymbol, type CurrencyCode } from '../../lib/currency';
+import { CURRENCIES, formatPrice, getCurrencySymbol, type CurrencyCode } from '../../lib/mini-apps/currency';
 import {
   DEFAULT_EXPENSE_CURRENCY, EXPENSE_CATS, INCOME_CATS, ExpensesDoc, Transaction, TxType, Party, PartyType, KhataProfile,
   currentMonthKey, formatDate, loadExpensesDoc, monthKey, monthLabel,
   saveExpensesDoc, shiftMonth, transactionsToCsv, pnlToCsv, daybookToCsv, gstReportToCsv, generatePdfHtml
-} from '../../lib/expenses';
+} from '../../lib/mini-apps/expenses';
 import { MoneyCategoryIcon } from '../../components/mini-apps/MoneyCategoryIcon';
 
 const PROFILE_TERM: Record<KhataProfile, any> = {

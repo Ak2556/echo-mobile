@@ -23,7 +23,7 @@ npx vitest run -t "name of the test"
 npx vitest run --project logic     # or --project ui
 
 npm run audit:backend      # scripts/audit-backend.mjs — calls each RPC for real
-npm run i18n:generate      # machine-translate missing strings into lib/i18nGenerated.ts
+npm run i18n:generate      # machine-translate missing strings into lib/i18n/i18nGenerated.ts
 npm run mac:dev            # export web bundle + run Electron shell
 ```
 
@@ -56,7 +56,7 @@ Tabs in `app/(tabs)/`; everything else stack-pushes from the root. Cold-start ro
 | `src/shared/lib` | `theme.ts`, `i18n.ts` (~530KB, the hand-authored string source — see i18n below), `analytics`, `haptics`, `performance`, `responsive`. |
 | `src/shared/database` | WatermelonDB schema, models, `sync.ts`. |
 | `components/` | Generic/shared UI only (`ui/`, `common/`, `mini-apps/`, `ai/`). |
-| `lib/` | Domain logic, ~214 files. `supabaseEchoApi.ts` (4.3k lines) is the single gateway to Supabase. |
+| `lib/` | Domain logic grouped by area, one level deep (`ai`, `core`, `feed`, `media`, `mini-apps`, `privacy`, `retention`, `routing`, `social`, `ui`, …). `supabaseEchoApi.ts` (4.3k lines) is the single gateway to Supabase and stays at the `lib/` root. Tests sit beside their module; cross-cutting guard tests that read source or migrations live in `test/`. |
 | `hooks/queries/` | Older React Query hooks (DMs, follows, notifications, profile). Coexists with `src/features/*/api`; new feature hooks go in `src/features`. |
 | `store/` | Zustand, sliced (`slices/{auth,chat,social,settings,retention}Slice.ts`). |
 | `supabase/functions/` | 20 Deno edge functions. |
@@ -70,7 +70,7 @@ Imports are relative in `app/`; `@/*` maps to the repo root via tsconfig `paths`
 2. **TanStack Query** — all server data, persisted across restarts through `mmkvPersister`.
 3. **WatermelonDB** (`src/shared/database`) — offline-first local DB for messaging, synced via `hooks/useDatabaseSync`.
 
-Writes that must survive offline go through `store/outbox.ts` + `lib/outboxProcessor.ts`.
+Writes that must survive offline go through `store/outbox.ts` + `lib/core/outboxProcessor.ts`.
 
 ### Supabase access
 
@@ -85,13 +85,13 @@ audio (expo-audio) → supabase/functions/voice-command
   → lib/voice/dispatch.ts → 18 in-app actions
 ```
 
-`lib/voice/localIntent.ts` resolves common intents on-device without a model call — extend it before adding server round-trips. Chat streams SSE from `supabase/functions/echo-ai` via `lib/api.ts`; tools with `requiresConfirm` pause the stream for a confirm card.
+`lib/voice/localIntent.ts` resolves common intents on-device without a model call — extend it before adding server round-trips. Chat streams SSE from `supabase/functions/echo-ai` via `lib/ai/api.ts`; tools with `requiresConfirm` pause the stream for a confirm card.
 
 **The AI account is free-tier (~20 req/day)** and throttles chat, voice and translate in production. Failures that look like bugs are often quota.
 
 ### i18n
 
-26 languages. `src/shared/lib/i18n.ts` is the source: `BASE_TRANSLATIONS` (English) plus per-language maps. Fix English copy there directly. `npm run i18n:generate` fills gaps into `lib/i18nGenerated.ts` (the only generated file, so don't hand-edit that one), and hand-authored strings win at runtime. Many non-English entries are corrupt (truncated, translated from Bengali); a re-translation run is still owed. Layout must handle RTL (Arabic) and the interface itself is localised, not only content.
+26 languages. `src/shared/lib/i18n.ts` is the source: `BASE_TRANSLATIONS` (English) plus per-language maps. Fix English copy there directly. `npm run i18n:generate` fills gaps into `lib/i18n/i18nGenerated.ts` (the only generated file, so don't hand-edit that one), and hand-authored strings win at runtime. Many non-English entries are corrupt (truncated, translated from Bengali); a re-translation run is still owed. Layout must handle RTL (Arabic) and the interface itself is localised, not only content.
 
 ### Theming
 

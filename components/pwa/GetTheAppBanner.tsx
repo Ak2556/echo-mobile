@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, Text, View } from 'react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { persistGet, persistSet } from '../../store/persist';
-import { WORKER_URL } from '../../lib/workerUrl';
+import { WORKER_URL } from '../../lib/routing/workerUrl';
 
 /**
  * "Get the app" on the web, the way Instagram and Facebook do it.

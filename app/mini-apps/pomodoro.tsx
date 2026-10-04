@@ -27,15 +27,15 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { useI18n } from '../../src/shared/lib/i18n';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { showToast } from '../../components/ui/Toast';
-import { createFocusBeatPlayer, FOCUS_BEATS, type FocusBeatId } from '../../lib/focusBeats';
-import { schedulePomodoroTimerNotification } from '../../lib/pomodoroRuntime';
+import { createFocusBeatPlayer, FOCUS_BEATS, type FocusBeatId } from '../../lib/mini-apps/focusBeats';
+import { schedulePomodoroTimerNotification } from '../../lib/mini-apps/pomodoroRuntime';
 import {
   ActivePomodoroTimer, PomodoroDoc, PomodoroMode, PomodoroSettings, DEFAULT_POMODORO_SETTINGS,
   clearActivePomodoroTimer, goalStreak, loadActivePomodoroTimer, loadPomodoro,
   remainingSecondsForActive, saveActivePomodoroTimer, savePomodoro,
   sessionsOn, todayStats, topLabels, weekBars,
-} from '../../lib/pomodoro';
-import { localDayKey } from '../../lib/localDate';
+} from '../../lib/mini-apps/pomodoro';
+import { localDayKey } from '../../lib/core/localDate';
 
 type Mode = PomodoroMode;
 

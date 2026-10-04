@@ -6,7 +6,7 @@
 //   feed (ranked)  -> lib/supabaseEchoApi.ts fetchRankedFeed / get_ranked_feed RPC
 //   create echo    -> lib/supabaseEchoApi.ts (insert public_echoes)
 //   like           -> lib/supabaseEchoApi.ts (insert echo_likes)
-//   echo-ai        -> lib/api.ts streamEchoAI (POST functions/v1/echo-ai)
+//   echo-ai        -> lib/ai/api.ts streamEchoAI (POST functions/v1/echo-ai)
 
 import http from 'k6/http';
 import { check } from 'k6';

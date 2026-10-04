@@ -144,7 +144,7 @@ export interface FeedItem {
   // id). The author cap can reject rows scoring above everything kept on the
   // page; building the next keyset cursor from this item's own rankScore
   // would re-fetch those rejected rows on every later page, where they are
-  // rejected again forever. See lib/feedSelection.ts (`selectWithDiversity`)
+  // rejected again forever. See lib/feed/feedSelection.ts (`selectWithDiversity`)
   // and fetchPersonalFeed in lib/supabaseEchoApi.ts. Never rendered.
   personalFeedCursor?: { score: number; id: string };
   // Remix lineage

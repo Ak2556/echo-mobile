@@ -17,8 +17,8 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../../components/ui/Toast';
-import { CameraCapture, CameraCaptureType, loadCameraCaptures, saveCameraCaptures } from '../../lib/cameraCaptures';
-import { uploadMiniAppMedia } from '../../lib/miniAppMedia';
+import { CameraCapture, CameraCaptureType, loadCameraCaptures, saveCameraCaptures } from '../../lib/media/cameraCaptures';
+import { uploadMiniAppMedia } from '../../lib/mini-apps/miniAppMedia';
 import { ttx } from '../../src/shared/lib/i18n';
 import { PhotoEditor } from '../../src/features/feed/ui/PhotoEditor';
 

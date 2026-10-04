@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { useTheme } from '../../../shared/lib/theme';
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { AdItem, trackAdView, trackAdClick } from '../api/useAds';
-import { isSafeExternalUrl } from '../../../../lib/urlSafety';
+import { isSafeExternalUrl } from '../../../../lib/routing/urlSafety';
 import { ArrowUpRight } from 'phosphor-react-native';
 
 export function AdCard({ ad }: { ad: AdItem }) {

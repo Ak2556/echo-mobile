@@ -5,8 +5,8 @@
 
 import { router } from 'expo-router';
 import { useAppStore } from '../../store/useAppStore';
-import { APP_LANGUAGES, normalizeAppLanguage, type AppLanguageCode } from '../languages';
-import { MINI_APP_CATALOG } from '../miniAppCatalog';
+import { APP_LANGUAGES, normalizeAppLanguage, type AppLanguageCode } from '../i18n/languages';
+import { MINI_APP_CATALOG } from '../mini-apps/miniAppCatalog';
 import { readFeedAloud } from './readFeed';
 import { readNotificationsAloud } from './readNotifications';
 import { getVoiceActions, type PostAction } from './actions';

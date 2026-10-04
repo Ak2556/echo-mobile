@@ -110,7 +110,7 @@ vi.mock('./queue', async (importOriginal) => {
 import { emit, listPending, listFailed, resetQueue } from './queue';
 import { resetLedger, hasApplied, findByCreatedItem } from './ledger';
 import { drainMiniLink, undoFact } from './drain';
-import { loadTransactions } from '../expenses';
+import { loadTransactions } from '../mini-apps/expenses';
 import { MAX_FACT_ATTEMPTS } from './types';
 
 describe('minilink drain', () => {

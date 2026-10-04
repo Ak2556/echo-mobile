@@ -2,9 +2,9 @@ import React from 'react';
 import { Sparkle } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { ConsentSheet } from '../consent/ConsentSheet';
-import { answerAiConsent, useAiConsent } from '../../lib/aiConsent';
+import { answerAiConsent, useAiConsent } from '../../lib/privacy/aiConsent';
 
-/** The one-time question in front of Echo's AI features (see lib/aiConsent.ts). */
+/** The one-time question in front of Echo's AI features (see lib/privacy/aiConsent.ts). */
 export function AiConsentSheet() {
   const { colors } = useTheme();
   return (

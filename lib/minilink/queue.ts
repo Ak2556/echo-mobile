@@ -1,6 +1,6 @@
 import { persistGet, persistSet } from '../../store/persist';
 import { uuidv4 } from '../../store/outbox';
-import type { TargetMiniAppId } from '../targetCategories';
+import type { TargetMiniAppId } from '../retention/targetCategories';
 import { MAX_FACT_ATTEMPTS, type Fact, type FactKind, type FactPayload } from './types';
 
 const KEY = 'minilink_facts_v1';

@@ -22,7 +22,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../src/shared/lib/theme';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
-import { CURRENCIES, CurrencyCode, formatPrice, getCurrencySymbol } from '../lib/currency';
+import { CURRENCIES, CurrencyCode, formatPrice, getCurrencySymbol } from '../lib/mini-apps/currency';
 import {
   LISTING_CATEGORIES,
   LISTING_CONDITIONS,
@@ -30,7 +30,7 @@ import {
   ListingCondition,
   createListing,
   uploadListingImages,
-} from '../lib/marketplaceApi';
+} from '../lib/mini-apps/marketplaceApi';
 import { ttx } from '../src/shared/lib/i18n';
 
 const MAX_PHOTOS = 6;

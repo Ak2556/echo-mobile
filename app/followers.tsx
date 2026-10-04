@@ -14,7 +14,7 @@ import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../src/shared/lib/theme';
-import { isSupabaseRemote } from '../lib/remoteConfig';
+import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { useRemoteFollowersList, type ConnectionUser } from '../hooks/queries/useRemoteFollowers';
 import { ttx } from '../src/shared/lib/i18n';
 

@@ -1,4 +1,4 @@
-import type { TargetMiniAppId } from '../targetCategories';
+import type { TargetMiniAppId } from '../retention/targetCategories';
 
 /**
  * A fact is something that happened in one mini-app, stated so another can

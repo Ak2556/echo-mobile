@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { CaretDown, CaretUp, Medal } from 'phosphor-react-native';
-import { RANK_RULES, isActiveThisWeek, rankProgress } from '../../../../lib/ranks';
+import { RANK_RULES, isActiveThisWeek, rankProgress } from '../../../../lib/retention/ranks';
 import { useTheme } from '../../../shared/lib/theme';
 import { ttx } from '../../../shared/lib/i18n';
 import { useMyRank } from '../api/useRanks';

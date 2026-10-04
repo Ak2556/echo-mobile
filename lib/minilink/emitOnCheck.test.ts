@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { shouldEmitPurchase, describePostDrain, describeUndo, purchaseAmount } from './rules';
-import type { ShoppingItem } from '../shoppingList';
+import type { ShoppingItem } from '../mini-apps/shoppingList';
 
 const item = (over: Partial<ShoppingItem> = {}): ShoppingItem => ({
   id: 'i1', listId: 'l1', name: 'milk', quantity: '1',
