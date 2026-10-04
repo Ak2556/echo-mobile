@@ -99,14 +99,14 @@ describe('EdgeGlass', () => {
 });
 
 describe('glassWash', () => {
-  it('keeps the bottom bar as it was', () => {
-    expect(glassWash('bottom', true, false)).toBe(0.22);
-    expect(glassWash('bottom', true, true)).toBe(0.18);
+  it('washes the tab bar enough that muted icons survive a dark photo', () => {
+    expect(glassWash('bottom', true, false)).toBeGreaterThanOrEqual(0.5);
+    expect(glassWash('bottom', true, true)).toBeGreaterThanOrEqual(0.4);
   });
 
-  it('makes the header markedly more opaque than the footer', () => {
-    expect(glassWash('top', true, false)).toBeGreaterThan(glassWash('bottom', true, false) * 2);
-    expect(glassWash('top', true, true)).toBeGreaterThan(glassWash('bottom', true, true) * 2);
+  it('keeps the header the most opaque of the two', () => {
+    expect(glassWash('top', true, false)).toBeGreaterThan(glassWash('bottom', true, false));
+    expect(glassWash('top', true, true)).toBeGreaterThan(glassWash('bottom', true, true));
   });
 
   it('is nearly solid on either edge when nothing blurs', () => {
