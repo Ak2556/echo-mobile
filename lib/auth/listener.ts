@@ -10,7 +10,8 @@ import { isSupabaseRemote } from '../core/remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes, fetchAndApplyRemoteSettings } from '../supabaseEchoApi';
 import { loadPersonaProfile } from '../ai/persona';
 import { syncNotificationProfile } from '../ai/personalNudges';
-import { statusForProfile } from './onboardingStatus';
+import { ONBOARDED_USER_KEY, resumableStatus, statusForProfile } from './onboardingStatus';
+import { persistGet, persistSet } from '../../store/persist';
 import { useAuthStore } from './store';
 import { destinationFor } from './destination';
 import { clearLocalUserData } from '../core/localDataReset';
@@ -66,15 +67,28 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
     return;
   }
 
+  // A returning, fully onboarded user is let in now rather than after the
+  // profile round-trip (see resumableStatus). Only from 'checking': it never
+  // overrides a status something else already settled.
+  const early = resumableStatus(persistGet<string>(ONBOARDED_USER_KEY, ''), session.user.id);
+  if (early && useAuthStore.getState().status === 'checking') {
+    auth.setAuth({ status: early, session });
+    app.setUserId(session.user.id);
+  }
+
   const profile = await fetchProfile(session.user.id);
 
+  const status = statusForProfile(profile);
   auth.setAuth({
     // See lib/auth/onboardingStatus.ts — this used to be
     // `Boolean(profile?.username)`, which handle_new_user() makes always true.
-    status: statusForProfile(profile),
+    status,
     session,
     profile,
   });
+  // Remember a server-confirmed onboarded user for the next cold start. Only a
+  // real profile counts: a failed fetch (null) says nothing about onboarding.
+  if (profile && status === 'ready') persistSet(ONBOARDED_USER_KEY, session.user.id);
 
   // Mirror identity bits into useAppStore so the rest of the app — which
   // still reads from it — stays consistent. New code should read from
@@ -276,6 +290,7 @@ export function AuthListenerProvider(): null {
         clearUser();
         blocksHydratedFor = null;
         useAuthStore.getState().reset();
+        persistSet(ONBOARDED_USER_KEY, '');
         // Clear mirrored fields in useAppStore. The components that still
         // read from useAppStore will pick up empty strings and re-route.
         const app = useAppStore.getState();
