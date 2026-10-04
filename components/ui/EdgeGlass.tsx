@@ -44,6 +44,22 @@ function withAlpha(hex: string, alpha: number): string {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
+/**
+ * Base opacity of the white (or dark) wash over the glass.
+ *
+ * 0.22 let a sharp post photo show through the header, and over a dark photo
+ * the tab bar blurred to mid-grey with the muted-grey icons lost in it (owner,
+ * 2026-10-04). A header carries the wordmark over whatever is scrolling under
+ * it, so the top edge is the most opaque; the tab bar is lighter, since it is
+ * only icons and the owner likes its frosted look. The blur and the tail fade
+ * still do the softening. Without any blur the bar has to be the surface.
+ */
+export function glassWash(edge: 'top' | 'bottom', blurred: boolean, isDark: boolean): number {
+  if (!blurred) return 0.96;
+  if (edge === 'top') return isDark ? 0.62 : 0.72;
+  return isDark ? 0.45 : 0.55;
+}
+
 export interface EdgeGlassProps {
   /** Which screen edge this is pinned to. Decides which way the fade runs. */
   edge: 'top' | 'bottom';
@@ -136,7 +152,7 @@ export function EdgeGlass({
   // Without a blur under it the bar has to be the surface: at 0.22 the feed
   // read straight through it — post text under the header, a post's like and
   // comment chips under the tab icons ("Home 2", "Explore 1").
-  const wash = NativeGlass || blurs ? (colors.isDark ? 0.18 : 0.22) : 0.96;
+  const wash = glassWash(edge, Boolean(NativeGlass || blurs), colors.isDark);
   const tailFraction = 1 - barFraction;
   const washColors = [
     withAlpha(base, wash),

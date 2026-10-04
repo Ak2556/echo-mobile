@@ -28,7 +28,7 @@ vi.mock('../../lib/ui/performance', () => ({
   usePerformanceProfile: () => profile,
 }));
 
-const { EdgeGlass } = await import('./EdgeGlass');
+const { EdgeGlass, glassWash } = await import('./EdgeGlass');
 
 // react-native-web drops unknown props, so the stub's data-* attributes never
 // reach the DOM. testID does survive, as data-testid.
@@ -95,5 +95,22 @@ describe('EdgeGlass', () => {
     );
     expect(container.querySelector('[data-glass-style]')).toBeNull();
     expect(blurLayers(container).length).toBeGreaterThan(0);
+  });
+});
+
+describe('glassWash', () => {
+  it('washes the tab bar enough that muted icons survive a dark photo', () => {
+    expect(glassWash('bottom', true, false)).toBeGreaterThanOrEqual(0.5);
+    expect(glassWash('bottom', true, true)).toBeGreaterThanOrEqual(0.4);
+  });
+
+  it('keeps the header the most opaque of the two', () => {
+    expect(glassWash('top', true, false)).toBeGreaterThan(glassWash('bottom', true, false));
+    expect(glassWash('top', true, true)).toBeGreaterThan(glassWash('bottom', true, true));
+  });
+
+  it('is nearly solid on either edge when nothing blurs', () => {
+    expect(glassWash('top', false, false)).toBe(0.96);
+    expect(glassWash('bottom', false, true)).toBe(0.96);
   });
 });
