@@ -25,7 +25,7 @@ export const DESTINATIONS: Record<string, string> = {
   tools: '/(tabs)/apps', apps: '/(tabs)/apps',
   // The Flow tab. lib/voice/localIntent.ts already emits destination 'watch'
   // for "video"/"flow", and without these keys that fast path dead-ended.
-  watch: '/(tabs)/watch', flow: '/(tabs)/watch', video: '/(tabs)/watch', videos: '/(tabs)/watch', reels: '/(tabs)/watch',
+  watch: '/(tabs)/watch', reverb: '/(tabs)/watch', clips: '/(tabs)/watch', clip: '/(tabs)/watch', flow: '/(tabs)/watch', video: '/(tabs)/watch', videos: '/(tabs)/watch', reels: '/(tabs)/watch',
   verify: '/get-verified', verification: '/get-verified', verified: '/get-verified',
   badges: '/badges', quests: '/quests',
   salons: '/salons',
