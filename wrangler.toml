@@ -16,6 +16,12 @@ compatibility_date = "2024-03-20"
 
 [vars]
 R2_ACCOUNT_ID = "5f35370a3c9265072a8ae6c47b22dd46"
+# Log-only until the first sweep has been read. See cloudflare/src/sizeCaps.ts.
+SIZE_SWEEP_ENFORCE = "false"
+
+# Deletes user uploads over their bucket's size ceiling; presigned PUTs cannot carry one.
+[triggers]
+crons = ["*/15 * * * *"]
 
 [[r2_buckets]]
 binding = "AVATARS_BUCKET"
