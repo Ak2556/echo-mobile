@@ -1,6 +1,6 @@
 # End-to-end encrypted DMs: rollout and operations
 
-Plan: docs/superpowers/plans/2026-09-26-dm-e2ee-phases-1-2.md
+Design: docs/design/dm-e2ee.md
 
 ## Deploy order
 The client selects the new `direct_messages` columns on every thread fetch, so the schema must be live before any build containing this work is installed.
