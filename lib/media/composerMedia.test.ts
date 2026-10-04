@@ -85,7 +85,9 @@ describe('composer option wiring', () => {
 
   it('the composer preview has transport controls; the feed does not opt in', () => {
     expect(composer).toMatch(/autoplay\s+controls/);
-    expect(src('src/features/feed/ui/EchoCard.tsx')).not.toMatch(/\bcontrols\b/);
+    // The live feed card must not pass `controls` to a video component. (This used to read
+    // EchoCard.tsx, which was deleted as dead code; FeedCard is what the feed renders.)
+    expect(src('src/features/feed/ui/FeedCard.tsx')).not.toMatch(/<(VideoPreview|InlineVideo)[^>]*\bcontrols\b/s);
   });
 
   it('video pick and record offer the OS trim step', () => {
