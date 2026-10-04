@@ -6,23 +6,30 @@ import { EXPO_MAX_PER_REQUEST, chunk, classifyTickets, deviceTokens, type ExpoTi
 
 const EXPO_SEND = 'https://exp.host/--/api/v2/push/send';
 
+/**
+ * iOS devices are skipped until Expo holds APNs credentials for the app (see
+ * deviceTokens). Set the IOS_PUSH_ENABLED secret to "true" the day the first iOS
+ * build ships, or iOS users will silently receive nothing.
+ */
+const skipIos = () => Deno.env.get('IOS_PUSH_ENABLED') !== 'true';
+
 /** user id -> every token that user can be reached on. */
 // deno-lint-ignore no-explicit-any
 export async function tokensByUser(db: SupabaseClient<any, any, any>, userIds: string[]): Promise<Map<string, string[]>> {
   const out = new Map<string, string[]>();
   if (userIds.length === 0) return out;
   const [{ data: rows, error }, { data: profiles, error: legacyError }] = await Promise.all([
-    db.from('push_tokens').select('user_id, token').in('user_id', userIds),
+    db.from('push_tokens').select('user_id, token, platform').in('user_id', userIds),
     db.from('profiles').select('id, push_token').in('id', userIds),
   ]);
   if (error) throw error;
   if (legacyError) throw legacyError;
-  const byUser = new Map<string, { token: string | null }[]>();
-  for (const r of (rows ?? []) as { user_id: string; token: string }[]) {
-    byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), { token: r.token }]);
+  const byUser = new Map<string, { token: string | null; platform: string | null }[]>();
+  for (const r of (rows ?? []) as { user_id: string; token: string; platform: string | null }[]) {
+    byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), { token: r.token, platform: r.platform }]);
   }
   for (const p of (profiles ?? []) as { id: string; push_token: string | null }[]) {
-    const tokens = deviceTokens(byUser.get(p.id) ?? [], p.push_token);
+    const tokens = deviceTokens(byUser.get(p.id) ?? [], p.push_token, { skipIos: skipIos() });
     if (tokens.length) out.set(p.id, tokens);
   }
   return out;

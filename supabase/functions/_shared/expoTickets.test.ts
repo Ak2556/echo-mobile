@@ -23,6 +23,32 @@ describe('deviceTokens', () => {
   });
 });
 
+describe('deviceTokens: iOS before APNs credentials exist', () => {
+  const ios = { token: A, platform: 'ios' };
+  const android = { token: B, platform: 'android' };
+
+  it('drops iOS devices and keeps Android ones', () => {
+    expect(deviceTokens([ios, android], null, { skipIos: true })).toEqual([B]);
+  });
+
+  it('keeps everything when iOS push is enabled, which is also the default of the pure helper', () => {
+    expect(deviceTokens([ios, android], null, { skipIos: false })).toEqual([A, B]);
+    expect(deviceTokens([ios, android], null)).toEqual([A, B]);
+  });
+
+  it('drops a legacy token that is the same device as a skipped iOS one', () => {
+    expect(deviceTokens([ios], A, { skipIos: true })).toEqual([]);
+  });
+
+  it('keeps a legacy token it cannot place on iOS', () => {
+    expect(deviceTokens([android], C, { skipIos: true })).toEqual([B, C]);
+  });
+
+  it('does not treat a missing platform as iOS, so an unlabelled Android token is not lost', () => {
+    expect(deviceTokens([{ token: B }], null, { skipIos: true })).toEqual([B]);
+  });
+});
+
 describe('classifyTickets', () => {
   it('reads each ticket against the token it was sent to, by position', () => {
     const out = classifyTickets([A, B, C], [
