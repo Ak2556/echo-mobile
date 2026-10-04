@@ -33,6 +33,7 @@ import { FeedItem } from '../../types';
 import { useQuery } from '@tanstack/react-query';
 import { fetchRemoteRepostsByUser } from '../../lib/supabaseEchoApi';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
+import { useFeature } from '../../hooks/useFeature';
 import { buildCreatorProfile } from '../../lib/feed/echoUX';
 import { StreakXPBadge } from '../../components/feed/StreakXPBadge';
 import { RankCard } from '../../components/ranks/RankCard';
@@ -109,6 +110,7 @@ export default function ProfileScreen() {
   } = useAppStore();
   const [profileUserId, setProfileUserId] = useState(userId);
   const [activeTab, setActiveTab] = useState<'posts' | 'reechoes'>('posts');
+  const yearInEchoOn = useFeature('yearInEcho');
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
@@ -318,15 +320,22 @@ export default function ProfileScreen() {
               Year in Echo was finished, registered in the Stack, and backed by
               a real year_wraps table — with nothing anywhere linking to it, so
               the only way in was typing the deep link. This is that way in.
+
+              Only while the yearInEcho flag is on. The screen sits behind
+              V2FeatureGuard, which sends everyone straight to Home when the
+              flag is off (it is off at launch), so an always-visible icon was a
+              button that did nothing and then dropped you on the wrong tab.
             */}
-            <Pressable
-              style={{ flex: 1, alignItems: 'center', paddingVertical: 12 }}
-              onPress={() => router.push('/year-in-echo')}
-              accessibilityRole="button"
-              accessibilityLabel="Your year in Echo"
-            >
-              <CalendarBlank color={colors.textMuted} size={26} weight="regular" />
-            </Pressable>
+            {yearInEchoOn ? (
+              <Pressable
+                style={{ flex: 1, alignItems: 'center', paddingVertical: 12 }}
+                onPress={() => router.push('/year-in-echo')}
+                accessibilityRole="button"
+                accessibilityLabel="Your year in Echo"
+              >
+                <CalendarBlank color={colors.textMuted} size={26} weight="regular" />
+              </Pressable>
+            ) : null}
           </View>
 
         <View style={{ paddingBottom: layout.bottomChromePadding }}>
