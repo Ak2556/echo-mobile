@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/aena/Developer/echo-ios/modules/echo-media/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest741165704144920156.xml:2:13-83
+INJECTED from /Users/aena/Developer/echo-ios/modules/echo-media/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest741165704144920156.xml:2:13-83
+	package
+		INJECTED from /Users/aena/Developer/echo-ios/modules/echo-media/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest741165704144920156.xml
+	xmlns:android
+		ADDED from /Users/aena/Developer/echo-ios/modules/echo-media/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest741165704144920156.xml:2:23-81
+uses-sdk
+INJECTED from /Users/aena/Developer/echo-ios/modules/echo-media/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest741165704144920156.xml reason: use-sdk injection requested
+INJECTED from /Users/aena/Developer/echo-ios/modules/echo-media/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest741165704144920156.xml
+INJECTED from /Users/aena/Developer/echo-ios/modules/echo-media/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest741165704144920156.xml
+	android:targetSdkVersion
+		INJECTED from /Users/aena/Developer/echo-ios/modules/echo-media/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest741165704144920156.xml
+	android:minSdkVersion
+		INJECTED from /Users/aena/Developer/echo-ios/modules/echo-media/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest741165704144920156.xml

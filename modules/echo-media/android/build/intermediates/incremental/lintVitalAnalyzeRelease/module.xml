@@ -1,0 +1,18 @@
+<lint-module
+    format="1"
+    dir="/Users/aena/Developer/echo-ios/modules/echo-media/android"
+    name=":echo-media"
+    type="LIBRARY"
+    maven="expo.modules.echomedia:echo-media:0.1.0"
+    agpVersion="8.11.0"
+    buildFolder="build"
+    bootClassPath="/Users/aena/Library/Android/sdk/platforms/android-36/android.jar:/Users/aena/Library/Android/sdk/build-tools/35.0.0/core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-36"
+    neverShrinking="true">
+  <lintOptions
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>
