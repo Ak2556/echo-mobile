@@ -7,6 +7,7 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { normalizeAiMode, toolsForMode } from "./mode.ts";
 import { moderateContent } from "./moderation.ts";
+import { findPendingToolCall, type StoredMessageRow } from "./pendingTool.ts";
 import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "../_shared/rateLimit.ts";
 import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
 
@@ -1103,6 +1104,24 @@ async function handleRequest(req: Request): Promise<Response> {
         const tier = await resolveLimitForUser(adminSupabase, userId);
         const selectedModel = resolveEchoAIModel(modelOverride, tier.planId);
 
+        // Every request that can reach the model is metered, and metered first:
+        // bouncing it here means no conversation row, no Postgres write and no
+        // model spend. The confirm and local_result branches used to skip this
+        // and run up to six model calls each, which let one account drain the
+        // Gemini quota that moderation shares, and moderation fails closed.
+        if (body.message || body.confirm || body.local_result) {
+          try {
+            await checkAndIncrementRateLimit(adminSupabase, userId, tier);
+          } catch (e) {
+            if (e instanceof AIRateLimitError) {
+              send({ type: "error", message: e.message });
+              send({ type: "done" });
+              return;
+            }
+            throw e;
+          }
+        }
+
         const { id: conversationId, isNew } = await getOrCreateConversation(
           supabase,
           userId,
@@ -1123,6 +1142,31 @@ async function handleRequest(req: Request): Promise<Response> {
         } catch { /* non-fatal */ }
 
         const systemPrompt = buildSystemPrompt(profile, body.current_screen ?? null, body.persona_context ?? null);
+
+        // A confirm or local_result answers a call the model issued and nobody has
+        // answered yet. Anything else is a forged or replayed request.
+        const answering = body.local_result ?? body.confirm;
+        if (answering) {
+          const { data: stored, error: storedError } = await supabase
+            .from("ai_messages")
+            .select("role, tool_calls, tool_call_id")
+            .eq("conversation_id", conversationId)
+            .order("created_at", { ascending: false })
+            .limit(100);
+          if (storedError) throw storedError;
+          const pending = findPendingToolCall((stored ?? []) as StoredMessageRow[], answering.tool_call_id);
+          if (!pending || pending.name !== answering.tool_name) {
+            send({
+              type: "tool_result",
+              id: String(answering.tool_call_id ?? ""),
+              name: String(answering.tool_name ?? ""),
+              ok: false,
+              error: "no pending tool call",
+            });
+            send({ type: "done" });
+            return;
+          }
+        }
 
         // Confirm branch: user approved/rejected a previously paused tool
         if (body.local_result) {
@@ -1148,21 +1192,7 @@ async function handleRequest(req: Request): Promise<Response> {
             body.mode,
           );
         } else if (body.message) {
-          // Fresh user turn
-          // Rate-limit BEFORE we persist or call the model — bouncing the
-          // request here means no Postgres write, no model spend, and
-          // the client gets a clean 429-shaped error event.
-          try {
-            await checkAndIncrementRateLimit(adminSupabase, userId, tier);
-          } catch (e) {
-            if (e instanceof AIRateLimitError) {
-              send({ type: "error", message: e.message });
-              send({ type: "done" });
-              controller.close();
-              return;
-            }
-            throw e;
-          }
+          // Fresh user turn (already metered above).
           const userMsg: ORMessage = { role: "user", content: body.message };
           await persistMessage(supabase, conversationId, userId, userMsg);
           await runAgentLoop(supabase, userId, conversationId, send, 6, selectedModel, systemPrompt, body.mode);
