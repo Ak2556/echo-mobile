@@ -696,6 +696,9 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
       <View style={compactFeed ? {
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
+        // Off phone the divider is inset to the content edge. Full-bleed it ran
+        // past the photo and action row by the card padding on each side.
+        marginHorizontal: layout.isPhone ? 0 : cardMargin,
       } : {
         borderRadius: 28,
         overflow: 'hidden',
@@ -734,7 +737,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         haptic="light"
         performanceMode="hot"
         style={{
-          paddingHorizontal: compactFeed ? cardMargin : 18,
+          paddingHorizontal: compactFeed ? (layout.isPhone ? cardMargin : 0) : 18,
           paddingVertical: compactFeed ? 14 : 17,
         }}
       >
