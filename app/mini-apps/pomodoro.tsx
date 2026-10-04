@@ -497,11 +497,17 @@ function FocusGarden({
 function FocusBeatsPanel({
   accent,
   playingBeat,
+  paused,
   onToggle,
+  onTogglePause,
+  onStop,
 }: {
   accent: string;
   playingBeat: FocusBeatId | null;
+  paused: boolean;
   onToggle: (beat: FocusBeatId) => void;
+  onTogglePause: () => void;
+  onStop: () => void;
 }) {
   const { colors, radius } = useTheme();
   const { tt } = useI18n();
@@ -509,15 +515,36 @@ function FocusBeatsPanel({
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 40, height: 40, borderRadius: radius.card, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
-          {playingBeat ? <SpeakerHigh color={accent} size={19} weight="fill" /> : <MusicNote color={accent} size={19} weight="bold" />}
+          {playingBeat && !paused ? <SpeakerHigh color={accent} size={19} weight="fill" /> : playingBeat ? <SpeakerSlash color={accent} size={19} weight="fill" /> : <MusicNote color={accent} size={19} weight="bold" />}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{tt('Focus beats')}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>
-            {playingBeat ? `${FOCUS_BEATS[playingBeat].name} ${tt('playing')}` : tt('Relax while focusing')}
+            {playingBeat ? (paused ? `${tt('Paused')} · ${FOCUS_BEATS[playingBeat].name}` : `${FOCUS_BEATS[playingBeat].name} ${tt('playing')}`) : tt('Relax while focusing')}
           </Text>
         </View>
-        {playingBeat ? <SpeakerSlash color={colors.textMuted} size={19} weight="bold" /> : null}
+        {playingBeat ? (
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <AnimatedPressable
+              onPress={onTogglePause}
+              haptic="light"
+              accessibilityRole="button"
+              accessibilityLabel={paused ? tt('Resume') : tt('Pause')}
+              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}
+            >
+              {paused ? <Play color={colors.bgPure} size={18} weight="fill" /> : <Pause color={colors.bgPure} size={18} weight="fill" />}
+            </AnimatedPressable>
+            <AnimatedPressable
+              onPress={onStop}
+              haptic="light"
+              accessibilityRole="button"
+              accessibilityLabel={tt('Stop')}
+              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <X color={colors.textMuted} size={18} weight="bold" />
+            </AnimatedPressable>
+          </View>
+        ) : null}
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {(Object.keys(FOCUS_BEATS) as FocusBeatId[]).map(beat => {
@@ -615,6 +642,7 @@ export default function PomodoroScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const [draftTotalSecs, setDraftTotalSecs] = useState<number | null>(null);
   const [playingBeat, setPlayingBeat] = useState<FocusBeatId | null>(null);
+  const [beatPaused, setBeatPaused] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeRef = useRef<ActivePomodoroTimer | null>(null);
   const beatPlayerRef = useRef<AudioPlayer | null>(null);
@@ -897,12 +925,27 @@ export default function PomodoroScreen() {
     showToast(`${minutes}${tt('m loaded')}`, tt('Focus'));
   };
 
+  const stopFocusBeat = () => {
+    beatPlayerRef.current?.pause();
+    beatPlayerRef.current?.remove();
+    beatPlayerRef.current = null;
+    setPlayingBeat(null);
+    setBeatPaused(false);
+  };
+
+  // Pause keeps the player and its place; stop (or tapping the playing beat
+  // again) discards it.
+  const toggleBeatPause = () => {
+    const player = beatPlayerRef.current;
+    if (!player || !playingBeat) return;
+    if (beatPaused) player.play();
+    else player.pause();
+    setBeatPaused(!beatPaused);
+  };
+
   const toggleFocusBeat = async (beat: FocusBeatId) => {
     if (playingBeat === beat) {
-      beatPlayerRef.current?.pause();
-      beatPlayerRef.current?.remove();
-      beatPlayerRef.current = null;
-      setPlayingBeat(null);
+      stopFocusBeat();
       return;
     }
     try {
@@ -912,8 +955,10 @@ export default function PomodoroScreen() {
       beatPlayerRef.current = player;
       player.play();
       setPlayingBeat(beat);
+      setBeatPaused(false);
     } catch {
       setPlayingBeat(null);
+      setBeatPaused(false);
       showToast(tt('Beat could not start on this device'), tt('Pomodoro'));
     }
   };
@@ -1173,7 +1218,10 @@ export default function PomodoroScreen() {
       <FocusBeatsPanel
         accent={accent}
         playingBeat={playingBeat}
+        paused={beatPaused}
         onToggle={beat => { void toggleFocusBeat(beat); }}
+        onTogglePause={toggleBeatPause}
+        onStop={stopFocusBeat}
       />
 
       <FocusIntelligencePanel
