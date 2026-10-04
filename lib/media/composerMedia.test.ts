@@ -93,4 +93,10 @@ describe('composer option wiring', () => {
   it('video pick and record offer the OS trim step', () => {
     expect((composer.match(/allowsEditing: true/g) ?? []).length).toBeGreaterThanOrEqual(3);
   });
+
+  it('does not reject posts on a client-side word list; moderation is server-side', () => {
+    expect(composer).not.toMatch(/isToxic/);
+    expect(composer).not.toMatch(/Moderation Error/);
+    expect(src('supabase/functions/worker/handlers.ts')).toMatch(/const moderation: Handler/);
+  });
 });
