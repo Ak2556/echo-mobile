@@ -25,3 +25,9 @@ export function parseTags(raw: string): string[] {
   }
   return [...seen];
 }
+
+/** Touch position on a scrub bar as 0…1, clamped — a drag can leave the bar. */
+export function scrubFraction(x: number, width: number): number {
+  if (!width || width <= 0) return 0;
+  return Math.min(1, Math.max(0, x / width));
+}
