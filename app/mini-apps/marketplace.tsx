@@ -35,7 +35,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { ListingCardSkeleton } from '../../components/ui/Skeleton';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
-import { track } from '../../src/shared/lib/analytics';
+import { track } from '../../lib/core/analytics';
 import { formatPrice, type CurrencyCode } from '../../lib/mini-apps/currency';
 import {
   fetchListings,
@@ -44,12 +44,12 @@ import {
   ListingCondition,
   ListingWithSeller,
 } from '../../lib/mini-apps/marketplaceApi';
-import { useTheme } from '../../src/shared/lib/theme';
-import { useResponsiveLayout } from '../../src/shared/lib/responsive';
+import { useTheme } from '../../lib/ui/theme';
+import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { useAppStore } from '../../store/useAppStore';
 import { getTargetCategory } from '../../lib/retention/targetCategories';
 import { clearRecentListings, getRecentListings, recordListingView, type RecentListing } from '../../lib/mini-apps/marketplaceRecents';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 const CARD_GAP = 12;
 const CARD_H_PADDING = 16;

@@ -102,7 +102,7 @@ describe('sign-out scope', () => {
 
   it('every sign-out outside account deletion is local', () => {
     const offenders: string[] = [];
-    for (const file of [...sources('lib'), ...sources('app'), ...sources('src')]) {
+    for (const file of [...sources('lib'), ...sources('app'), ...sources('hooks'), ...sources('components')]) {
       if (GLOBAL_ALLOWED.has(file)) continue;
       const src = readFileSync(resolve(root, file), 'utf8');
       for (const m of src.matchAll(/auth\.signOut\(([^)]*)\)/g)) {
@@ -122,7 +122,7 @@ describe('the E2EE device key outlives sign-out', () => {
 
   it('only account deletion forgets it', () => {
     const users: string[] = [];
-    for (const dir of ['lib', 'app', 'src', 'components', 'hooks', 'store']) {
+    for (const dir of ['lib', 'app', 'components', 'hooks', 'store']) {
       for (const e of readdirSync(resolve(root, dir), { withFileTypes: true, recursive: true })) {
         if (!e.isFile() || !/\.(ts|tsx)$/.test(e.name) || /\.test\.tsx?$/.test(e.name)) continue;
         const file = resolve(e.parentPath, e.name);

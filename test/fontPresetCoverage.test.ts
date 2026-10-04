@@ -28,7 +28,7 @@ import { join, relative, resolve } from 'node:path';
  */
 
 const ROOT = resolve(__dirname, '..');
-const DIRS = ['app', 'components', 'src'];
+const DIRS = ['app', 'components'];
 
 /**
  * Families that may be written literally, because they are semantic rather than

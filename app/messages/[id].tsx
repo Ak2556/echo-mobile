@@ -48,7 +48,7 @@ import { persistGet, persistSet } from '../../store/persist';
 import { recordAppOpen } from '../../lib/ai/personalNudges';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { HlsVideoPlayer } from '../../components/media/HlsVideoPlayer';
 import {
@@ -76,7 +76,7 @@ import { supabase } from '../../lib/supabase';
 import { usePresenceTracking } from '../../lib/social/presence';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/routing/echoUrl';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 import { playbackEnded } from '../../lib/mini-apps/audioPlayback';
 
 /**

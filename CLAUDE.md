@@ -47,17 +47,14 @@ Expo Router, file-based, `app/`. `app/_layout.tsx` is a large root that composes
 
 Tabs in `app/(tabs)/`; everything else stack-pushes from the root. Cold-start routing must wait for `useRootNavigationState` before navigating — several past bugs came from routing before the navigator mounted.
 
-### Where code lives (this split is not obvious)
+### Where code lives
 
 | Path | Holds |
 |---|---|
-| `src/features/{feed,chat,voice,auth}/ui` | Feature UI. **Canonical** — `FeedCard`, `ChatInput`, `VoiceControl` live here, not in `components/`. |
-| `src/features/*/api` | Feature-scoped React Query hooks (`useFeed`, `useSupabaseSocial`, `useAds`). |
-| `src/shared/lib` | `theme.ts`, `i18n.ts` (~530KB, the hand-authored string source — see i18n below), `analytics`, `haptics`, `performance`, `responsive`. |
-| `src/shared/database` | WatermelonDB schema, models, `sync.ts`. |
-| `components/` | Generic/shared UI only (`ui/`, `common/`, `mini-apps/`, `ai/`). |
-| `lib/` | Domain logic grouped by area, one level deep (`ai`, `core`, `feed`, `media`, `mini-apps`, `privacy`, `retention`, `routing`, `social`, `ui`, …). `supabaseEchoApi.ts` (4.3k lines) is the single gateway to Supabase and stays at the `lib/` root. Tests sit beside their module; cross-cutting guard tests that read source or migrations live in `test/`. |
-| `hooks/queries/` | Older React Query hooks (DMs, follows, notifications, profile). Coexists with `src/features/*/api`; new feature hooks go in `src/features`. |
+| `app/` | Screens, file-based routing. |
+| `components/` | UI, grouped by area: `feed/` (`FeedCard`, `InlineVideo`, …), `chat/`, `voice/` (`VoiceControl`), `ranks/`, `mini-apps/`, `ui/` (shared primitives), `common/`, `ai/`, … |
+| `hooks/` | React Query hooks: the feed/ads/ranks ones at the top level, DMs, follows, notifications and profile in `queries/`. |
+| `lib/` | Logic grouped by area, one level deep (`ai`, `core`, `database`, `feed`, `i18n`, `media`, `mini-apps`, `privacy`, `retention`, `routing`, `social`, `ui`, …). `supabaseEchoApi.ts` (4.3k lines) is the single gateway to Supabase and stays at the `lib/` root. `lib/ui/theme.ts` is the theme, `lib/i18n/i18n.ts` (~530KB) the string source, `lib/database/` the WatermelonDB schema. Tests sit beside their module; cross-cutting guard tests that read source or migrations live in `test/`. |
 | `store/` | Zustand, sliced (`slices/{auth,chat,social,settings,retention}Slice.ts`). |
 | `supabase/functions/` | 20 Deno edge functions. |
 | `supabase/migrations/` | 155 migrations — the only source of truth for the schema. A legacy Python/FastAPI service lived in `backend/` and was removed on 2026-09-04; nothing referenced it and the edge functions superseded it. Recover from git history if ever needed. |
@@ -68,7 +65,7 @@ Imports are relative in `app/`; `@/*` maps to the repo root via tsconfig `paths`
 
 1. **Zustand** (`store/useAppStore.ts`) — composed from five slices. Persistence goes through `store/persist.ts`, which prefers MMKV and falls back to AsyncStorage; on the fallback path the store hydrates asynchronously after creation, so early reads can see defaults.
 2. **TanStack Query** — all server data, persisted across restarts through `mmkvPersister`.
-3. **WatermelonDB** (`src/shared/database`) — offline-first local DB for messaging, synced via `hooks/useDatabaseSync`.
+3. **WatermelonDB** (`lib/database`) — offline-first local DB for messaging, synced via `hooks/useDatabaseSync`.
 
 Writes that must survive offline go through `store/outbox.ts` + `lib/core/outboxProcessor.ts`.
 
@@ -91,11 +88,11 @@ audio (expo-audio) → supabase/functions/voice-command
 
 ### i18n
 
-26 languages. `src/shared/lib/i18n.ts` is the source: `BASE_TRANSLATIONS` (English) plus per-language maps. Fix English copy there directly. `npm run i18n:generate` fills gaps into `lib/i18n/i18nGenerated.ts` (the only generated file, so don't hand-edit that one), and hand-authored strings win at runtime. Many non-English entries are corrupt (truncated, translated from Bengali); a re-translation run is still owed. Layout must handle RTL (Arabic) and the interface itself is localised, not only content.
+26 languages. `lib/i18n/i18n.ts` is the source: `BASE_TRANSLATIONS` (English) plus per-language maps. Fix English copy there directly. `npm run i18n:generate` fills gaps into `lib/i18n/i18nGenerated.ts` (the only generated file, so don't hand-edit that one), and hand-authored strings win at runtime. Many non-English entries are corrupt (truncated, translated from Bengali); a re-translation run is still owed. Layout must handle RTL (Arabic) and the interface itself is localised, not only content.
 
 ### Theming
 
-`useTheme()` from `src/shared/lib/theme` returns colours, font sizes, radii, and an `animation()` helper that returns `undefined` when `reduceAnimations` is on. Never hardcode colours.
+`useTheme()` from `lib/ui/theme` returns colours, font sizes, radii, and an `animation()` helper that returns `undefined` when `reduceAnimations` is on. Never hardcode colours.
 
 ## Testing notes
 

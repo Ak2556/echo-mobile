@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable, TextInput, Alert } from 'react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../ui/Toast';
 import { Disclosure } from './Disclosure';
 import { formatTimeOfDay, parseTimeOfDay } from './timeOfDay';

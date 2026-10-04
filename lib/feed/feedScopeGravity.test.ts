@@ -16,7 +16,7 @@ describe('gravityForScope', () => {
 });
 
 describe('Home feed has one ranking control', () => {
-  const useFeed = readFileSync('src/features/feed/api/useFeed.ts', 'utf8');
+  const useFeed = readFileSync('hooks/useFeed.ts', 'utf8');
   const settings = readFileSync('app/settings.tsx', 'utf8');
   const home = readFileSync('app/(tabs)/home.tsx', 'utf8');
 
@@ -55,7 +55,7 @@ describe('rankTrending', () => {
 
 describe('Flow has Trending | New', () => {
   const watch = readFileSync('app/(tabs)/watch.tsx', 'utf8');
-  const useFeed = readFileSync('src/features/feed/api/useFeed.ts', 'utf8');
+  const useFeed = readFileSync('hooks/useFeed.ts', 'utf8');
 
   it('passes the selected tab to the video feed, defaulting to Trending', () => {
     expect(watch).toMatch(/useState<FlowSort>\('trending'\)/);

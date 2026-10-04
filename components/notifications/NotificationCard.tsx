@@ -6,7 +6,7 @@ import { Avatar } from '../ui/Avatar';
 import { IconBadge } from '../ui/IconBadge';
 import { SpeakButton } from '../ui/SpeakButton';
 import { Notification } from '../../types';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 
 import {
   SYSTEM_TYPES,

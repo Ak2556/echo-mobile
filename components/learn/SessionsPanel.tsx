@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Linking, TextInput, Share } from 'react-native';
 import { CalendarBlank, ShareNetwork, VideoCamera } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../ui/Toast';
 import { getSessionUserId } from '../../lib/supabaseEchoApi';
 import { bookingPageUrl } from '../../lib/routing/workerUrl';

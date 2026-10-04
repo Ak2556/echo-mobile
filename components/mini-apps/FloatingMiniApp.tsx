@@ -9,18 +9,18 @@ import { usePathname } from 'expo-router';
 import { restingX, restingY, shouldPersistDrag } from '../../lib/ui/floatingBubblePlacement';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Waveform, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { useAuthStore } from '../../lib/auth/store';
 import { useFloatingApp } from '../../store/floatingApp';
 import { useVoiceControl } from '../../store/voiceControl';
-import { tap as haptic } from '../../src/shared/lib/haptics';
+import { tap as haptic } from '../../lib/ui/haptics';
 import { useTutorialStore } from '../../store/tutorialStore';
 import { FLOATING_APPS, floatingAppMeta } from '../../lib/mini-apps/miniAppRegistry';
 import { MiniAppEmbedContext } from '../../lib/mini-apps/miniAppEmbed';
 import { MiniAppIcon, MiniAppGlyph } from './MiniAppIcon';
 import { MINI_APP_CATALOG } from '../../lib/mini-apps/miniAppCatalog';
 import { IconButton } from '../ui/IconButton';
-import { useI18n } from '../../src/shared/lib/i18n';
+import { useI18n } from '../../lib/i18n/i18n';
 
 // Per-app branding (colour + display name) from the shared catalog, so the
 // floating picker reads exactly like the Tools tab. Falls back to the

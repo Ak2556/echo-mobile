@@ -1,0 +1,507 @@
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { ActivityIndicator, Pressable, Text, View, AppState } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Eye, Pause, Play, SpeakerHigh, SpeakerSlash, WifiSlash } from 'phosphor-react-native';
+import { scrubFraction } from '../../lib/media/composerMedia';
+import { probePlayerCreated, probePlayerReleased, probeTrace } from '../../lib/media/devVideoProbe';
+import { useVideoMountPolicy } from '../../lib/feed/videoMountPolicy';
+import { FIRST_FRAME_GRACE_MS, useFirstFrameWatchdog } from '../../lib/feed/firstFrameWatchdog';
+import { videoSourceForUri } from '../../lib/media/videoMedia';
+import { useAppStore } from '../../store/useAppStore';
+import { useActiveVideoStore } from '../../store/useActiveVideoStore';
+import { ttx } from '../../lib/i18n/i18n';
+import { useIsFocused } from '@react-navigation/native';
+
+// Safely attempt to load expo-video (unavailable in Expo Go).
+// In Expo Go this stays null and we render the static fallback.
+// react-native-webview ships no web build at all, and a static import runs at
+// module load — so on web it throws before this component is ever rendered,
+// taking the feed, explore, threads and profiles down with it. Loaded the same
+// guarded way as expo-video below; null on web, where the fallback below is
+// used instead.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const WebView: any = (() => { try { return require('react-native-webview').WebView; } catch { return null; } })();
+
+let ExpoVideoModule: { VideoView: any; useVideoPlayer: any } | null = null;
+try {
+  // Dynamic require is required: expo-video's native module is absent in Expo
+  // Go, where a static import would throw at module load. The catch renders a
+  // static fallback instead.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  ExpoVideoModule = require('expo-video');
+} catch {}
+
+interface VideoPreviewProps {
+  uri: string;
+  height?: number;
+  borderRadius?: number;
+  onPress?: () => void;
+  viewCount?: number;
+  /**
+   * The echo this video belongs to. Playback follows the active-video store,
+   * so only the one video the user is actually looking at plays.
+   */
+  echoId?: string;
+  /**
+   * Release the native player when this card is not the active video.
+   *
+   * Opt-in, because it trades a still frame for a decoder. A surface where one
+   * card fills the screen (the Flow) can set it freely — the released cards are
+   * off-screen, so nobody sees the placeholder. A scrolling feed where several
+   * video cards are visible at once should NOT, because there are no
+   * server-side thumbnails: a released card shows a blank surface rather than a
+   * paused frame. Cap that surface's mounted-card count instead.
+   */
+  releaseWhenInactive?: boolean;
+  /**
+   * Play without participating in the active-video store. Only for a surface
+   * showing exactly one video that has no echo yet — the composer preview.
+   *
+   * Omitting echoId used to imply this, which meant a grid of videos each
+   * decided it was active and they all played at once, audio and all. Opting
+   * in explicitly makes that impossible to do by accident.
+   */
+  autoplay?: boolean;
+  /**
+   * User-initiated pause. Separate from `isActive`, which only says whether
+   * this is the video on screen — a paused video is still the active one, and
+   * must stay paused until the user says otherwise.
+   */
+  paused?: boolean;
+  /**
+   * Composer-style transport: tap to pause, a sound toggle and a scrub bar.
+   * Local to this player. The feed leaves it off because there a tap navigates
+   * and the global mute rules, but a clip you are about to post needs to be
+   * checked with sound and scrubbed to the frame you care about.
+   */
+  controls?: boolean;
+}
+
+const VIDEO_PREVIEW_TIMEOUT_MS = 45_000;
+
+type VideoLoadState = 'loading' | 'ready' | 'error';
+
+function loadStateFromStatus(status: string | undefined): VideoLoadState | null {
+  if (status === 'readyToPlay') return 'ready';
+  if (status === 'error') return 'error';
+  if (status === 'loading' || status === 'idle') return 'loading';
+  return null;
+}
+
+function formatViewCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return `${n}`;
+}
+
+// Static fallback (Expo Go / no native module)
+function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, echoId }: VideoPreviewProps) {
+  return (
+    <Pressable onPress={onPress} disabled={!onPress} pointerEvents={onPress ? 'auto' : 'box-none'} style={{ height, borderRadius, overflow: 'hidden' }}>
+      <LinearGradient
+        colors={['#2A2018', '#1A1512', '#0C0B09']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <View style={{
+          width: 54, height: 54, borderRadius: 27,
+          backgroundColor: 'rgba(255,255,255,0.15)',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Play color="#fff" size={24} weight="fill" />
+        </View>
+      </LinearGradient>
+
+      {viewCount !== undefined && (
+        <View style={{
+          position: 'absolute', bottom: 10, left: 10,
+          flexDirection: 'row', alignItems: 'center', gap: 4,
+          paddingHorizontal: 8, paddingVertical: 4,
+          borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)',
+        }}>
+          <Eye size={13} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{formatViewCount(viewCount)}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+// Full video player (dev client / production build)
+function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount, echoId, autoplay = false, paused = false, controls = false }: VideoPreviewProps) {
+  const { VideoView, useVideoPlayer } = ExpoVideoModule!;
+  const [loadState, setLoadState] = useState<VideoLoadState>('loading');
+  const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
+
+  // THROWAWAY probe (lib/media/devVideoProbe.ts). A player is constructed here on
+  // MOUNT, not when the card becomes active — counting them is the whole point
+  // of the investigation. Remove with the probe.
+  useEffect(() => {
+    probePlayerCreated();
+    return () => { probePlayerReleased(); };
+  }, []);
+
+  const activeEchoId = useActiveVideoStore(s => s.activeEchoId);
+  const soundEnabled = useAppStore(s => s.soundEnabled);
+  const isGlobalMuted = !soundEnabled;
+  const isFocused = useIsFocused();
+
+  const appState = useRef(AppState.currentState);
+  const [isAppActive, setIsAppActive] = useState(appState.current === 'active');
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextAppState) => {
+      setIsAppActive(nextAppState === 'active');
+    });
+    return () => sub.remove();
+  }, []);
+
+  const isActive = isFocused && isAppActive && (echoId ? activeEchoId === echoId : autoplay);
+  // Playback is driven by effects, so a user pause has to be part of the
+  // condition rather than a one-off player.pause() — otherwise the next effect
+  // run (a mute toggle, a status change, a re-render) restarts the video and
+  // the pause looks broken.
+  // Controls mode: the user's own pause/sound choice replaces the global mute,
+  // so a preview can be heard without changing the app-wide setting.
+  const [userPaused, setUserPaused] = useState(false);
+  const [userSound, setUserSound] = useState(false);
+  const shouldPlay = isActive && !paused && !(controls && userPaused);
+  const playerMuted = controls ? !userSound || !isActive : isGlobalMuted || !isActive;
+
+  const [progress, setProgress] = useState(0);
+  const [barWidth, setBarWidth] = useState(0);
+  useEffect(() => {
+    if (!controls) return;
+    try { player.timeUpdateEventInterval = 0.25; } catch { /* older runtimes */ }
+    const sub = player.addListener('timeUpdate', ({ currentTime }: { currentTime: number }) => {
+      const d = Number(player.duration) || 0;
+      setProgress(d > 0 ? Math.min(1, Math.max(0, currentTime / d)) : 0);
+    });
+    return () => sub.remove();
+  }, [controls, player]);
+  const seekTo = (x: number) => {
+    const d = Number(player.duration) || 0;
+    if (!d) return;
+    const f = scrubFraction(x, barWidth);
+    player.currentTime = f * d;
+    setProgress(f);
+  };
+
+  // THROWAWAY, with the probe. 'error' has two very different causes — a real
+  // player error or the 45s timeout expiring with the state still 'loading' —
+  // and they point at opposite fixes, so record which one happened.
+  const [failReason, setFailReason] = useState('');
+
+  // Whether anything has actually been drawn. `readyToPlay` only says the
+  // player believes it can play; a decoder can report that and then produce no
+  // frames, which is how a black card with no spinner and no fallback happened.
+  const [sawFirstFrame, setSawFirstFrame] = useState(false);
+
+  useEffect(() => { setLoadState('loading'); setFailReason(''); setSawFirstFrame(false); }, [uri]);
+
+  useEffect(() => {
+    player.muted = playerMuted;
+    if (loadState === 'ready') {
+      if (shouldPlay) player.play();
+      else player.pause();
+    }
+  }, [shouldPlay, isActive, playerMuted, loadState, player]);
+
+  useEffect(() => {
+    const initialState = loadStateFromStatus(player.status);
+    if (initialState) {
+      setLoadState(initialState);
+      if (initialState === 'ready' && shouldPlay) player.play();
+    }
+
+    const sub = player.addListener('statusChange', ({ status, error }: { status: string; error?: { message?: string } }) => {
+      const nextState = loadStateFromStatus(status);
+      if (!nextState) return;
+      if (nextState === 'ready') {
+        if (shouldPlay) player.play();
+        else player.pause();
+      }
+      if (nextState === 'error') {
+        setFailReason(error?.message ? `player: ${error.message}` : 'player: no message');
+        if (__DEV__) console.warn('[video-preview] load failed', error?.message ?? uri);
+      }
+      setLoadState(nextState);
+    });
+    return () => sub.remove();
+  }, [player, uri, shouldPlay]);
+
+  // THROWAWAY (lib/media/devVideoProbe.ts). Reports which term of the playback
+  // decision is false for the card on screen, because pause and mute both
+  // stopped responding while a player was demonstrably alive.
+  useEffect(() => {
+    if (!__DEV__) return;
+    if (echoId && activeEchoId !== echoId) return; // only the card on screen
+    let playerMuted: boolean | null = null;
+    let playerPlaying: boolean | null = null;
+    try { playerMuted = player.muted; } catch { /* property may not be readable */ }
+    try { playerPlaying = (player as any).playing ?? null; } catch { /* ditto */ }
+    probeTrace({
+      focused: isFocused,
+      appActive: isAppActive,
+      activeMatch: echoId ? activeEchoId === echoId : !!autoplay,
+      isActive,
+      paused,
+      shouldPlay,
+      soundEnabled,
+      playerMuted,
+      playerPlaying,
+      load: loadState,
+      fail: failReason,
+    });
+  }, [echoId, activeEchoId, isFocused, isAppActive, isActive, paused, shouldPlay, soundEnabled, loadState, player, autoplay, failReason]);
+
+  useEffect(() => {
+    if (loadState !== 'loading') return;
+    const t = setTimeout(() => setLoadState(s => {
+      if (s !== 'loading') return s;
+      setFailReason(`timeout ${VIDEO_PREVIEW_TIMEOUT_MS / 1000}s`);
+      return 'error';
+    }), VIDEO_PREVIEW_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [loadState, uri]);
+
+  // The watchdog above only runs while 'loading', so reaching 'ready' used to
+  // cancel it for good. A player that says readyToPlay and then draws nothing
+  // hit no timeout, no error and no fallback — just black, permanently. This
+  // covers that case and routes it to the same WebView fallback, which decodes
+  // through the system WebView and often succeeds where the native player did
+  // not. See firstFrameWatchdog.ts for how this was found.
+  const frameStalled = useFirstFrameWatchdog(loadState === 'ready', sawFirstFrame);
+  useEffect(() => {
+    if (!frameStalled) return;
+    setFailReason(`no frame ${FIRST_FRAME_GRACE_MS / 1000}s after ready`);
+    if (__DEV__) console.warn('[video-preview] ready but nothing rendered', uri);
+    setLoadState('error');
+  }, [frameStalled, uri]);
+
+  const webRef = useRef<any>(null);
+  const isLocalUri = /^(file|content):/i.test(uri);
+
+  /**
+   * The fallback's markup must depend on the uri and NOTHING else.
+   *
+   * Anything else in here — the muted attribute, an autoplay flag — changes the
+   * html string, which changes `source`, which reloads the WebView and restarts
+   * the video from zero. State is applied through injectJavaScript below
+   * instead, on the live element.
+   *
+   * It starts muted on purpose. An unmuted autoplaying element was the whole
+   * defect: it sang away underneath a mute button that had no connection to it.
+   */
+  const fallbackHtml = useMemo(() => `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <style>
+          body { margin: 0; padding: 0; background-color: #09090B; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+          video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        </style>
+      </head>
+      <body>
+        <video src="${uri}" autoplay loop muted playsinline webkit-playsinline></video>
+      </body>
+    </html>
+  `, [uri]);
+
+  /**
+   * Drive the fallback from the same two decisions that drive the native
+   * player. Without this the WebView obeyed neither: `player.muted = true`
+   * muted an expo-video player that had failed to load, while the audible
+   * element was this one — so the mute button reported success and changed
+   * nothing the user could hear, and tap-to-pause lost to `autoplay loop`.
+   */
+  const fallbackMuted = playerMuted;
+  useEffect(() => {
+    if (loadState !== 'error') return;
+    const web = webRef.current;
+    if (!web) return;
+    web.injectJavaScript(`
+      (function () {
+        var v = document.querySelector('video');
+        if (!v) return;
+        v.muted = ${fallbackMuted ? 'true' : 'false'};
+        ${shouldPlay ? 'var p = v.play(); if (p && p.catch) p.catch(function () {});' : 'v.pause();'}
+      })();
+      true;
+    `);
+  }, [loadState, fallbackMuted, shouldPlay]);
+
+  return (
+    <Pressable
+      onPress={controls ? () => setUserPaused(p => !p) : onPress}
+      disabled={!controls && !onPress}
+      pointerEvents={controls || onPress ? 'auto' : 'box-none'}
+      accessibilityRole={controls ? 'button' : undefined}
+      accessibilityLabel={controls ? ttx(userPaused ? 'Play video' : 'Pause video') : undefined}
+      style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#09090B' }}
+    >
+      <VideoView
+        player={player}
+        style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+        contentFit="cover"
+        nativeControls={false}
+        onFirstFrameRender={() => { setSawFirstFrame(true); setLoadState('ready'); }}
+      />
+
+      {loadState === 'loading' && (
+        <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)' }}>
+          <ActivityIndicator color="#fff" />
+        </View>
+      )}
+
+      {loadState === 'error' && isLocalUri && (
+        // The WebView fallback loads the URI in an HTML <video>, which cannot
+        // read a device file (file:// or content://). For a clip that was just
+        // picked in the composer it drew a black box forever. Say what is
+        // attached instead; the upload does not depend on the preview.
+        <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#141210' }}>
+          <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+            <Play color="#fff" size={24} weight="fill" />
+          </View>
+          <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>{ttx("Preview unavailable. The video will still post.")}</Text>
+        </View>
+      )}
+
+      {loadState === 'error' && !isLocalUri && (
+        <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}>
+          {isActive && WebView && (
+            <WebView
+              ref={webRef}
+              source={{ html: fallbackHtml }}
+              // Apply the current mute/play state as soon as the document is
+              // live, not only on the next toggle — otherwise a card that falls
+              // back while sound is off starts audible and stays that way until
+              // the user touches something.
+              onLoadEnd={() => {
+                webRef.current?.injectJavaScript(`
+                  (function () {
+                    var v = document.querySelector('video');
+                    if (!v) return;
+                    v.muted = ${fallbackMuted ? 'true' : 'false'};
+                    ${shouldPlay ? 'var p = v.play(); if (p && p.catch) p.catch(function () {});' : 'v.pause();'}
+                  })();
+                  true;
+                `);
+              }}
+              style={{ flex: 1, backgroundColor: '#09090B' }}
+              scrollEnabled={false}
+              allowsInlineMediaPlayback={true}
+              mediaPlaybackRequiresUserAction={false}
+            />
+          )}
+          {/* Invisible overlay to catch taps instead of the webview */}
+          <View style={{ position: 'absolute', inset: 0 }} />
+        </View>
+      )}
+
+      {/* Bottom scrim only — the video autoplays, so no persistent play chip
+          and no full-frame dim. Overlaid card text stays legible via this band. */}
+      <LinearGradient colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.55)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 110 }} pointerEvents="none" />
+
+      {viewCount !== undefined && (
+        <View pointerEvents="none" style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)' }}>
+          <Eye size={13} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{formatViewCount(viewCount)}</Text>
+        </View>
+      )}
+
+      {controls && loadState === 'ready' && (
+        <>
+          {userPaused && (
+            <View pointerEvents="none" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
+                <Play color="#fff" size={24} weight="fill" />
+              </View>
+            </View>
+          )}
+          <Pressable
+            onPress={() => setUserSound(v => !v)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={ttx(userSound ? 'Mute preview' : 'Play sound')}
+            style={{ position: 'absolute', top: 10, right: 10, width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {userSound ? <SpeakerHigh color="#fff" size={18} weight="fill" /> : <SpeakerSlash color="#fff" size={18} weight="fill" />}
+          </Pressable>
+          <Pressable
+            onLayout={e => setBarWidth(e.nativeEvent.layout.width)}
+            onPressIn={e => seekTo(e.nativeEvent.locationX)}
+            onTouchMove={e => seekTo(e.nativeEvent.locationX)}
+            hitSlop={{ top: 14, bottom: 6 }}
+            accessibilityRole="adjustable"
+            accessibilityLabel={ttx("Seek")}
+            style={{ position: 'absolute', left: 10, right: 10, bottom: 8, height: 18, justifyContent: 'center' }}
+          >
+            <View style={{ height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' }}>
+              <View style={{ width: `${progress * 100}%`, height: 3, borderRadius: 2, backgroundColor: '#fff' }} />
+            </View>
+          </Pressable>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+/**
+ * What a card shows while its player is released.
+ *
+ * Deliberately plain: there are no server-side thumbnails, so there is no frame
+ * to show. It holds the exact height the player would occupy, because a
+ * placeholder of a different size makes the list jump as cards mount and
+ * release — which would be a worse artefact than the decoders this saves.
+ */
+function ReleasedVideoPlaceholder({ height = 260, borderRadius = 16, onPress }: VideoPreviewProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      pointerEvents={onPress ? 'auto' : 'box-none'}
+      style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#0C0B09' }}
+    />
+  );
+}
+
+function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
+  return (
+    <Pressable onPress={onPress} disabled={!onPress} pointerEvents={onPress ? 'auto' : 'box-none'} style={{ height, borderRadius, overflow: 'hidden' }}>
+      <LinearGradient
+        colors={['#2A2018', '#1A1512', '#0C0B09']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}
+      >
+        <WifiSlash color="rgba(255,255,255,0.5)" size={24} />
+        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '500' }}>{ttx("Video paused, Data Saver on")}</Text>
+      </LinearGradient>
+      {viewCount !== undefined && (
+        <View style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)' }}>
+          <Eye size={13} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{viewCount >= 1000 ? `${(viewCount / 1000).toFixed(1)}K` : `${viewCount}`}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+// Public export — auto-selects based on native module availability and Data Saver flag
+export function VideoPreview(props: VideoPreviewProps) {
+  const dataSaver = useAppStore(s => s.dataSaver);
+  const activeEchoId = useActiveVideoStore(s => s.activeEchoId);
+
+  // Matches VideoPlayer's own definition of active. Computed here too so the
+  // decision to construct a player can be made BEFORE one exists — inside
+  // VideoPlayer it is already too late, the useVideoPlayer call has run.
+  const isActive = props.echoId ? activeEchoId === props.echoId : !!props.autoplay;
+  const keepMounted = useVideoMountPolicy(isActive);
+
+  if (dataSaver) return <DataSaverPlaceholder {...props} />;
+  if (!ExpoVideoModule) return <VideoFallback {...props} />;
+  if (props.releaseWhenInactive && !keepMounted) return <ReleasedVideoPlaceholder {...props} />;
+  return <VideoPlayer {...props} />;
+}

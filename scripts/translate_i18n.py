@@ -1,7 +1,7 @@
 """
 DISABLED. Do not run this script.
 
-It produced the translation corruption in src/shared/lib/i18n.ts and is kept
+It produced the translation corruption in lib/i18n/i18n.ts and is kept
 only so the damage it did is traceable.
 
 Two faults, either of which is disqualifying:
@@ -20,9 +20,9 @@ The supported path is:
 
     OPENROUTER_API_KEY=... npm run i18n:generate
 
-which reads the English base from src/shared/lib/i18n.ts, translates from
+which reads the English base from lib/i18n/i18n.ts, translates from
 English, validates each value before writing it, and is covered by
-src/shared/lib/i18nIntegrity.test.ts.
+lib/i18n/i18nIntegrity.test.ts.
 """
 
 import sys

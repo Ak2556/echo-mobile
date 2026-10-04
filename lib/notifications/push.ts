@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { supabase } from '../supabase';
-import { track } from '../../src/shared/lib/analytics';
+import { track } from '../core/analytics';
 import { captureException } from '../core/monitoring';
 import { persistGet, persistSet } from '../../store/persist';
 import { registerNotificationChannels } from './channels';

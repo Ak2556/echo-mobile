@@ -16,7 +16,7 @@ import { join, resolve } from 'node:path';
  */
 
 const ROOT = resolve(__dirname, '..');
-const APP_DIRS = ['lib', 'app', 'src', 'hooks', 'components'];
+const APP_DIRS = ['lib', 'app', 'hooks', 'components'];
 const CLIENT_ROLES = ['anon', 'authenticated'];
 
 function sourceFiles(dir: string): string[] {

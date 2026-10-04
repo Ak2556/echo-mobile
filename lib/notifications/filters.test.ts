@@ -41,7 +41,7 @@ describe('notification filters', () => {
   it('every filter has an i18n key that exists in the base strings', () => {
     // A chip whose key is missing renders the raw key — "notif.filterSaves" —
     // which is how a typo ships looking like a label.
-    const i18n = readFileSync(join(ROOT, 'src/shared/lib/i18n.ts'), 'utf8');
+    const i18n = readFileSync(join(ROOT, 'lib/i18n/i18n.ts'), 'utf8');
     for (const f of NOTIFICATION_FILTERS) {
       expect(i18n, `${f.id} needs ${f.labelKey} in BASE_TRANSLATIONS`).toContain(`'${f.labelKey}':`);
     }

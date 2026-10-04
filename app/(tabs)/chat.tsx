@@ -15,7 +15,7 @@ import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
-import { ModelPickerSheet } from '../../src/features/chat/ui/ModelPickerSheet';
+import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
 import { streamEchoAI, isRateLimitError } from '../../lib/ai/api';
 import { speak } from '../../lib/mini-apps/tts';
 import { isLocalTool, LocalToolContext } from '../../lib/ai/localTools';
@@ -25,13 +25,13 @@ import { gatherProactiveContext, pickProactiveOpener, expandChip, type Proactive
 import { syncPersonalNudges, recordAppOpen } from '../../lib/ai/personalNudges';
 import { markCheckinSeen } from '../../lib/ai/proactiveCheckin';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { Avatar } from '../../components/ui/Avatar';
 import { Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/feed/publishContext';
-import { track } from '../../src/shared/lib/analytics';
-import { useResponsiveLayout } from '../../src/shared/lib/responsive';
+import { track } from '../../lib/core/analytics';
+import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { buildPersonaPromptContext, loadPersonaProfile, recordPersonaSignal, syncPersonaFromMessages } from '../../lib/ai/persona';
 import { playSoundEffect } from '../../lib/ui/sound';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
@@ -44,7 +44,7 @@ import { miniAppById } from '../../lib/mini-apps/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { persistGet } from '../../store/persist';
 import { assistantLanguageInstruction } from '../../lib/i18n/languages';
-import { useI18n, ttx } from '../../src/shared/lib/i18n';
+import { useI18n, ttx } from '../../lib/i18n/i18n';
 import type { AiMode } from '../../supabase/functions/echo-ai/mode';
 
 

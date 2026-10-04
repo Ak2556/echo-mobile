@@ -17,7 +17,7 @@ import { join, resolve } from 'node:path';
  */
 
 const ROOT = resolve(__dirname, '..');
-const UI_DIRS = ['app', 'components', 'src'];
+const UI_DIRS = ['app', 'components'];
 const BUTTON_TAGS = ['IconButton', 'Button', 'PrimaryButton', 'LitePressable'];
 
 function tsxFiles(dir: string): string[] {

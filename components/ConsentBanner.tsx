@@ -4,13 +4,13 @@ import { consentBannerAllowedOn } from '../lib/routing/consentBannerRoutes';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
-import { useTheme } from '../src/shared/lib/theme';
+import { useTheme } from '../lib/ui/theme';
 import {
   getAnalyticsConsentAsync,
   setAnalyticsConsentAsync,
 } from '../lib/privacy/consent';
-import { initAnalytics, track } from '../src/shared/lib/analytics';
-import { ttx } from '../src/shared/lib/i18n';
+import { initAnalytics, track } from '../lib/core/analytics';
+import { ttx } from '../lib/i18n/i18n';
 
 /**
  * GDPR-style analytics consent banner shown on first launch.

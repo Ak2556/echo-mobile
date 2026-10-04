@@ -13,12 +13,12 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import { persistGet, persistSet } from '../../store/persist';
 import { EmptyState } from '../../components/common/EmptyState';
-import { useResponsiveLayout } from '../../src/shared/lib/responsive';
+import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { DMView } from './[id]';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { Conversation } from '../../types';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useCreateGroupConversation, useRemoteConversations, useSetDMPref } from '../../hooks/queries/useDMs';
@@ -27,9 +27,9 @@ import { ConversationSkeleton } from '../../components/ui/Skeleton';
 import { RemoteConversation, searchRemoteUsers, UserSearchHit, fetchNetworkAuras, publishAura } from '../../lib/supabaseEchoApi';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { safeBack } from '../../lib/routing/safeBack';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 import { MusicPickerModal, Song } from '../../components/ui/MusicPicker';
-import { ChatDetailsSidebar } from '../../src/features/chat/ui/ChatDetailsSidebar';
+import { ChatDetailsSidebar } from '../../components/chat/ChatDetailsSidebar';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();

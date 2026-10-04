@@ -1,0 +1,203 @@
+import React from 'react';
+import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
+import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LiquidGlass } from '../ui/LiquidGlass';
+import { Lightning, Feather, Star, Check } from 'phosphor-react-native';
+import { useTheme } from '../../lib/ui/theme';
+import { tap } from '../../lib/ui/haptics';
+import type { EchoAIModel } from '../../lib/ai/api';
+import { ttx } from '../../lib/i18n/i18n';
+import { ACCENT_COLORS } from '../../lib/ui/accentDesign';
+
+interface ModelMeta {
+  key: EchoAIModel;
+  name: string;
+  tagline: string;
+  Icon: React.ComponentType<any>;
+  accent: string;
+}
+
+/**
+ * Each model gets a name, a one-line tagline that frames the tradeoff, and
+ * a glyph. Keeps the picker feeling like a deliberate product surface
+ * instead of "another action sheet with three text items."
+ */
+const MODELS: ModelMeta[] = [
+  {
+    key: 'gemini-2.5-flash',
+    name: 'Flash',
+    tagline: 'Balanced',
+    Icon: Lightning,
+    accent: ACCENT_COLORS.amber, // ochre — speed
+  },
+  {
+    key: 'gemini-2.5-pro',
+    name: 'Pro',
+    tagline: 'Deep',
+    Icon: Star,
+    accent: ACCENT_COLORS.violet, // muted violet — premium
+  },
+  {
+    key: 'gemini-2.5-flash-lite',
+    name: 'Lite',
+    tagline: 'Fast',
+    Icon: Feather,
+    accent: ACCENT_COLORS.cyan, // muted cyan — featherweight
+  },
+];
+
+interface ModelPickerSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  selected: EchoAIModel;
+  onSelect: (model: EchoAIModel) => void;
+}
+
+export function ModelPickerSheet({ visible, onClose, selected, onSelect }: ModelPickerSheetProps) {
+  const { colors, reduceAnimations, font } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  if (!visible) return null;
+
+  return (
+    <Modal visible transparent animationType="none" onRequestClose={onClose}>
+      <Animated.View
+        entering={reduceAnimations ? undefined : FadeIn.duration(160)}
+        exiting={reduceAnimations ? undefined : FadeOut.duration(120)}
+        style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
+      >
+        <Pressable style={{ flex: 1 }} onPress={onClose} />
+      </Animated.View>
+
+      <Animated.View
+        entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
+        exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingHorizontal: 12,
+          paddingBottom: insets.bottom + 12,
+        }}
+      >
+        {/* Was a raw BlurView at a hardcoded intensity of 60, which bypassed
+            usePerformanceProfile entirely: reduce-transparency, a hot device and
+            a low device tier all still got the full blur. LiquidGlass picks
+            shader / blur / solid from that profile, and adds the rim, the
+            chromatic edge and the tilt response the rest of the app has.
+            Nothing scrolls behind a modal sheet, so no maxTier ceiling. */}
+        <LiquidGlass
+          borderRadius={22}
+          variant="heavy"
+          tintOverride={colors.isDark ? 'rgba(0,0,0,0.42)' : 'rgba(255,255,255,0.58)'}
+          fallbackTint={colors.bg}
+          elevated
+        >
+          {/* Header */}
+          <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6 }}>
+            <Text style={[font.display, { color: colors.text, fontSize: 18, letterSpacing: -0.3 }]}>
+              {ttx("Pick a model")}
+            </Text>
+            <Text style={[font.body, { color: colors.textSecondary, fontSize: 13, marginTop: 4 }]}>
+              {ttx("All three answer the same prompt with different tradeoffs.")}
+            </Text>
+          </View>
+
+          {/* Rows */}
+          <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12, gap: 6 }}>
+            {MODELS.map(m => {
+              const active = m.key === selected;
+              return (
+                <Pressable
+                  key={m.key}
+                  onPress={() => {
+                    tap('light');
+                    onSelect(m.key);
+                    onClose();
+                  }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`${m.name}. ${m.tagline}`}
+                  // Only paint on the pressable. Layout props set here —
+                  // flexDirection, gap, padding — are dropped in release
+                  // builds through the NativeWind interop, which is why this
+                  // sheet rendered as a vertical pile of icon, name, tagline
+                  // and check instead of a row. The inner View below owns the
+                  // layout, which is the pattern that survives.
+                  style={({ pressed }) => ({
+                    borderRadius: 14,
+                    backgroundColor: active
+                      ? colors.accentMuted
+                      : pressed
+                        ? colors.surfaceHover
+                        : 'transparent',
+                    borderWidth: active ? 1 : StyleSheet.hairlineWidth,
+                    borderColor: active ? colors.accent : colors.border,
+                  })}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 }}>
+                  {/* Icon tile */}
+                  <View style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    backgroundColor: `${m.accent}22`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <m.Icon color={m.accent} size={20} weight="fill" />
+                  </View>
+
+                  {/* Label + tagline */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, letterSpacing: -0.1 }]}>
+                      {m.name}
+                    </Text>
+                    <Text style={[font.body, { color: colors.textSecondary, fontSize: 12, marginTop: 1 }]} numberOfLines={1}>
+                      {m.tagline}
+                    </Text>
+                  </View>
+
+                  {/* Selected check */}
+                  {active && (
+                    <View style={{
+                      width: 24, height: 24, borderRadius: 12,
+                      backgroundColor: colors.accent,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Check color="#fff" size={14} weight="bold" />
+                    </View>
+                  )}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </LiquidGlass>
+
+        {/* Cancel pill — same treatment as ActionSheet for consistency */}
+        <Pressable
+          onPress={() => { tap('light'); onClose(); }}
+          style={({ pressed }) => ({
+            marginTop: 10,
+            borderRadius: 16,
+            backgroundColor: pressed ? colors.surfaceHover : colors.surface,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.border,
+            paddingVertical: 16,
+            shadowColor: '#000',
+            shadowOpacity: 0.25,
+            shadowRadius: 16,
+            shadowOffset: { width: 0, height: 8 },
+          })}
+          accessibilityRole="button"
+          accessibilityLabel={ttx("Cancel")}
+        >
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, textAlign: 'center' }]}>{ttx("Cancel")}</Text>
+        </Pressable>
+      </Animated.View>
+    </Modal>
+  );
+}

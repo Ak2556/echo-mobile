@@ -3,9 +3,9 @@ import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassPanel } from '../ui/GlassPanel';
-import { useTheme } from '../../src/shared/lib/theme';
-import { tap } from '../../src/shared/lib/haptics';
-import { ttx } from '../../src/shared/lib/i18n';
+import { useTheme } from '../../lib/ui/theme';
+import { tap } from '../../lib/ui/haptics';
+import { ttx } from '../../lib/i18n/i18n';
 
 export interface ActionItem {
   key: string;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pressable } from 'react-native';
 import { SpeakerHigh } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
-import { tap } from '../../src/shared/lib/haptics';
+import { useTheme } from '../../lib/ui/theme';
+import { tap } from '../../lib/ui/haptics';
 import { isTtsAvailable, toggleSpeak, useTtsStore, type SpeakOptions } from '../../lib/mini-apps/tts';
 
 /**

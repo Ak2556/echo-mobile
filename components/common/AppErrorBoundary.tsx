@@ -3,9 +3,9 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Warning, ArrowClockwise, CaretDown, CaretUp } from 'phosphor-react-native';
 import type { ErrorBoundaryProps } from 'expo-router';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { captureException } from '../../lib/core/monitoring';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 /**
  * Production error boundary used by Expo Router as the root fallback.

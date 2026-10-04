@@ -11,11 +11,11 @@ import { Avatar } from '../components/ui/Avatar';
 import { warmAvatarColor } from '../lib/social/avatarPalette';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../src/shared/lib/theme';
+import { useTheme } from '../lib/ui/theme';
 import { Story } from '../types';
 import { playSoundEffect } from '../lib/ui/sound';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
-import { ttx } from '../src/shared/lib/i18n';
+import { ttx } from '../lib/i18n/i18n';
 
 const STORY_DURATION_HOURS = 24;
 

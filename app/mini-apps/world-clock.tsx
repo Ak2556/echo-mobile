@@ -7,7 +7,7 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import {
   PRESET_CITIES,
   WorldClockCity,
@@ -18,7 +18,7 @@ import {
   searchWorldClockLocations,
   zoneLabel,
 } from '../../lib/mini-apps/worldClock';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 // `at` is passed in, not read here: with the React Compiler on, a component
 // that reads the clock itself is memoized on its props and never re-renders

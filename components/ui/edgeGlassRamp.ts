@@ -1,4 +1,4 @@
-import type { SurfaceTier } from '../../src/shared/lib/performance';
+import type { SurfaceTier } from '../../lib/ui/performance';
 
 /**
  * How a full-bleed chrome surface fades into the content behind it.

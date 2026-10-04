@@ -45,7 +45,7 @@ export async function clearLocalUserData(): Promise<void> {
 
 async function resetLocalDatabase(): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { database } = require('../../src/shared/database');
+  const { database } = require('../database');
   await database.write(async () => {
     await database.unsafeResetDatabase();
   });

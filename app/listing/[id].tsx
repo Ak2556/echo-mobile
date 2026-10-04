@@ -16,7 +16,7 @@ import {
   ShareNetwork,
   Tag,
 } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SpeakButton } from '../../components/ui/SpeakButton';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
@@ -27,7 +27,7 @@ import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 const CONDITION_COLOR: Record<string, string> = {
   'New': '#10B981',

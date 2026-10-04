@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, Switch, Text, View } from 'react-native';
 import { X, Trophy } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { Avatar } from '../ui/Avatar';
 import {
   fetchLeaderboard,
@@ -10,7 +10,7 @@ import {
   type Leaderboard,
   type SocialApp,
 } from '../../lib/mini-apps/miniAppSocial';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 /**
  * Compare a structured mini-app (habits / fitness) with people you follow.

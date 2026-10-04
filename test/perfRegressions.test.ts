@@ -21,7 +21,7 @@ describe('performance regressions', () => {
 describe('no live blur per list row', () => {
   it('feed card action buttons are static GlassChips, not LiquidGlass', () => {
     // ~46 live blur views (one per button) made Home janky on 72-99% of frames.
-    const card = readFileSync('src/features/feed/ui/FeedCard.tsx', 'utf8');
+    const card = readFileSync('components/feed/FeedCard.tsx', 'utf8');
     expect(card).toMatch(/<GlassChip\s/);
     expect(card).not.toMatch(/<LiquidGlass/);
   });

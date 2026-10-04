@@ -4,9 +4,9 @@ import { CheckCircle, XCircle, Wrench, ChartBar } from 'phosphor-react-native';
 import Animated, { FadeIn, Layout, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { MOTION } from '../../lib/ui/motion';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 export type ToolCallStatus = 'pending_confirm' | 'running' | 'ok' | 'error' | 'rejected';
 

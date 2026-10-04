@@ -25,11 +25,11 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../../components/ui/Toast';
 import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/mini-apps/miniAppMedia';
 import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/mini-apps/voiceMemos';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 import { playbackEnded } from '../../lib/mini-apps/audioPlayback';
 
 async function playbackCandidates(memo: Memo): Promise<string[]> {

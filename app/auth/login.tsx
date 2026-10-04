@@ -13,8 +13,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { AppleLogo, EnvelopeSimple, GoogleLogo } from 'phosphor-react-native';
-import { useTheme } from '../../src/shared/lib/theme';
-import { useResponsiveLayout } from '../../src/shared/lib/responsive';
+import { useTheme } from '../../lib/ui/theme';
+import { useResponsiveLayout } from '../../lib/ui/responsive';
 import * as Haptics from 'expo-haptics';
 import {
   CANCELLED,
@@ -28,7 +28,7 @@ import { GetTheAppBanner } from '../../components/pwa/GetTheAppBanner';
 import { WebLandingPanel } from '../../components/pwa/WebLandingPanel';
 import { showToast } from '../../components/ui/Toast';
 import { ReviewerSignInSheet } from '../../components/auth/ReviewerSignInSheet';
-import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
+import { useI18n, type TranslationKey } from '../../lib/i18n/i18n';
 
 const ROTATING_PROMPT_KEYS: TranslationKey[] = [
   'auth.prompt.song',

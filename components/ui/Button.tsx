@@ -1,7 +1,7 @@
 import React from 'react';
 import { PressableProps, Text, View, Platform, StyleSheet } from 'react-native';
 import { GlassPanel } from './GlassPanel';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useTheme } from '../../lib/ui/theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface ButtonProps extends PressableProps {

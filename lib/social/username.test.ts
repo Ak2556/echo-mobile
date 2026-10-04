@@ -58,7 +58,7 @@ describe('tapping a person opens their profile', () => {
   });
 
   it('feed cards never open the author photo full screen', () => {
-    const feedCard = src('src/features/feed/ui/FeedCard.tsx');
+    const feedCard = src('components/feed/FeedCard.tsx');
     expect(feedCard).not.toMatch(/setAvatarViewerOpen|avatarUrl[^\n]*ZoomableImageViewer|ZoomableImageViewer[^>]*avatarUrl/);
     // The one viewer in the card is the post's own photos (photo-post tap).
     expect(feedCard.match(/<ZoomableImageViewer/g)).toHaveLength(1);
@@ -66,7 +66,7 @@ describe('tapping a person opens their profile', () => {
   });
 
   it('a commenter photo and name open their profile', () => {
-    const card = src('src/features/feed/ui/CommentCard.tsx');
+    const card = src('components/feed/CommentCard.tsx');
     expect(card.match(/onPress=\{openAuthor\}/g)).toHaveLength(2);
   });
 });

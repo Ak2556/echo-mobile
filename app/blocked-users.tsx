@@ -10,9 +10,9 @@ import { Avatar } from '../components/ui/Avatar';
 import { EmptyState } from '../components/common/EmptyState';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../src/shared/lib/theme';
+import { useTheme } from '../lib/ui/theme';
 import { User } from '../types';
-import { ttx } from '../src/shared/lib/i18n';
+import { ttx } from '../lib/i18n/i18n';
 import { personName } from '../lib/social/personName';
 
 export default function BlockedUsersScreen() {

@@ -5,14 +5,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, GitBranch, Heart, ChatCircle } from 'phosphor-react-native';
-import { useRemixTree } from '../../src/features/feed/api/useFeed';
-import { RemixButton } from '../../src/features/feed/ui/RemixButton';
+import { useRemixTree } from '../../hooks/useFeed';
+import { RemixButton } from '../../components/feed/RemixButton';
 import { GRADIENTS, ACCENT_COLORS, DISPLAY_TYPE, accentShadow, feedbackHaptic } from '../../lib/ui/accentDesign';
 import { useAppStore } from '../../store/useAppStore';
 import { PERSPECTIVE_LABELS, PERSPECTIVE_TYPES } from '../../lib/ai/perspectives';
-import { track } from '../../src/shared/lib/analytics';
+import { track } from '../../lib/core/analytics';
 import type { PerspectiveType, RemixTreeNode } from '../../types';
-import { ttx } from '../../src/shared/lib/i18n';
+import { ttx } from '../../lib/i18n/i18n';
 
 /**
  * Evolution tree viewer — full lineage of a single remix root. Renders the

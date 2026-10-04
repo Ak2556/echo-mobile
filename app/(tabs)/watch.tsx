@@ -3,12 +3,12 @@ import { VideoProbeOverlay } from '../../components/dev/VideoProbeOverlay';
 import { View, Text, Pressable, RefreshControl, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { FlowCard } from '../../src/features/feed/ui/FlowCard';
+import { FlowCard } from '../../components/feed/FlowCard';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
-import { useInfiniteVideoFeed, type FlowSort } from '../../src/features/feed/api/useFeed';
-import { useI18n } from '../../src/shared/lib/i18n';
-import { useResponsiveLayout } from '../../src/shared/lib/responsive';
-import { useTheme } from '../../src/shared/lib/theme';
+import { useInfiniteVideoFeed, type FlowSort } from '../../hooks/useFeed';
+import { useI18n } from '../../lib/i18n/i18n';
+import { useResponsiveLayout } from '../../lib/ui/responsive';
+import { useTheme } from '../../lib/ui/theme';
 
 // Trending | New, centred over the video like the rest of Flow's chrome. Layout
 // sits on inner Views: box props on a Pressable drop out in release builds.

@@ -8,15 +8,15 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { BookmarkSimple, Plus } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { FeedCard } from '../src/features/feed/ui/FeedCard';
+import { FeedCard } from '../components/feed/FeedCard';
 import { FeedCardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../src/shared/lib/theme';
-import { useFeed } from '../src/features/feed/api/useFeed';
+import { useTheme } from '../lib/ui/theme';
+import { useFeed } from '../hooks/useFeed';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
-import { ttx } from '../src/shared/lib/i18n';
+import { ttx } from '../lib/i18n/i18n';
 
 export default function BookmarksScreen() {
   const router = useRouter();

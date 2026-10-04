@@ -18,11 +18,11 @@ import {
   setPersonaEnabled,
   setPersonaUserNote,
 } from '../lib/ai/persona';
-import { useTheme } from '../src/shared/lib/theme';
-import { useResponsiveLayout } from '../src/shared/lib/responsive';
+import { useTheme } from '../lib/ui/theme';
+import { useResponsiveLayout } from '../lib/ui/responsive';
 import { useAppStore } from '../store/useAppStore';
-import { track } from '../src/shared/lib/analytics';
-import { ttx } from '../src/shared/lib/i18n';
+import { track } from '../lib/core/analytics';
+import { ttx } from '../lib/i18n/i18n';
 
 function stageLabel(stage: PersonaStatus['stage']): string {
   switch (stage) {

@@ -5,7 +5,7 @@ import { getTodayProductivity, searchLocalProductivity } from '../core/localSear
 import { createNote, formatNoteResult, updateNote } from '../mini-apps/notes';
 import { deleteVoiceMemo, renameVoiceMemo } from '../mini-apps/voiceMemos';
 import { publishPollFromArgs } from '../feed/polls';
-import { track } from '../../src/shared/lib/analytics';
+import { track } from '../core/analytics';
 
 export type LocalToolName =
   | 'create_note'

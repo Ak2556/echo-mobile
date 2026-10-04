@@ -80,14 +80,14 @@ describe('composer option wiring', () => {
   });
 
   it('a local video that cannot preview never falls back to a WebView', () => {
-    expect(src('src/features/feed/ui/VideoPreview.tsx')).toMatch(/loadState === 'error' && !isLocalUri/);
+    expect(src('components/feed/VideoPreview.tsx')).toMatch(/loadState === 'error' && !isLocalUri/);
   });
 
   it('the composer preview has transport controls; the feed does not opt in', () => {
     expect(composer).toMatch(/autoplay\s+controls/);
     // The live feed card must not pass `controls` to a video component. (This used to read
     // EchoCard.tsx, which was deleted as dead code; FeedCard is what the feed renders.)
-    expect(src('src/features/feed/ui/FeedCard.tsx')).not.toMatch(/<(VideoPreview|InlineVideo)[^>]*\bcontrols\b/s);
+    expect(src('components/feed/FeedCard.tsx')).not.toMatch(/<(VideoPreview|InlineVideo)[^>]*\bcontrols\b/s);
   });
 
   it('video pick and record offer the OS trim step', () => {
