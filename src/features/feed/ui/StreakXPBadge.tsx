@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { useRetention } from '../../../../lib/retention';
+import { useRetention } from '../../../../lib/retention/retention';
 import { useTheme } from '../../../shared/lib/theme';
 
 const COMPACT_TEXT_SCALE = 1.15;

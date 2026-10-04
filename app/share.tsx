@@ -8,15 +8,15 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../src/shared/lib/theme';
 import { FeedItem } from '../types';
-import { isSupabaseRemote } from '../lib/remoteConfig';
+import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { getSessionUserId } from '../lib/supabaseEchoApi';
 import { usePublishRemoteEcho } from '../src/features/feed/api/useSupabaseSocial';
-import { coerceFeedItem } from '../lib/localFeedSeed';
-import { consumePendingPublishContext, peekPendingPublishContext } from '../lib/publishContext';
+import { coerceFeedItem } from '../lib/feed/localFeedSeed';
+import { consumePendingPublishContext, peekPendingPublishContext } from '../lib/feed/publishContext';
 import { randomUUID } from 'expo-crypto';
 import { CelebrationOverlay } from '../components/ui/CelebrationOverlay';
 import { TextInput } from '../components/ui/TextInput';
-import { XP_REWARDS } from '../lib/retention';
+import { XP_REWARDS } from '../lib/retention/retention';
 import {
   EDITORIAL_ACTIONS,
   applyEditorialAction,
@@ -26,9 +26,9 @@ import {
   inferTopics,
   missingPublishFields,
   summarizeConversationContext,
-} from '../lib/echoUX';
-import { rewriteEditorial, EditorialAction } from '../lib/editorial';
-import { getPerspectiveLabel } from '../lib/perspectives';
+} from '../lib/feed/echoUX';
+import { rewriteEditorial, EditorialAction } from '../lib/feed/editorial';
+import { getPerspectiveLabel } from '../lib/ai/perspectives';
 import { track } from '../src/shared/lib/analytics';
 import { ttx } from '../src/shared/lib/i18n';
 

@@ -1,6 +1,6 @@
 import type { Href } from 'expo-router';
 import type { AuthStatus } from './types';
-import { isPublicRoute } from '../publicRoutes';
+import { isPublicRoute } from '../routing/publicRoutes';
 
 /**
  * Where a given auth status should send someone standing on a given route.

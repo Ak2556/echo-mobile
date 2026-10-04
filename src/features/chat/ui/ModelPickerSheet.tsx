@@ -6,9 +6,9 @@ import { LiquidGlass } from '../../../../components/ui/LiquidGlass';
 import { Lightning, Feather, Star, Check } from 'phosphor-react-native';
 import { useTheme } from '../../../shared/lib/theme';
 import { tap } from '../../../shared/lib/haptics';
-import type { EchoAIModel } from '../../../../lib/api';
+import type { EchoAIModel } from '../../../../lib/ai/api';
 import { ttx } from '../../../shared/lib/i18n';
-import { ACCENT_COLORS } from '../../../../lib/accentDesign';
+import { ACCENT_COLORS } from '../../../../lib/ui/accentDesign';
 
 interface ModelMeta {
   key: EchoAIModel;

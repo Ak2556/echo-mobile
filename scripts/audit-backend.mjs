@@ -108,17 +108,17 @@ console.log('\n[3/6] Enum ↔ check-constraint sync');
     {
       name: 'marketplace_listings.condition',
       db: latestConstraint('marketplace_listings', 'condition'),
-      app: [...readFileSync(join(ROOT, 'lib/marketplaceApi.ts'), 'utf8').matchAll(/ListingCondition = ([^;]+);/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1])),
+      app: [...readFileSync(join(ROOT, 'lib/mini-apps/marketplaceApi.ts'), 'utf8').matchAll(/ListingCondition = ([^;]+);/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1])),
     },
     {
       name: 'marketplace_listings.currency',
       db: latestConstraint('marketplace_listings', 'currency'),
-      app: [...new Set([...readFileSync(join(ROOT, 'lib/currency.ts'), 'utf8').matchAll(/code:\s*'([^']+)'/g)].map((m) => m[1]))],
+      app: [...new Set([...readFileSync(join(ROOT, 'lib/mini-apps/currency.ts'), 'utf8').matchAll(/code:\s*'([^']+)'/g)].map((m) => m[1]))],
     },
     {
       name: 'profiles.ai_model',
       db: latestConstraint('profiles', 'ai_model'),
-      app: [...readFileSync(join(ROOT, 'lib/api.ts'), 'utf8').matchAll(/EchoAIModel = ([^;]+);/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1])),
+      app: [...readFileSync(join(ROOT, 'lib/ai/api.ts'), 'utf8').matchAll(/EchoAIModel = ([^;]+);/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1])),
     },
   ];
 

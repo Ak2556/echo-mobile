@@ -5,12 +5,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { SpringCounter } from '../../../../components/ui/SpringCounter';
-import { isSupabaseRemote } from '../../../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../../../lib/core/remoteConfig';
 import { useToggleRemoteLike } from '../api/useSupabaseSocial';
 import { useAppStore } from '../../../../store/useAppStore';
-import { MOTION } from '../../../../lib/motion';
+import { MOTION } from '../../../../lib/ui/motion';
 import { track } from '../../../shared/lib/analytics';
-import { playSoundEffect } from '../../../../lib/sound';
+import { playSoundEffect } from '../../../../lib/ui/sound';
 
 interface LikeButtonProps {
   echoId: string;

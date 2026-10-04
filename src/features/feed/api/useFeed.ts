@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { FeedItem } from '../../../../types/index';
 import { useAppStore } from '../../../../store/useAppStore';
-import { isSupabaseRemote } from '../../../../lib/remoteConfig';
-import { captureException } from '../../../../lib/monitoring';
+import { isSupabaseRemote } from '../../../../lib/core/remoteConfig';
+import { captureException } from '../../../../lib/core/monitoring';
 import {
   fetchRankedFeed,
   fetchRemoteFeed,
@@ -13,8 +13,8 @@ import {
   fetchRemixTree,
   RankedFeedCursor,
 } from '../../../../lib/supabaseEchoApi';
-import { LOCAL_SEED_FEED, coerceFeedItem } from '../../../../lib/localFeedSeed';
-import { computeScore, gravityForScope, rankTrending } from '../../../../lib/feedScoring';
+import { LOCAL_SEED_FEED, coerceFeedItem } from '../../../../lib/feed/localFeedSeed';
+import { computeScore, gravityForScope, rankTrending } from '../../../../lib/feed/feedScoring';
 
 const PAGE_SIZE = 20;
 

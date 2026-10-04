@@ -8,7 +8,7 @@ import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../../components/ui/Toast';
-import { loadFitness, saveFitness } from '../../lib/fitness';
+import { loadFitness, saveFitness } from '../../lib/mini-apps/fitness';
 import { ttx } from '../../src/shared/lib/i18n';
 
 type Unit = 'metric' | 'imperial';

@@ -13,7 +13,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../src/shared/lib/theme';
 import { User } from '../types';
 import { ttx } from '../src/shared/lib/i18n';
-import { personName } from '../lib/personName';
+import { personName } from '../lib/social/personName';
 
 export default function MutedUsersScreen() {
   const { mutedIds, toggleMute, getUser } = useAppStore();

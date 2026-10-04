@@ -1,6 +1,6 @@
 // Realtime fan-out load test — the scale concern flagged as #2.
 //
-// Mirrors lib/realtime.ts `useRealtimeNewEchoes`: every online client opens a
+// Mirrors lib/core/realtime.ts `useRealtimeNewEchoes`: every online client opens a
 // WebSocket and subscribes to *unfiltered* INSERTs on public_echoes. This holds
 // N concurrent subscriptions open so you can watch broadcast fan-out cost and
 // realtime connection limits as N climbs. Run this ALONGSIDE main.js (whose

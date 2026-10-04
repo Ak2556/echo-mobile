@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { TextStyle, ViewStyle } from 'react-native';
 import { useAppStore } from '../../../store/useAppStore';
-import { DEFAULT_APP_LANGUAGE, languageByCode, normalizeAppLanguage, type AppLanguageCode } from '../../../lib/languages';
-import { ensureTranslation, getRuntime, useI18nRuntime } from '../../../lib/i18nRuntime';
-import { GENERATED } from '../../../lib/i18nGenerated';
-import { TT_PHRASES } from '../../../lib/i18nPhrases';
+import { DEFAULT_APP_LANGUAGE, languageByCode, normalizeAppLanguage, type AppLanguageCode } from '../../../lib/i18n/languages';
+import { ensureTranslation, getRuntime, useI18nRuntime } from '../../../lib/i18n/i18nRuntime';
+import { GENERATED } from '../../../lib/i18n/i18nGenerated';
+import { TT_PHRASES } from '../../../lib/i18n/i18nPhrases';
 
 const BASE_TRANSLATIONS = {
   'nav.home': 'Home',

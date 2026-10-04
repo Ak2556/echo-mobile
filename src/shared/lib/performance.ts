@@ -1,6 +1,6 @@
 import { useAppStore } from '../../../store/useAppStore';
-import { getDeviceTier, type DeviceTier } from '../../../lib/deviceTier';
-import { useA11ySignals } from '../../../lib/a11ySignals';
+import { getDeviceTier, type DeviceTier } from '../../../lib/ui/deviceTier';
+import { useA11ySignals } from '../../../lib/ui/a11ySignals';
 
 /**
  * `control` sits between `default` and `hot`, and exists for one specific case:

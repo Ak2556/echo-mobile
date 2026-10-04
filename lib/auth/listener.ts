@@ -5,15 +5,15 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { useAppStore } from '../../store/useAppStore';
 import { identify, resetIdentity, track } from '../../src/shared/lib/analytics';
-import { identifyUser, clearUser, captureException } from '../monitoring';
-import { isSupabaseRemote } from '../remoteConfig';
+import { identifyUser, clearUser, captureException } from '../core/monitoring';
+import { isSupabaseRemote } from '../core/remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes, fetchAndApplyRemoteSettings } from '../supabaseEchoApi';
-import { loadPersonaProfile } from '../persona';
-import { syncNotificationProfile } from '../personalNudges';
+import { loadPersonaProfile } from '../ai/persona';
+import { syncNotificationProfile } from '../ai/personalNudges';
 import { statusForProfile } from './onboardingStatus';
 import { useAuthStore } from './store';
 import { destinationFor } from './destination';
-import { clearLocalUserData } from '../localDataReset';
+import { clearLocalUserData } from '../core/localDataReset';
 import { outbox } from '../../store/outbox';
 import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
@@ -22,7 +22,7 @@ import { ensureDeviceRegistered } from '../e2ee/deviceKeys';
 import { clearMessageCache } from '../e2ee/cache';
 import { makeAuthStateCallback } from './authStateCallback';
 import { useNavigationReady } from './useNavigationReady';
-import { TRUSTED_WEB_HOSTS } from '../publicHost';
+import { TRUSTED_WEB_HOSTS } from '../routing/publicHost';
 
 /**
  * THE single auth listener.

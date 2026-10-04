@@ -1,9 +1,9 @@
 import { persistGet, persistSet, storage } from '../persist';
-import type { EchoAIModel } from '../../lib/api';
-import type { CurrencyCode } from '../../lib/currency';
-import { DEFAULT_TARGET_CATEGORY_ID, getTargetCategory } from '../../lib/targetCategories';
-import type { FontStyleName } from '../../lib/fontPresets';
-import { DEFAULT_APP_LANGUAGE, detectDeviceLanguage, normalizeAppLanguage, type AppLanguageCode } from '../../lib/languages';
+import type { EchoAIModel } from '../../lib/ai/api';
+import type { CurrencyCode } from '../../lib/mini-apps/currency';
+import { DEFAULT_TARGET_CATEGORY_ID, getTargetCategory } from '../../lib/retention/targetCategories';
+import type { FontStyleName } from '../../lib/ui/fontPresets';
+import { DEFAULT_APP_LANGUAGE, detectDeviceLanguage, normalizeAppLanguage, type AppLanguageCode } from '../../lib/i18n/languages';
 import type { ThemeName } from '../../src/shared/lib/theme';
 
 const DEFAULT_ACCENT_COLOR = '#7A8B4E';

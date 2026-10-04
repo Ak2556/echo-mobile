@@ -9,7 +9,7 @@ The client selects the new `direct_messages` columns on every thread fetch, so t
 3. Ship the build.
 
 ## Turning it on (launch default)
-1:1 E2EE is a launch requirement, so the build ships with `e2eeSend: true` compiled in (`lib/featureFlags.ts`). Group chats are out of scope.
+1:1 E2EE is a launch requirement, so the build ships with `e2eeSend: true` compiled in (`lib/core/featureFlags.ts`). Group chats are out of scope.
 1. Run the two-device check (plan Task 9 Step 3) on the release candidate.
 2. The production row is set to `true` by migration `20260929100000_e2ee_send_on.sql` (applied on merge). A remote `false` overrides the compiled default, so without it the app seals only until its first flag fetch. `lib/featureFlagParity.test.ts` fails if the migrated rows and the compiled defaults drift apart again.
 3. Ship the build. OTA does not reach installed builds (runtime mismatch), so it rides a store build.

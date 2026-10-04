@@ -6,7 +6,7 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withSpring, withTiming, Easing, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
 import { usePathname } from 'expo-router';
-import { restingX, restingY, shouldPersistDrag } from '../../lib/floatingBubblePlacement';
+import { restingX, restingY, shouldPersistDrag } from '../../lib/ui/floatingBubblePlacement';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Waveform, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
@@ -15,10 +15,10 @@ import { useFloatingApp } from '../../store/floatingApp';
 import { useVoiceControl } from '../../store/voiceControl';
 import { tap as haptic } from '../../src/shared/lib/haptics';
 import { useTutorialStore } from '../../store/tutorialStore';
-import { FLOATING_APPS, floatingAppMeta } from '../../lib/miniAppRegistry';
-import { MiniAppEmbedContext } from '../../lib/miniAppEmbed';
+import { FLOATING_APPS, floatingAppMeta } from '../../lib/mini-apps/miniAppRegistry';
+import { MiniAppEmbedContext } from '../../lib/mini-apps/miniAppEmbed';
 import { MiniAppIcon, MiniAppGlyph } from './MiniAppIcon';
-import { MINI_APP_CATALOG } from '../../lib/miniAppCatalog';
+import { MINI_APP_CATALOG } from '../../lib/mini-apps/miniAppCatalog';
 import { IconButton } from '../ui/IconButton';
 import { useI18n } from '../../src/shared/lib/i18n';
 

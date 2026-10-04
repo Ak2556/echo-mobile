@@ -1,14 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { fetchRemoteComments, getSessionUserId, insertRemoteComment, setRemoteCommentLike } from '../../lib/supabaseEchoApi';
-import { withTimeout, isAppOnline } from '../../lib/net';
+import { withTimeout, isAppOnline } from '../../lib/core/net';
 import { outbox } from '../../store/outbox';
 import { Comment } from '../../types';
-import { appendCommentCache } from '../../lib/queryCache';
-import { commentRetryKey, createRetryIds } from '../../lib/retryIds';
+import { appendCommentCache } from '../../lib/core/queryCache';
+import { commentRetryKey, createRetryIds } from '../../lib/core/retryIds';
 import { randomUUID } from 'expo-crypto';
-import { createLatestIntent } from '../../lib/latestIntent';
-import { isTransientError } from '../../lib/mutationErrors';
+import { createLatestIntent } from '../../lib/ai/latestIntent';
+import { isTransientError } from '../../lib/core/mutationErrors';
 
 // Ids held across a failed attempt so the resend (the compose screen keeps the
 // draft on failure) reuses it; see lib/retryIds.

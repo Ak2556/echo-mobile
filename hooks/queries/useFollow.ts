@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { fetchMyFollowSets } from '../../lib/supabaseEchoApi';
 import { useToggleRemoteFollow } from '../../src/features/feed/api/useSupabaseSocial';
 import { useAppStore } from '../../store/useAppStore';

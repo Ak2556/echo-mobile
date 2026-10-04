@@ -1,5 +1,5 @@
 import { persistGet, persistSet } from '../../store/persist';
-import type { TargetMiniAppId } from '../targetCategories';
+import type { TargetMiniAppId } from '../retention/targetCategories';
 
 /**
  * What each delivered fact created, and where.

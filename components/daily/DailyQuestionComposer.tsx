@@ -10,7 +10,7 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { useI18n } from '../../src/shared/lib/i18n';
 import { SpeakButton } from '../ui/SpeakButton';
 import { submitDailyAnswer, type DailyQuestion } from '../../lib/supabaseEchoApi';
-import { isAppOnline } from '../../lib/net';
+import { isAppOnline } from '../../lib/core/net';
 import { outbox } from '../../store/outbox';
 import { track } from '../../src/shared/lib/analytics';
 

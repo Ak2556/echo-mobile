@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { ActivityIndicator, Pressable, Text, View, AppState } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
-import { probePlayerCreated, probePlayerReleased, probeTrace } from '../../../../lib/devVideoProbe';
+import { probePlayerCreated, probePlayerReleased, probeTrace } from '../../../../lib/media/devVideoProbe';
 import { useVideoMountPolicy } from '../lib/videoMountPolicy';
 import { FIRST_FRAME_GRACE_MS, useFirstFrameWatchdog } from '../lib/firstFrameWatchdog';
-import { videoSourceForUri } from '../../../../lib/videoMedia';
+import { videoSourceForUri } from '../../../../lib/media/videoMedia';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
 import { ttx } from '../../../shared/lib/i18n';
@@ -126,7 +126,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
 
-  // THROWAWAY probe (lib/devVideoProbe.ts). A player is constructed here on
+  // THROWAWAY probe (lib/media/devVideoProbe.ts). A player is constructed here on
   // MOUNT, not when the card becomes active — counting them is the whole point
   // of the investigation. Remove with the probe.
   useEffect(() => {
@@ -198,7 +198,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
     return () => sub.remove();
   }, [player, uri, shouldPlay]);
 
-  // THROWAWAY (lib/devVideoProbe.ts). Reports which term of the playback
+  // THROWAWAY (lib/media/devVideoProbe.ts). Reports which term of the playback
   // decision is false for the card on screen, because pause and mute both
   // stopped responding while a player was demonstrably alive.
   useEffect(() => {

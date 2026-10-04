@@ -20,7 +20,7 @@ import { useI18n } from '../../src/shared/lib/i18n';
 import { setReadableNotifications } from '../../lib/voice/readNotifications';
 import { Notification } from '../../types';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import {
   useRemoteNotifications,
   useMarkNotificationRead,

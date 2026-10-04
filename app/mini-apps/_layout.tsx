@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, usePathname } from 'expo-router';
-import { recordToolOpen } from '../../lib/miniAppRecents';
-import { miniAppById } from '../../lib/miniAppCatalog';
+import { recordToolOpen } from '../../lib/mini-apps/miniAppRecents';
+import { miniAppById } from '../../lib/mini-apps/miniAppCatalog';
 
 export default function MiniAppsLayout() {
   const pathname = usePathname();

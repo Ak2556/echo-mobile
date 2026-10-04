@@ -17,7 +17,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../../store/useAppStore';
 import { usePerformanceProfile } from '../../src/shared/lib/performance';
-import { MOTION } from '../../lib/motion';
+import { MOTION } from '../../lib/ui/motion';
 import { resist, decideSwipe, DEFAULT_SWIPE, type SwipeOutcome } from './gestureCardSwipe';
 import { buildActions, dispatch, type GestureCardAction } from './gestureCardA11y';
 

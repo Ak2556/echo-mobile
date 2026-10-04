@@ -13,9 +13,9 @@ import {
   fetchDailyAnswerStreak,
   type DailyQuestion,
 } from '../lib/supabaseEchoApi';
-import { getFirstRunFallbackQuestion } from '../lib/firstRunQuestion';
+import { getFirstRunFallbackQuestion } from '../lib/retention/firstRunQuestion';
 import { track } from '../src/shared/lib/analytics';
-import { registerForPush } from '../lib/push';
+import { registerForPush } from '../lib/notifications/push';
 import { useI18n } from '../src/shared/lib/i18n';
 
 /**

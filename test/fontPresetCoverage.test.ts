@@ -83,7 +83,7 @@ describe('the Font Style setting reaches every screen', () => {
     // places, including the "Echo Tools" title, and never passed to useFonts.
     // An unloaded family does not fail — it silently falls back to the platform
     // face, so the screen just looks wrong and nothing says why.
-    const preset = readFileSync(join(ROOT, 'lib/fontPresets.ts'), 'utf8');
+    const preset = readFileSync(join(ROOT, 'lib/ui/fontPresets.ts'), 'utf8');
     const layout = readFileSync(join(ROOT, 'app/_layout.tsx'), 'utf8');
     const loadCall = layout.slice(layout.indexOf('useFonts('));
     const loaded = new Set([...loadCall.slice(0, loadCall.indexOf('});')).matchAll(/\b((?:Inter|Fraunces)_[A-Za-z0-9_]+)/g)].map(m => m[1]));
@@ -98,7 +98,7 @@ describe('the Font Style setting reaches every screen', () => {
   it('every style branch defines the same slots', () => {
     // A slot missing from one branch is `undefined` at runtime for that choice,
     // which silently falls back to the platform font for that text only.
-    const preset = readFileSync(join(ROOT, 'lib/fontPresets.ts'), 'utf8');
+    const preset = readFileSync(join(ROOT, 'lib/ui/fontPresets.ts'), 'utf8');
     const branches = preset.split(/case '|default:/).slice(1);
     expect(branches.length).toBeGreaterThanOrEqual(4);
     const slots = ['body', 'bodyMedium', 'bodySemibold', 'bodyBold', 'display', 'displayBlack', 'serif', 'quote', 'eyebrow'];

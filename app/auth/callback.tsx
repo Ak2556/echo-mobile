@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { consumeAuthCallbackUrl } from '../../lib/auth/callback';
 import { useTheme } from '../../src/shared/lib/theme';
-import { captureException } from '../../lib/monitoring';
+import { captureException } from '../../lib/core/monitoring';
 
 /**
  * Handles echo://auth/callback#access_token=…&refresh_token=…

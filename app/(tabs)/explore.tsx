@@ -18,13 +18,13 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useI18n } from '../../src/shared/lib/i18n';
 import { useFeed } from '../../src/features/feed/api/useFeed';
-import { buildSearchBuckets, deriveTopicFeed, groupDiscovery } from '../../lib/echoUX';
+import { buildSearchBuckets, deriveTopicFeed, groupDiscovery } from '../../lib/feed/echoUX';
 import { useRemoteSearch } from '../../hooks/queries/useSearch';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { track } from '../../src/shared/lib/analytics';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
-import { MINI_APP_CATALOG } from '../../lib/miniAppCatalog';
+import { MINI_APP_CATALOG } from '../../lib/mini-apps/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 
 type SearchTab = 'all' | 'people' | 'echoes' | 'topics' | 'tools';

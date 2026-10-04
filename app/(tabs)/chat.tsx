@@ -16,34 +16,34 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
 import { ModelPickerSheet } from '../../src/features/chat/ui/ModelPickerSheet';
-import { streamEchoAI, isRateLimitError } from '../../lib/api';
-import { speak } from '../../lib/tts';
-import { isLocalTool, LocalToolContext } from '../../lib/localTools';
-import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
-import { generateSessionTitle } from '../../lib/aiTitle';
-import { gatherProactiveContext, pickProactiveOpener, expandChip, type ProactiveOpener } from '../../lib/proactiveAI';
-import { syncPersonalNudges, recordAppOpen } from '../../lib/personalNudges';
-import { markCheckinSeen } from '../../lib/proactiveCheckin';
+import { streamEchoAI, isRateLimitError } from '../../lib/ai/api';
+import { speak } from '../../lib/mini-apps/tts';
+import { isLocalTool, LocalToolContext } from '../../lib/ai/localTools';
+import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/ai/localToolFlow';
+import { generateSessionTitle } from '../../lib/ai/aiTitle';
+import { gatherProactiveContext, pickProactiveOpener, expandChip, type ProactiveOpener } from '../../lib/ai/proactiveAI';
+import { syncPersonalNudges, recordAppOpen } from '../../lib/ai/personalNudges';
+import { markCheckinSeen } from '../../lib/ai/proactiveCheckin';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
 import { Avatar } from '../../components/ui/Avatar';
 import { Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
-import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
+import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/feed/publishContext';
 import { track } from '../../src/shared/lib/analytics';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
-import { buildPersonaPromptContext, loadPersonaProfile, recordPersonaSignal, syncPersonaFromMessages } from '../../lib/persona';
-import { playSoundEffect } from '../../lib/sound';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { buildPersonaPromptContext, loadPersonaProfile, recordPersonaSignal, syncPersonaFromMessages } from '../../lib/ai/persona';
+import { playSoundEffect } from '../../lib/ui/sound';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useRemoteConversations } from '../../hooks/queries/useDMs';
 import type { RemoteConversation } from '../../lib/supabaseEchoApi';
 import type { Conversation } from '../../types';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
-import { getTargetCategory } from '../../lib/targetCategories';
-import { miniAppById } from '../../lib/miniAppCatalog';
+import { getTargetCategory } from '../../lib/retention/targetCategories';
+import { miniAppById } from '../../lib/mini-apps/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { persistGet } from '../../store/persist';
-import { assistantLanguageInstruction } from '../../lib/languages';
+import { assistantLanguageInstruction } from '../../lib/i18n/languages';
 import { useI18n, ttx } from '../../src/shared/lib/i18n';
 import type { AiMode } from '../../supabase/functions/echo-ai/mode';
 
@@ -589,7 +589,7 @@ export default function ChatScreen() {
 
   const navigateFn = useCallback((screen: string) => {
     // v1 navigation surface. Secondary routes are still defined in the app
-    // but hidden from AI navigation per `lib/featureFlags.ts`.
+    // but hidden from AI navigation per `lib/core/featureFlags.ts`.
     const routeMap: Record<string, string> = {
       discover: '/(tabs)/home',
       profile: '/(tabs)/you',

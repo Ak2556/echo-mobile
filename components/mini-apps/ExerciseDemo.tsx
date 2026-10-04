@@ -4,7 +4,7 @@ import Animated, {
   withRepeat, withSequence, withTiming, cancelAnimation,
 } from 'react-native-reanimated';
 import Svg, { Circle, Line } from 'react-native-svg';
-import { Exercise } from '../../lib/exerciseLibrary';
+import { Exercise } from '../../lib/mini-apps/exerciseLibrary';
 
 const ALine = Animated.createAnimatedComponent(Line);
 const ACircle = Animated.createAnimatedComponent(Circle);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'expo-router';
-import { consentBannerAllowedOn } from '../lib/consentBannerRoutes';
+import { consentBannerAllowedOn } from '../lib/routing/consentBannerRoutes';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
@@ -8,7 +8,7 @@ import { useTheme } from '../src/shared/lib/theme';
 import {
   getAnalyticsConsentAsync,
   setAnalyticsConsentAsync,
-} from '../lib/consent';
+} from '../lib/privacy/consent';
 import { initAnalytics, track } from '../src/shared/lib/analytics';
 import { ttx } from '../src/shared/lib/i18n';
 

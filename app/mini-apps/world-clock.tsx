@@ -17,7 +17,7 @@ import {
   saveWorldClockCities,
   searchWorldClockLocations,
   zoneLabel,
-} from '../../lib/worldClock';
+} from '../../lib/mini-apps/worldClock';
 import { ttx } from '../../src/shared/lib/i18n';
 
 // `at` is passed in, not read here: with the React Compiler on, a component

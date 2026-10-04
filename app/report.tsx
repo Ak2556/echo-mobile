@@ -8,10 +8,10 @@ import { Warning } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
-import { REPORT_REASONS as REASONS, URGENT_REPORT_REASONS } from '../lib/reportReasons';
+import { REPORT_REASONS as REASONS, URGENT_REPORT_REASONS } from '../lib/feed/reportReasons';
 import { submitRemoteReport } from '../lib/supabaseEchoApi';
 import { buildDisclosure } from '../lib/e2ee/report';
-import { isSupabaseRemote } from '../lib/remoteConfig';
+import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { useTheme } from '../src/shared/lib/theme';
 import { ttx } from '../src/shared/lib/i18n';
 

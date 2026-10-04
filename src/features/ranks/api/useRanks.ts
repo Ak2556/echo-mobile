@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchAuthorRanks, fetchMyRank, type AuthorRank } from '../../../../lib/supabaseEchoApi';
-import { isSupabaseRemote } from '../../../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../../../lib/core/remoteConfig';
 
 /** Your own rank, live, so a new post moves the bar straight away. */
 export function useMyRank() {

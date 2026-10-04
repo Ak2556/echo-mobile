@@ -1,6 +1,6 @@
 import { useAppStore } from '../../../store/useAppStore';
-import { usePresenceStore } from '../../../lib/presence';
-import { buildFontPreset } from '../../../lib/fontPresets';
+import { usePresenceStore } from '../../../lib/social/presence';
+import { buildFontPreset } from '../../../lib/ui/fontPresets';
 
 
 

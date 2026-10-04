@@ -27,7 +27,7 @@ import {
   WarningCircle,
 } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
-import { MOTION } from '../../lib/motion';
+import { MOTION } from '../../lib/ui/motion';
 import { usePerformanceProfile } from '../../src/shared/lib/performance';
 
 export interface ToastAction {

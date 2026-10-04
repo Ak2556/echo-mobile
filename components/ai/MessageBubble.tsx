@@ -8,7 +8,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
 import { tap } from '../../src/shared/lib/haptics';
-import { isTtsAvailable, toggleSpeak, useTtsStore } from '../../lib/tts';
+import { isTtsAvailable, toggleSpeak, useTtsStore } from '../../lib/mini-apps/tts';
 
 async function copyToClipboard(text: string) {
   try {

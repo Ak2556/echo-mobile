@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { showToast } from '../../components/ui/Toast';
 import { persistSet } from '../../store/persist';
-import { captureException } from '../monitoring';
+import { captureException } from '../core/monitoring';
 import { performReply } from './reply';
 import { resolveReplyIntent } from './replyIntent';
 

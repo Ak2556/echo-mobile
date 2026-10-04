@@ -7,8 +7,8 @@ import 'react-native-url-polyfill/auto';
 import './auth/webcrypto';
 import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
-import { authLock } from './authLock';
-import { secureSessionStorage } from './secureSessionStorage';
+import { authLock } from './auth/authLock';
+import { secureSessionStorage } from './core/secureSessionStorage';
 
 const configuredSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const configuredSupabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;

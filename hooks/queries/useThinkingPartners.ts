@@ -5,7 +5,7 @@ import {
   getSessionUserId,
   type ThinkingPartnerMode,
 } from '../../lib/supabaseEchoApi';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 
 /**
  * Surfaces users matched by embedding-centroid similarity:

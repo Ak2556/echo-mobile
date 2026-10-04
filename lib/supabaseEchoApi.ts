@@ -1,24 +1,24 @@
 import { supabase } from './supabase';
-import type { MyRank } from './ranks';
+import type { MyRank } from './retention/ranks';
 import { Platform } from 'react-native';
-import { withTimeout } from './net';
+import { withTimeout } from './core/net';
 import * as FileSystem from 'expo-file-system/legacy';
 import { FeedItem, Comment, EvolutionGroup, RemixTreeNode, PerspectiveCounts, PerspectiveType } from '../types';
 import {
   mapEchoRowToFeedItem,
   SupabaseEchoRow,
   SupabaseProfileRow,
-} from './mapSupabaseEcho';
-import { selectWithDiversity, type SelectableItem } from './feedSelection';
-import { interestRows } from './interestsSync';
-import { captureException } from './monitoring';
+} from './feed/mapSupabaseEcho';
+import { selectWithDiversity, type SelectableItem } from './feed/feedSelection';
+import { interestRows } from './social/interestsSync';
+import { captureException } from './core/monitoring';
 import { editDirectMessage, insertDirectMessage, readDirectMessages, SEALED_COLUMNS, type DMKind, type SealedRow } from './e2ee/messages';
 import type { Disclosure } from './e2ee/report';
-import { computeDayStreak } from './dailyStreak';
+import { computeDayStreak } from './retention/dailyStreak';
 import { useAppStore } from '../store/useAppStore';
-import { APP_LANGUAGES } from './languages';
-import { WORKER_URL, dmMediaUrl, uploadUrlEndpoint, versionedAvatarUrl } from './workerUrl';
-import { downscaleForUpload, MAX_UPLOAD_EDGE } from './imageUploadPrep';
+import { APP_LANGUAGES } from './i18n/languages';
+import { WORKER_URL, dmMediaUrl, uploadUrlEndpoint, versionedAvatarUrl } from './routing/workerUrl';
+import { downscaleForUpload, MAX_UPLOAD_EDGE } from './media/imageUploadPrep';
 
 async function translateFeedItems(items: FeedItem[]): Promise<FeedItem[]> {
   const contentLanguage = useAppStore.getState().contentLanguage;

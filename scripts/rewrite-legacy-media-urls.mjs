@@ -6,7 +6,7 @@
 // only when all of its URLs resolve — so running this too early rewrites
 // nothing rather than breaking media.
 //
-// Why rewrite rows when lib/workerUrl.ts already normalises at read time: the
+// Why rewrite rows when lib/routing/workerUrl.ts already normalises at read time: the
 // normaliser ships inside a build, and no installed build can receive it. Every
 // build was made with runtimeVersion "1.0.0", and since the fingerprint policy
 // landed (8322452) no OTA matches them. Changing the rows is the only fix that
@@ -34,7 +34,7 @@ const run = promisify(execFile);
 
 const WORKER_URL = (process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || 'https://echo-mobile.at3236129.workers.dev').replace(/\/+$/, '');
 
-// Mirrors normalizeLegacyMediaUrl in lib/workerUrl.ts — this is plain Node and
+// Mirrors normalizeLegacyMediaUrl in lib/routing/workerUrl.ts — this is plain Node and
 // cannot import TypeScript. rewrite-legacy-media-urls.test.ts asserts the two
 // agree, so they cannot drift silently.
 const LEGACY_PUBLIC_STORAGE = /^https?:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/([^/?#]+)\/([^?#]+)(\?[^#]*)?/i;

@@ -26,7 +26,7 @@ import React from 'react';
  */
 
 const registerForPush = vi.fn(() => Promise.resolve({ token: 't', granted: true }));
-vi.mock('../lib/push', () => ({ registerForPush }));
+vi.mock('../lib/notifications/push', () => ({ registerForPush }));
 
 // The composer is the only thing that calls onAnswered; stand in for it with a
 // button so the test drives the real handler in welcome.tsx.
@@ -42,7 +42,7 @@ vi.mock('../lib/supabaseEchoApi', () => ({
   fetchTodaysDailyQuestion: () => Promise.resolve({ id: 'q1', prompt: 'What mattered today?' }),
   fetchDailyAnswerStreak: () => Promise.resolve(3),
 }));
-vi.mock('../lib/firstRunQuestion', () => ({
+vi.mock('../lib/retention/firstRunQuestion', () => ({
   getFirstRunFallbackQuestion: () => ({ id: 'fallback', prompt: 'What mattered today?' }),
 }));
 vi.mock('../src/shared/lib/analytics', () => ({ track: vi.fn() }));

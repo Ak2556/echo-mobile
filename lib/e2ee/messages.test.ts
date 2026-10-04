@@ -15,8 +15,8 @@ let bobHasDevice = true;
 let flagOn = true;
 let registration: Promise<typeof alice> = Promise.resolve(alice);
 
-vi.mock('../monitoring', () => ({ captureException: vi.fn() }));
-vi.mock('../remoteFlags', () => ({ isFeatureEnabled: (flag: string) => flag === 'e2eeSend' && flagOn }));
+vi.mock('../core/monitoring', () => ({ captureException: vi.fn() }));
+vi.mock('../core/remoteFlags', () => ({ isFeatureEnabled: (flag: string) => flag === 'e2eeSend' && flagOn }));
 vi.mock('./deviceKeys', () => ({
   ensureDeviceRegistered: () => registration,
   fetchTargetDevices: async (userIds: string[]) => [

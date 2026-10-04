@@ -10,7 +10,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../src/shared/lib/theme';
 import { showToast } from '../components/ui/Toast';
-import { clearPushToken, registerForPush } from '../lib/push';
+import { clearPushToken, registerForPush } from '../lib/notifications/push';
 import { syncNotificationPrefs } from '../lib/notifications/prefsSync';
 import { ttx } from '../src/shared/lib/i18n';
 

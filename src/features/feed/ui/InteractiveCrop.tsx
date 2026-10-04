@@ -8,7 +8,7 @@ import {
   containFit,
   type Rect,
   type ViewTransform,
-} from '../../../../lib/cropGeometry';
+} from '../../../../lib/media/cropGeometry';
 
 /**
  * Interactive crop.

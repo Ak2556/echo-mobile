@@ -11,8 +11,8 @@ import { Avatar } from '../../components/ui/Avatar';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
-import { WARM_AVATAR_COLORS } from '../../lib/avatarPalette';
-import { streamEchoAI } from '../../lib/api';
+import { WARM_AVATAR_COLORS } from '../../lib/social/avatarPalette';
+import { streamEchoAI } from '../../lib/ai/api';
 import {
   fetchConversationById, fetchGroupMembers, addGroupMembers, removeGroupMember,
   setGroupMemberRole, updateGroupMeta, leaveGroup, setDMPref,

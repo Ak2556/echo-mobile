@@ -14,7 +14,7 @@ import { EmptyState } from '../components/common/EmptyState';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../src/shared/lib/theme';
 import { useFeed } from '../src/features/feed/api/useFeed';
-import { isSupabaseRemote } from '../lib/remoteConfig';
+import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
 import { ttx } from '../src/shared/lib/i18n';
 

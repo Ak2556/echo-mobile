@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { PushPrePrompt } from './PushPrePrompt';
-import { mayOfferPush, notePushOffered, registerForPush } from '../../lib/push';
-import { hasResolvedAnalyticsConsent } from '../../lib/consent';
+import { mayOfferPush, notePushOffered, registerForPush } from '../../lib/notifications/push';
+import { hasResolvedAnalyticsConsent } from '../../lib/privacy/consent';
 import { useAppStore } from '../../store/useAppStore';
 import { useTutorialStore } from '../../store/tutorialStore';
 

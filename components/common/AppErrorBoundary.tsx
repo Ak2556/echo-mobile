@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Warning, ArrowClockwise, CaretDown, CaretUp } from 'phosphor-react-native';
 import type { ErrorBoundaryProps } from 'expo-router';
 import { useTheme } from '../../src/shared/lib/theme';
-import { captureException } from '../../lib/monitoring';
+import { captureException } from '../../lib/core/monitoring';
 import { ttx } from '../../src/shared/lib/i18n';
 
 /**
