@@ -62,6 +62,15 @@ export function isDuplicateError(err: unknown): boolean {
   return msg.includes('duplicate') || msg.includes('already exists');
 }
 
+/**
+ * The client has no session at all (supabase-js returned none), as opposed to a
+ * refresh that the server rejected. Writes throw this before sending anything,
+ * so it must not read as a connection problem.
+ */
+export function isNotSignedInError(err: unknown): boolean {
+  return (err as MaybeErr | null)?.message === 'Not signed in';
+}
+
 /** A short, honest message to show when a write fails. */
 export const RECIPIENT_NOT_READY_MESSAGE =
   'They need to update Echo before you can message them. One-to-one chats are end-to-end encrypted.';
@@ -69,6 +78,7 @@ export const RECIPIENT_NOT_READY_MESSAGE =
 export function friendlyWriteError(err: unknown): string {
   if (isRecipientNotReady(err)) return RECIPIENT_NOT_READY_MESSAGE;
   if (isAuthSessionError(err)) return 'Your session expired — please sign in again.';
+  if (isNotSignedInError(err)) return 'Your session ended — sign out and back in to do that.';
   const kind = classifyError(err);
   if (kind === 'offline') return 'You’re offline — we’ll sync this when you’re back.';
   if (kind === 'timeout') return 'That took too long. Please try again.';
