@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { composerMediaAspect, formatClipDuration, parseTags } from './composerMedia';
+import { composerMediaAspect, formatClipDuration, parseTags, scrubFraction } from './composerMedia';
 
 describe('composerMediaAspect', () => {
   it('keeps a photo its own shape within the feed range', () => {
@@ -18,6 +18,15 @@ describe('formatClipDuration', () => {
     expect(formatClipDuration(72_400)).toBe('1:12');
     expect(formatClipDuration(0)).toBeNull();
     expect(formatClipDuration(undefined)).toBeNull();
+  });
+});
+
+describe('scrubFraction', () => {
+  it('maps a touch to 0…1 and clamps drags that leave the bar', () => {
+    expect(scrubFraction(150, 300)).toBe(0.5);
+    expect(scrubFraction(-20, 300)).toBe(0);
+    expect(scrubFraction(400, 300)).toBe(1);
+    expect(scrubFraction(10, 0)).toBe(0);
   });
 });
 
@@ -72,5 +81,16 @@ describe('composer option wiring', () => {
 
   it('a local video that cannot preview never falls back to a WebView', () => {
     expect(src('components/feed/VideoPreview.tsx')).toMatch(/loadState === 'error' && !isLocalUri/);
+  });
+
+  it('the composer preview has transport controls; the feed does not opt in', () => {
+    expect(composer).toMatch(/autoplay\s+controls/);
+    // The live feed card must not pass `controls` to a video component. (This used to read
+    // EchoCard.tsx, which was deleted as dead code; FeedCard is what the feed renders.)
+    expect(src('components/feed/FeedCard.tsx')).not.toMatch(/<(VideoPreview|InlineVideo)[^>]*\bcontrols\b/s);
+  });
+
+  it('video pick and record offer the OS trim step', () => {
+    expect((composer.match(/allowsEditing: true/g) ?? []).length).toBeGreaterThanOrEqual(3);
   });
 });
