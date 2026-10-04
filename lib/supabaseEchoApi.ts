@@ -490,6 +490,9 @@ async function resolveProfileId(identifier: string): Promise<string> {
   return data.id as string;
 }
 
+/** The message thrown when a call needs a session and the client has none. */
+export const NOT_SIGNED_IN = 'Not signed in';
+
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.user?.id ?? null;
@@ -1970,7 +1973,11 @@ export async function isUsernameTaken(username: string): Promise<boolean> {
  */
 export async function fetchMyAgeYears(): Promise<number | null> {
   const uid = await getSessionUserId();
-  if (!uid) return null;
+  // No session is not "no date of birth on file": answering null here made the
+  // birthday gate appear for an app that thought it was signed in but had no
+  // session, and its save then failed. Throw, so callers treat it as a check
+  // that could not be made (both show nothing in that case).
+  if (!uid) throw new Error(NOT_SIGNED_IN);
   const { data, error } = await supabase.rpc('user_age_years', { p_uid: uid });
   if (error) throw error;
   return typeof data === 'number' ? data : null;
@@ -1987,7 +1994,7 @@ export async function fetchMyAgeYears(): Promise<number | null> {
  */
 export async function saveMyDateOfBirth(dobIso: string): Promise<void> {
   const uid = await getSessionUserId();
-  if (!uid) throw new Error('Not signed in');
+  if (!uid) throw new Error(NOT_SIGNED_IN);
   const { error } = await supabase
     .from('profiles')
     .update({ date_of_birth: dobIso, personalized_notifications: true })

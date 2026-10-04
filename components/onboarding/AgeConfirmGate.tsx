@@ -7,7 +7,8 @@ import { ttx } from '../../lib/i18n/i18n';
 import { useAuthStore } from '../../lib/auth/store';
 import { signOut } from '../../lib/auth';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
-import { fetchMyAgeYears, saveMyDateOfBirth } from '../../lib/supabaseEchoApi';
+import { NOT_SIGNED_IN, fetchMyAgeYears, saveMyDateOfBirth } from '../../lib/supabaseEchoApi';
+import { captureException } from '../../lib/core/monitoring';
 import { syncNotificationProfile } from '../../lib/ai/personalNudges';
 import { useAppStore } from '../../store/useAppStore';
 import { ageRejectionMessage } from '../../constants/legal/ageGate';
@@ -62,7 +63,15 @@ export function AgeConfirmGate() {
       queryClient.setQueryData(['age', 'me'], check?.ok ? check.age : 18);
     } catch (e) {
       const code = (e as { code?: string }).code;
-      setServerError(code === '23514' ? ageRejectionMessage('too-young') : ttx("Couldn't save that. Check your connection and try again."));
+      const noSession = e instanceof Error && e.message === NOT_SIGNED_IN;
+      // Say what actually happened. Every failure used to read as a bad
+      // connection, which hid a lost session behind advice that cannot fix it.
+      if (code !== '23514') captureException(e, { tags: { source: 'age_gate_save' } });
+      setServerError(
+        code === '23514' ? ageRejectionMessage('too-young')
+        : noSession ? ttx('Your session ended. Log out and sign in again.')
+        : ttx("Couldn't save that. Check your connection and try again."),
+      );
     } finally {
       setSaving(false);
     }
