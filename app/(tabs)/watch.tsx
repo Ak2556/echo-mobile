@@ -122,7 +122,7 @@ export default function WatchScreen() {
     }, [setActiveEchoId])
   );
 
-  const feedMaxWidth = layout.isDesktop ? layout.wideMaxWidth : layout.width;
+  const feedMaxWidth = layout.isDesktop ? layout.wideMaxWidth : layout.contentMaxWidth;
   const feedContainerStyle = {
     width: '100%' as const,
     maxWidth: feedMaxWidth,
