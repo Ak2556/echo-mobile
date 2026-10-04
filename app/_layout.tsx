@@ -36,8 +36,9 @@ import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
 import { database } from '../lib/database';
 import { usePresenceTracking } from '../lib/social/presence';
 import { persistGet, persistSet, persistDelete, storageHydrate } from '../store/persist';
-import { parseEchoUniversalLink, safeRouteId } from '../lib/routing/urlSafety';
+import { parseEchoUniversalLink } from '../lib/routing/urlSafety';
 import { handleNotificationReply } from '../lib/notifications/handleReplyResponse';
+import { INBOX, inputFromPush, tapRouteOrInbox } from '../lib/notifications/tapTarget';
 import { initNotificationSurface, registerPushAndStoreToken } from '../lib/notifications/push';
 import { PomodoroRuntimeHost } from '../lib/mini-apps/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
@@ -263,6 +264,11 @@ function UniversalLinkRouter(): null {
   return null;
 }
 
+// A push tap that arrived before the person was signed in, held until they are.
+let pendingPushTap: Record<string, unknown> | null = null;
+// The last tap this process opened, so a re-run of the effect cannot open it again.
+let lastHandledPushTap: string | null = null;
+
 function RootLayout() {
   const userId = useAppStore(s => s.userId);
   usePresenceTracking(userId ?? undefined);
@@ -332,92 +338,73 @@ function RootLayout() {
     return () => sub.remove();
   }, []);
 
-  // Push notification taps.
+  // Channels and reply actions, registered before any notification can land.
+  // A category is matched by id at delivery time, so this cannot wait for the
+  // permission prompt or the Reply button never appears on the first push.
   useEffect(() => {
     if (Platform.OS === 'web') return;
-
-    // Channels and reply actions, registered before any notification can land.
-    // A category is matched by id at delivery time, so this cannot wait for the
-    // permission prompt or the Reply button never appears on the first push.
     void initNotificationSurface();
+  }, []);
+
+  // Push notification taps.
+  //
+  // Two things have to be true before a tap can open anything: <Stack> exists, and
+  // the person is signed in with a profile. The effect used to run at mount, so a
+  // cold start from a tap, which is exactly when the response is waiting, pushed
+  // before the navigator existed ("Attempted to navigate before mounting the Root
+  // Layout component") and landed on the default screen as if they had opened the
+  // app themselves. And while auth was still resolving, app/index.tsx's redirect
+  // to the home tab could overtake the push.
+  //
+  // A tap that arrives earlier is held and opened the moment auth is ready, which
+  // also covers someone who has to sign in or finish onboarding first.
+  const pushNavKey = useRootNavigationState()?.key;
+  const { status: authStatus } = useAuth();
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    if (!pushNavKey) return;
 
     let cancelled = false;
-    const VALID_KINDS = new Set(['daily_question', 'daily_react', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved', 'echo_checkin', 'personal_nudge', 'rules_reminder']);
-    const route = (data: Record<string, unknown> | null | undefined) => {
-      if (!data) return;
-      const kind = String(data.kind ?? '');
-      if (!VALID_KINDS.has(kind)) return;
-      if (kind === 'echo_checkin') {
-        track('notification_tapped', { kind });
-        router.push('/(tabs)/chat');
-        return;
-      }
-      if (kind === 'rules_reminder') {
-        track('notification_tapped', { kind });
-        router.push('/legal/rules' as never);
-        return;
-      }
-      if (kind === 'personal_nudge') {
-        // The tap is our on-device "opened" signal — it resets nudge back-off.
+    const open = (data: Record<string, unknown> | null | undefined) => {
+      const input = inputFromPush(data);
+      if (!input) return;
+      if (input.kind === 'personal_nudge') {
+        // The tap is our on-device "opened" signal: it resets nudge back-off.
         noteNudgeOpened();
-        // Local nudges carry `surface`; server (personalized-fanout) nudges
-        // carry it in `target_kind`.
-        const surface = String(data.surface ?? data.target_kind ?? '');
-        track('notification_tapped', { kind, surface });
-        // Mini-app usage nudges carry a concrete route — open that app directly.
-        const nudgeRoute = data.route ? String(data.route) : '';
-        if (nudgeRoute.startsWith('/')) router.push(nudgeRoute as Href);
-        else if (surface === 'daily') router.push('/daily-question');
-        else if (surface === 'dm') router.push('/messages');
-        else if (surface === 'feed') router.push('/(tabs)/home');
-        else if (surface === 'marketplace') router.push('/mini-apps/marketplace');
-        else router.push('/(tabs)/chat');
-        return;
       }
-      const targetId = String(data.target_id ?? data.echo_id ?? data.user_id ?? '');
-      const routeId = safeRouteId(targetId);
-      // Follows carry no target_id — the object of the notification is the
-      // follower, passed as actor_id. Route to their profile.
-      const actorId = safeRouteId(String(data.actor_id ?? ''));
-      if (kind === 'daily_question' || kind === 'daily_react' || kind === 'friend_answer') {
-        track('notification_tapped', { kind });
-        router.push('/daily-question');
-        return;
-      }
-      if (kind === 'follow') {
-        const id = actorId || routeId;
-        if (!id) return;
-        track('notification_tapped', { kind });
-        router.push({ pathname: '/user/[id]', params: { id } });
-        return;
-      }
-      if (!routeId) return;
-      track('notification_tapped', { kind });
-      if (kind === 'comment' || kind === 'reaction' || kind === 'like' || kind === 'quote' || kind === 'mention' || kind === 'repost' || kind === 'bookmark') {
-        router.push({ pathname: '/thread/[id]', params: { id: routeId } });
-      } else if (kind === 'dm') {
-        router.push({ pathname: '/messages/[id]', params: { id: routeId } });
-      } else if (kind === 'appeal_resolved') {
-        router.push('/appeal');
-      } else if (kind === 'content_removed') {
-        router.push({ pathname: '/appeal', params: { decisionId: routeId } });
-      }
+      const target = tapRouteOrInbox(input);
+      // routed:false means the push named a kind or id with no screen of its own and
+      // the person went to the inbox instead. Worth knowing when it climbs.
+      track('notification_tapped', { kind: input.kind, routed: target !== INBOX });
+      router.push(target as Href);
     };
+
+    if (authStatus === 'ready' && pendingPushTap) {
+      const held = pendingPushTap;
+      pendingPushTap = null;
+      open(held);
+    }
 
     // A reply typed in the shade is not a tap: it must send, not just navigate.
     // Both entry points go through the same check — a cold start caused by
     // tapping Send is the case that matters most, because the reply only exists
     // in this response object.
-    const handle = (response: Notifications.NotificationResponse) => {
+    const handle = (response: Notifications.NotificationResponse, initial: boolean) => {
+      // getLastNotificationResponseAsync keeps returning the same response, and this
+      // effect re-runs when auth changes: never open one tap twice.
+      const key = `${response.notification.request.identifier}:${response.actionIdentifier}`;
+      if (initial && key === lastHandledPushTap) return;
+      lastHandledPushTap = key;
       const data = response.notification.request.content.data as Record<string, unknown>;
       if (handleNotificationReply(response.actionIdentifier, response.userText, data)) return;
-      route(data);
+      if (authStatus === 'ready') open(data);
+      else pendingPushTap = data;
     };
 
     Notifications.getLastNotificationResponseAsync()
       .then((response) => {
         if (cancelled || !response) return;
-        handle(response);
+        handle(response, true);
       })
       .catch((error) => {
         if (!isUnsignedSimulatorNotificationError(error)) {
@@ -425,14 +412,15 @@ function RootLayout() {
         }
       });
 
-    const sub = Notifications.addNotificationResponseReceivedListener(handle);
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => handle(response, false));
 
     return () => {
       cancelled = true;
       sub.remove();
     };
+    // `router` is stable; the handlers read only their arguments and the auth status.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pushNavKey, authStatus]);
 
   return (
     // Outermost: ShareIntentRouter reads this context, and a share can be what
