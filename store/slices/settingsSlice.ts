@@ -5,6 +5,7 @@ import { DEFAULT_TARGET_CATEGORY_ID, getTargetCategory } from '../../lib/targetC
 import type { FontStyleName } from '../../lib/fontPresets';
 import { DEFAULT_APP_LANGUAGE, detectDeviceLanguage, normalizeAppLanguage, type AppLanguageCode } from '../../lib/languages';
 import type { ThemeName } from '../../src/shared/lib/theme';
+import { initialAppearance, type AppearanceMode } from '../../lib/appearance';
 
 const DEFAULT_ACCENT_COLOR = '#7A8B4E';
 const LEGACY_DEFAULT_ACCENT_COLOR = '#E06030';
@@ -31,8 +32,12 @@ export interface SettingsSlice {
   setPrivateAccount: (v: boolean) => void;
   profilePhotoVisible: boolean;
   setProfilePhotoVisible: (v: boolean) => void;
+  /** Legacy master switch. Kept for the voice commands; setting it also sets `appearance`. */
   darkMode: boolean;
   setDarkMode: (v: boolean) => void;
+  /** 'system' (default) follows the device; 'light'/'dark' override it. */
+  appearance: AppearanceMode;
+  setAppearance: (v: AppearanceMode) => void;
   // ── Notification prefs ──
   notifyLikes: boolean; setNotifyLikes: (v: boolean) => void;
   notifyComments: boolean; setNotifyComments: (v: boolean) => void;
@@ -190,7 +195,14 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     notificationsEnabled: b('notificationsEnabled', true), setNotificationsEnabled: s(set, 'notificationsEnabled'),
     privateAccount: b('privateAccount', false), setPrivateAccount: s(set, 'privateAccount'),
     profilePhotoVisible: b('profilePhotoVisible', true), setProfilePhotoVisible: s(set, 'profilePhotoVisible'),
-    darkMode: b('darkMode', true), setDarkMode: s(set, 'darkMode'),
+    darkMode: b('darkMode', true),
+    setDarkMode: (v) => {
+      persistSet('darkMode', v);
+      persistSet('appearance', v ? 'dark' : 'light');
+      set({ darkMode: v, appearance: v ? 'dark' : 'light' });
+    },
+    appearance: initialAppearance(persistGet<unknown>('appearance', null), persistGet<boolean | null>('darkMode', null)),
+    setAppearance: (v) => { persistSet('appearance', v); set({ appearance: v }); },
     notifyLikes: b('notifyLikes', true), setNotifyLikes: s(set, 'notifyLikes'),
     notifyComments: b('notifyComments', true), setNotifyComments: s(set, 'notifyComments'),
     notifyFollows: b('notifyFollows', true), setNotifyFollows: s(set, 'notifyFollows'),

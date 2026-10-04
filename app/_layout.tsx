@@ -2,7 +2,7 @@ import { purgeLegacyMessageStore, registerQueryClient } from '../lib/localDataRe
 import { useEffect } from 'react';
 import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
-import { AppState, Linking, LogBox, Platform } from 'react-native';
+import { Appearance, AppState, Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../src/shared/lib/analytics';
@@ -149,6 +149,16 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
  * registerPushAndStoreToken only proceeds when permission is already granted,
  * so this can never surprise anyone with a permission dialog on startup.
  */
+function AppearanceSync() {
+  const appearance = useAppStore(s => s.appearance);
+  useEffect(() => {
+    // Pushes the choice to the native layer so the status bar, keyboard, alerts
+    // and system pickers match the app. null hands control back to the device.
+    try { Appearance.setColorScheme(appearance === 'system' ? null : appearance); } catch { /* unsupported (web) */ }
+  }, [appearance]);
+  return null;
+}
+
 function PushTokenRefresh() {
   const { status, session } = useAuth();
   const userId = session?.user?.id;
@@ -446,6 +456,7 @@ function RootLayout() {
         {/* Web-only; a no-op on native. Mounted here so the worker registers
             wherever the user lands, not only on the home route. */}
         <ServiceWorkerRegistrar />
+        <AppearanceSync />
         <PushTokenRefresh />
         <MiniLinkDrain />
         <ShareIntentRouter />

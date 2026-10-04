@@ -554,6 +554,8 @@ export default function SettingsScreen() {
   }, []);
 
   const [showFontPicker, setShowFontPicker] = useState(false);
+
+  const [showAppearancePicker, setShowAppearancePicker] = useState(false);
   const [showFontStylePicker, setShowFontStylePicker] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [showBubblePicker, setShowBubblePicker] = useState(false);
@@ -1068,7 +1070,15 @@ export default function SettingsScreen() {
               }
             />
             {divider}
-            <SettingsRow theme={theme} icon={Moon} iconColor="#8B5E7D" label={ttx("Dark Mode")} subtitle={ttx("Always on for OLED savings")} right={SwitchEl(s.darkMode, s.setDarkMode)} />
+            <SettingsRow
+              theme={theme}
+              icon={Moon}
+              iconColor="#8B5E7D"
+              label={ttx("Appearance")}
+              subtitle={ttx("Match your device, or always light or dark")}
+              onPress={() => setShowAppearancePicker(true)}
+              right={chevronValue(ttx(s.appearance === 'system' ? 'System' : s.appearance === 'light' ? 'Light' : 'Dark'))}
+            />
             {divider}
             <SettingsRow theme={theme} icon={DeviceMobile} label={ttx("Pure Black Background")} subtitle={ttx("True black for AMOLED screens")} right={SwitchEl(s.pureBlackBackground, s.setPureBlackBackground)} />
             {divider}
@@ -1242,6 +1252,21 @@ export default function SettingsScreen() {
       {}
       {showThemePicker && (
         <ThemePicker value={s.theme} onChange={s.setTheme} onClose={() => setShowThemePicker(false)} theme={theme} />
+      )}
+
+      {showAppearancePicker && (
+        <OptionPicker
+          theme={theme}
+          title={ttx("Appearance")}
+          options={[
+            { label: ttx('System'), value: 'system' as const, desc: ttx('Match your device (recommended)') },
+            { label: ttx('Light'), value: 'light' as const },
+            { label: ttx('Dark'), value: 'dark' as const, desc: ttx('Easier on OLED screens') },
+          ]}
+          value={s.appearance}
+          onChange={(v) => s.setAppearance(v)}
+          onClose={() => setShowAppearancePicker(false)}
+        />
       )}
 
       {showFontPicker && (

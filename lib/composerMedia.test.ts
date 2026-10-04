@@ -85,7 +85,9 @@ describe('composer option wiring', () => {
 
   it('the composer preview has transport controls; the feed does not opt in', () => {
     expect(composer).toMatch(/autoplay\s+controls/);
-    expect(src('src/features/feed/ui/EchoCard.tsx')).not.toMatch(/\bcontrols\b/);
+    for (const f of ['FeedCard', 'FlowCard']) {
+      expect(src(`src/features/feed/ui/${f}.tsx`)).not.toMatch(/<VideoPreview[^>]*\bcontrols\b/s);
+    }
   });
 
   it('video pick and record offer the OS trim step', () => {
