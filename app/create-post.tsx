@@ -408,13 +408,11 @@ export default function CreatePostScreen() {
 
   const handlePublish = async () => {
     if (!canPublish || publishingRef.current) return;
-    
-    const isToxic = (text: string | null | undefined) => /swear|toxic|curse|badword/i.test(text || '');
-    if (isToxic(prompt) || isToxic(response) || isToxic(pollQuestion) || pollOptions.some(o => isToxic(o))) {
-      Alert.alert('Moderation Error', 'Your post contains inappropriate language and cannot be published.');
-      return;
-    }
 
+    // No client-side word filter: moderation is the server's job (the worker
+    // judges every new or edited echo). A word list here only ever rejected
+    // innocent posts ("toxic relationship", "curse of knowledge") and caught
+    // nothing a user could not type around.
     publishingRef.current = true;
     setPublishing(true);
 
