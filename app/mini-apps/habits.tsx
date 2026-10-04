@@ -23,8 +23,8 @@ import {
   HABIT_COLORS, HABIT_MARKERS, Habit, HabitCheckIn, checkInFor, formatCheckInTime,
   getHabitStreak, isScheduledOn, dayCountFor, STREAK_MILESTONES,
   loadHabits, saveHabits, setCheckInDetails, thisWeekCount, todayStr,
-} from '../../lib/habits';
-import { localDayKey } from '../../lib/localDate';
+} from '../../lib/mini-apps/habits';
+import { localDayKey } from '../../lib/core/localDate';
 import { HabitDetail } from '../../components/mini-apps/HabitDetail';
 import { TimePicker } from '../../components/ui/TimePicker';
 import { DateTimePicker } from '../../components/ui/DateTimePicker';

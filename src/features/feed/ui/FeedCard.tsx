@@ -24,12 +24,12 @@ import { GlassRow } from '../../../../components/ui/GlassRow';
 const ACTION_HEIGHT = 42;
 const ACTION_RADIUS = 14;
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
-import { countLabel } from '../../../../lib/a11yCount';
+import { countLabel } from '../../../../lib/ui/a11yCount';
 import { RankMark } from '../../ranks/ui/RankMark';
 import { GestureCard, type GestureCardAction } from '../../../../components/ui/GestureCard';
 import { Avatar } from '../../../../components/ui/Avatar';
 import { showToast } from '../../../../components/ui/Toast';
-import { warmAvatarColor } from '../../../../lib/avatarPalette';
+import { warmAvatarColor } from '../../../../lib/social/avatarPalette';
 import { MusicNote, ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, GitBranch, Trash } from 'phosphor-react-native';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FeedItem, PerspectiveType, Poll } from '../../../../types/index';
@@ -37,7 +37,7 @@ import { useAppStore } from '../../../../store/useAppStore';
 import { useTheme } from '../../../shared/lib/theme';
 import { useI18n, ttx } from '../../../shared/lib/i18n';
 import { SpeakButton } from '../../../../components/ui/SpeakButton';
-import { isSupabaseRemote } from '../../../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../../../lib/core/remoteConfig';
 import { recordRemoteEchoView, markNotInterested } from '../../../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, useDeleteRemoteEcho } from '../api/useSupabaseSocial';
 import { useFollow } from '../../../../hooks/queries/useFollow';
@@ -51,7 +51,7 @@ interface FeedCardProps {
   pinned?: boolean;
 }
 
-// Warm editorial palette (lib/avatarPalette.ts) — one hue per perspective.
+// Warm editorial palette (lib/social/avatarPalette.ts) — one hue per perspective.
 const PERSPECTIVE_CHIP: Record<PerspectiveType, { verb: string; color: string; dimColor: string }> = {
   agree:     { verb: 'Builds on',  color: '#7A8B4E', dimColor: '#7A8B4E20' },
   challenge: { verb: 'Challenges', color: '#C65F3F', dimColor: '#C65F3F20' },

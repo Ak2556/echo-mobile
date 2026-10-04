@@ -1,8 +1,8 @@
 import { useColorScheme } from 'react-native';
 import { resolveIsDark } from '../../../lib/appearance';
 import { useAppStore } from '../../../store/useAppStore';
-import { usePresenceStore } from '../../../lib/presence';
-import { buildFontPreset } from '../../../lib/fontPresets';
+import { usePresenceStore } from '../../../lib/social/presence';
+import { buildFontPreset } from '../../../lib/ui/fontPresets';
 
 
 

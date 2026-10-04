@@ -13,10 +13,10 @@ import { useTheme } from '../src/shared/lib/theme';
 import { createSalon } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../src/shared/lib/i18n';
-import { WARM_AVATAR_COLORS } from '../lib/avatarPalette';
+import { WARM_AVATAR_COLORS } from '../lib/social/avatarPalette';
 
 // Salon covers use the same warm identity palette as avatars, so a salon
-// never becomes the loudest thing on a screen. See lib/avatarPalette.ts.
+// never becomes the loudest thing on a screen. See lib/social/avatarPalette.ts.
 const COVER_COLORS = WARM_AVATAR_COLORS.slice(0, 8);
 const NAME_MAX = 40;
 const DESC_MAX = 240;

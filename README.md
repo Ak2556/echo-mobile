@@ -489,7 +489,9 @@ components/           shared UI (ui/, common/, mini-apps/, ai/, ...)
 src/features/         feature modules: feed, chat, auth, voice, ranks
 src/shared/           theme, i18n, analytics, local database
 hooks/                older React Query hooks (new feature hooks go in src/features)
-lib/                  API wrappers and domain logic; supabaseEchoApi.ts is the one gateway to Supabase
+lib/                  domain logic, grouped by area. supabaseEchoApi.ts, the one gateway to Supabase, stays at the root
+  ai/ auth/ core/ e2ee/ feed/ i18n/ media/ mini-apps/ minilink/ notifications/
+  privacy/ retention/ routing/ social/ ui/ voice/ whatsapp/
 store/                Zustand slices
 constants/            legal text, entity facts, age policy
 types/                shared TypeScript types
@@ -524,7 +526,7 @@ Real, current, and each would otherwise cost you an afternoon.
 - **Offline has two layers.** WatermelonDB backs direct messages; `useDatabaseSync()` runs from `app/_layout.tsx` on mount and on foreground. Everything else relies on TanStack Query persisted to MMKV with a seven-day window, plus AsyncStorage and server sync for mini-apps.
 - **The feed is ranked**, not chronological — follows, engagement and content embeddings. A chronological **Latest** tab is the alternative.
 - **Account deletion goes through the `delete-account` edge function**, not the `delete_account()` RPC. The RPC only reaches Postgres; media lives in R2 and has to be purged first.
-- **The mini-app catalog is the source of truth** for what ships: [`lib/miniAppCatalog.ts`](lib/miniAppCatalog.ts).
+- **The mini-app catalog is the source of truth** for what ships: [`lib/mini-apps/miniAppCatalog.ts`](lib/mini-apps/miniAppCatalog.ts).
 - **Anything you can tap, you should be able to say.** A test walks `app/` and fails if a screen has no voice phrase, or a multiline field no dictation handler. Exclusions live in the test with a written reason each.
 - **Translate from English, and check the output.** `scripts/translate_i18n.py` seeded every language from the *Bengali* block and truncated each value; it now refuses to run. `npm run i18n:generate` is the supported path, and [`src/shared/lib/i18nIntegrity.test.ts`](src/shared/lib/i18nIntegrity.test.ts) fails the build on those signatures.
 - **Do not run `npm audit fix --force`.** It clears four advisories by downgrading `expo-router` from 6.x to 5.1.11, which is a different framework. Of the four, `image-size` reaches the tree only through metro and never ships, and the `decode-uri-component` patch is ESM-only while `query-string` requires it as CommonJS — forcing it breaks deep-link parsing. There is no safe upgrade today, and the audit will keep saying otherwise.

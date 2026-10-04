@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GRADIENTS, ACCENT_COLORS, ACCENT_SPRING, DISPLAY_TYPE, accentShadow, feedbackHaptic } from '../../lib/accentDesign';
+import { GRADIENTS, ACCENT_COLORS, ACCENT_SPRING, DISPLAY_TYPE, accentShadow, feedbackHaptic } from '../../lib/ui/accentDesign';
 import { useAppStore } from '../../store/useAppStore';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');

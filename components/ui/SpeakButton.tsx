@@ -3,7 +3,7 @@ import { Pressable } from 'react-native';
 import { SpeakerHigh } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { tap } from '../../src/shared/lib/haptics';
-import { isTtsAvailable, toggleSpeak, useTtsStore, type SpeakOptions } from '../../lib/tts';
+import { isTtsAvailable, toggleSpeak, useTtsStore, type SpeakOptions } from '../../lib/mini-apps/tts';
 
 /**
  * A tap-to-read-aloud speaker. Reads `text` in the app's (or given) language via

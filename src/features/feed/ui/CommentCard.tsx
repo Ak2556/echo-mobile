@@ -11,7 +11,7 @@ import { SpeakButton } from '../../../../components/ui/SpeakButton';
 import { Comment } from '../../../../types/index';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useTheme } from '../../../shared/lib/theme';
-import { isSupabaseRemote } from '../../../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../../../lib/core/remoteConfig';
 import { useToggleRemoteCommentLike } from '../../../../hooks/queries/useEchoComments';
 import { ttx } from '../../../shared/lib/i18n';
 

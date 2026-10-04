@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, Pressable, FlatList, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
 import { X, MagnifyingGlass, MusicNote, WarningCircle } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
-import { searchSpotify, SpotifyTrack } from '../../lib/spotify';
+import { searchSpotify, SpotifyTrack } from '../../lib/mini-apps/spotify';
 import { Image } from 'expo-image';
 import { ttx } from '../../src/shared/lib/i18n';
 

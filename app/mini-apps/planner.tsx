@@ -11,7 +11,7 @@ import { showToast } from '../../components/ui/Toast';
 import {
   PLANNER_SLOTS, PlannerItem, PlannerSlot, loadPlanner, plannerStats,
   plannerToday, savePlanner, shiftPlannerDate,
-} from '../../lib/planner';
+} from '../../lib/mini-apps/planner';
 import { ttx } from '../../src/shared/lib/i18n';
 
 export default function PlannerScreen() {

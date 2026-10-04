@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Medal } from 'phosphor-react-native';
-import { tierByLevel } from '../../../../lib/ranks';
+import { tierByLevel } from '../../../../lib/retention/ranks';
 import { ttx } from '../../../shared/lib/i18n';
 import { useAuthorRank } from '../api/useRanks';
 

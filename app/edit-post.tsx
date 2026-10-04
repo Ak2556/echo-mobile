@@ -18,10 +18,10 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
-import { friendlyWriteError } from '../lib/mutationErrors';
+import { friendlyWriteError } from '../lib/core/mutationErrors';
 import { useTheme } from '../src/shared/lib/theme';
 import { PollOption } from '../types';
-import { isSupabaseRemote } from '../lib/remoteConfig';
+import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { updateRemoteEcho } from '../lib/supabaseEchoApi';
 import { ttx } from '../src/shared/lib/i18n';
 

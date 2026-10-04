@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchSuggestedUsers } from '../../lib/supabaseEchoApi';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { getSessionUserId } from '../../lib/supabaseEchoApi';
 import { useEffect, useState } from 'react';
 

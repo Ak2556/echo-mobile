@@ -4,7 +4,7 @@ import { CalendarBlank, ShareNetwork, VideoCamera } from 'phosphor-react-native'
 import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../ui/Toast';
 import { getSessionUserId } from '../../lib/supabaseEchoApi';
-import { bookingPageUrl } from '../../lib/workerUrl';
+import { bookingPageUrl } from '../../lib/routing/workerUrl';
 import { TutorOfferings } from './TutorOfferings';
 import {
   fetchMyBookings,
@@ -19,7 +19,7 @@ import {
   type BookingStatus,
   type Person,
   type TutorProfile,
-} from '../../lib/learnApi';
+} from '../../lib/mini-apps/learnApi';
 
 /**
  * Sessions that a second person can actually see.

@@ -9,7 +9,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import { ttx } from '../../src/shared/lib/i18n';
-import { defaultCurrency, getCurrencySymbol } from '../../lib/currency';
+import { defaultCurrency, getCurrencySymbol } from '../../lib/mini-apps/currency';
 
 // Money shows in the device region's currency (INR fallback), not a hardcoded "$".
 const CUR = getCurrencySymbol(defaultCurrency());

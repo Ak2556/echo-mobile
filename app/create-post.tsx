@@ -7,7 +7,7 @@ import {
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { MAX_VIDEO_DURATION_MS, videoUploadVerdict } from '../lib/videoUploadGuard';
+import { MAX_VIDEO_DURATION_MS, videoUploadVerdict } from '../lib/media/videoUploadGuard';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,27 +22,27 @@ import {
   Users, MagnifyingGlass, PencilSimple, CaretLeft, CaretRight,
 } from 'phosphor-react-native';
 import { ActionSheet } from '../components/common/ActionSheet';
-import { composerMediaAspect, formatClipDuration, parseTags } from '../lib/composerMedia';
+import { composerMediaAspect, formatClipDuration, parseTags } from '../lib/media/composerMedia';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
-import { warmAvatarColor } from '../lib/avatarPalette';
+import { warmAvatarColor } from '../lib/social/avatarPalette';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../src/shared/lib/theme';
 import { useI18n, ttx } from '../src/shared/lib/i18n';
 import { FeedItem, PollOption } from '../types';
-import { coerceFeedItem } from '../lib/localFeedSeed';
-import { prependEchoToFeedCache, removeEchoFromFeedCache } from '../lib/queryCache';
+import { coerceFeedItem } from '../lib/feed/localFeedSeed';
+import { prependEchoToFeedCache, removeEchoFromFeedCache } from '../lib/core/queryCache';
 import * as Crypto from 'expo-crypto';
-import { playSoundEffect } from '../lib/sound';
+import { playSoundEffect } from '../lib/ui/sound';
 import { track } from '../src/shared/lib/analytics';
-import { mayOfferPush, notePushOffered, registerForPush } from '../lib/push';
+import { mayOfferPush, notePushOffered, registerForPush } from '../lib/notifications/push';
 import { PushPrePrompt } from '../components/onboarding/PushPrePrompt';
-import { isSupabaseRemote } from '../lib/remoteConfig';
+import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, searchRemoteUsers } from '../lib/supabaseEchoApi';
-import { publishOrQueue } from '../lib/publishEcho';
+import { publishOrQueue } from '../lib/feed/publishEcho';
 import { PhotoEditor } from '../src/features/feed/ui/PhotoEditor';
-import { isAppOnline } from '../lib/net';
+import { isAppOnline } from '../lib/core/net';
 import { outbox } from '../store/outbox';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
 

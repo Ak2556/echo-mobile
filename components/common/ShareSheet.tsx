@@ -3,12 +3,12 @@ import { Share, Alert, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Link, ShareNetwork, PaperPlaneTilt, Image as ImageIcon } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from './ActionSheet';
-import { echoUrl } from '../../lib/echoUrl';
+import { echoUrl } from '../../lib/routing/echoUrl';
 import { tap } from '../../src/shared/lib/haptics';
 import { useTheme } from '../../src/shared/lib/theme';
 import { FeedItem } from '../../types';
 import { ShareableEchoCard } from '../../src/features/feed/ui/ShareableEchoCard';
-import { shareEchoAsImage } from '../../lib/shareEchoImage';
+import { shareEchoAsImage } from '../../lib/media/shareEchoImage';
 import { track } from '../../src/shared/lib/analytics';
 import { ttx } from '../../src/shared/lib/i18n';
 

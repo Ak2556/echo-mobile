@@ -1,4 +1,4 @@
-import { WARM_AVATAR_COLORS } from '../../../../lib/avatarPalette';
+import { WARM_AVATAR_COLORS } from '../../../../lib/social/avatarPalette';
 
 /**
  * The colour a media tile shows while its image is still arriving.

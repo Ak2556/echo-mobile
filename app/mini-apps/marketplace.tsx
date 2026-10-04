@@ -36,19 +36,19 @@ import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { ListingCardSkeleton } from '../../components/ui/Skeleton';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
 import { track } from '../../src/shared/lib/analytics';
-import { formatPrice, type CurrencyCode } from '../../lib/currency';
+import { formatPrice, type CurrencyCode } from '../../lib/mini-apps/currency';
 import {
   fetchListings,
   LISTING_CATEGORIES,
   LISTING_CONDITIONS,
   ListingCondition,
   ListingWithSeller,
-} from '../../lib/marketplaceApi';
+} from '../../lib/mini-apps/marketplaceApi';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { useAppStore } from '../../store/useAppStore';
-import { getTargetCategory } from '../../lib/targetCategories';
-import { clearRecentListings, getRecentListings, recordListingView, type RecentListing } from '../../lib/marketplaceRecents';
+import { getTargetCategory } from '../../lib/retention/targetCategories';
+import { clearRecentListings, getRecentListings, recordListingView, type RecentListing } from '../../lib/mini-apps/marketplaceRecents';
 import { ttx } from '../../src/shared/lib/i18n';
 
 const CARD_GAP = 12;
@@ -58,7 +58,7 @@ type SortMode = 'newest' | 'price-low' | 'price-high';
 type MarketMode = 'all' | 'services' | 'local' | 'digital';
 type ConditionFilter = ListingCondition | 'All';
 
-// Warm editorial palette (lib/avatarPalette.ts) mapped by category.
+// Warm editorial palette (lib/social/avatarPalette.ts) mapped by category.
 const CATEGORY_META: Record<string, { color: string; Icon: React.ComponentType<any> }> = {
   All: { color: '#E06030', Icon: Storefront },
   'Books & Learning': { color: '#4E7A8B', Icon: BookOpen },

@@ -11,7 +11,7 @@ import { ArrowLeft, Brain, UsersThree, Lightning } from 'phosphor-react-native';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { useThinkingPartners } from '../hooks/queries/useThinkingPartners';
 import { useToggleRemoteFollow } from '../src/features/feed/api/useSupabaseSocial';
-import { GRADIENTS, ACCENT_COLORS, accentShadow, feedbackHaptic } from '../lib/accentDesign';
+import { GRADIENTS, ACCENT_COLORS, accentShadow, feedbackHaptic } from '../lib/ui/accentDesign';
 import { useAppStore } from '../store/useAppStore';
 import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { track } from '../src/shared/lib/analytics';

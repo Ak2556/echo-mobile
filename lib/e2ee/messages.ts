@@ -14,11 +14,11 @@
  */
 import { getRandomBytes, randomUUID } from 'expo-crypto';
 import { supabase } from '../supabase';
-import { isFeatureEnabled } from '../remoteFlags';
+import { isFeatureEnabled } from '../core/remoteFlags';
 import { E2EEError, openBody, openMessageKey, resealBody, sealMessage, type TargetDevice } from './crypto';
 import { ensureDeviceRegistered, fetchTargetDevices, getLocalDevice } from './deviceKeys';
 import { recallMessage, rememberMessage } from './cache';
-import { captureException } from '../monitoring';
+import { captureException } from '../core/monitoring';
 
 export type DMKind = 'text' | 'link' | 'contact' | 'echo' | 'image' | 'voice';
 

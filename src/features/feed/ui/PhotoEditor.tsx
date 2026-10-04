@@ -18,10 +18,10 @@ import { showToast } from '../../../../components/ui/Toast';
 import { Slider } from '../../../../components/ui/Slider';
 import {
   finalMatrix, hasAdjustments, FILTER_PRESETS, NO_ADJUST, IDENTITY, type Adjustments,
-} from '../../../../lib/photoFilters';
+} from '../../../../lib/media/photoFilters';
 import { ttx } from '../../../shared/lib/i18n';
 import { InteractiveCrop } from './InteractiveCrop';
-import { screenRectToImageCrop, type Rect as CropRect, type ViewTransform } from '../../../../lib/cropGeometry';
+import { screenRectToImageCrop, type Rect as CropRect, type ViewTransform } from '../../../../lib/media/cropGeometry';
 
 type OptionalManipulator = {
   manipulateAsync: (uri: string, actions: unknown[], options: { compress?: number; format?: unknown }) => Promise<{ uri: string; width: number; height: number }>;

@@ -13,7 +13,7 @@ const alias = {
   // so stub it; tests never assert on notification scheduling.
   'expo-notifications': path.resolve(__dirname, 'test/stubs/expo-notifications.ts'),
   'expo-haptics': path.resolve(__dirname, 'test/stubs/expo-haptics.ts'),
-  // Same reason: lib/secureSessionStorage imports both at module load, so
+  // Same reason: lib/core/secureSessionStorage imports both at module load, so
   // every test that reaches lib/supabase would fail on the native runtime.
   'expo-secure-store': path.resolve(__dirname, 'test/stubs/expo-secure-store.ts'),
   'expo-crypto': path.resolve(__dirname, 'test/stubs/expo-crypto.ts'),

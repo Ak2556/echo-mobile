@@ -6,9 +6,9 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
-import { createNote } from '../../lib/notes';
-import { miniAppSnapshotText } from '../../lib/miniAppIntegration';
-import { askMiniAppCoach, coachAppFor } from '../../lib/miniAppCoach';
+import { createNote } from '../../lib/mini-apps/notes';
+import { miniAppSnapshotText } from '../../lib/mini-apps/miniAppIntegration';
+import { askMiniAppCoach, coachAppFor } from '../../lib/mini-apps/miniAppCoach';
 import { CompareSheet } from './CompareSheet';
 import { ttx } from '../../src/shared/lib/i18n';
 

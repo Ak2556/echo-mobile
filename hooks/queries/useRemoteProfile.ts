@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import {
   fetchRemoteEchoById,
   fetchRemoteEchoesByAuthor,
@@ -10,7 +10,7 @@ import {
   isRemoteFollowing,
 } from '../../lib/supabaseEchoApi';
 import { FeedItem, User } from '../../types';
-import { SupabaseProfileRow } from '../../lib/mapSupabaseEcho';
+import { SupabaseProfileRow } from '../../lib/feed/mapSupabaseEcho';
 
 function profileRowToUser(
   p: SupabaseProfileRow,

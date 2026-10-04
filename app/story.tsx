@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { View, Text, StatusBar } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { safeBack } from '../lib/safeBack';
+import { safeBack } from '../lib/routing/safeBack';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming, FadeInDown } from 'react-native-reanimated';
 import { X, Eye } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';

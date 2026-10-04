@@ -3,7 +3,7 @@ import { Pressable, View, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { SealCheck } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
-import { warmAvatarColor } from '../../lib/avatarPalette';
+import { warmAvatarColor } from '../../lib/social/avatarPalette';
 import { ZoomableImageViewer } from './ZoomableImageViewer';
 
 interface ProfileAvatarProps {

@@ -153,7 +153,7 @@ writeHeaders();
 /** Apple Team IDs are exactly ten alphanumeric characters. */
 const TEAM_ID_PATTERN = /^[A-Z0-9]{10}$/;
 
-/** Must stay in step with app.config.js and lib/urlSafety.ts. */
+/** Must stay in step with app.config.js and lib/routing/urlSafety.ts. */
 const PATH_PREFIXES = ['/e', '/u', '/c'];
 
 const assetlinksPath = join(wellKnown, 'assetlinks.json');

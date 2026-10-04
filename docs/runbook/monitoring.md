@@ -133,7 +133,7 @@ budget, not bugs. Look at the provider dashboard before reading any code.
 The asymmetry in that last row is the whole argument for keeping risky things
 behind flags rather than in native code.
 
-**Note the gap: there is no remote kill switch.** `lib/featureFlags.ts` is a
+**Note the gap: there is no remote kill switch.** `lib/core/featureFlags.ts` is a
 compile-time constant map. Disabling a feature today requires an OTA at best and
 a store release at worst. Until that changes, the fastest way to stop a
 misbehaving feature is usually to break its backend — revoke the function

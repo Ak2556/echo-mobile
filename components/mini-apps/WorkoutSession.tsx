@@ -7,11 +7,11 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { tap } from '../../src/shared/lib/haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { ExerciseDemo } from './ExerciseDemo';
-import { EXERCISES, EXERCISE_CATALOG } from '../../lib/exerciseLibrary';
+import { EXERCISES, EXERCISE_CATALOG } from '../../lib/mini-apps/exerciseLibrary';
 import {
   Routine, Workout, WorkoutExercise,
   bestLiftFor, detectPRs, lastLiftFor, workoutVolume,
-} from '../../lib/fitness';
+} from '../../lib/mini-apps/fitness';
 import { ttx } from '../../src/shared/lib/i18n';
 
 interface ExerciseState {

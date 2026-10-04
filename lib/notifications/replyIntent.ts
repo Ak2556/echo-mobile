@@ -1,5 +1,5 @@
 import { ACTION_REPLY, COMMENTABLE_KINDS } from './routing';
-import { safeRouteId } from '../urlSafety';
+import { safeRouteId } from '../routing/urlSafety';
 
 /**
  * Turning a notification action response into something to send.

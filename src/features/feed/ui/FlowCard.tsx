@@ -10,18 +10,18 @@ import { FeedItem } from '../../../../types/index';
 import { VideoPreview } from './VideoPreview';
 import { useResponsiveLayout } from '../../../shared/lib/responsive';
 import { useTheme } from '../../../shared/lib/theme';
-import { warmAvatarColor } from '../../../../lib/avatarPalette';
+import { warmAvatarColor } from '../../../../lib/social/avatarPalette';
 import { useToggleRemoteLike, useToggleRemoteBookmark } from '../api/useSupabaseSocial';
 import { CommentsSheet } from './CommentsSheet';
 import { useAppStore } from '../../../../store/useAppStore';
-import { saveMediaToDevice } from '../../../../lib/mediaDownload';
+import { saveMediaToDevice } from '../../../../lib/media/mediaDownload';
 import { showToast } from '../../../../components/ui/Toast';
 import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, runOnJS, withDelay } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
-import { personName } from '../../../../lib/personName';
-import { echoUrl } from '../../../../lib/echoUrl';
+import { personName } from '../../../../lib/social/personName';
+import { echoUrl } from '../../../../lib/routing/echoUrl';
 
 const TEXT_SHADOW = {
   textShadowColor: 'rgba(0, 0, 0, 0.4)',

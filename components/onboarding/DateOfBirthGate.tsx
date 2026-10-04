@@ -5,7 +5,7 @@ import { Cake } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { ttx } from '../../src/shared/lib/i18n';
 import { MINIMUM_AGE, checkDateOfBirth, ageRejectionMessage } from '../../constants/legal/ageGate';
-import { needsDateOfBirth } from '../../lib/interestsSync';
+import { needsDateOfBirth } from '../../lib/social/interestsSync';
 import { fetchMyAgeYears, syncInterests, updateRemoteProfile } from '../../lib/supabaseEchoApi';
 import { useAppStore } from '../../store/useAppStore';
 

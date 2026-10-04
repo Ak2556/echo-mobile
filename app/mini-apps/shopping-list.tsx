@@ -13,14 +13,14 @@ import { showToast } from '../../components/ui/Toast';
 import {
   SHOPPING_CATEGORIES, FREQUENT_ITEMS, ShoppingItem, ShoppingListInfo,
   loadShoppingData, saveShoppingData, shoppingStats
-} from '../../lib/shoppingList';
+} from '../../lib/mini-apps/shoppingList';
 import { ttx } from '../../src/shared/lib/i18n';
 import { emit } from '../../lib/minilink/queue';
 import { drainMiniLink, undoFact } from '../../lib/minilink/drain';
 import { hasApplied } from '../../lib/minilink/ledger';
 import { shouldEmitPurchase, describePostDrain, describeUndo, purchaseAmount } from '../../lib/minilink/rules';
-import { defaultCurrency, getCurrencySymbol } from '../../lib/currency';
-import { loadExpensesDoc } from '../../lib/expenses';
+import { defaultCurrency, getCurrencySymbol } from '../../lib/mini-apps/currency';
+import { loadExpensesDoc } from '../../lib/mini-apps/expenses';
 
 // Money shows in the currency chosen in Expenses, which is where checked-off
 // items are logged; the device region's (INR fallback) until that loads.

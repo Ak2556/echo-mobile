@@ -17,7 +17,7 @@ import {
   resetPersonaProfile,
   setPersonaEnabled,
   setPersonaUserNote,
-} from '../lib/persona';
+} from '../lib/ai/persona';
 import { useTheme } from '../src/shared/lib/theme';
 import { useResponsiveLayout } from '../src/shared/lib/responsive';
 import { useAppStore } from '../store/useAppStore';

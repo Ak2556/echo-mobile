@@ -22,13 +22,13 @@ import {
   loadFitness, saveFitness, todayMealTotals, todayWaterMl, workoutVolume, isSameDay,
   liftHistory, est1RM, weeklySummaries, monthlySummaries,
   thisWeekWorkoutCount, weeklyStreak, detectPRs,
-} from '../../lib/fitness';
-import { localDayKey } from '../../lib/localDate';
-import { syncFitnessReminders } from '../../lib/fitnessReminders';
+} from '../../lib/mini-apps/fitness';
+import { localDayKey } from '../../lib/core/localDate';
+import { syncFitnessReminders } from '../../lib/mini-apps/fitnessReminders';
 import { WorkoutSession } from '../../components/mini-apps/WorkoutSession';
-import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/exerciseLibrary';
-import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods, foodById } from '../../lib/foodDatabase';
-import { searchOnlineFoods } from '../../lib/foodApi';
+import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/mini-apps/exerciseLibrary';
+import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods, foodById } from '../../lib/mini-apps/foodDatabase';
+import { searchOnlineFoods } from '../../lib/mini-apps/foodApi';
 import { ttx } from '../../src/shared/lib/i18n';
 
 type Tab = 'meals' | 'workouts' | 'progress' | 'library';

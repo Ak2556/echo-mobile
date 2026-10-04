@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { safeBack } from '../../lib/safeBack';
+import { safeBack } from '../../lib/routing/safeBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
@@ -21,11 +21,11 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SpeakButton } from '../../components/ui/SpeakButton';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { PhotoGallery } from '../../components/marketplace/PhotoGallery';
-import { formatPrice } from '../../lib/currency';
-import { fetchListing, ListingWithSeller, updateListingStatus } from '../../lib/marketplaceApi';
+import { formatPrice } from '../../lib/mini-apps/currency';
+import { fetchListing, ListingWithSeller, updateListingStatus } from '../../lib/mini-apps/marketplaceApi';
 import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { ttx } from '../../src/shared/lib/i18n';
 

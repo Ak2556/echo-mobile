@@ -8,10 +8,10 @@
  * documents to be readable in all 22 so that no user can be told their language
  * is unavailable.
  *
- * This list is deliberately SEPARATE from `lib/languages.ts` (the app's UI
+ * This list is deliberately SEPARATE from `lib/i18n/languages.ts` (the app's UI
  * locales). They answer different questions:
  *
- *   lib/languages.ts        → what language is the interface drawn in? (26)
+ *   lib/i18n/languages.ts        → what language is the interface drawn in? (26)
  *   this file               → what language can the legal notice be read in? (22)
  *
  * Only 13 of the 22 overlap. Keeping them apart means we can satisfy the statute

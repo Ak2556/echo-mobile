@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchThinkingFingerprint } from '../../lib/supabaseEchoApi';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 
 /**
  * An AI-synthesised portrait of how a user thinks, derived from the embeddings

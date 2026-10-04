@@ -13,7 +13,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../src/shared/lib/theme';
 import { ttx } from '../../src/shared/lib/i18n';
 
-// Warm editorial palette (lib/avatarPalette.ts) — one hue per die.
+// Warm editorial palette (lib/social/avatarPalette.ts) — one hue per die.
 function getDice(colors: { danger: string; warning: string; success: string; accent: string; textSecondary: string; textMuted: string }) {
   return [
     { sides: 4,  label: 'D4',  color: colors.danger },

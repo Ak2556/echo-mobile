@@ -31,7 +31,7 @@ const WORKER_URL = process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || 'https://ech
 
 // Every bucket with an R2 counterpart that still has objects to copy. R2 bucket
 // names match the Supabase ones (wrangler.toml).
-//   - PublicBucket in lib/workerUrl.ts: served at /media.
+//   - PublicBucket in lib/routing/workerUrl.ts: served at /media.
 //   - mini-app-media: private, served only through /mini-app-media-urls.
 //   - dm-media: private, served only through /dm-media. The app resolves even a
 //     legacy Supabase DM URL to that route, so those objects must be in R2 too.

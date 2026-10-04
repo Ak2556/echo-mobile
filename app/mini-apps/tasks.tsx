@@ -12,8 +12,8 @@ import { showToast } from '../../components/ui/Toast';
 import {
   TaskItem, TaskPriority, SubTask, loadTasks, saveTasks, taskStats,
   todayTaskDate, tomorrowTaskDate,
-} from '../../lib/tasks';
-import { scheduleTaskReminder, cancelTaskReminder } from '../../lib/taskReminders';
+} from '../../lib/mini-apps/tasks';
+import { scheduleTaskReminder, cancelTaskReminder } from '../../lib/mini-apps/taskReminders';
 import { tap } from '../../src/shared/lib/haptics';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
 import { DateTimePicker } from '../../components/ui/DateTimePicker';

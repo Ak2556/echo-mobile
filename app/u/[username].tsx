@@ -1,5 +1,5 @@
 import { useLocalSearchParams, Redirect } from 'expo-router';
-import { safeRouteId } from '../../lib/urlSafety';
+import { safeRouteId } from '../../lib/routing/urlSafety';
 
 // Public deep-link target for /u/<username>. app.config.js claims this prefix
 // for App Links and Universal Links, and parseEchoUniversalLink resolves it,

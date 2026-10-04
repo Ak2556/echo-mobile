@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../../shared/lib/theme';
 import { UserRow } from './UserRow';
 import { Avatar } from '../../../../components/ui/Avatar';
-import { personName } from '../../../../lib/personName';
+import { personName } from '../../../../lib/social/personName';
 
 export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
   const { colors, font, fontSizes } = useTheme();

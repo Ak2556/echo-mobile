@@ -3,7 +3,7 @@ import { Pressable, PressableProps, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../../store/useAppStore';
-import { MOTION, PRESS_DEPTH, PressDepth } from '../../lib/motion';
+import { MOTION, PRESS_DEPTH, PressDepth } from '../../lib/ui/motion';
 import { PerformanceMode, usePerformanceProfile } from '../../src/shared/lib/performance';
 
 const AnimatedPress = Animated.createAnimatedComponent(Pressable);

@@ -28,14 +28,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   // Keep expo-video imports stable in runtimes where the native module is unavailable.
   if (moduleName === "expo-video") {
     return {
-      filePath: path.resolve(__dirname, "lib/expoVideoShim.js"),
+      filePath: path.resolve(__dirname, "lib/core/expoVideoShim.js"),
       type: "sourceFile",
     };
   }
   // Supabase Realtime may import ws; native builds need a no-op module for Node-only transports.
   if (moduleName === "ws" && (platform === "ios" || platform === "android")) {
     return {
-      filePath: path.resolve(__dirname, "lib/emptyShim.js"),
+      filePath: path.resolve(__dirname, "lib/core/emptyShim.js"),
       type: "sourceFile",
     };
   }

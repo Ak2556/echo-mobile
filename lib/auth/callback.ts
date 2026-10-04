@@ -1,6 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
-import { isAllowedAuthCallbackUrl } from '../urlSafety';
+import { isAllowedAuthCallbackUrl } from '../routing/urlSafety';
 
 /**
  * Parse + consume an auth callback URL.

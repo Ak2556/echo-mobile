@@ -7,11 +7,11 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../src/shared/lib/theme';
 import { useResponsiveLayout } from '../src/shared/lib/responsive';
 import { useAppStore } from '../store/useAppStore';
-import { getTargetCategory } from '../lib/targetCategories';
-import { getTodayProductivity, type TodayProductivity } from '../lib/localSearch';
-import { buildTargetProgressDigest, type TargetProgressDigest } from '../lib/targetProgress';
-import { fetchCrossAppProgress, type CrossAppProgress } from '../lib/targetProgressRemote';
-import { setPendingPublishContext } from '../lib/publishContext';
+import { getTargetCategory } from '../lib/retention/targetCategories';
+import { getTodayProductivity, type TodayProductivity } from '../lib/core/localSearch';
+import { buildTargetProgressDigest, type TargetProgressDigest } from '../lib/retention/targetProgress';
+import { fetchCrossAppProgress, type CrossAppProgress } from '../lib/retention/targetProgressRemote';
+import { setPendingPublishContext } from '../lib/feed/publishContext';
 import { IconBadge } from '../components/ui/IconBadge';
 import { ttx } from '../src/shared/lib/i18n';
 

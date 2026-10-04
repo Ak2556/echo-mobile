@@ -5,7 +5,7 @@ import Animated, { FadeIn, Layout, useAnimatedStyle, useSharedValue, withSequenc
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { useTheme } from '../../src/shared/lib/theme';
-import { MOTION } from '../../lib/motion';
+import { MOTION } from '../../lib/ui/motion';
 import { ttx } from '../../src/shared/lib/i18n';
 
 export type ToolCallStatus = 'pending_confirm' | 'running' | 'ok' | 'error' | 'rejected';

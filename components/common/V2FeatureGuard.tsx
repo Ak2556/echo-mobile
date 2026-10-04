@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/shared/lib/theme';
-import type { FeatureFlag } from '../../lib/featureFlags';
+import type { FeatureFlag } from '../../lib/core/featureFlags';
 import { useFeature } from '../../hooks/useFeature';
 import { ttx } from '../../src/shared/lib/i18n';
 

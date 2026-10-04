@@ -11,7 +11,7 @@ import Animated, {
   SharedValue
 } from 'react-native-reanimated';
 import { useTheme } from '../../src/shared/lib/theme';
-import { localDayKey } from '../../lib/localDate';
+import { localDayKey } from '../../lib/core/localDate';
 
 const ITEM_HEIGHT = 44;
 const VISIBLE_ITEMS = 5;

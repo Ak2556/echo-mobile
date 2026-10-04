@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CaretLeft, CaretRight, DownloadSimple, X } from 'phosphor-react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { saveMediaToDevice } from '../../lib/mediaDownload';
+import { saveMediaToDevice } from '../../lib/media/mediaDownload';
 import { showToast } from './Toast';
 
 interface ZoomableImageViewerProps {

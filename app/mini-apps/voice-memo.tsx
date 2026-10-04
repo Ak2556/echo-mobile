@@ -27,10 +27,10 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../../components/ui/Toast';
-import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/miniAppMedia';
-import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/voiceMemos';
+import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/mini-apps/miniAppMedia';
+import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/mini-apps/voiceMemos';
 import { ttx } from '../../src/shared/lib/i18n';
-import { playbackEnded } from '../../lib/audioPlayback';
+import { playbackEnded } from '../../lib/mini-apps/audioPlayback';
 
 async function playbackCandidates(memo: Memo): Promise<string[]> {
   const candidates: string[] = [];

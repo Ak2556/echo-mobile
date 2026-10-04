@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Medal } from 'phosphor-react-native';
-import { isActiveThisWeek, tierByLevel } from '../../../../lib/ranks';
+import { isActiveThisWeek, tierByLevel } from '../../../../lib/retention/ranks';
 import { useTheme } from '../../../shared/lib/theme';
 import { ttx } from '../../../shared/lib/i18n';
 import { useAuthorRank } from '../api/useRanks';

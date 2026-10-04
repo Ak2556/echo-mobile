@@ -5,7 +5,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useTutorialStore } from '../../store/tutorialStore';
 import { useAppStore } from '../../store/useAppStore';
-import { TOURS } from '../../lib/tutorialSteps';
+import { TOURS } from '../../lib/ui/tutorialSteps';
 import { useTheme } from '../../src/shared/lib/theme';
 import { ttx } from '../../src/shared/lib/i18n';
 

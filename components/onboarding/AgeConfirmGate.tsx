@@ -6,12 +6,12 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { ttx } from '../../src/shared/lib/i18n';
 import { useAuthStore } from '../../lib/auth/store';
 import { signOut } from '../../lib/auth';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { fetchMyAgeYears, saveMyDateOfBirth } from '../../lib/supabaseEchoApi';
-import { syncNotificationProfile } from '../../lib/personalNudges';
+import { syncNotificationProfile } from '../../lib/ai/personalNudges';
 import { useAppStore } from '../../store/useAppStore';
 import { ageRejectionMessage } from '../../constants/legal/ageGate';
-import { parseDobFields, shouldAskForAge } from '../../lib/ageConfirm';
+import { parseDobFields, shouldAskForAge } from '../../lib/privacy/ageConfirm';
 
 /**
  * One-time birthday card for accounts that have no date of birth on file.

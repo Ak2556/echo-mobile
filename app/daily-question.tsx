@@ -4,7 +4,7 @@ import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { safeBack } from '../lib/safeBack';
+import { safeBack } from '../lib/routing/safeBack';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { ArrowLeft, LockSimple, Question, ChatCircleDots, Lightning, Clock, Users } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
@@ -29,8 +29,8 @@ import {
   type DivergentDailyAnswer,
 } from '../lib/supabaseEchoApi';
 import { track } from '../src/shared/lib/analytics';
-import { captureException } from '../lib/monitoring';
-import { recordAppOpen } from '../lib/personalNudges';
+import { captureException } from '../lib/core/monitoring';
+import { recordAppOpen } from '../lib/ai/personalNudges';
 
 /**
  * Daily Question — Echo's twist on BeReal's daily ritual.

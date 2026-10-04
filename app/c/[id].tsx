@@ -1,5 +1,5 @@
 import { useLocalSearchParams, Redirect } from 'expo-router';
-import { safeRouteId } from '../../lib/urlSafety';
+import { safeRouteId } from '../../lib/routing/urlSafety';
 
 // Public deep-link target for /c/<commentId>. See app/u/[username].tsx — this
 // prefix was claimed and parsed but had no route to land on.

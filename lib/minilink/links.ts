@@ -1,6 +1,6 @@
-import { logPurchase, deletePurchase } from '../expenses';
+import { logPurchase, deletePurchase } from '../mini-apps/expenses';
 import type { Fact, FactKind } from './types';
-import type { TargetMiniAppId } from '../targetCategories';
+import type { TargetMiniAppId } from '../retention/targetCategories';
 
 export interface Link {
   kind: FactKind;

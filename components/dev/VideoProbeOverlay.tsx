@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, Platform } from 'react-native';
-import { getDeviceTier } from '../../lib/deviceTier';
-import { useVideoProbe, probeReset } from '../../lib/devVideoProbe';
+import { getDeviceTier } from '../../lib/ui/deviceTier';
+import { useVideoProbe, probeReset } from '../../lib/media/devVideoProbe';
 
 /**
  * THROWAWAY — dev-only HUD for the video smoothness investigation.
  *
- * Renders nothing outside __DEV__. Delete with lib/devVideoProbe.ts when the
+ * Renders nothing outside __DEV__. Delete with lib/media/devVideoProbe.ts when the
  * question is answered.
  *
  * Four numbers, chosen because each one discriminates between a different
@@ -19,7 +19,7 @@ import { useVideoProbe, probeReset } from '../../lib/devVideoProbe';
  *
  *   TIER     what getDeviceTier() actually resolved to on THIS device
  *            A slow phone classified 'mid' is a tiering bug, not a video bug —
- *            lib/deviceTier.ts decides by OS version, which is a proxy that can
+ *            lib/ui/deviceTier.ts decides by OS version, which is a proxy that can
  *            be wrong for cheap new handsets running a current Android.
  *
  *   JS FPS   frames the JS thread managed in the last second

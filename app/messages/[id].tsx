@@ -10,9 +10,9 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { safeBack } from '../../lib/safeBack';
-import { clientIdOfFailedDM } from '../../lib/dmLocalIds';
-import { speak, isTtsAvailable } from '../../lib/tts';
+import { safeBack } from '../../lib/routing/safeBack';
+import { clientIdOfFailedDM } from '../../lib/social/dmLocalIds';
+import { speak, isTtsAvailable } from '../../lib/mini-apps/tts';
 import {
   CaretLeft, PaperPlaneTilt, Quotes, SealCheck, Flag,
   Waveform, Copy, Trash, ArrowBendUpLeft, PencilSimple, SpeakerHigh,
@@ -41,15 +41,15 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { showToast } from '../../components/ui/Toast';
 import { isRecipientNotReady } from '../../lib/e2ee/crypto';
-import { RECIPIENT_NOT_READY_MESSAGE } from '../../lib/mutationErrors';
-import { streamEchoAI } from '../../lib/api';
-import { EMOJI_CATEGORIES, searchEmoji } from '../../lib/emojiData';
+import { RECIPIENT_NOT_READY_MESSAGE } from '../../lib/core/mutationErrors';
+import { streamEchoAI } from '../../lib/ai/api';
+import { EMOJI_CATEGORIES, searchEmoji } from '../../lib/media/emojiData';
 import { persistGet, persistSet } from '../../store/persist';
-import { recordAppOpen } from '../../lib/personalNudges';
+import { recordAppOpen } from '../../lib/ai/personalNudges';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { HlsVideoPlayer } from '../../components/media/HlsVideoPlayer';
 import {
   useRemoteMessages,
@@ -73,11 +73,11 @@ import {
 } from '../../hooks/queries/useDMs';
 import { markMessagesRead, fetchGroupMembers, fetchConversationPrefs, setDMPref, type GroupMember, type RemoteMessageReaction, type ConversationPrefs } from '../../lib/supabaseEchoApi';
 import { supabase } from '../../lib/supabase';
-import { usePresenceTracking } from '../../lib/presence';
+import { usePresenceTracking } from '../../lib/social/presence';
 import type { Conversation, DirectMessage } from '../../types';
-import { userUrl } from '../../lib/echoUrl';
+import { userUrl } from '../../lib/routing/echoUrl';
 import { ttx } from '../../src/shared/lib/i18n';
-import { playbackEnded } from '../../lib/audioPlayback';
+import { playbackEnded } from '../../lib/mini-apps/audioPlayback';
 
 /**
  * A failed 1:1 send. "Try again" is wrong when the recipient has no device to

@@ -16,7 +16,7 @@ import {
   uploadLecture,
   type Lecture,
   type LectureNote,
-} from '../../lib/learnApi';
+} from '../../lib/mini-apps/learnApi';
 
 /**
  * Lectures: upload one, or point at one, then watch it and take notes on it.

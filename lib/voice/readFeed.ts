@@ -5,8 +5,8 @@
 // Decoupled on purpose: the reader never imports the feed screen, and the feed
 // screen never imports TTS — they meet through this tiny registry.
 
-import { speakSequence } from '../tts';
-import type { AppLanguageCode } from '../languages';
+import { speakSequence } from '../mini-apps/tts';
+import type { AppLanguageCode } from '../i18n/languages';
 import type { FeedItem } from '../../types';
 
 export interface ReadableItem {

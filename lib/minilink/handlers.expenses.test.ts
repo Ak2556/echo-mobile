@@ -40,7 +40,7 @@ vi.mock('@react-native-async-storage/async-storage', () => ({
   },
 }));
 
-import { logPurchase, deletePurchase, loadExpensesDoc, saveExpensesDoc, loadTransactions } from '../expenses';
+import { logPurchase, deletePurchase, loadExpensesDoc, saveExpensesDoc, loadTransactions } from '../mini-apps/expenses';
 import type { Fact } from './types';
 
 const fact = (over: Partial<Fact<'purchase'>> = {}): Fact<'purchase'> => ({

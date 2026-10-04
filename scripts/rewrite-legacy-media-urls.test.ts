@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeLegacyMediaUrl } from '../lib/workerUrl';
+import { normalizeLegacyMediaUrl } from '../lib/routing/workerUrl';
 import { buildDoBlock, extractJsonObject, planRewrites, rewriteUrl, rowsFrom } from './rewrite-legacy-media-urls.mjs';
 
 const OBJECT = 'https://eyokhisijabitzjiydmz.supabase.co/storage/v1/object';

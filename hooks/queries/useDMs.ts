@@ -3,7 +3,7 @@ import {
   useQuery, useMutation, useInfiniteQuery,
   useQueryClient, InfiniteData,
 } from '@tanstack/react-query';
-import { withTimeout } from '../../lib/net';
+import { withTimeout } from '../../lib/core/net';
 import {
   fetchRemoteConversations,
   fetchRemoteMessages,
@@ -34,11 +34,11 @@ import {
   RemoteConversation,
   RemoteDirectMessage,
 } from '../../lib/supabaseEchoApi';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { supabase } from '../../lib/supabase';
-import { catchUpOnJoin, useCatchUpOnResume } from '../../lib/realtimeCatchUp';
-import { freshChannel } from '../../lib/realtimeTopic';
-import { clientIdOfFailedDM, failedDMId, failedDMMatching, newDMClientId, pendingDMId } from '../../lib/dmLocalIds';
+import { catchUpOnJoin, useCatchUpOnResume } from '../../lib/core/realtimeCatchUp';
+import { freshChannel } from '../../lib/core/realtimeTopic';
+import { clientIdOfFailedDM, failedDMId, failedDMMatching, newDMClientId, pendingDMId } from '../../lib/social/dmLocalIds';
 
 // Conversations list
 /** All conversations for the current user, with real unread counts. */

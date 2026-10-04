@@ -9,7 +9,7 @@ import {
   setSharePref,
   type Leaderboard,
   type SocialApp,
-} from '../../lib/miniAppSocial';
+} from '../../lib/mini-apps/miniAppSocial';
 import { ttx } from '../../src/shared/lib/i18n';
 
 /**

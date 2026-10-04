@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { syncInterests } from '../../lib/supabaseEchoApi';
-import { cleanUsername } from '../../lib/username';
+import { cleanUsername } from '../../lib/social/username';
 import {
   View, Text, TextInput, ScrollView, Platform, useWindowDimensions,
   KeyboardAvoidingView, ActivityIndicator, Image, Alert,
@@ -14,10 +14,10 @@ import Animated, {
   withRepeat, withSequence, withDecay,
 } from 'react-native-reanimated';
 import { ArrowLeft, Check, At, Brain, UsersThree, Plus, Camera } from 'phosphor-react-native';
-import { ARCHETYPE_QUESTIONS, ARCHETYPES, ThinkingArchetype, scoreArchetype } from '../../lib/thinkingArchetype';
+import { ARCHETYPE_QUESTIONS, ARCHETYPES, ThinkingArchetype, scoreArchetype } from '../../lib/ai/thinkingArchetype';
 import { supabase } from '../../lib/supabase';
 import { setRemoteFollow, uploadAvatar } from '../../lib/supabaseEchoApi';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { refreshAuthSession, useAuth, sendEmailOtp, verifyEmailOtp } from '../../lib/auth';
 import { useAppStore } from '../../store/useAppStore';
@@ -26,11 +26,11 @@ import { showToast } from '../../components/ui/Toast';
 import { track, identify } from '../../src/shared/lib/analytics';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
-import { WARM_AVATAR_COLORS } from '../../lib/avatarPalette';
+import { WARM_AVATAR_COLORS } from '../../lib/social/avatarPalette';
 import { MINIMUM_AGE, checkDateOfBirth, ageRejectionMessage } from '../../constants/legal/ageGate';
-import { APP_LANGUAGES } from '../../lib/languages';
+import { APP_LANGUAGES } from '../../lib/i18n/languages';
 import { ttx } from '../../src/shared/lib/i18n';
-import { personName } from '../../lib/personName';
+import { personName } from '../../lib/social/personName';
 
 const ACCENT = '#E06030';
 const SPRING = { damping: 24, stiffness: 300 };
@@ -42,7 +42,7 @@ const STEP = { EMAIL: 0, OTP: 1, NAME: 2, DOB: 3, AVATAR: 4, BIO: 5, INTERESTS: 
 const PANEL_COUNT = 10;
 const NUMBERED_STEPS = 9; // input steps 0..8; CONFIRM is the celebratory outro
 
-// Warm editorial identity palette — single source: lib/avatarPalette.ts.
+// Warm editorial identity palette — single source: lib/social/avatarPalette.ts.
 const AVATAR_COLORS = [...WARM_AVATAR_COLORS];
 
 const INTERESTS = [

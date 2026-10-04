@@ -62,7 +62,7 @@ Keep `backend/db/schema.sql` aligned when it is used as a reference schema.
 
 ## AI Changes
 
-AI changes can affect UX, cost, latency, and safety. For changes under `supabase/functions/echo-ai/`, `lib/api.ts`, `lib/aiMemory.ts`, or `backend/main.py`, include:
+AI changes can affect UX, cost, latency, and safety. For changes under `supabase/functions/echo-ai/`, `lib/ai/api.ts`, `lib/ai/aiMemory.ts`, or `backend/main.py`, include:
 
 - Model and provider behavior.
 - Streaming behavior and abort behavior.

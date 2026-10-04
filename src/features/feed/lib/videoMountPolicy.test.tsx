@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
 const tier = vi.hoisted(() => ({ value: 'mid' as 'high' | 'mid' | 'low' }));
-vi.mock('../../../../lib/deviceTier', () => ({
+vi.mock('../../../../lib/ui/deviceTier', () => ({
   getDeviceTier: () => tier.value,
 }));
 

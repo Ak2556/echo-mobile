@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/shared/lib/theme';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
-import { MOTION } from '../../lib/motion';
+import { MOTION } from '../../lib/ui/motion';
 import { ttx } from '../../src/shared/lib/i18n';
 
 interface Props {

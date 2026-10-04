@@ -22,7 +22,7 @@ vi.mock('../../store/useAppStore', () => ({
   },
 }));
 // tts pulls React Native; stub it so importing the dispatcher stays pure.
-vi.mock('../tts', () => ({ speakSequence: vi.fn(), speak: vi.fn(), stopSpeaking: vi.fn() }));
+vi.mock('../mini-apps/tts', () => ({ speakSequence: vi.fn(), speak: vi.fn(), stopSpeaking: vi.fn() }));
 
 import { dispatchVoiceIntent } from './dispatch';
 
@@ -234,7 +234,7 @@ describe('mini-app catalog covers every shipped route', () => {
   it('has an entry for each app/mini-apps/*.tsx screen', async () => {
     const { readdirSync } = await import('node:fs');
     const { join } = await import('node:path');
-    const { MINI_APP_CATALOG } = await import('../miniAppCatalog');
+    const { MINI_APP_CATALOG } = await import('../mini-apps/miniAppCatalog');
 
     const routes = readdirSync(join(process.cwd(), 'app/mini-apps'))
       .filter(f => f.endsWith('.tsx') && f !== '_layout.tsx')
@@ -250,7 +250,7 @@ describe('mini-app catalog covers every shipped route', () => {
   it('every catalog entry points at a screen that exists', async () => {
     const { existsSync } = await import('node:fs');
     const { join } = await import('node:path');
-    const { MINI_APP_CATALOG } = await import('../miniAppCatalog');
+    const { MINI_APP_CATALOG } = await import('../mini-apps/miniAppCatalog');
 
     const dangling = MINI_APP_CATALOG
       .map(a => String(a.route).replace('/mini-apps/', ''))
@@ -343,7 +343,7 @@ describe('voice reaches every screen', () => {
     const { readdirSync, statSync } = await import('node:fs');
     const { join } = await import('node:path');
     const { DESTINATIONS } = await import('./dispatch');
-    const { MINI_APP_CATALOG } = await import('../miniAppCatalog');
+    const { MINI_APP_CATALOG } = await import('../mini-apps/miniAppCatalog');
 
     const walk = (dir: string, base = ''): string[] =>
       readdirSync(join(process.cwd(), dir)).flatMap((f) => {
