@@ -7,18 +7,20 @@ export const DAILY_TITLES = [
   'Brain, meet today’s question',
   'Two minutes, one honest take',
   'Today’s question is a good one',
-  'Everyone’s answering — where you at?',
+  'The question is out. Your move.',
   'Warning: mildly provocative question inside',
   'Your daily excuse to have an opinion',
   'Quick — before you overthink it',
   'Plot twist: today’s question is about you',
   'Hot take incubator, now open',
   'Answer this before your coffee gets cold',
-  'The group chat is arguing. Join in.',
+  'Your opinion has been requested. No pressure, some pressure.',
   'Small question, big feelings',
   'Say something true. We dare you.',
   'Today’s question would like a word',
   'Opinions wanted. Yours specifically.',
+  'Bold of today’s question to assume you have no take.',
+  'Today’s question is here. Silence is also an answer, but a boring one.',
 ];
 
 export function pickTitle(random: () => number = Math.random): string {

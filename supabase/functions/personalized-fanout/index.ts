@@ -41,37 +41,38 @@ function pick<T>(arr: T[]): T {
 // health or therapy claims either (see the 2026-09-22 legal review).
 const SURFACE_COPY: Record<string, () => string> = {
   daily: () => pick([
-    "Today's question is up. What's your take?",
-    "Two minutes, one question, your honest answer.",
-    "Today's daily question is waiting. Answer, then see what everyone said.",
+    "Today's question is up. Having an opinion is free.",
+    "One question, two minutes, zero wrong answers. Several embarrassing ones.",
+    "Today's question is waiting. Answer first, overthink it afterwards.",
+    "A question appeared. You probably have a take. Let's hear it.",
   ]),
   dm: () => pick([
-    "Anyone you've been meaning to message? Now's a good time.",
-    "Your chats are one tap away.",
-    "Say hi to someone you haven't talked to in a while.",
+    "That person you keep meaning to text? Same app, one tap.",
+    "Your chats are right there. Thumbs are free.",
+    "Say hi to someone you haven't talked to in a while. A 'hey' counts.",
   ]),
   feed: () => pick([
-    "See what people have been posting on Echo.",
-    "Catch up on your feed.",
-    "Got a thought worth sharing? Post it.",
+    "People posted things. Some of it is even good.",
+    "Your feed exists. So does the post button.",
+    "Got a thought worth sharing? Post it before it escapes.",
   ]),
   chat: () => pick([
-    "Got a thought to untangle? Talk it through with Echo.",
-    "Stuck on something? Ask Echo.",
-    "Got a weird thought? Drop it in the chat.",
+    "Got a thought tangled up? Echo will sort it out without judging. Much.",
+    "Stuck on something? Ask Echo. It has no feelings to hurt.",
+    "Weird thought? Drop it in the chat. Echo has seen weirder, probably.",
   ]),
   tools: () => pick([
-    "A minute to move one thing forward. You got this.",
-    "Your tools are a tap away.",
-    "Tick one small thing off today.",
+    "One tiny thing, ticked off. That's the whole pitch.",
+    "Your tools are a tap away. They won't do it for you, but they're supportive.",
+    "Tick one small thing off today. We'll pretend it was big.",
   ]),
   marketplace: () => pick([
-    "Have something to sell? List it on Echo.",
-    "Browse the marketplace.",
+    "Got stuff you'll never use again? List it on Echo.",
+    "Browse the marketplace. Window shopping is free, allegedly.",
   ]),
   profile: () => pick([
-    "See how your posts are doing.",
-    "Check in on your profile and recent posts.",
+    "See how your posts are doing. No pressure, some pressure.",
+    "Check your profile and recent posts. Vanity, but productive.",
   ]),
 };
 

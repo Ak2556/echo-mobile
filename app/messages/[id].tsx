@@ -9,7 +9,8 @@ import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { clearActiveConversation, setActiveConversation } from '../../lib/notifications/activeChat';
 import { safeBack } from '../../lib/routing/safeBack';
 import { clientIdOfFailedDM } from '../../lib/social/dmLocalIds';
 import { speak, isTtsAvailable } from '../../lib/mini-apps/tts';
@@ -1879,6 +1880,14 @@ export default function DMScreen() {
 function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // While this thread is on screen its own DM pushes are redundant (the bubble
+  // is already there), so the notification handler drops them.
+  useFocusEffect(useCallback(() => {
+    if (!id) return undefined;
+    setActiveConversation(id);
+    return () => clearActiveConversation(id);
+  }, [id]));
 
   const {
     conversations, getDMs, sendDM, markConversationRead,
