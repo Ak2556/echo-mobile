@@ -7,10 +7,11 @@ import { QuotedEchoCard } from './QuotedEchoCard';
 import { tap } from '../../lib/ui/haptics';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { MediaGrid } from './MediaGrid';
 import { ZoomableImageViewer } from '../ui/ZoomableImageViewer';
 import { VideoPreview } from './VideoPreview';
+import { VideoTile } from './VideoTile';
 import { useQueryClient } from '@tanstack/react-query';
 import { LinkifiedText } from './LinkifiedText';
 import { ReactionBar } from './ReactionBar';
@@ -940,7 +941,12 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
             {!!item.prompt && (
               <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 3}>{item.prompt}</Text>
             )}
-            <VideoPreview uri={item.videoUri} height={compactFeed ? 180 : 260} borderRadius={radius.md} echoId={item.id} />
+            <VideoTile
+              height={compactFeed ? 180 : 260}
+              borderRadius={radius.md}
+              viewCount={item.viewCount}
+              onPress={() => router.push({ pathname: '/(tabs)/watch', params: { echoId: item.id } } as Href)}
+            />
           </View>
         )}
 

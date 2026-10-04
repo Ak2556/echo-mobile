@@ -201,7 +201,7 @@ export function useInfiniteFeed() {
       const followSet = new Set(followingIds);
 
       const filterHidden = (list: FeedItem[]) =>
-        list.filter(item => item.postType !== 'video' && !item.videoUri && !blockSet.has(item.userId) && !skipSet.has(item.id));
+        list.filter(item => !blockSet.has(item.userId) && !skipSet.has(item.id));
 
       if (remote) {
         // Remote pages are returned RAW here; block/mute/not-interested filtering
@@ -297,7 +297,7 @@ export function useInfiniteFeed() {
         ...data,
         pages: data.pages.map(page =>
           page.filter(item => {
-            if (item.postType === 'video' || !!item.videoUri) return false; // Isolate videos from home feed
+            // Video posts stay: a friend's clip belongs in the main feed as well as in Reverb.
             if (blockSet.has(item.userId) || skipSet.has(item.id)) return false;
             if (seen.has(item.id)) return false;
             seen.add(item.id);
