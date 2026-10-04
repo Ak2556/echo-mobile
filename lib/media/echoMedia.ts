@@ -20,6 +20,7 @@ const native: EchoMediaNative | null =
 
 export const canTrimVideo = (): boolean => native !== null;
 export const canSaveToGallery = (): boolean => native !== null;
+export const canReadFrames = (): boolean => native !== null;
 
 export async function trimVideo(uri: string, startMs: number, endMs: number): Promise<string> {
   if (!native) throw new Error('Video trimming is not available in this build');
