@@ -3,6 +3,9 @@ import { useEffect } from 'react';
 import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
 import { Appearance, AppState, Linking, LogBox, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '../lib/ui/theme';
+import { statusBarStyleFor } from '../lib/ui/appearance';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../lib/core/analytics';
@@ -158,6 +161,13 @@ function AppearanceSync() {
     try { Appearance.setColorScheme(appearance === 'system' ? null : appearance); } catch { /* unsupported (web) */ }
   }, [appearance]);
   return null;
+}
+
+// Follows the theme the app actually resolved (device, override and palette pair),
+// not the raw device setting, so the icons stay readable against the screen behind them.
+function ThemedStatusBar() {
+  const { colors } = useTheme();
+  return <StatusBar style={statusBarStyleFor(colors.isDark)} />;
 }
 
 function PushTokenRefresh() {
@@ -445,6 +455,7 @@ function RootLayout() {
             wherever the user lands, not only on the home route. */}
         <ServiceWorkerRegistrar />
         <AppearanceSync />
+        <ThemedStatusBar />
         <PushTokenRefresh />
         <MiniLinkDrain />
         <ShareIntentRouter />

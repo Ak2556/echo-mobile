@@ -23,6 +23,16 @@ export function resolveIsDark(mode: AppearanceMode, systemScheme: string | null 
 }
 
 /**
+ * Status bar icon colour for a resolved theme. The icons are drawn by the system,
+ * so they have to be told: 'light' means light icons (for a dark background). Left
+ * unset, Android kept them white, and on a light theme the clock, signal and battery
+ * disappeared into the background.
+ */
+export function statusBarStyleFor(isDark: boolean): 'light' | 'dark' {
+  return isDark ? 'light' : 'dark';
+}
+
+/**
  * Initial mode from what is on disk. `darkMode` used to be the only switch and
  * was only written when the person flipped it, so a stored value is a real
  * choice and is kept; no stored value means they never chose, so follow the

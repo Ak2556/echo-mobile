@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { initialAppearance, resolveIsDark } from './appearance';
+import { initialAppearance, resolveIsDark, statusBarStyleFor } from './appearance';
 
 describe('resolveIsDark', () => {
   it('follows the device in system mode', () => {
@@ -27,5 +27,12 @@ describe('initialAppearance', () => {
   it('prefers the new setting and ignores junk', () => {
     expect(initialAppearance('light', true)).toBe('light');
     expect(initialAppearance('purple', null)).toBe('system');
+  });
+});
+
+describe('statusBarStyleFor', () => {
+  it('uses light icons on a dark theme and dark icons on a light one', () => {
+    expect(statusBarStyleFor(true)).toBe('light');
+    expect(statusBarStyleFor(false)).toBe('dark');
   });
 });
