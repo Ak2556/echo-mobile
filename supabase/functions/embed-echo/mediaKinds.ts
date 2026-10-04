@@ -4,6 +4,21 @@
 // suite; the moderation module that uses it cannot be, since it reads
 // Deno.env at import.
 
+/** Containers Gemini reads that Echo's clients actually produce. */
+const MIME_BY_EXTENSION: Record<string, string> = {
+  mp4: "video/mp4",
+  m4v: "video/mp4",
+  mov: "video/quicktime",
+  webm: "video/webm",
+};
+
+/** MIME type for a video URL, or null when Gemini cannot read it (m3u8, mkv, unknown). */
+export function videoMimeType(url: string): string | null {
+  const m = /\.([a-z0-9]+)(?:[?#]|$)/i.exec(url);
+  if (!m) return null;
+  return MIME_BY_EXTENSION[m[1].toLowerCase()] ?? null;
+}
+
 /** Extensions the vision model accepts as an image_url part. */
 const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|bmp|heic|heif)(\?|#|$)/i;
 
@@ -11,9 +26,11 @@ const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|bmp|heic|heif)(\?|#|$)/i;
 const VIDEO_EXTENSIONS = /\.(mp4|mov|m4v|webm|avi|mkv|m3u8)(\?|#|$)/i;
 
 export interface MediaSplit {
-  /** URLs to send to the classifier. */
+  /** URLs to send to the image classifier. */
   images: string[];
-  /** Video and anything unrecognised — recorded, not classified. */
+  /** Video files a video-capable model can read (see videoMimeType). */
+  videos: string[];
+  /** Everything else (HLS manifests, unrecognised files) — recorded, not classified. */
   unchecked: string[];
 }
 
@@ -25,6 +42,7 @@ export interface MediaSplit {
  */
 export function splitMediaForModeration(urls: readonly (string | null | undefined)[] | null | undefined): MediaSplit {
   const images: string[] = [];
+  const videos: string[] = [];
   const unchecked: string[] = [];
 
   for (const url of urls ?? []) {
@@ -38,6 +56,7 @@ export function splitMediaForModeration(urls: readonly (string | null | undefine
       continue;
     }
     if (IMAGE_EXTENSIONS.test(trimmed)) images.push(trimmed);
+    else if (videoMimeType(trimmed)) videos.push(trimmed);
     else if (VIDEO_EXTENSIONS.test(trimmed)) unchecked.push(trimmed);
     // An extensionless URL could be either. Treat it as unchecked rather than
     // guessing: a wrong guess here either fails the whole gate or waves the
@@ -45,5 +64,5 @@ export function splitMediaForModeration(urls: readonly (string | null | undefine
     else unchecked.push(trimmed);
   }
 
-  return { images, unchecked };
+  return { images, videos, unchecked };
 }
