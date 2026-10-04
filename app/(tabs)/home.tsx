@@ -584,15 +584,13 @@ export default function DiscoverScreen() {
     scroll: (dir) => { try { listRef.current?.scrollToOffset?.({ offset: dir === 'up' ? 0 : 100000, animated: true }); } catch { /* ignore */ } },
   });
 
-  // Tablet/desktop: the feed becomes a two-column masonry inside a wider
-  // centred container; the header shares that same width so it aligns.
-  // iPad shows a single-column feed — one card at a time — instead of a
-  // 2-column masonry. The column is capped at a balanced reading width and
-  // centered so cards keep a natural height-to-width ratio rather than
-  // stretching edge to edge. Masonry stays only for wide desktop web; the
-  // header shares the same width so everything aligns.
-  const useMasonry = layout.isDesktop;
-  const feedMaxWidth = layout.isDesktop ? layout.wideMaxWidth : layout.contentMaxWidth;
+  // Desktop web and iPad in landscape: two-column masonry inside a wider centred
+  // container. Phone and iPad portrait: one column capped at a reading width,
+  // centred so cards never stretch edge to edge. The header shares the feed's
+  // width so everything aligns.
+  const tabletLandscape = layout.isTablet && layout.width > layout.height;
+  const useMasonry = layout.isDesktop || tabletLandscape;
+  const feedMaxWidth = useMasonry ? layout.wideMaxWidth : layout.contentMaxWidth;
   const feedContainerStyle = {
     width: '100%' as const,
     maxWidth: feedMaxWidth,

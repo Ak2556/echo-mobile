@@ -8,10 +8,23 @@ const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
 // every card stretched edge to edge. contentMaxWidth is the window on phone and
 // the capped reading column on tablet.
 describe('tablet feed width', () => {
-  it.each(['app/(tabs)/home.tsx', 'app/(tabs)/watch.tsx'])('%s caps the feed on tablet', (file) => {
-    const src = read(file);
+  it('watch caps the feed on tablet', () => {
+    const src = read('app/(tabs)/watch.tsx');
     expect(src).toMatch(/const feedMaxWidth = layout\.isDesktop \? layout\.wideMaxWidth : layout\.contentMaxWidth;/);
     expect(src).not.toMatch(/feedMaxWidth = [^;]*layout\.width/);
+  });
+
+  it('home is one capped column in portrait and two columns in tablet landscape', () => {
+    const src = read('app/(tabs)/home.tsx');
+    expect(src).toMatch(/const useMasonry = layout\.isDesktop \|\| tabletLandscape;/);
+    expect(src).toMatch(/const feedMaxWidth = useMasonry \? layout\.wideMaxWidth : layout\.contentMaxWidth;/);
+    expect(src).not.toMatch(/feedMaxWidth = [^;]*layout\.width/);
+  });
+
+  it('off phone, the compact card divider is inset to the content edge', () => {
+    const src = read('components/feed/FeedCard.tsx');
+    expect(src).toMatch(/marginHorizontal: layout\.isPhone \? 0 : cardMargin/);
+    expect(src).toMatch(/compactFeed \? \(layout\.isPhone \? cardMargin : 0\) : 18/);
   });
 
   it('the tab bar row is capped and centred', () => {
