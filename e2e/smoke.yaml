@@ -45,7 +45,7 @@ appId: com.downloadecho.echo
     timeout: 15000
 - takeScreenshot: e2e/shots/home
 
-- tapOn: "Clips"
+- tapOn: "Reverb"
 - extendedWaitUntil:
     visible: "Share"
     timeout: 20000

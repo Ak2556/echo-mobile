@@ -10,7 +10,7 @@ const RULES = [
   // ── navigation ────────────────────────────────────────────────────────────
   { any: ['home', 'होम', 'ghar'], intent: 'navigate', args: { destination: 'home' }, reply: 'Home' },
   { any: ['explore', 'search', 'खोज', 'ढूंढ'], intent: 'navigate', args: { destination: 'explore' }, reply: 'Explore' },
-  { any: ['clips', 'clip', 'flow', 'reels', 'videos', 'video', 'वीडियो'], intent: 'navigate', args: { destination: 'watch' }, reply: 'Clips' },
+  { any: ['reverb', 'clips', 'clip', 'flow', 'reels', 'videos', 'video', 'वीडियो'], intent: 'navigate', args: { destination: 'watch' }, reply: 'Reverb' },
   { any: ['chat', 'assistant', 'चैट'], intent: 'navigate', args: { destination: 'chat' }, reply: 'Chat' },
   { any: ['tools', 'apps', 'टूल'], intent: 'navigate', args: { destination: 'apps' }, reply: 'Tools' },
   { any: ['profile', 'my profile', 'प्रोफाइल'], intent: 'navigate', args: { destination: 'you' }, reply: 'Profile' },
@@ -73,7 +73,7 @@ const DESTINATIONS = {
   tools: '/(tabs)/apps', apps: '/(tabs)/apps',
   // The Flow tab. lib/voice/localIntent.ts already emits destination 'watch'
   // for "video"/"flow", and without these keys that fast path dead-ended.
-  watch: '/(tabs)/watch', clips: '/(tabs)/watch', clip: '/(tabs)/watch', flow: '/(tabs)/watch', video: '/(tabs)/watch', videos: '/(tabs)/watch', reels: '/(tabs)/watch',
+  watch: '/(tabs)/watch', reverb: '/(tabs)/watch', clips: '/(tabs)/watch', clip: '/(tabs)/watch', flow: '/(tabs)/watch', video: '/(tabs)/watch', videos: '/(tabs)/watch', reels: '/(tabs)/watch',
   verify: '/get-verified', verification: '/get-verified', verified: '/get-verified',
   badges: '/badges', quests: '/quests',
   salons: '/salons',
