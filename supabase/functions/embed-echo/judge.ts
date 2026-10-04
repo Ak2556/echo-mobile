@@ -13,11 +13,17 @@
 // and pending, and the caller retries.
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { moderateContent, moderateImages } from "./moderation.ts";
+import { moderateContent, moderateImages, moderateVideos } from "./moderation.ts";
+import { videoModerationEnabled } from "./videoModeration.ts";
 import { splitMediaForModeration } from "./mediaKinds.ts";
 import { guardedFetch } from "../_shared/breaker.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
+
+// Most videos one post may carry through the video gate. The composer attaches
+// one; more than this can only come from a hand-built request, and is hidden
+// rather than waved through.
+const MAX_VIDEOS_PER_POST = 3;
 
 // Embeddings are routed through OpenRouter (same key as chat + moderation) so
 // the deployment needs only OPENROUTER_API_KEY. gemini-embedding-001 supports
@@ -151,7 +157,9 @@ export async function judgeEcho(db: SupabaseClient<any, any, any>, echoId: strin
   //
   // Only run it when the text passed: a post already destined to stay hidden
   // does not need a second billed call.
-  const { images, unchecked } = splitMediaForModeration(echoRow.media_urls);
+  const split = splitMediaForModeration(echoRow.media_urls);
+  const { images } = split;
+  let unchecked = split.unchecked;
   if (verdict.ok && images.length > 0) {
     let imageVerdict = await moderateImages(images);
     for (let attempt = 0; attempt < opts.inlineRetries && unavailable(imageVerdict); attempt++) {
@@ -166,11 +174,34 @@ export async function judgeEcho(db: SupabaseClient<any, any, any>, echoId: strin
       ? verdict
       : { ok: false, categories: imageVerdict.categories.map((c) => `image:${c}`) };
   }
+
+  // Video goes to Gemini's native video input, behind VIDEO_MODERATION=on so a
+  // deploy cannot hold every video post pending before the path has been
+  // tried against a real clip. Read per call: a changed secret applies on the
+  // next invocation. Off, videos are recorded as unchecked, as they always were.
+  if (videoModerationEnabled(Deno.env.get("VIDEO_MODERATION"))) {
+    if (verdict.ok && split.videos.length > MAX_VIDEOS_PER_POST) {
+      verdict = { ok: false, categories: ["video:too_many"] };
+    } else if (verdict.ok && split.videos.length > 0) {
+      // No inline retries: a video call is heavy, and the worker queue already
+      // retries a post left pending with backoff.
+      const videoVerdict = await moderateVideos(split.videos);
+      if (unavailable(videoVerdict)) {
+        console.error(`[embed-echo] video moderation unavailable for ${echoId}; leaving pending:`, videoVerdict.error);
+        return { kind: "unavailable" };
+      }
+      verdict = videoVerdict.ok
+        ? verdict
+        : { ok: false, categories: videoVerdict.categories.map((c) => `video:${c}`) };
+    }
+  } else {
+    unchecked = [...unchecked, ...split.videos];
+  }
   if (unchecked.length > 0) {
-    // Video is the case this covers. A still-image model cannot read an mp4 or
-    // an HLS manifest, and no frame is extracted anywhere in the pipeline yet,
-    // so these reach the feed on the strength of their text alone. Logged so
-    // the gap is visible in function logs rather than implied by silence.
+    // HLS manifests and unrecognised files, plus video while VIDEO_MODERATION
+    // is off: a still-image model cannot read them, so they reach the feed on
+    // the strength of their text alone. Logged so the gap is visible in
+    // function logs rather than implied by silence.
     console.warn(`[embed-echo] ${unchecked.length} media item(s) on ${echoId} not visually checked`);
   }
 

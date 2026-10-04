@@ -3,25 +3,28 @@ import { splitMediaForModeration } from '../supabase/functions/embed-echo/mediaK
 
 describe('splitMediaForModeration', () => {
   it('picks out the images a classifier can read', () => {
-    const { images, unchecked } = splitMediaForModeration([
+    const { images, videos, unchecked } = splitMediaForModeration([
       'https://echo-mobile.at3236129.workers.dev/media/echo-media/u/1787481978729_0.jpg',
       'https://eyokhisijabitzjiydmz.supabase.co/storage/v1/object/public/echo-media/u/photo.PNG',
       'https://cdn.example.com/a.webp?width=800',
     ]);
 
     expect(images).toHaveLength(3);
+    expect(videos).toEqual([]);
     expect(unchecked).toEqual([]);
   });
 
   it('sets video aside instead of sending it to an image model', () => {
-    const { images, unchecked } = splitMediaForModeration([
+    const { images, videos, unchecked } = splitMediaForModeration([
       'https://eyokhisijabitzjiydmz.supabase.co/storage/v1/object/public/echo-media/u/1777626068410_video.mp4',
       'https://echo-mobile.at3236129.workers.dev/media/echo-media/u/clip.m3u8',
       'https://echo-mobile.at3236129.workers.dev/media/echo-media/u/cover.jpg',
     ]);
 
     expect(images).toEqual(['https://echo-mobile.at3236129.workers.dev/media/echo-media/u/cover.jpg']);
-    expect(unchecked).toHaveLength(2);
+    // An mp4 goes to the video gate; an HLS manifest is not something Gemini reads.
+    expect(videos).toEqual(['https://eyokhisijabitzjiydmz.supabase.co/storage/v1/object/public/echo-media/u/1777626068410_video.mp4']);
+    expect(unchecked).toEqual(['https://echo-mobile.at3236129.workers.dev/media/echo-media/u/clip.m3u8']);
   });
 
   it('treats an extensionless URL as unchecked rather than guessing', () => {
@@ -42,8 +45,8 @@ describe('splitMediaForModeration', () => {
   });
 
   it('shrugs off empty and malformed input', () => {
-    expect(splitMediaForModeration(null)).toEqual({ images: [], unchecked: [] });
-    expect(splitMediaForModeration(undefined)).toEqual({ images: [], unchecked: [] });
-    expect(splitMediaForModeration([null, undefined, '', '   '])).toEqual({ images: [], unchecked: [] });
+    expect(splitMediaForModeration(null)).toEqual({ images: [], videos: [], unchecked: [] });
+    expect(splitMediaForModeration(undefined)).toEqual({ images: [], videos: [], unchecked: [] });
+    expect(splitMediaForModeration([null, undefined, '', '   '])).toEqual({ images: [], videos: [], unchecked: [] });
   });
 });

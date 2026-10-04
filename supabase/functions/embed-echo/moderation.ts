@@ -18,8 +18,19 @@
 // Keys (GEMINI_API_KEY, OPENROUTER_API_KEY) live in Supabase Edge Function
 // Secrets — never shipped in the mobile bundle.
 
-import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
+import { chatCompletion, geminiModelId, hasChatProvider } from "../_shared/aiChat.ts";
 import { guardedFetch } from "../_shared/breaker.ts";
+import { videoMimeType } from "./mediaKinds.ts";
+import { parseVerdict } from "./verdict.ts";
+import {
+  blockReason,
+  extractGeminiText,
+  fileRequestBody,
+  inlineRequestBody,
+  toBase64,
+  videoRoute,
+  MAX_VIDEO_BYTES,
+} from "./videoModeration.ts";
 
 export interface ModerationResult {
   /** True when the content is safe to publish. */
@@ -123,28 +134,6 @@ export async function moderateContent(text: string): Promise<ModerationResult> {
   }
 }
 
-/**
- * Parse the classifier's JSON verdict defensively. Models sometimes wrap JSON
- * in markdown fences or add stray text, so we extract the first {...} block.
- * Returns null when no valid verdict can be recovered (caller fails open).
- */
-function parseVerdict(content: string): { flagged: boolean; categories: string[] } | null {
-  if (!content) return null;
-  const start = content.indexOf("{");
-  const end = content.lastIndexOf("}");
-  if (start === -1 || end === -1 || end < start) return null;
-  try {
-    const obj = JSON.parse(content.slice(start, end + 1));
-    const flagged = obj?.flagged === true;
-    const categories = Array.isArray(obj?.categories)
-      ? obj.categories.filter((c: unknown): c is string => typeof c === "string")
-      : [];
-    return { flagged, categories };
-  } catch {
-    return null;
-  }
-}
-
 const VISION_SYSTEM_PROMPT =
   "You are a strict but fair content-moderation classifier for a public social " +
   "feed. Decide whether the attached image(s) are safe to publish. Flag only if " +
@@ -229,3 +218,164 @@ export async function moderateImages(urls: string[]): Promise<ModerationResult> 
     clearTimeout(timer);
   }
 }
+
+// ── Video ───────────────────────────────────────────────────────────────────
+
+const GEMINI_API = "https://generativelanguage.googleapis.com";
+// Native Gemini id (no "google/" prefix): this call bypasses OpenRouter.
+const VIDEO_MODEL = geminiModelId(Deno.env.get("MODERATION_VIDEO_MODEL") ?? "gemini-2.5-flash-lite");
+// Fetching, uploading, waiting for the file to process and generating all have
+// to fit in one worker invocation.
+const VIDEO_TIMEOUT_MS = 100_000;
+const FILE_POLL_INTERVAL_MS = 2_000;
+const FILE_POLL_MAX_MS = 60_000;
+
+const VIDEO_SYSTEM_PROMPT =
+  "You are a strict but fair content-moderation classifier for a public social " +
+  "feed. Decide whether the attached video, including its audio and any spoken " +
+  "words, is safe to publish. Flag only if it clearly falls into one of these " +
+  "categories: " +
+  CATEGORIES.join(", ") +
+  ". Ordinary footage, sport, dance, swimwear, medical or educational content, " +
+  "news, and edgy-but-legal content are NOT violations. Sexual content involving " +
+  "anyone who appears to be a minor must always be flagged as sexual/minors. " +
+  'Respond with ONLY a compact JSON object of the form {"flagged": boolean, ' +
+  '"categories": string[]}. Output no prose.';
+
+const unavailableResult = (error: string): ModerationResult => ({
+  ok: false,
+  categories: ["moderation_unavailable"],
+  error,
+});
+
+/** Upload bytes through the resumable Files API; resolves once the file is ACTIVE. */
+async function uploadToGeminiFiles(
+  apiKey: string,
+  bytes: Uint8Array<ArrayBuffer>,
+  mimeType: string,
+  signal: AbortSignal,
+): Promise<{ name: string; uri: string }> {
+  const start = await fetch(`${GEMINI_API}/upload/v1beta/files`, {
+    method: "POST",
+    headers: {
+      "x-goog-api-key": apiKey,
+      "X-Goog-Upload-Protocol": "resumable",
+      "X-Goog-Upload-Command": "start",
+      "X-Goog-Upload-Header-Content-Length": String(bytes.length),
+      "X-Goog-Upload-Header-Content-Type": mimeType,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ file: { display_name: "echo-moderation" } }),
+    signal,
+  });
+  if (!start.ok) throw new Error(`files start http ${start.status}`);
+  const uploadUrl = start.headers.get("x-goog-upload-url");
+  if (!uploadUrl) throw new Error("files start: no upload url");
+
+  const put = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      "Content-Length": String(bytes.length),
+      "X-Goog-Upload-Offset": "0",
+      "X-Goog-Upload-Command": "upload, finalize",
+    },
+    body: bytes,
+    signal,
+  });
+  if (!put.ok) throw new Error(`files upload http ${put.status}`);
+  let file = (await put.json())?.file;
+  if (!file?.name || !file?.uri) throw new Error("files upload: unexpected response");
+
+  const deadline = Date.now() + FILE_POLL_MAX_MS;
+  while (file.state !== "ACTIVE") {
+    if (file.state === "FAILED") throw new Error("files: processing failed");
+    if (Date.now() > deadline) throw new Error("files: timed out waiting for ACTIVE");
+    await new Promise((r) => setTimeout(r, FILE_POLL_INTERVAL_MS));
+    const poll = await fetch(`${GEMINI_API}/v1beta/${file.name}`, {
+      headers: { "x-goog-api-key": apiKey },
+      signal,
+    });
+    if (!poll.ok) throw new Error(`files poll http ${poll.status}`);
+    file = await poll.json();
+  }
+  return { name: file.name, uri: file.uri };
+}
+
+async function moderateOneVideo(url: string, apiKey: string, signal: AbortSignal): Promise<ModerationResult> {
+  const mimeType = videoMimeType(url);
+  if (!mimeType) return unavailableResult("video: unsupported container");
+
+  const res = await fetch(url, { signal });
+  if (!res.ok) return unavailableResult(`video fetch http ${res.status}`);
+  const declared = Number(res.headers.get("content-length") ?? 0);
+  // Refuse before reading a body that cannot be legitimate. The bucket caps
+  // uploads, so an oversized file is hidden, not retried.
+  if (declared > MAX_VIDEO_BYTES) return { ok: false, categories: ["video_too_large"] };
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  const route = videoRoute(bytes.length);
+  if (route === "too_large") return { ok: false, categories: ["video_too_large"] };
+
+  let uploaded: { name: string; uri: string } | null = null;
+  try {
+    let requestBody;
+    if (route === "inline") {
+      requestBody = inlineRequestBody({ systemPrompt: VIDEO_SYSTEM_PROMPT, mimeType, base64: toBase64(bytes) });
+    } else {
+      uploaded = await uploadToGeminiFiles(apiKey, bytes, mimeType, signal);
+      requestBody = fileRequestBody({ systemPrompt: VIDEO_SYSTEM_PROMPT, mimeType, fileUri: uploaded.uri });
+    }
+
+    const gen = await guardedFetch("gemini", `${GEMINI_API}/v1beta/models/${VIDEO_MODEL}:generateContent`, {
+      method: "POST",
+      headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+      signal,
+    });
+    if (!gen.ok) return unavailableResult(`video generate http ${gen.status}`);
+
+    const json = await gen.json();
+    // A video the model refuses to look at is blocked, not clean.
+    const blocked = blockReason(json);
+    if (blocked) return { ok: false, categories: [`blocked:${blocked}`] };
+
+    const verdict = parseVerdict(extractGeminiText(json));
+    if (!verdict) return unavailableResult("video: unparseable verdict");
+    return verdict.flagged ? { ok: false, categories: verdict.categories } : { ok: true, categories: [] };
+  } finally {
+    if (uploaded) {
+      // Best effort: uploads expire on their own after 48 hours.
+      fetch(`${GEMINI_API}/v1beta/${uploaded.name}`, { method: "DELETE", headers: { "x-goog-api-key": apiKey } })
+        .catch(() => {});
+    }
+  }
+}
+
+/**
+ * Classify uploaded videos with Gemini's native video input.
+ *
+ * Same contract and failure semantics as moderateImages: ok=false with
+ * "moderation_unavailable" means no verdict was reached, which the caller
+ * treats as "leave pending and retry"; any other ok=false hides the post.
+ * The first flagged video decides; every video must pass for ok=true.
+ */
+export async function moderateVideos(urls: string[]): Promise<ModerationResult> {
+  if (urls.length === 0) return { ok: true, categories: [] };
+
+  const apiKey = Deno.env.get("GEMINI_API_KEY");
+  if (!apiKey) return unavailableResult("GEMINI_API_KEY unset (video moderation needs Gemini directly)");
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), VIDEO_TIMEOUT_MS);
+  try {
+    for (const url of urls) {
+      const result = await moderateOneVideo(url, apiKey, controller.signal);
+      if (!result.ok) return result;
+    }
+    return { ok: true, categories: [] };
+  } catch (e) {
+    return unavailableResult(e instanceof Error ? e.message : String(e));
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
