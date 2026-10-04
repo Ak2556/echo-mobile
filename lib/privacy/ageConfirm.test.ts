@@ -48,4 +48,18 @@ describe('the gate is wired', () => {
     expect(gate).toMatch(/onRequestClose=\{\(\) => \{\}\}/);
     expect(gate).not.toMatch(/Remind me later|Skip/);
   });
+
+  it('does not mistake a missing session for "no date of birth on file"', () => {
+    const api = readFileSync('lib/supabaseEchoApi.ts', 'utf8');
+    const fn = api.slice(api.indexOf('export async function fetchMyAgeYears'), api.indexOf('export async function saveMyDateOfBirth'));
+    expect(fn).toMatch(/if \(!uid\) throw new Error\(NOT_SIGNED_IN\)/);
+    expect(fn).not.toMatch(/if \(!uid\) return null/);
+  });
+
+  it('tells the user when the session is gone instead of blaming the connection', () => {
+    const gate = readFileSync('components/onboarding/AgeConfirmGate.tsx', 'utf8');
+    expect(gate).toMatch(/NOT_SIGNED_IN/);
+    expect(gate).toMatch(/Your session ended/);
+    expect(gate).toMatch(/captureException\(e/);
+  });
 });
