@@ -126,3 +126,47 @@ export function tapRouteFromPush(data: unknown): TapRoute | null {
   const input = inputFromPush(data);
   return input ? tapRoute(input) : null;
 }
+
+/**
+ * "X just posted" is the one kind whose destination depends on what was posted:
+ * a video belongs in Flow, where it plays full screen, and the thread screen is
+ * the wrong place to land. The notification carries no post type, so the caller
+ * asks (isVideo) at tap time. Every other kind keeps its thread.
+ */
+const FLOW_WHEN_VIDEO = new Set<string>(['friend_post']);
+
+/** Flow, opened on this echo first. */
+export function flowRoute(echoId: unknown): TapRoute | null {
+  const id = safeRouteId(echoId);
+  return id ? { pathname: '/(tabs)/watch', params: { echoId: id } } : null;
+}
+
+/** How long a tap waits to learn whether the post is a video before settling for the thread. */
+export const VIDEO_CHECK_TIMEOUT_MS = 2500;
+
+/**
+ * Where a tap goes once the post type is known. Never throws and never waits
+ * long: a slow or failed lookup lands on the thread, which is where the tap used
+ * to go anyway.
+ */
+export async function resolveTapRoute(
+  input: TapInput,
+  isVideo: (echoId: string) => Promise<boolean>,
+  timeoutMs: number = VIDEO_CHECK_TIMEOUT_MS,
+): Promise<TapRoute> {
+  const base = tapRouteOrInbox(input);
+  if (!FLOW_WHEN_VIDEO.has(input.kind)) return base;
+  const flow = flowRoute(input.targetId);
+  if (!flow) return base;
+  const id = safeRouteId(input.targetId)!;
+  try {
+    const video = await Promise.race([
+      isVideo(id),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), timeoutMs)),
+    ]);
+    return video ? flow : base;
+  } catch {
+    return base;
+  }
+}
+

@@ -41,7 +41,8 @@ import { usePresenceTracking } from '../lib/social/presence';
 import { persistGet, persistSet, persistDelete, storageHydrate } from '../store/persist';
 import { parseEchoUniversalLink } from '../lib/routing/urlSafety';
 import { handleNotificationReply } from '../lib/notifications/handleReplyResponse';
-import { INBOX, inputFromPush, tapRouteOrInbox } from '../lib/notifications/tapTarget';
+import { INBOX, inputFromPush, resolveTapRoute } from '../lib/notifications/tapTarget';
+import { echoIsVideo } from '../lib/notifications/echoIsVideo';
 import { initNotificationSurface, registerPushAndStoreToken } from '../lib/notifications/push';
 import { PomodoroRuntimeHost } from '../lib/mini-apps/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
@@ -385,14 +386,17 @@ function RootLayout() {
     if (!pushNavKey) return;
 
     let cancelled = false;
-    const open = (data: Record<string, unknown> | null | undefined) => {
+    const open = async (data: Record<string, unknown> | null | undefined) => {
       const input = inputFromPush(data);
       if (!input) return;
       if (input.kind === 'personal_nudge') {
         // The tap is our on-device "opened" signal: it resets nudge back-off.
         noteNudgeOpened();
       }
-      const target = tapRouteOrInbox(input);
+      // A new video from a friend opens in Flow, not on its thread; that needs one
+      // quick lookup of the post type, bounded so a slow network cannot hold the tap.
+      const target = await resolveTapRoute(input, echoIsVideo);
+      if (cancelled) return;
       // routed:false means the push named a kind or id with no screen of its own and
       // the person went to the inbox instead. Worth knowing when it climbs.
       track('notification_tapped', { kind: input.kind, routed: target !== INBOX });
@@ -402,7 +406,7 @@ function RootLayout() {
     if (authStatus === 'ready' && pendingPushTap) {
       const held = pendingPushTap;
       pendingPushTap = null;
-      open(held);
+      void open(held);
     }
 
     // A reply typed in the shade is not a tap: it must send, not just navigate.
@@ -417,7 +421,7 @@ function RootLayout() {
       lastHandledPushTap = key;
       const data = response.notification.request.content.data as Record<string, unknown>;
       if (handleNotificationReply(response.actionIdentifier, response.userText, data)) return;
-      if (authStatus === 'ready') open(data);
+      if (authStatus === 'ready') void open(data);
       else pendingPushTap = data;
     };
 

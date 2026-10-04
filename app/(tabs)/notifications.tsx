@@ -12,7 +12,8 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { destinationFor, summaryTextFor } from '../../lib/notifications/presentation';
-import { tapRoute } from '../../lib/notifications/tapTarget';
+import { resolveTapRoute, tapRoute } from '../../lib/notifications/tapTarget';
+import { echoIsVideo } from '../../lib/notifications/echoIsVideo';
 import { NOTIFICATION_FILTERS, matchesFilter, type NotificationFilter } from '../../lib/notifications/filters';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -257,8 +258,10 @@ export default function NotificationsScreen() {
     // cannot disagree about where a kind goes. A nudge or an urgent report has no
     // screen of its own: tapping its row in the inbox stays in the inbox.
     if (destinationFor(n.type) === 'none') return;
-    const route = tapRoute({ kind: n.type, targetId: n.targetId, actorId: n.fromUserId });
-    if (route) router.push(route as Href);
+    const input = { kind: n.type, targetId: n.targetId, actorId: n.fromUserId };
+    if (!tapRoute(input)) return;
+    // A friend's new video opens in Flow rather than on its thread.
+    void resolveTapRoute(input, echoIsVideo).then((route) => router.push(route as Href));
   };
 
   return (
