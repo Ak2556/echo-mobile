@@ -7,11 +7,42 @@ import { ImageSquare, VideoCamera, SlidersHorizontal } from 'phosphor-react-nati
 import { useTheme } from '../../lib/ui/theme';
 import { PhotoEditor } from '../../components/feed/PhotoEditor';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { VideoTrimmer } from '../../components/mini-apps/VideoTrimmer';
+import { showToast } from '../../components/ui/Toast';
+import { canSaveToGallery, canTrimVideo, mediaErrorMessage, saveToGallery } from '../../lib/media/echoMedia';
 
 export default function EditorApp() {
   const { colors, radius, font } = useTheme();
   const [editingPhotoUri, setEditingPhotoUri] = useState<string | null>(null);
-  
+  const [trimmingVideoUri, setTrimmingVideoUri] = useState<string | null>(null);
+
+  // What happens to a finished edit. Where the build can write to the gallery
+  // (Android with the EchoMedia module) it offers Save and Share; everywhere
+  // else it goes straight to the share sheet, which on iOS has Save built in.
+  const deliver = async (uri: string, mimeType: string, label: string) => {
+    const canShare = await Sharing.isAvailableAsync();
+    if (!canSaveToGallery()) {
+      if (canShare) await Sharing.shareAsync(uri);
+      else Alert.alert(label, 'Your edits are done, but sharing is not available on this device.');
+      return;
+    }
+    Alert.alert(label, 'Your edit is ready.', [
+      {
+        text: 'Save to gallery',
+        onPress: async () => {
+          try {
+            await saveToGallery(uri, mimeType);
+            showToast('Saved to your gallery', 'Editor');
+          } catch (e) {
+            Alert.alert('Could not save', mediaErrorMessage(e));
+          }
+        },
+      },
+      ...(canShare ? [{ text: 'Share', onPress: () => { void Sharing.shareAsync(uri); } }] : []),
+      { text: 'Done', style: 'cancel' as const },
+    ]);
+  };
+
   const pickAndEditPhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -33,19 +64,18 @@ export default function EditorApp() {
       Alert.alert('Permission needed', 'Gallery access is required.');
       return;
     }
+    // Android's picker has no trim step (allowsEditing only exists on iOS), so
+    // where the EchoMedia module is present Echo trims in its own screen.
+    const ownTrimmer = canTrimVideo();
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['videos'],
-      allowsEditing: true, // Native video editor!
+      allowsEditing: !ownTrimmer,
       videoQuality: ImagePicker.UIImagePickerControllerQualityType.High,
     });
     if (!result.canceled && result.assets[0]) {
       const uri = result.assets[0].uri;
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(uri);
-      } else {
-        Alert.alert('Video Trimmed', 'Your video was processed but sharing is not available on this device.');
-      }
+      if (ownTrimmer) setTrimmingVideoUri(uri);
+      else await deliver(uri, 'video/mp4', 'Video ready');
     }
   };
 
@@ -89,12 +119,18 @@ export default function EditorApp() {
         onCancel={() => setEditingPhotoUri(null)}
         onDone={async (uri) => {
           setEditingPhotoUri(null);
-          const canShare = await Sharing.isAvailableAsync();
-          if (canShare && uri) {
-            await Sharing.shareAsync(uri);
-          } else {
-            Alert.alert('Photo Edit Complete', 'Your edits have been baked successfully.');
-          }
+          if (!uri) return;
+          await deliver(uri, /\.png($|\?)/i.test(uri) ? 'image/png' : 'image/jpeg', 'Photo ready');
+        }}
+      />
+
+      <VideoTrimmer
+        visible={!!trimmingVideoUri}
+        uri={trimmingVideoUri || ''}
+        onCancel={() => setTrimmingVideoUri(null)}
+        onDone={async (uri) => {
+          setTrimmingVideoUri(null);
+          await deliver(uri, 'video/mp4', 'Video ready');
         }}
       />
     </MiniAppShell>
