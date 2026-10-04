@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { statusForProfile } from './onboardingStatus';
+import { readFileSync } from 'node:fs';
+import { resumableStatus, statusForProfile } from './onboardingStatus';
 import type { AuthProfile } from './types';
 
 const profile = (over: Partial<AuthProfile> = {}): AuthProfile => ({
@@ -43,5 +44,28 @@ describe('statusForProfile', () => {
     // wizard would let step 3 overwrite the display name and username of an
     // established account over a dropped request.
     expect(statusForProfile(null)).toBe('ready');
+  });
+});
+
+describe('resumableStatus', () => {
+  it('lets the user the server confirmed as onboarded in before the profile returns', () => {
+    expect(resumableStatus('u1', 'u1')).toBe('ready');
+  });
+
+  it('asks the server for anyone else', () => {
+    expect(resumableStatus('', 'u1')).toBeNull();
+    expect(resumableStatus(null, 'u1')).toBeNull();
+    expect(resumableStatus('u2', 'u1')).toBeNull();
+    expect(resumableStatus('u1', undefined)).toBeNull();
+  });
+
+  it('is wired: set from a real profile only, used before the fetch, cleared on sign-out', () => {
+    const src = readFileSync('lib/auth/listener.ts', 'utf8');
+    const early = src.indexOf('resumableStatus(');
+    const fetched = src.indexOf('await fetchProfile(session.user.id)');
+    expect(early).toBeGreaterThan(-1);
+    expect(early).toBeLessThan(fetched);
+    expect(src).toMatch(/if \(profile && status === 'ready'\) persistSet\(ONBOARDED_USER_KEY, session\.user\.id\)/);
+    expect(src).toMatch(/persistSet\(ONBOARDED_USER_KEY, ''\)/);
   });
 });
