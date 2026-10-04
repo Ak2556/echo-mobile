@@ -7,6 +7,7 @@ import { probePlayerCreated, probePlayerReleased, probeTrace } from '../../lib/m
 import { useVideoMountPolicy } from '../../lib/feed/videoMountPolicy';
 import { FIRST_FRAME_GRACE_MS, useFirstFrameWatchdog } from '../../lib/feed/firstFrameWatchdog';
 import { videoSourceForUri } from '../../lib/media/videoMedia';
+import { videoFallbackHtml } from '../../lib/media/videoHtml';
 import { useAppStore } from '../../store/useAppStore';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
 import { ttx } from '../../lib/i18n/i18n';
@@ -293,21 +294,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
    * It starts muted on purpose. An unmuted autoplaying element was the whole
    * defect: it sang away underneath a mute button that had no connection to it.
    */
-  const fallbackHtml = useMemo(() => `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <style>
-          body { margin: 0; padding: 0; background-color: #09090B; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-          video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-        </style>
-      </head>
-      <body>
-        <video src="${uri}" autoplay loop muted playsinline webkit-playsinline></video>
-      </body>
-    </html>
-  `, [uri]);
+  const fallbackHtml = useMemo(() => videoFallbackHtml(uri), [uri]);
 
   /**
    * Drive the fallback from the same two decisions that drive the native
