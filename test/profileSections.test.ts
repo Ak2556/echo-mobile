@@ -90,3 +90,19 @@ describe('empty input', () => {
     expect(out.flows).toEqual([]);
   });
 });
+
+describe('profile grid video tile', () => {
+  // The grid cannot be rendered in a node test, so this guards the wiring that
+  // was missing: a video post has no mediaUris, and without a frame read from
+  // the clip its tile fell through to the pale text treatment ("Video post").
+  it('takes a frame from the clip for a video post', () => {
+    const grid = require('node:fs').readFileSync('components/profile/PostsGrid.tsx', 'utf8') as string;
+    expect(grid).toMatch(/useVideoPoster\(isVideo \? item\.videoUri : undefined\)/);
+    expect(grid).toMatch(/isVideo \?\s*\(\s*<LinearGradient colors=\{\['#0B0B0F'/);
+  });
+
+  it('labels the video tab Reverb, like the tab bar', () => {
+    const screen = require('node:fs').readFileSync('app/user/[id].tsx', 'utf8') as string;
+    expect(screen).toMatch(/flows: 'Reverb'/);
+  });
+});
