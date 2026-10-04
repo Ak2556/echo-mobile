@@ -942,7 +942,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
               <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 3}>{item.prompt}</Text>
             )}
             <VideoTile
-              height={compactFeed ? 180 : 260}
+              uri={item.videoUri}
               borderRadius={radius.md}
               viewCount={item.viewCount}
               onPress={() => router.push({ pathname: '/(tabs)/watch', params: { echoId: item.id } } as Href)}
