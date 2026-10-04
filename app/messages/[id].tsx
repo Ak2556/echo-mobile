@@ -3,7 +3,7 @@ import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import {
   View, Text, KeyboardAvoidingView, Platform, ScrollView,
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
-  ActivityIndicator, Alert, Linking, Dimensions,
+  ActivityIndicator, Alert, Linking, Dimensions, AppState,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { clearActiveConversation, setActiveConversation } from '../../lib/notifications/activeChat';
+import { clearConversationNotifications } from '../../lib/notifications/tray';
 import { safeBack } from '../../lib/routing/safeBack';
 import { clientIdOfFailedDM } from '../../lib/social/dmLocalIds';
 import { speak, isTtsAvailable } from '../../lib/mini-apps/tts';
@@ -72,7 +73,7 @@ import {
   useForwardMessage,
   useRemoteConversations,
 } from '../../hooks/queries/useDMs';
-import { markMessagesRead, fetchGroupMembers, fetchConversationPrefs, setDMPref, type GroupMember, type RemoteMessageReaction, type ConversationPrefs } from '../../lib/supabaseEchoApi';
+import { markMessagesRead, dismissConversationNotifications, fetchGroupMembers, fetchConversationPrefs, setDMPref, type GroupMember, type RemoteMessageReaction, type ConversationPrefs } from '../../lib/supabaseEchoApi';
 import { supabase } from '../../lib/supabase';
 import { usePresenceTracking } from '../../lib/social/presence';
 import type { Conversation, DirectMessage } from '../../types';
@@ -1882,11 +1883,22 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   const insets = useSafeAreaInsets();
 
   // While this thread is on screen its own DM pushes are redundant (the bubble
-  // is already there), so the notification handler drops them.
+  // is already there), so the notification handler drops them. Opening it, or
+  // coming back to the app with it open, is also the user reading what is
+  // already in the tray and the inbox, so those go too.
   useFocusEffect(useCallback(() => {
     if (!id) return undefined;
     setActiveConversation(id);
-    return () => clearActiveConversation(id);
+    const settle = () => {
+      void clearConversationNotifications(id);
+      void dismissConversationNotifications(id);
+    };
+    settle();
+    const sub = AppState.addEventListener('change', (state) => { if (state === 'active') settle(); });
+    return () => {
+      sub.remove();
+      clearActiveConversation(id);
+    };
   }, [id]));
 
   const {

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { clearActiveConversation, isChatOpen, setActiveConversation } from './activeChat';
+import { clearActiveConversation, isChatOpen, isDmFor, setActiveConversation } from './activeChat';
 
 const dm = (target: string) => ({ kind: 'dm', target_id: target });
 
@@ -45,5 +45,16 @@ describe('wiring', () => {
     const screen = readFileSync('app/messages/[id].tsx', 'utf8');
     expect(screen).toMatch(/setActiveConversation\(id\)/);
     expect(screen).toMatch(/clearActiveConversation\(id\)/);
+    expect(screen).toMatch(/clearConversationNotifications\(id\)/);
+    expect(screen).toMatch(/dismissConversationNotifications\(id\)/);
+  });
+});
+
+describe('isDmFor', () => {
+  it('matches a DM for exactly that conversation', () => {
+    expect(isDmFor(dm('c1'), 'c1')).toBe(true);
+    expect(isDmFor(dm('c1'), 'c2')).toBe(false);
+    expect(isDmFor({ kind: 'comment', target_id: 'c1' }, 'c1')).toBe(false);
+    expect(isDmFor(null, 'c1')).toBe(false);
   });
 });
