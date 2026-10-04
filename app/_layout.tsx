@@ -113,6 +113,13 @@ const queryClient = new QueryClient({
       // to login. Runs even for bespoke flows so the broken session is cleared.
       if (isAuthSessionError(error)) { void signOut(); }
       if (meta?.bespoke || meta?.silent) return;
+      // The toast is deliberately vague; the cause is not. Without this a
+      // follow that failed on the owner's phone showed "Couldn't save" and left
+      // nothing to diagnose it from (code, status and message all dropped).
+      const e = error as { code?: string; status?: number; message?: string } | null;
+      captureException(error, {
+        tags: { source: 'mutation_error', code: String(e?.code ?? ''), status: String(e?.status ?? '') },
+      });
       showToast(friendlyWriteError(error), '⚠️');
     },
   }),
