@@ -7,10 +7,10 @@ const IDS_KEY = 'mini:expenses:reminderIds';
 const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
 
 const KHATA_LINES = [
-  'Time to close the books. Log your daily entries before you forget!',
-  'Your Khata is waiting. Did you lend or spend today?',
-  'Keep your ledger clean. Two minutes now saves an hour tomorrow.',
-  'End of the day check-in: any dues to collect or pay?',
+  'Close the books. Future you hates surprises.',
+  'Your Khata is waiting. Did money leave your pocket today? It usually does.',
+  'Two minutes now beats an hour of "where did it all go" tomorrow.',
+  'Any dues to collect or pay? Memory is a terrible accountant.',
   'Money talks, but it doesn’t log itself. Update your Khata.',
 ];
 
