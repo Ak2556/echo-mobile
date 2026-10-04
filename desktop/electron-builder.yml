@@ -1,0 +1,29 @@
+appId: com.echo.desktop
+productName: Echo
+artifactName: Echo-${version}-${arch}.${ext}
+asar: true
+npmRebuild: false
+
+directories:
+  output: release/mac
+
+files:
+  - desktop/main.cjs
+  - dist/web/**/*
+  - package.json
+  - "!node_modules/**/*"
+
+extraMetadata:
+  main: desktop/main.cjs
+
+mac:
+  category: public.app-category.social-networking
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  identity: null
+  icon: assets/images/icon.png
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64

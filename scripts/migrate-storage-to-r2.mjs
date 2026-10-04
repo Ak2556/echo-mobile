@@ -4,8 +4,7 @@
 //
 // Uploads have gone to R2 for a while; only historical objects remain behind.
 // That split is why some media 402'd when the project hit its egress quota
-// while newer media kept serving. See
-// docs/superpowers/specs/2026-09-10-storage-r2-migration-design.md
+// while newer media kept serving.
 //
 //   node scripts/migrate-storage-to-r2.mjs              # dry run (default)
 //   node scripts/migrate-storage-to-r2.mjs --apply      # actually copy

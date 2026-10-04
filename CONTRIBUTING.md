@@ -30,10 +30,6 @@ Improve environment example hygiene
 Fix feed fallback pagination test
 ```
 
-## Ownership
-
-Check [docs/team-ownership/ownership-map.md](docs/team-ownership/ownership-map.md) before editing files outside your normal area. Cross-area PRs should name the impacted owners in the PR description.
-
 ## Pull Request Checklist
 
 Before opening a PR:
@@ -83,4 +79,4 @@ Never commit:
 - Local `.env` files.
 - Personal machine paths or local tool configuration.
 
-Use [docs/security/environment-and-secrets.md](docs/security/environment-and-secrets.md) for secret handling.
+Secrets live in your environment, never in the repo. `.env.example` lists the public client variables; server secrets are set with `supabase secrets set` and the host's own settings.

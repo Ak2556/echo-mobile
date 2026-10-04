@@ -1,6 +1,6 @@
 /**
  * End-to-end encryption for 1:1 direct messages: the pure core.
- * Spec: docs/superpowers/specs/2026-09-10-dm-e2e-encryption-design.md
+ * Spec: docs/design/dm-e2ee.md
  *
  * Nothing in this file touches React Native, the network or storage. Every
  * input is passed in, randomness included, so the scheme is tested under node.
