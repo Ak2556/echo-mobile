@@ -11,12 +11,12 @@
 # would have dropped lecture storage from production on the next deploy.
 
 name = "echo-mobile"
-main = "cloudflare/src/index.ts"
+main = "cloudflare/index.ts"
 compatibility_date = "2024-03-20"
 
 [vars]
 R2_ACCOUNT_ID = "5f35370a3c9265072a8ae6c47b22dd46"
-# Deletes user uploads over their bucket's size ceiling. See cloudflare/src/sizeCaps.ts.
+# Deletes user uploads over their bucket's size ceiling. See cloudflare/sizeCaps.ts.
 # "false" makes the sweep log what it would delete and delete nothing.
 SIZE_SWEEP_ENFORCE = "true"
 

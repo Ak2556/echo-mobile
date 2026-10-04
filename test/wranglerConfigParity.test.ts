@@ -26,8 +26,8 @@ const withoutMain = (lines: string[]) => lines.filter(line => !line.startsWith('
 
 describe('wrangler configs', () => {
   it('point at the same worker source', () => {
-    expect(root).toContain('main = "cloudflare/src/index.ts"');
-    expect(worker).toContain('main = "src/index.ts"');
+    expect(root).toContain('main = "cloudflare/index.ts"');
+    expect(worker).toContain('main = "index.ts"');
   });
 
   it('declare the same worker in every other respect', () => {
