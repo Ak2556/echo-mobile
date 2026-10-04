@@ -49,7 +49,7 @@ export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
 const SECTION_LABELS: Record<ProfileSection, string> = {
   echoes: 'Echoes',
   photos: 'Photos',
-  flows: 'Flows',
+  flows: 'Reverb',
   reechoed: 'Reechoed',
 };
 
