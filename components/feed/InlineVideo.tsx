@@ -11,6 +11,7 @@ const WebView: any = (() => { try { return require('react-native-webview').WebVi
 import { ArrowsClockwise, CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { videoSourceForUri } from '../../lib/media/videoMedia';
+import { videoFallbackHtml } from '../../lib/media/videoHtml';
 import { ttx } from '../../lib/i18n/i18n';
 
 export interface QualityOption { label: string; uri: string; }
@@ -181,7 +182,11 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRe
       <View style={{ height, borderRadius: radius.card, overflow: 'hidden', backgroundColor: '#000' }}>
         {loadState === 'error' ? (
           <WebView
-            source={{ uri: activeUri }}
+            // The clip goes inside a page of our own. Loading the .mp4 as the
+            // document left a broken-media icon: the media server's CSP blocks the
+            // player in a media document. See lib/media/videoHtml.ts.
+            source={{ html: videoFallbackHtml(activeUri, { controls: true, loop }) }}
+            originWhitelist={['*']}
             style={{ flex: 1, backgroundColor: '#000' }}
             allowsInlineMediaPlayback={true}
             mediaPlaybackRequiresUserAction={false}
