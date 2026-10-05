@@ -12,6 +12,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { clearActiveConversation, setActiveConversation } from '../../lib/notifications/activeChat';
 import { clearConversationNotifications } from '../../lib/notifications/tray';
+import { prefetchSendTargets } from '../../lib/e2ee/messages';
 import { safeBack } from '../../lib/routing/safeBack';
 import { clientIdOfFailedDM } from '../../lib/social/dmLocalIds';
 import { speak, isTtsAvailable } from '../../lib/mini-apps/tts';
@@ -2099,6 +2100,12 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   // Position) and keeps the optimistic append at the very bottom.
   const remoteMessages = [...(remoteMessagePages?.pages ?? [])].reverse().flat();
   const isGroupConversation = !!conversation?.isGroup;
+  // Look up who messages here are sealed to while the thread is being read, so
+  // the first send is one request instead of three.
+  useEffect(() => {
+    if (!remote || !id || !userId || isGroupConversation) return;
+    prefetchSendTargets(id, userId);
+  }, [remote, id, userId, isGroupConversation]);
   const sendRemote = useSendRemoteDM(id, conversation?.userId ?? undefined, isGroupConversation);
   const sendImageDM = useSendImageDM(id, conversation?.userId ?? undefined, isGroupConversation);
   const sendVoiceDM = useSendVoiceDM(id, conversation?.userId ?? undefined, isGroupConversation);

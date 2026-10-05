@@ -18,6 +18,7 @@ import { isFeatureEnabled } from '../core/remoteFlags';
 import { E2EEError, openBody, openMessageKey, resealBody, sealMessage, type TargetDevice } from './crypto';
 import { ensureDeviceRegistered, fetchTargetDevices, getLocalDevice } from './deviceKeys';
 import { recallMessage, rememberMessage } from './cache';
+import { createSendTargets } from './sendTargets';
 import { captureException } from '../core/monitoring';
 
 export type DMKind = 'text' | 'link' | 'contact' | 'echo' | 'image' | 'voice';
@@ -41,29 +42,54 @@ export type OutgoingDirectMessage = {
 
 export const ENCRYPTABLE_KINDS: ReadonlySet<string> = new Set(['text', 'link', 'contact', 'echo']);
 
+/**
+ * Who this chat's messages are sealed to, remembered between messages (see
+ * ./sendTargets): the first send in a chat pays for the lookups, the rest do not.
+ */
+const sendTargets = createSendTargets({
+  fetchConversation: async (conversationId) => {
+    const { data, error } = await supabase
+      .from('dm_conversations')
+      .select('user_a, user_b, is_group')
+      .eq('id', conversationId)
+      .single();
+    if (error) throw error;
+    const c = data as { user_a: string; user_b: string | null; is_group: boolean };
+    return { userA: c.user_a, userB: c.user_b, isGroup: c.is_group };
+  },
+  fetchDevices: fetchTargetDevices,
+});
+
+/**
+ * Warm the lookups for a chat the user has just opened, so even the first
+ * message is a single request. Best effort: a failure only means the send does
+ * the lookups itself, as before.
+ */
+export function prefetchSendTargets(conversationId: string, senderId: string): void {
+  if (!isFeatureEnabled('e2eeSend')) return;
+  void sendTargets.resolve(conversationId, senderId).catch(() => {});
+}
+
+/** Forget everything remembered about who to seal to (tests, account switches). */
+export function forgetSendTargets(): void {
+  sendTargets.clear();
+}
+
 async function sealTargets(msg: OutgoingDirectMessage): Promise<TargetDevice[] | null> {
   if (msg.text == null || !ENCRYPTABLE_KINDS.has(msg.kind)) return null;
   if (!isFeatureEnabled('e2eeSend')) return null;
 
-  const { data: conv, error } = await supabase
-    .from('dm_conversations')
-    .select('user_a, user_b, is_group')
-    .eq('id', msg.conversationId)
-    .single();
-  if (error) throw error;
-  const c = conv as { user_a: string; user_b: string | null; is_group: boolean };
-  if (c.is_group || !c.user_b) return null;
+  const resolved = await sendTargets.resolve(msg.conversationId, msg.senderId);
+  if (!resolved) return null; // a group, or a conversation with no one else in it
 
-  const recipientId = c.user_a === msg.senderId ? c.user_b : c.user_a;
-  const devices = await fetchTargetDevices([recipientId, msg.senderId]);
   // Fail closed: the recipient cannot decrypt yet, and 1:1 text is never sent
   // in plaintext while e2eeSend is on. They register on their next sign-in to a
   // current build.
-  if (!devices.some(d => d.userId === recipientId)) throw new E2EEError('recipient_not_ready');
+  if (!resolved.ready) throw new E2EEError('recipient_not_ready');
 
   // From here on, failure fails the send.
   const self = await ensureDeviceRegistered(msg.senderId);
-  const targets = new Map<string, TargetDevice>(devices.map(d => [d.deviceId, { deviceId: d.deviceId, publicKey: d.publicKey }]));
+  const targets = new Map<string, TargetDevice>(resolved.devices.map(d => [d.deviceId, { deviceId: d.deviceId, publicKey: d.publicKey }]));
   targets.set(self.deviceId, { deviceId: self.deviceId, publicKey: self.keyPair.publicKey });
   return [...targets.values()];
 }
@@ -115,7 +141,12 @@ export async function insertDirectMessage(msg: OutgoingDirectMessage): Promise<{
   // The row that landed was sealed by the earlier attempt, under its own key.
   // This attempt's key opens nothing on the server, so it is not cached.
   if (isAlreadySent(error, msg)) return { id, encrypted: true };
-  if (error) throw error;
+  if (error) {
+    // Whatever this send was sealed to may be stale (a device revoked, a chat
+    // changed): look it up afresh on the next attempt.
+    sendTargets.invalidate(msg.conversationId, msg.senderId);
+    throw error;
+  }
 
   rememberMessage({
     id,
