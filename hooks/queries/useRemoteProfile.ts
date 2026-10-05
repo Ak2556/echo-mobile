@@ -3,7 +3,6 @@ import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import {
   fetchRemoteEchoById,
   fetchRemoteEchoesByAuthor,
-  fetchRemoteFollowersCount,
   fetchRemoteFollowingCount,
   fetchRemoteProfile,
   getSessionUserId,
@@ -33,6 +32,8 @@ function profileRowToUser(
   };
 }
 
+const PROFILE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export function useRemoteProfileBundle(userId: string | undefined) {
   return useQuery({
     queryKey: ['profile', userId],
@@ -52,17 +53,41 @@ export function useRemoteProfileBundle(userId: string | undefined) {
         if (!uid) return null;
         targetId = uid;
       }
-      const profile = await fetchRemoteProfile(targetId);
-      if (!profile) return null;
+      // The profile screen used to wait through five requests in a row (profile,
+      // echoes, the author again, viewer state, then "do I follow them"). They
+      // need only the profile id, so with an id in hand they all go at once and
+      // the screen waits for the slowest, not the sum. The follower count is on
+      // the profile row, so it costs no request at all.
+      const sessionUid = await getSessionUserId(); // local read, no network
+      const idKnown = PROFILE_ID_RE.test(targetId);
+      const profilePromise = fetchRemoteProfile(targetId);
+      const following = (id: string) => (sessionUid && sessionUid !== id ? isRemoteFollowing(id) : Promise.resolve(false));
+
+      let profile: Awaited<typeof profilePromise>;
+      let echoes: FeedItem[];
+      let followingCount: number;
+      let isFollowing: boolean;
+      if (idKnown) {
+        [profile, echoes, followingCount, isFollowing] = await Promise.all([
+          profilePromise,
+          fetchRemoteEchoesByAuthor(targetId, profilePromise),
+          fetchRemoteFollowingCount(targetId),
+          following(targetId),
+        ]);
+        if (!profile) return null;
+      } else {
+        // A username, not an id: the id is only known once the profile is back.
+        profile = await profilePromise;
+        if (!profile) return null;
+        [echoes, followingCount, isFollowing] = await Promise.all([
+          fetchRemoteEchoesByAuthor(profile.id, profile),
+          fetchRemoteFollowingCount(profile.id),
+          following(profile.id),
+        ]);
+      }
       const profileId = profile.id;
-      const [echoes, followerCount, followingCount, sessionUid] = await Promise.all([
-        fetchRemoteEchoesByAuthor(profileId),
-        fetchRemoteFollowersCount(profileId),
-        fetchRemoteFollowingCount(profileId),
-        getSessionUserId(),
-      ]);
+      const followerCount = profile.follower_count ?? 0;
       const isSelf = sessionUid === profileId;
-      const isFollowing = sessionUid && !isSelf ? await isRemoteFollowing(profileId) : false;
       // Resolve the pinned echo if any. Use a local list first to avoid an
       // extra round-trip when the pin is one of the most recent echoes.
       let pinnedEcho: FeedItem | null = null;

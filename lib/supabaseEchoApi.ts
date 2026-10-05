@@ -1757,22 +1757,35 @@ export async function fetchRemoteRepostsByUser(userId: string): Promise<FeedItem
     );
 }
 
-export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedItem[]> {
-  const { data: echoes, error } = await supabase
-    .from('public_echoes')
-    .select(ECHO_SELECT)
-    .eq('author_id', authorId)
-    .order('created_at', { ascending: false });
+/**
+ * An author's echoes, with the viewer's like/bookmark/repost state.
+ *
+ * Two round trips, not three: the echoes and the author's profile are asked for
+ * together (they need only the author id), and only the viewer-state lookups wait
+ * for the echo ids. Pass `author` when the caller already has the profile, or a
+ * promise for it that is already in flight, so it is not fetched a second time.
+ */
+export async function fetchRemoteEchoesByAuthor(
+  authorId: string,
+  author?: SupabaseProfileRow | null | Promise<SupabaseProfileRow | null>,
+): Promise<FeedItem[]> {
+  const authorPromise: Promise<SupabaseProfileRow | null> = author !== undefined
+    ? Promise.resolve(author)
+    : Promise.resolve(
+        supabase.from('profiles').select(PROFILE_SELECT).eq('id', authorId).maybeSingle(),
+      ).then(({ data }) => (data as SupabaseProfileRow | null) ?? null);
+
+  const [{ data: echoes, error }, authorRow] = await Promise.all([
+    supabase
+      .from('public_echoes')
+      .select(ECHO_SELECT)
+      .eq('author_id', authorId)
+      .order('created_at', { ascending: false }),
+    authorPromise.catch(() => null),
+  ]);
   if (error) throw error;
   const rows = (echoes || []) as SupabaseEchoRow[];
   if (rows.length === 0) return [];
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select(PROFILE_SELECT)
-    .eq('id', authorId)
-    .maybeSingle();
-  const author = profile as SupabaseProfileRow | null | undefined;
 
   const uid = await getSessionUserId();
   let liked = new Set<string>();
@@ -1791,7 +1804,7 @@ export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedI
   }
 
   return rows.map(echo =>
-    mapEchoRowToFeedItem(echo, author || undefined, liked, bookmarked, reposted)
+    mapEchoRowToFeedItem(echo, authorRow || undefined, liked, bookmarked, reposted)
   );
 }
 
@@ -1827,13 +1840,19 @@ export async function setRemoteFollow(targetUserId: string, follow: boolean): Pr
   }
 }
 
+/**
+ * Followers of a profile. A primary-key read of the trigger-maintained
+ * profiles.follower_count, not a count over every follows row (which grew with
+ * the audience and is paid on every profile view).
+ */
 export async function fetchRemoteFollowersCount(userId: string): Promise<number> {
-  const { count, error } = await supabase
-    .from('follows')
-    .select('*', { count: 'exact', head: true })
-    .eq('following_id', userId);
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('follower_count')
+    .eq('id', userId)
+    .maybeSingle();
   if (error) throw error;
-  return count ?? 0;
+  return (data as { follower_count: number | null } | null)?.follower_count ?? 0;
 }
 
 export async function fetchRemoteFollowingCount(userId: string): Promise<number> {
