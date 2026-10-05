@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import type { MyRank } from './retention/ranks';
 import { Platform } from 'react-native';
 import { withTimeout } from './core/net';
+import { createUsernameChecker } from './social/usernameCheck';
 import * as FileSystem from 'expo-file-system/legacy';
 import { FeedItem, Comment, EvolutionGroup, RemixTreeNode, PerspectiveCounts, PerspectiveType } from '../types';
 import {
@@ -1955,15 +1956,41 @@ export async function fetchAuthorRanks(ids: string[]): Promise<Record<string, Au
   return out;
 }
 
-/** Whether another account already holds this handle. The caller's own row
- *  doesn't count, so re-saving an unchanged profile never trips it. */
-export async function isUsernameTaken(username: string): Promise<boolean> {
+/**
+ * Ask the server whether someone else holds this handle (username_available:
+ * one case-insensitive index lookup, caller's own row excluded). A database
+ * that does not have the function yet falls back to the exact-match lookup it
+ * replaces, so a client update can never be ahead of the migration and break
+ * sign-up.
+ */
+async function fetchUsernameTaken(username: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('username_available', { p_username: username });
+  if (!error && typeof data === 'boolean') return !data;
+  const missing = error && (error.code === 'PGRST202' || error.code === '42883' || /username_available/i.test(error.message ?? ''));
+  if (error && !missing) throw error;
+
   const uid = await getSessionUserId();
   let query = supabase.from('profiles').select('id').eq('username', username);
   if (uid) query = query.neq('id', uid);
-  const { data, error } = await query.limit(1);
-  if (error) throw error;
-  return (data?.length ?? 0) > 0;
+  const { data: rows, error: lookupError } = await query.limit(1);
+  if (lookupError) throw lookupError;
+  return (rows?.length ?? 0) > 0;
+}
+
+const usernameChecker = createUsernameChecker({ fetchTaken: fetchUsernameTaken });
+let usernameCheckerUid: string | null = null;
+
+/** Whether another account already holds this handle. The caller's own row
+ *  doesn't count, so re-saving an unchanged profile never trips it. Cached and
+ *  de-duplicated (lib/social/usernameCheck); the answer is per signed-in user,
+ *  because "yours" reads as available only to you. */
+export async function isUsernameTaken(username: string): Promise<boolean> {
+  const uid = await getSessionUserId();
+  if (uid !== usernameCheckerUid) {
+    usernameChecker.clear();
+    usernameCheckerUid = uid;
+  }
+  return usernameChecker.isTaken(username);
 }
 
 /**

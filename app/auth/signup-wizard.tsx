@@ -16,7 +16,7 @@ import Animated, {
 import { ArrowLeft, Check, At, Brain, UsersThree, Plus, Camera } from 'phosphor-react-native';
 import { ARCHETYPE_QUESTIONS, ARCHETYPES, ThinkingArchetype, scoreArchetype } from '../../lib/ai/thinkingArchetype';
 import { supabase } from '../../lib/supabase';
-import { setRemoteFollow, uploadAvatar } from '../../lib/supabaseEchoApi';
+import { isUsernameTaken, setRemoteFollow, uploadAvatar } from '../../lib/supabaseEchoApi';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { refreshAuthSession, useAuth, sendEmailOtp, verifyEmailOtp } from '../../lib/auth';
@@ -446,30 +446,22 @@ export default function SignupWizard() {
     }
 
     setUsernameStatus('checking');
-    const controller = new AbortController();
+    // A stale answer (the field changed while this was in flight) is dropped.
+    // The API layer caches and shares requests, so retyping a name is instant.
+    let live = true;
 
     const debounce = setTimeout(async () => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', usernameClean)
-          .abortSignal(controller.signal)
-          .maybeSingle();
-        if (controller.signal.aborted) return;
-        if (error) {
-          setUsernameStatus('idle');
-          return;
-        }
-        setUsernameStatus(data ? 'taken' : 'available');
+        const taken = await isUsernameTaken(usernameClean);
+        if (live) setUsernameStatus(taken ? 'taken' : 'available');
       } catch {
-        if (!controller.signal.aborted) setUsernameStatus('idle');
+        if (live) setUsernameStatus('idle');
       }
     }, 300);
 
     return () => {
+      live = false;
       clearTimeout(debounce);
-      controller.abort();
     };
   }, [usernameClean]);
 
