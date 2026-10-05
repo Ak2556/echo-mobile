@@ -13,6 +13,7 @@
 
 import { supabase } from '../supabase';
 import { clearMessageCache } from '../e2ee/cache';
+import { clearPushToken } from '../notifications/push';
 
 export { useAuth, useAuthStore } from './store';
 export { AuthListenerProvider, refreshAuthSession } from './listener';
@@ -42,6 +43,16 @@ export { CANCELLED } from './types';
  */
 export async function signOut(): Promise<void> {
   clearMessageCache();
+  // Take this device off the account being signed out, while its session still
+  // exists to authorise the delete. It was never done: the account kept naming
+  // this phone as a notification target, so after someone else signed in here
+  // the first account's notifications (its followers' posts, its messages) kept
+  // arriving on this phone as if they were the new user's. Bounded, because
+  // signing out must never wait on the network.
+  await Promise.race([
+    clearPushToken().catch(() => {}),
+    new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+  ]);
   // 'local', not supabase-js's default 'global': signing out here must not
   // revoke the user's sessions on their other devices. The forced sign-out on
   // a broken session (app/_layout.tsx) comes through here too.

@@ -28,8 +28,21 @@ export async function tokensByUser(db: SupabaseClient<any, any, any>, userIds: s
   for (const r of (rows ?? []) as { user_id: string; token: string; platform: string | null }[]) {
     byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), { token: r.token, platform: r.platform }]);
   }
+  // Who owns each legacy token according to push_tokens (one row per token). A
+  // legacy token that belongs to a different account is a stale copy.
+  const legacyTokens = [...new Set((profiles ?? []).map((p: { push_token: string | null }) => p.push_token).filter((t: string | null): t is string => !!t))];
+  const owners = new Map<string, string>();
+  if (legacyTokens.length) {
+    const { data: owned, error: ownedError } = await db.from('push_tokens').select('token, user_id').in('token', legacyTokens);
+    if (ownedError) throw ownedError;
+    for (const r of (owned ?? []) as { token: string; user_id: string }[]) owners.set(r.token, r.user_id);
+  }
   for (const p of (profiles ?? []) as { id: string; push_token: string | null }[]) {
-    const tokens = deviceTokens(byUser.get(p.id) ?? [], p.push_token, { skipIos: skipIos() });
+    const owner = p.push_token ? owners.get(p.push_token) : undefined;
+    const tokens = deviceTokens(byUser.get(p.id) ?? [], p.push_token, {
+      skipIos: skipIos(),
+      legacyOwnedByOther: !!owner && owner !== p.id,
+    });
     if (tokens.length) out.set(p.id, tokens);
   }
   return out;
