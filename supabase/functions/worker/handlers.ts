@@ -11,6 +11,7 @@ import { judgeRequest } from '../verify-identity/judge.ts';
 import { runErasure } from '../delete-account/erasure.ts';
 import { dmMediaKey } from '../_shared/dmMediaKey.ts';
 import { MAX_PUSH_AGE_MS, isStale } from './policy.ts';
+import { runPostFanout } from './postFanout.ts';
 import { pruneDeadTokens, sendToExpo, tokensByUser } from '../_shared/expoPush.ts';
 import { pickTitle, truncate } from '../daily-question-push/copy.ts';
 import { channelForKind, priorityForKind } from '../../../lib/notifications/routing.ts';
@@ -214,6 +215,36 @@ const mediaGc: Handler = async (msg, ctx) => {
   }
 };
 
+/**
+ * A new post, expanded into friend_post notifications for its followers in
+ * keyset batches (see ./postFanout.ts and migration 20261005140000). The post
+ * itself queued only this one job, so posting costs the same for 12 followers
+ * and 12 million.
+ */
+const postFanout: Handler = async (msg, ctx) => {
+  const echoId = String(msg.echo_id);
+  const authorId = String(msg.author_id);
+  const preview = typeof msg.preview === 'string' ? msg.preview : '';
+  const cursor = typeof msg.cursor === 'string' ? msg.cursor : null;
+  await runPostFanout(echoId, cursor, {
+    batch: async (id, after, limit) => {
+      const { data, error } = await ctx.db.rpc('fanout_friend_post_batch', {
+        p_echo_id: id, p_author_id: authorId, p_preview: preview, p_after: after, p_limit: limit,
+      });
+      if (error) throw error;
+      return typeof data === 'string' ? data : null;
+    },
+    continueFrom: async (id, next) => {
+      const { error } = await ctx.db.rpc('jobs_enqueue', {
+        p_queue: 'post_fanout',
+        p_msg: { echo_id: id, author_id: authorId, preview, cursor: next },
+        p_delay: 0,
+      });
+      if (error) throw error;
+    },
+  });
+};
+
 export const HANDLERS: Record<string, Handler> = {
   push,
   moderation,
@@ -223,4 +254,5 @@ export const HANDLERS: Record<string, Handler> = {
   verification,
   erasure,
   media_gc: mediaGc,
+  post_fanout: postFanout,
 };
