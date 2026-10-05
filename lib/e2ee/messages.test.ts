@@ -14,15 +14,17 @@ let conversation: { user_a: string; user_b: string | null; is_group: boolean } =
 let bobHasDevice = true;
 let flagOn = true;
 let registration: Promise<typeof alice> = Promise.resolve(alice);
+let deviceFetches = 0;
+let conversationFetches = 0;
 
 vi.mock('../core/monitoring', () => ({ captureException: vi.fn() }));
 vi.mock('../core/remoteFlags', () => ({ isFeatureEnabled: (flag: string) => flag === 'e2eeSend' && flagOn }));
 vi.mock('./deviceKeys', () => ({
   ensureDeviceRegistered: () => registration,
-  fetchTargetDevices: async (userIds: string[]) => [
+  fetchTargetDevices: async (userIds: string[]) => (deviceFetches++, [
     ...(bobHasDevice && userIds.includes('u-bob') ? [{ userId: 'u-bob', deviceId: bob.deviceId, publicKey: bob.keyPair.publicKey }] : []),
     ...(userIds.includes('u-alice') ? [{ userId: 'u-alice', deviceId: alice.deviceId, publicKey: alice.keyPair.publicKey }] : []),
-  ],
+  ]),
   getLocalDevice: async () => alice,
 }));
 // device_id lets the fixture answer like the server does: only this device's rows.
@@ -54,7 +56,7 @@ vi.mock('../supabase', () => ({
       },
       select: () => ({
         eq: (_col: string, value: string) => ({
-          single: () => Promise.resolve({ data: table === 'dm_conversations' ? conversation : messageRow, error: null }),
+          single: () => { if (table === 'dm_conversations') conversationFetches++; return Promise.resolve({ data: table === 'dm_conversations' ? conversation : messageRow, error: null }); },
           in: (_c: string, ids: string[]) =>
             Promise.resolve({ data: keyRows.filter(k => ids.includes(k.message_id) && k.device_id === value), error: null }),
         }),
@@ -67,10 +69,13 @@ vi.mock('../supabase', () => ({
   },
 }));
 
-import { editDirectMessage, insertDirectMessage, readDirectMessages } from './messages';
+import { editDirectMessage, forgetSendTargets, insertDirectMessage, readDirectMessages } from './messages';
 import { isRecipientNotReady } from './crypto';
 
 beforeEach(() => {
+  forgetSendTargets();
+  deviceFetches = 0;
+  conversationFetches = 0;
   outgoing.length = 0;
   conversation = { user_a: 'u-alice', user_b: 'u-bob', is_group: false };
   bobHasDevice = true;
@@ -270,3 +275,33 @@ describe('a retry reuses the message id', () => {
 });
 
 type SealedRowish = { ciphertext: string; nonce: string; ephemeral_public_key: string };
+
+describe('requests per sealed send', () => {
+  const send = (text: string, id: string) => insertDirectMessage({ id, conversationId: 'c1', senderId: 'u-alice', kind: 'text', text });
+
+  it('the first message in a chat looks up the chat and the recipient once; the next ones send and nothing else', async () => {
+    await send('one', 'm1');
+    await send('two', 'm2');
+    await send('three', 'm3');
+    expect(conversationFetches).toBe(1);
+    expect(deviceFetches).toBe(1);
+    expect(outgoing.filter(o => o.kind === 'rpc')).toHaveLength(3);
+  });
+
+  it('a send that fails drops what it used, so the next attempt looks the recipient up again', async () => {
+    await send('one', 'm1');
+    nextError = { code: '42501', message: 'dm_blocked' };
+    await expect(send('two', 'm2')).rejects.toBeTruthy();
+    await send('three', 'm3');
+    expect(deviceFetches).toBe(2);
+  });
+
+  it('still fails closed with no recipient device, and does not remember that she had none', async () => {
+    bobHasDevice = false;
+    await expect(send('hi', 'm1')).rejects.toSatisfy((e: unknown) => isRecipientNotReady(e));
+    expect(outgoing.filter(o => o.kind === 'rpc')).toHaveLength(0);
+    bobHasDevice = true; // she registers a device
+    await send('hi again', 'm2');
+    expect(outgoing.filter(o => o.kind === 'rpc')).toHaveLength(1);
+  });
+});

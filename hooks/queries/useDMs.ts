@@ -40,6 +40,7 @@ import { supabase } from '../../lib/supabase';
 import { catchUpOnJoin, useCatchUpOnResume } from '../../lib/core/realtimeCatchUp';
 import { freshChannel } from '../../lib/core/realtimeTopic';
 import { mergeMessages } from '../../lib/social/messageCache';
+import { isConversationId } from '../../lib/social/conversationId';
 import { createIdBatcher } from '../../lib/social/idBatcher';
 import { clientIdOfFailedDM, failedDMId, failedDMMatching, newDMClientId, pendingDMId } from '../../lib/social/dmLocalIds';
 
@@ -228,7 +229,9 @@ export function useSendRemoteDM(
     // the request: a send can still land after its bubble shows "failed", and
     // only a reused id keeps the retry from delivering it twice.
     mutationFn: ({ content, replyToId, clientId }: { content: string; replyToId?: string; clientId: string }) => {
-      if (isGroup) {
+      // A chat that already exists is addressed by its id: no get-or-create
+      // round trip first. Only a chat that does not exist yet needs the recipient.
+      if (isGroup || isConversationId(conversationId)) {
         if (!conversationId) throw new Error('No conversation');
         return withTimeout(sendRemoteDMToConversation(conversationId, content, replyToId, clientId), 20000, 'dm');
       }
@@ -376,7 +379,9 @@ export function useSendImageDM(
 
   return useMutation({
     mutationFn: ({ uri, mimeType, replyToId, caption }: { uri: string; mimeType: string; replyToId?: string; caption?: string }) => {
-      if (isGroup) {
+      // A chat that already exists is addressed by its id: no get-or-create
+      // round trip first. Only a chat that does not exist yet needs the recipient.
+      if (isGroup || isConversationId(conversationId)) {
         if (!conversationId) throw new Error('No conversation');
         return sendDMImageToConversation(conversationId, uri, mimeType, replyToId, caption);
       }
@@ -437,7 +442,9 @@ export function useSendVoiceDM(
 
   return useMutation({
     mutationFn: ({ uri, durationSec, replyToId }: { uri: string; durationSec: number; replyToId?: string }) => {
-      if (isGroup) {
+      // A chat that already exists is addressed by its id: no get-or-create
+      // round trip first. Only a chat that does not exist yet needs the recipient.
+      if (isGroup || isConversationId(conversationId)) {
         if (!conversationId) throw new Error('No conversation');
         return sendDMVoiceToConversation(conversationId, uri, durationSec, replyToId);
       }
@@ -488,7 +495,9 @@ export function useSendLinkDM(
 
   return useMutation({
     mutationFn: ({ url, title, subtitle, replyToId }: { url: string; title?: string; subtitle?: string; replyToId?: string }) => {
-      if (isGroup) {
+      // A chat that already exists is addressed by its id: no get-or-create
+      // round trip first. Only a chat that does not exist yet needs the recipient.
+      if (isGroup || isConversationId(conversationId)) {
         if (!conversationId) throw new Error('No conversation');
         return sendRemoteDMLinkToConversation(conversationId, url, title, subtitle, replyToId);
       }
@@ -542,7 +551,9 @@ export function useSendContactDM(
       contact: { userId: string; username: string; displayName: string; avatarColor: string; avatarUrl?: string | null };
       replyToId?: string;
     }) => {
-      if (isGroup) {
+      // A chat that already exists is addressed by its id: no get-or-create
+      // round trip first. Only a chat that does not exist yet needs the recipient.
+      if (isGroup || isConversationId(conversationId)) {
         if (!conversationId) throw new Error('No conversation');
         return sendRemoteDMContactToConversation(conversationId, contact, replyToId);
       }
@@ -597,7 +608,9 @@ export function useSendEchoDM(
       intro?: string;
       replyToId?: string;
     }) => {
-      if (isGroup) {
+      // A chat that already exists is addressed by its id: no get-or-create
+      // round trip first. Only a chat that does not exist yet needs the recipient.
+      if (isGroup || isConversationId(conversationId)) {
         if (!conversationId) throw new Error('No conversation');
         return sendRemoteDMEchoToConversation(conversationId, echo, intro, replyToId);
       }
