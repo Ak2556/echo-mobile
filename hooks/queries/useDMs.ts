@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   useQuery, useMutation, useInfiniteQuery,
-  useQueryClient, InfiniteData,
+  useQueryClient, InfiniteData, type QueryClient,
 } from '@tanstack/react-query';
 import { withTimeout } from '../../lib/core/net';
 import {
   fetchRemoteConversations,
   fetchRemoteMessages,
+  fetchRemoteMessagesByIds,
   fetchConversationById,
   sendRemoteDM,
   sendRemoteDMToConversation,
@@ -38,6 +39,8 @@ import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { supabase } from '../../lib/supabase';
 import { catchUpOnJoin, useCatchUpOnResume } from '../../lib/core/realtimeCatchUp';
 import { freshChannel } from '../../lib/core/realtimeTopic';
+import { mergeMessages } from '../../lib/social/messageCache';
+import { createIdBatcher } from '../../lib/social/idBatcher';
 import { clientIdOfFailedDM, failedDMId, failedDMMatching, newDMClientId, pendingDMId } from '../../lib/social/dmLocalIds';
 
 // Conversations list
@@ -99,6 +102,20 @@ export function useRemoteConversation(conversationId: string | undefined) {
 
 // Messages
 /** Messages in a conversation — infinite scroll (load older on demand). */
+/**
+ * Bring just these messages up to date in the cached thread: one round trip for
+ * the rows that changed, merged in place, instead of refetching every loaded
+ * page. Anything that goes wrong falls back to the full refetch, so the worst
+ * case is the old behaviour.
+ */
+async function patchThreadMessages(qc: QueryClient, conversationId: string, ids: string[]): Promise<void> {
+  const fresh = await fetchRemoteMessagesByIds(conversationId, ids);
+  qc.setQueryData<InfiniteData<RemoteDirectMessage[]>>(
+    ['messages', conversationId],
+    old => mergeMessages(old, fresh),
+  );
+}
+
 export function useRemoteMessages(conversationId: string | undefined) {
   const remote = isSupabaseRemote();
   const qc = useQueryClient();
@@ -117,24 +134,43 @@ export function useRemoteMessages(conversationId: string | undefined) {
   useEffect(() => {
     if (!remote || !conversationId || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
 
+    // A burst of events (a read receipt on a backlog is one per message) becomes
+    // one query for the rows that changed. Too big a burst is not worth chasing
+    // id by id; it refetches the thread like before.
+    const refetchThread = () => { void qc.invalidateQueries({ queryKey: ['messages', conversationId] }); };
+    const batcher = createIdBatcher({
+      windowMs: 120,
+      maxBatch: 20,
+      flush: ids => patchThreadMessages(qc, conversationId, ids),
+      overflow: refetchThread,
+    });
+    const onChange = (payload: { new?: { id?: string } }) => {
+      const id = payload.new?.id;
+      if (id) batcher.add(id);
+      else refetchThread();
+    };
+
     const channel = supabase
       .channel(`direct_messages:${conversationId}:${Math.random().toString(36).slice(2, 10)}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `conversation_id=eq.${conversationId}` },
-        () => qc.invalidateQueries({ queryKey: ['messages', conversationId] }),
+        onChange,
       )
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `conversation_id=eq.${conversationId}` },
-        () => qc.invalidateQueries({ queryKey: ['messages', conversationId] }),
+        onChange,
       )
       // Messages sent while the channel was down (phone locked, socket
       // dropped, or before the first join) are never replayed: refetch on
       // every (re)join so they appear.
       .subscribe(catchUpOnJoin(catchUpThread));
 
-    return () => { void supabase.removeChannel(channel); };
+    return () => {
+      batcher.dispose();
+      void supabase.removeChannel(channel);
+    };
   }, [remote, conversationId, qc, catchUpThread]);
 
   return useInfiniteQuery<
@@ -253,11 +289,18 @@ export function useSendRemoteDM(
           : old,
       );
     },
-    onSettled: (_data, error) => {
+    onSettled: (_data, error, vars) => {
       // A failed send must keep its local 'failed-' bubble: skip the refetch
-      // that would wipe it. Successful sends refresh as usual.
+      // that would wipe it. A successful one needs only its own row (the row id
+      // is the client id): patch that in place, and fall back to the full
+      // refetch if that cannot be done.
       if (!error) {
-        qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+        const refetch = () => { void qc.invalidateQueries({ queryKey: ['messages', conversationId] }); };
+        if (conversationId && vars?.clientId) {
+          patchThreadMessages(qc, conversationId, [vars.clientId]).catch(refetch);
+        } else {
+          refetch();
+        }
         qc.invalidateQueries({ queryKey: ['conversations'] });
       }
     },

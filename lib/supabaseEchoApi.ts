@@ -3978,32 +3978,17 @@ export async function removeMessageReaction(messageId: string, reactionValue: st
 }
 
 /** Fetch messages for a conversation (oldest-first, paginated by cursor). */
-export async function fetchRemoteMessages(
-  conversationId: string,
-  limit = 40,
-  cursor?: string,
-): Promise<RemoteDirectMessage[]> {
-  let q = supabase
-    .from('direct_messages')
-    .select(`
+const messageSelect = () => `
       id, conversation_id, sender_id, text, kind, ${SEALED_COLUMNS},
       created_at, read_at, deleted_at, edited_at,
       shared_echo_id, media_url,
       reply_to_id,
       reply_msg:reply_to_id (id, conversation_id, sender_id, created_at, text, kind, deleted_at, ${SEALED_COLUMNS}),
       reactions:message_reactions(id, user_id, emoji)
-    `)
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    `;
 
-  if (cursor) q = q.lt('created_at', cursor);
-
-  const { data, error } = await q;
-  if (error) throw error;
-
-  const uid = await getSessionUserId();
-  const pageRows = (data ?? []) as Record<string, unknown>[];
+/** Rows from messageSelect() -> displayed messages: decrypt, resolve media, shape reactions. Order is kept. */
+async function mapMessageRows(pageRows: Record<string, unknown>[], uid: string | null): Promise<RemoteDirectMessage[]> {
   const sealedRows: SealedRow[] = [];
   for (const m of pageRows) {
     sealedRows.push(m as unknown as SealedRow);
@@ -4011,7 +3996,7 @@ export async function fetchRemoteMessages(
   }
   const readable = uid ? await readDirectMessages(sealedRows, uid) : new Map();
 
-  const messages = await Promise.all([...pageRows].reverse().map(async m => {
+  const messages = await Promise.all(pageRows.map(async m => {
     const rm = (m.reply_msg as Record<string, unknown> | null);
     const kind = (m.kind as RemoteDirectMessage['kind']) ?? 'text';
     const storedMediaUrl = (m.media_url as string | null) ?? null;
@@ -4046,6 +4031,45 @@ export async function fetchRemoteMessages(
   }));
 
   return messages;
+}
+
+export async function fetchRemoteMessages(
+  conversationId: string,
+  limit = 40,
+  cursor?: string,
+): Promise<RemoteDirectMessage[]> {
+  let q = supabase
+    .from('direct_messages')
+    .select(messageSelect())
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (cursor) q = q.lt('created_at', cursor);
+
+  const { data, error } = await q;
+  if (error) throw error;
+
+  const uid = await getSessionUserId();
+  // Newest first from the server; the thread reads oldest to newest.
+  return mapMessageRows([...((data ?? []) as unknown as Record<string, unknown>[])].reverse(), uid);
+}
+
+/**
+ * Just the named messages of one thread, mapped exactly like a page. What a
+ * realtime event needs: one round trip for the rows that changed, instead of a
+ * refetch of every loaded page.
+ */
+export async function fetchRemoteMessagesByIds(conversationId: string, ids: string[]): Promise<RemoteDirectMessage[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('direct_messages')
+    .select(messageSelect())
+    .eq('conversation_id', conversationId)
+    .in('id', ids);
+  if (error) throw error;
+  const uid = await getSessionUserId();
+  return mapMessageRows((data ?? []) as unknown as Record<string, unknown>[], uid);
 }
 
 export interface ConversationMedia {
