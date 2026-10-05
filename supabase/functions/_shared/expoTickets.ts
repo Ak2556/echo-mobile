@@ -35,13 +35,19 @@ export interface ExpoTicket {
 export function deviceTokens(
   rows: { token: string | null; platform?: string | null }[],
   legacy: string | null | undefined,
-  opts: { skipIos?: boolean } = {},
+  opts: { skipIos?: boolean; legacyOwnedByOther?: boolean } = {},
 ): string[] {
   const skipped = new Set(
     opts.skipIos ? rows.filter((r) => r.platform === 'ios').map((r) => r.token) : [],
   );
   const kept = rows.filter((r) => !skipped.has(r.token)).map((r) => r.token);
-  const all = [...kept, legacy && skipped.has(legacy) ? null : legacy];
+  // The legacy profiles.push_token is one token per account and was never
+  // cleared on sign-out, so it can still name a device that someone else has
+  // since signed in on. push_tokens has one row per token and follows the
+  // device, so when it says another account owns this token the legacy copy is
+  // stale: sending to it delivered one person's notifications to another's phone.
+  const legacyUsable = legacy && !skipped.has(legacy) && !opts.legacyOwnedByOther ? legacy : null;
+  const all = [...kept, legacyUsable];
   return [...new Set(all.filter((t): t is string => typeof t === 'string' && EXPO_TOKEN.test(t)))];
 }
 

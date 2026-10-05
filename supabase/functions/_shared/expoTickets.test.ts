@@ -77,3 +77,18 @@ describe('chunk', () => {
     expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
   });
 });
+
+describe('deviceTokens: a legacy token that another account now owns', () => {
+  it('is not sent to: it names a device someone else signed in on', () => {
+    expect(deviceTokens([{ token: A }], C, { legacyOwnedByOther: true })).toEqual([A]);
+  });
+
+  it('is still sent to when this account owns it, or push_tokens knows nothing of it', () => {
+    expect(deviceTokens([], C, { legacyOwnedByOther: false })).toEqual([C]);
+    expect(deviceTokens([], C)).toEqual([C]);
+  });
+
+  it("never drops the account's own push_tokens rows", () => {
+    expect(deviceTokens([{ token: A }, { token: B }], A, { legacyOwnedByOther: true })).toEqual([A, B]);
+  });
+});
