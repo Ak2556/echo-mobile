@@ -26,6 +26,7 @@ function rowsToConnections(
     avatarUrl: p.avatar_url ?? undefined,
     bio: p.bio ?? '',
     isVerified: p.is_verified,
+    isPrivate: p.is_private === true,
     followerCount: 0,
     followingCount: 0,
     echoCount: 0,

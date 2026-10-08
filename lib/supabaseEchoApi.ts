@@ -1821,23 +1821,105 @@ export async function isRemoteFollowing(targetUserId: string): Promise<boolean> 
   return !!data;
 }
 
+export type FollowOutcome = 'following' | 'requested' | 'none';
+
+/** What the server last answered for each person, for the caller that cannot take a return value. */
+const followOutcomes = new Map<string, FollowOutcome>();
+export function takeFollowOutcome(targetUserId: string): FollowOutcome | undefined {
+  const outcome = followOutcomes.get(targetUserId);
+  followOutcomes.delete(targetUserId);
+  return outcome;
+}
+
+/**
+ * Follow or unfollow. A public account is followed at once; a private one only
+ * receives a request, which the server decides (request_follow), so a stale
+ * client cannot guess wrong; read it with takeFollowOutcome. Unfollowing also
+ * withdraws a pending request: either may exist and neither is an error when absent.
+ */
 export async function setRemoteFollow(targetUserId: string, follow: boolean): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   if (follow) {
-    const { error } = await supabase.from('follows').insert({
-      follower_id: uid,
-      following_id: targetUserId,
-    });
-    if (error && !error.message.includes('duplicate')) throw error;
-  } else {
-    const { error } = await supabase
-      .from('follows')
-      .delete()
-      .eq('follower_id', uid)
-      .eq('following_id', targetUserId);
+    const { data, error } = await supabase.rpc('request_follow', { p_target: targetUserId });
     if (error) throw error;
+    followOutcomes.set(targetUserId, data === 'requested' ? 'requested' : 'following');
+    return;
   }
+  const [removed, withdrawn] = await Promise.all([
+    supabase.from('follows').delete().eq('follower_id', uid).eq('following_id', targetUserId),
+    supabase.rpc('cancel_follow_request', { p_target: targetUserId }),
+  ]);
+  if (removed.error) throw removed.error;
+  if (withdrawn.error) throw withdrawn.error;
+}
+
+/** Has the viewer asked to follow this (private) account and not yet been answered? */
+export async function isRemoteFollowRequested(targetUserId: string): Promise<boolean> {
+  const uid = await getSessionUserId();
+  if (!uid) return false;
+  const { data, error } = await supabase
+    .from('follow_requests')
+    .select('target_id')
+    .eq('requester_id', uid)
+    .eq('target_id', targetUserId)
+    .maybeSingle();
+  if (error) throw error;
+  return !!data;
+}
+
+/** Everyone the viewer has asked to follow and is still waiting on. */
+export async function fetchMyFollowRequestIds(): Promise<string[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase.from('follow_requests').select('target_id').eq('requester_id', uid);
+  if (error) throw error;
+  return (data || []).map((r: { target_id: string }) => r.target_id);
+}
+
+export interface IncomingFollowRequest {
+  requesterId: string;
+  username: string;
+  displayName: string;
+  avatarColor: string;
+  avatarUrl: string | null;
+  createdAt: string;
+}
+
+type IncomingRequestRow = {
+  requester_id: string;
+  created_at: string;
+  requester: { username: string; display_name: string | null; avatar_color: string | null; avatar_url: string | null } | null;
+};
+
+/** Requests made to the viewer, newest first. */
+export async function fetchIncomingFollowRequests(): Promise<IncomingFollowRequest[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase
+    .from('follow_requests')
+    .select('requester_id, created_at, requester:profiles!requester_id(username, display_name, avatar_color, avatar_url)')
+    .eq('target_id', uid)
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return ((data ?? []) as unknown as IncomingRequestRow[])
+    .filter(r => r.requester)
+    .map(r => ({
+      requesterId: r.requester_id,
+      username: r.requester!.username,
+      displayName: r.requester!.display_name || r.requester!.username,
+      avatarColor: r.requester!.avatar_color || '#6366F1',
+      avatarUrl: r.requester!.avatar_url,
+      createdAt: r.created_at,
+    }));
+}
+
+/** Approve or decline. False means the request was already gone (withdrawn or answered elsewhere). */
+export async function respondToFollowRequest(requesterId: string, accept: boolean): Promise<boolean> {
+  const { data, error } = await supabase.rpc('respond_follow_request', { p_requester: requesterId, p_accept: accept });
+  if (error) throw error;
+  return data === true;
 }
 
 /**
@@ -3250,6 +3332,7 @@ export async function searchRemoteProfiles(query: string): Promise<import('../ty
     avatarUrl: p.avatar_url ?? undefined,
     bio: p.bio ?? '',
     isVerified: p.is_verified,
+    isPrivate: p.is_private === true,
     followerCount: 0,
     followingCount: 0,
     echoCount: 0,

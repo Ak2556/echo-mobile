@@ -14,11 +14,12 @@ describe('every kind the database can create lands somewhere deliberate', () => 
     report_resolved: '/my-reports',
     rules_reminder: '/legal/rules',
     social_task_update: '/mini-apps/tasks',
+    follow_request: '/follow-requests',
   };
   const thread = ['like', 'comment', 'repost', 'mention', 'reaction', 'bookmark', 'quote', 'friend_post'];
 
   it('covers the whole notifications_type_check list, so a new type forces a decision here', () => {
-    const decided = new Set([...Object.keys(fixed), ...thread, 'follow', 'dm', 'content_removed', 'personal_nudge', 'report_urgent']);
+    const decided = new Set([...Object.keys(fixed), ...thread, 'follow', 'follow_accepted', 'dm', 'content_removed', 'personal_nudge', 'report_urgent']);
     expect([...NOTIFICATION_TYPES].filter((t) => !decided.has(t))).toEqual([]);
   });
 
@@ -35,6 +36,11 @@ describe('every kind the database can create lands somewhere deliberate', () => 
   it('follow opens the follower, who is the actor, not a target', () => {
     expect(tapRoute({ kind: 'follow', actorId: ID })).toEqual({ pathname: '/user/[id]', params: { id: ID } });
     expect(tapRoute({ kind: 'follow', targetId: OTHER })).toEqual({ pathname: '/user/[id]', params: { id: OTHER } });
+    // An approval opens the profile of the person who approved, where their posts now are.
+    expect(tapRoute({ kind: 'follow_accepted', actorId: ID })).toEqual({ pathname: '/user/[id]', params: { id: ID } });
+    // A request opens the screen where it is answered, not the requester's profile.
+    expect(tapRoute({ kind: 'follow_request', actorId: ID })).toBe('/follow-requests');
+    expect(tapRouteFromPush({ kind: 'follow_request', actor_id: ID })).toBe('/follow-requests');
   });
 
   it('dm opens the conversation', () => {

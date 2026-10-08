@@ -89,6 +89,7 @@ export function tapRoute(i: TapInput): TapRoute | null {
       const id = safeRouteId(i.actorId) ?? target;
       return id ? { pathname: '/user/[id]', params: { id } } : null;
     }
+    case 'follow-requests': return '/follow-requests';
     case 'thread': return target ? { pathname: '/thread/[id]', params: { id: target } } : null;
     case 'dm': return target ? { pathname: '/messages/[id]', params: { id: target } } : null;
     case 'daily': return '/daily-question';

@@ -121,7 +121,7 @@ export default function ReportScreen() {
 
         {disclosure && (
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginTop: 12, lineHeight: 18 }}>
-            {ttx('This chat is end-to-end encrypted, so Echo can’t see it. Reporting sends this message and up to 5 messages before it to Echo’s moderators, and nothing else.')}
+            {ttx('This message is end-to-end encrypted, so Echo can’t see it. Reporting sends this message and up to 5 messages before it to Echo’s moderators, and nothing else.')}
           </Text>
         )}
 

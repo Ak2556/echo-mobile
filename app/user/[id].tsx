@@ -9,7 +9,7 @@ import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import {
   ArrowLeft, SealCheck, DotsThreeOutline, Envelope,
-  UserMinus, Flag, ShareNetwork, Images, Compass, Users, PencilSimple, ChatTeardropDots,
+  UserMinus, Flag, ShareNetwork, Images, Lock, Compass, Users, PencilSimple, ChatTeardropDots,
 } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
@@ -117,7 +117,7 @@ function ProfileSections({ section, onChange, counts, colors }: any) {
   );
 }
 
-function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId, section, onSectionChange, sectionCounts }: any) {
+function ProfileHeader({ user, echoeCount, following, requested, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId, section, onSectionChange, sectionCounts }: any) {
   const { colors, radius, animation, isUserOnline } = useTheme();
   const online = isUserOnline(user.id);
   const primaryTopic = creatorProfile?.topics?.[0];
@@ -134,7 +134,10 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
       withSpring(1, { damping: 12, stiffness: 300 })
     );
     onFollow();
-    showToast(!following ? `Following @${user.username}` : `Unfollowed @${user.username}`, !following ? 'Following' : '');
+    if (requested) showToast(`Request to @${user.username} withdrawn`, '');
+    else if (following) showToast(`Unfollowed @${user.username}`, '');
+    else if (user.isPrivate) showToast(`Asked to follow @${user.username}`, 'Requested');
+    else showToast(`Following @${user.username}`, 'Following');
   };
 
   const menuActions: ActionItem[] = [
@@ -271,15 +274,15 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: radius.lg,
-                  backgroundColor: following ? colors.surfaceHover : colors.accent,
-                  borderWidth: following ? 1 : 0,
+                  backgroundColor: following || requested ? colors.surfaceHover : colors.accent,
+                  borderWidth: following || requested ? 1 : 0,
                   borderColor: colors.border,
                 }}
                 scaleValue={0.96}
                 haptic="medium"
               >
-                <Text style={{ fontWeight: '700', fontSize: 15, color: following ? colors.text : '#fff' }}>
-                  {following ? 'Following' : 'Follow'}
+                <Text style={{ fontWeight: '700', fontSize: 15, color: following || requested ? colors.text : '#fff' }}>
+                  {following ? 'Following' : requested ? 'Requested' : 'Follow'}
                 </Text>
               </AnimatedPressable>
             </Animated.View>
@@ -439,7 +442,10 @@ export default function UserProfileScreen() {
       );
     }
 
-    const { user, echoes, isFollowing: remoteFollowing, isSelf, pinnedEcho } = remoteBundle.data;
+    const { user, echoes, isFollowing: remoteFollowing, isRequested: remoteRequested, isSelf, pinnedEcho } = remoteBundle.data;
+    // A private account shows its posts only to approved followers; the server already
+    // returns none to anyone else, so this is the explanation, not the protection.
+    const lockedOut = !isSelf && user.isPrivate === true && !remoteFollowing;
     const blocked = isBlocked(user.id);
     const muted = isMuted(user.id);
     const creatorProfile = buildCreatorProfile(user, echoes);
@@ -476,7 +482,15 @@ export default function UserProfileScreen() {
           renderItem={() => null}
           keyExtractor={(_item, index) => String(index)}
           ListFooterComponent={
-              listData.length === 0 ? (
+              lockedOut ? (
+                <View style={{ paddingTop: 56 }}>
+                  <EmptyState
+                    icon={<Lock color={colors.accent} size={28} weight="duotone" />}
+                    title={ttx("This account is private")}
+                    subtitle={remoteRequested ? ttx("Your request is waiting for them to answer.") : ttx("Ask to follow to see their echoes.")}
+                  />
+                </View>
+              ) : listData.length === 0 ? (
                 <View style={{ paddingTop: 56 }}>
                   <EmptyState
                     icon={<Images color={colors.accent} size={28} weight="duotone" />}
@@ -501,9 +515,14 @@ export default function UserProfileScreen() {
               onSectionChange={setSection}
               sectionCounts={sectionCounts}
               following={remoteFollowing}
+              requested={remoteRequested}
               blocked={blocked}
               muted={muted}
-              onFollow={() => followMut.mutate({ userId: user.id, follow: !remoteFollowing })}
+              onFollow={() => followMut.mutate(
+                remoteFollowing ? { userId: user.id, follow: false }
+                : remoteRequested ? { userId: user.id, follow: false, mode: 'cancel-request' }
+                : { userId: user.id, follow: true, mode: user.isPrivate ? 'request' : undefined },
+              )}
               onMessage={() => { void openDirectMessage(user); }}
               messageLoading={startConvMut.isPending}
               onShare={() => { void Share.share({ message: userUrl(user.username), url: userUrl(user.username) }); }}

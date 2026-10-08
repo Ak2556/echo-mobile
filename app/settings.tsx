@@ -3,11 +3,12 @@ import { View, Text, ScrollView, Switch, Alert, Modal, Platform, StyleSheet, Lin
 import { contactCardEnabled, contactCardSupported, enableContactCard } from '../lib/social/contactCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useIncomingFollowRequests } from '../hooks/queries/useFollowRequests';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  ArrowLeft, CaretRight, Bell, Vibrate, Lock, Moon, SpeakerHigh,
+  ArrowLeft, CaretRight, Bell, Vibrate, Lock, UserPlus, Moon, SpeakerHigh,
   Shield, Info, Question, SignOut, Trash, Eye, EyeSlash,
   ChatTeardropDots, Lightning, Translate, WifiSlash, ShieldCheck,
   Palette, TextT, SquaresFour, Star, Robot, FloppyDisk,
@@ -524,6 +525,8 @@ function ThemePicker({ value, onChange, onClose, theme }: {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const incomingRequests = useIncomingFollowRequests();
+  const pendingRequests = incomingRequests.data?.length ?? 0;
   const s = useAppStore();
   const theme = useTheme();
   const { t } = useI18n();
@@ -996,7 +999,11 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Bell} label={ttx("Notification Preferences")} subtitle={ttx("Customize which notifications you receive")} onPress={() => router.push('/notification-prefs')} />
             {divider}
-            <SettingsRow theme={theme} icon={Lock} iconColor="#B08536" label={ttx("Private Account")} subtitle={ttx("Safer default while you're learning the app")} right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
+            <SettingsRow theme={theme} icon={Lock} iconColor="#B08536" label={ttx("Private Account")} subtitle={ttx("Only people you approve can see your echoes")} right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
+            {(s.privateAccount || pendingRequests > 0) && divider}
+            {(s.privateAccount || pendingRequests > 0) && (
+              <SettingsRow theme={theme} icon={UserPlus} iconColor="#B08536" label={ttx("Follow requests")} subtitle={pendingRequests > 0 ? `${pendingRequests} waiting` : ttx("Approve or decline people who ask to follow you")} onPress={() => router.push('/follow-requests' as never)} />
+            )}
             {divider}
             <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label={ttx("Sensitive Content Filter")} subtitle={ttx("Filter potentially sensitive content")} right={SwitchEl(s.sensitiveContentFilter, handleSensitiveContentFilter)} />
           </GlassPanel>

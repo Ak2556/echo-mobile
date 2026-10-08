@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { InfiniteData } from '@tanstack/react-query';
 import { QueryClient } from '@tanstack/react-query';
-import { patchLikeCaches, prependEchoToFeedCache } from './queryCache';
+import { patchFollowCaches, patchFollowRevert, patchLikeCaches, prependEchoToFeedCache } from './queryCache';
 import type { FeedItem } from '../../types';
 
 // Minimal FeedItem factory — only the id matters for these cache tests.
@@ -92,5 +92,68 @@ describe('patchLikeCaches across feed shapes', () => {
     qc.setQueryData(['feed', 'meta'], { total: 3 });
     patchLikeCaches(qc, 'a', true);
     expect(qc.getQueryData(['feed', 'meta'])).toEqual({ total: 3 });
+  });
+});
+
+describe('follow state on a private account', () => {
+  const bundle = (over: Record<string, unknown> = {}) => ({
+    user: { id: 'u1', followerCount: 5 },
+    echoes: [],
+    isFollowing: false,
+    isRequested: false,
+    isSelf: false,
+    ...over,
+  });
+  const setup = (over?: Record<string, unknown>) => {
+    const qc = new QueryClient();
+    qc.setQueryData(['profile', 'u1'], bundle(over));
+    return { qc, read: () => qc.getQueryData(['profile', 'u1']) as ReturnType<typeof bundle> };
+  };
+
+  it('a plain follow adds a follower and clears any request', () => {
+    const { qc, read } = setup({ isRequested: true });
+    patchFollowCaches(qc, 'u1', true);
+    expect(read()).toMatchObject({ isFollowing: true, isRequested: false });
+    expect(read().user.followerCount).toBe(6);
+  });
+
+  it('a request shows "requested" and adds no follower, because none exists until approval', () => {
+    const { qc, read } = setup();
+    patchFollowCaches(qc, 'u1', true, { requested: true });
+    expect(read()).toMatchObject({ isFollowing: false, isRequested: true });
+    expect(read().user.followerCount).toBe(5);
+  });
+
+  it('withdrawing a request takes no follower off the count', () => {
+    const { qc, read } = setup({ isRequested: true });
+    patchFollowCaches(qc, 'u1', false, { wasRequested: true });
+    expect(read()).toMatchObject({ isFollowing: false, isRequested: false });
+    expect(read().user.followerCount).toBe(5);
+  });
+
+  it('a real unfollow still takes one off', () => {
+    const { qc, read } = setup({ isFollowing: true });
+    patchFollowCaches(qc, 'u1', false);
+    expect(read().user.followerCount).toBe(4);
+  });
+
+  it('reverting each tap restores what it changed', () => {
+    const request = setup();
+    patchFollowCaches(request.qc, 'u1', true, { requested: true });
+    patchFollowRevert(request.qc, 'u1', true, 'request');
+    expect(request.read()).toMatchObject({ isFollowing: false, isRequested: false });
+    expect(request.read().user.followerCount).toBe(5);
+
+    const cancel = setup({ isRequested: true });
+    patchFollowCaches(cancel.qc, 'u1', false, { wasRequested: true });
+    patchFollowRevert(cancel.qc, 'u1', false, 'cancel-request');
+    expect(cancel.read()).toMatchObject({ isFollowing: false, isRequested: true });
+    expect(cancel.read().user.followerCount).toBe(5);
+
+    const plain = setup();
+    patchFollowCaches(plain.qc, 'u1', true);
+    patchFollowRevert(plain.qc, 'u1', true);
+    expect(plain.read()).toMatchObject({ isFollowing: false });
+    expect(plain.read().user.followerCount).toBe(5);
   });
 });
