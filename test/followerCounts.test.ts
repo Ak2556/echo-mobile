@@ -32,7 +32,7 @@ describe('profile screen latency', () => {
   });
 
   it('with an id in hand, the profile, echoes, following count and follow state go at once', () => {
-    expect(hook).toMatch(/Promise\.all\(\[\s*profilePromise,\s*fetchRemoteEchoesByAuthor\(targetId, profilePromise\),\s*fetchRemoteFollowingCount\(targetId\),\s*following\(targetId\),\s*\]\)/);
+    expect(hook).toMatch(/Promise\.all\(\[\s*profilePromise,\s*fetchRemoteEchoesByAuthor\(targetId, profilePromise\),\s*fetchRemoteFollowingCount\(targetId\),\s*following\(targetId\),\s*requested\(targetId\),\s*\]\)/);
     expect(hook).toMatch(/const followerCount = profile\.follower_count \?\? 0/);
     // No sequential "do I follow them" after the group any more.
     expect(hook).not.toMatch(/await isRemoteFollowing\(profileId\)/);

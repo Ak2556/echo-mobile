@@ -47,6 +47,17 @@ export function pushTitle(t: string, actorName: string, preview?: string | null,
       `${a} couldn’t scroll past without commenting`,
       `Plot twist: ${a} replied`,
     ]);
+    case 'follow_request': return pick([
+      `${a} wants to follow you. Your call.`,
+      `${a} is knocking. You hold the key.`,
+      `${a} asked to follow you. No pressure.`,
+      `Request from ${a}. Approve, decline, or let them wait.`,
+    ]);
+    case 'follow_accepted': return pick([
+      `${a} said yes. You're in.`,
+      `${a} approved your request. Welcome.`,
+      `Request approved. ${a} let you follow.`,
+    ]);
     case 'follow': return pick([
       `${a} followed you. Don't let it go to your head.`,
       `New follower: ${a}. Bold choice.`,
@@ -151,6 +162,8 @@ export function pushBody(t: string, _actorName: string, preview?: string | null,
     // Title-only social pings get a line of flavor in the body. An empty
     // variant is deliberate: not every ping needs a punchline.
     case 'like': return pick(['You cooked.', 'Certified good post.', 'One person has spoken. It counts.', 'Screenshot this for a bad day.', '']);
+    case 'follow_request': return pick(['Tap to answer.', 'Approve or decline in Follow requests.', '']);
+    case 'follow_accepted': return pick(['Their echoes are yours now.', 'Go see what you were missing.', '']);
     case 'follow': return pick(['Tap to see who.', 'Excellent taste, honestly.', 'Go say hi.', 'Your reach is reaching.', '']);
     case 'repost': return pick(['Your words, wider reach.', 'Going places.', 'Spreading like good gossip.', '']);
     case 'reaction': return pick(['Someone felt that.', 'That hit different.', 'No words, just vibes.', '']);

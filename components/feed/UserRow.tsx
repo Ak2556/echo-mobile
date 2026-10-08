@@ -28,9 +28,12 @@ export function UserRow({
   following, followsYou = false, showFollowsYouBadge = true, followBusy = false,
 }: UserRowProps) {
   const router = useRouter();
-  const { isFollowing: hookIsFollowing, toggle, pendingId } = useFollow();
+  const { isFollowing: hookIsFollowing, isRequested, toggle, pendingId } = useFollow();
   const { colors, fontSizes, showAvatars, reduceAnimations } = useTheme();
   const isFollowingState = following !== undefined ? following : hookIsFollowing(user.id);
+  // Waiting on a private account's owner. Only the shared follow state knows this;
+  // a parent that controls `following` itself is not asked.
+  const requestedState = following === undefined && !isFollowingState && isRequested(user.id);
   const busy = followBusy || pendingId === user.id;
   const btnScale = useSharedValue(1);
 
@@ -50,8 +53,11 @@ export function UserRow({
     if (onFollowPress) {
       onFollowPress();
     } else {
-      toggle(user.id);
-      showToast(!isFollowingState ? `Following @${user.username}` : `Unfollowed @${user.username}`, !isFollowingState ? 'Following' : '');
+      toggle(user.id, { isPrivate: user.isPrivate });
+      if (requestedState) showToast(`Request to @${user.username} withdrawn`, '');
+      else if (isFollowingState) showToast(`Unfollowed @${user.username}`, '');
+      else if (user.isPrivate) showToast(`Asked to follow @${user.username}`, 'Requested');
+      else showToast(`Following @${user.username}`, 'Following');
     }
   };
   const openProfile = () => {
@@ -112,7 +118,7 @@ export function UserRow({
             onPress={(e) => { e.stopPropagation?.(); handleFollow(); }}
             disabled={busy}
             accessibilityRole="button"
-            accessibilityLabel={isFollowingState ? `Unfollow ${user.username}` : `Follow ${user.username}`}
+            accessibilityLabel={isFollowingState ? `Unfollow ${user.username}` : requestedState ? `Withdraw follow request to ${user.username}` : `Follow ${user.username}`}
             style={{
               marginLeft: 12,
               paddingHorizontal: 16,
@@ -122,11 +128,11 @@ export function UserRow({
               alignItems: 'center',
               justifyContent: 'center',
               opacity: busy ? 0.6 : 1,
-              backgroundColor: isFollowingState ? colors.surfaceHover : colors.text,
+              backgroundColor: isFollowingState || requestedState ? colors.surfaceHover : colors.text,
             }}
           >
-            <Text style={{ fontSize: fontSizes.small, fontWeight: '800', color: isFollowingState ? colors.text : colors.bg }}>
-              {isFollowingState ? 'Following' : followsYou ? 'Follow back' : 'Follow'}
+            <Text style={{ fontSize: fontSizes.small, fontWeight: '800', color: isFollowingState || requestedState ? colors.text : colors.bg }}>
+              {isFollowingState ? 'Following' : requestedState ? 'Requested' : followsYou ? 'Follow back' : 'Follow'}
             </Text>
           </Pressable>
         </Animated.View>

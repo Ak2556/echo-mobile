@@ -73,7 +73,7 @@ export function isNotSignedInError(err: unknown): boolean {
 
 /** A short, honest message to show when a write fails. */
 export const RECIPIENT_NOT_READY_MESSAGE =
-  'They need to update Echo before you can message them. One-to-one chats are end-to-end encrypted.';
+  'They need to update Echo before you can message them. Text in one-to-one chats is end-to-end encrypted, so it can only go to someone on a current version.';
 
 export function friendlyWriteError(err: unknown): string {
   if (isRecipientNotReady(err)) return RECIPIENT_NOT_READY_MESSAGE;

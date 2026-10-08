@@ -4,11 +4,12 @@ import {
   setRemoteCommentReaction,
   setRemoteEchoReaction,
   setRemoteFollow,
+  takeFollowOutcome,
   setRemoteLike,
   setRemoteRepost,
 } from '../lib/supabaseEchoApi';
 import type { PerspectiveType } from '../types/index';
-import { patchBookmarkCaches, patchFollowCaches, patchLikeCaches, patchRepostCaches } from '../lib/core/queryCache';
+import { patchBookmarkCaches, patchFollowCaches, patchFollowRevert, patchLikeCaches, patchRepostCaches } from '../lib/core/queryCache';
 import { awardXp } from '../lib/retention/retention';
 import type { EchoReaction } from '../types/index';
 import { isAppOnline } from '../lib/core/net';
@@ -123,19 +124,35 @@ export function useToggleCommentReaction() {
   });
 }
 
+/**
+ * `mode` says what the tap meant when the screen already knew the account was
+ * private: 'request' shows "Requested" straight away instead of flashing
+ * "Following", and 'cancel-request' withdraws one without taking a follower off
+ * the count (none was ever added). The server still decides; a client that did
+ * not know is corrected in onSuccess.
+ */
+export type FollowVars = { userId: string; follow: boolean; mode?: 'request' | 'cancel-request' };
+
 export function useToggleRemoteFollow() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ userId, follow }: { userId: string; follow: boolean }) => {
+    mutationFn: async ({ userId, follow }: FollowVars) => {
       if (!isAppOnline()) { outbox.enqueue('follow', { userId, follow }); return; }
       await followIntent.send(userId, follow, v => setRemoteFollow(userId, v), TOGGLE_RETRY);
     },
-    onMutate: async ({ userId, follow }) => {
-      patchFollowCaches(qc, userId, follow);
+    onMutate: async ({ userId, follow, mode }) => {
+      patchFollowCaches(qc, userId, follow, { requested: follow && mode === 'request', wasRequested: !follow && mode === 'cancel-request' });
       return { userId };
     },
-    onError: (_e, { userId, follow }) => {
-      if (followIntent.isIdle(userId)) patchFollowCaches(qc, userId, !follow);
+    onSuccess: (_, { userId, follow }) => {
+      if (takeFollowOutcome(userId) !== 'requested' || !follow) return;
+      // The account turned out to be private. Show a request, not a follow.
+      patchFollowCaches(qc, userId, false, { requested: true });
+      qc.setQueryData<string[]>(['my-following'], old => (Array.isArray(old) ? old.filter(id => id !== userId) : old));
+      qc.setQueryData<string[]>(['my-follow-requests'], old => Array.from(new Set([...(Array.isArray(old) ? old : []), userId])));
+    },
+    onError: (_e, { userId, follow, mode }) => {
+      if (followIntent.isIdle(userId)) patchFollowRevert(qc, userId, follow, mode);
     },
     onSettled: (_, __, vars) => {
       if (vars && !followIntent.isIdle(vars.userId)) return;
@@ -143,6 +160,7 @@ export function useToggleRemoteFollow() {
       if (vars?.userId) qc.invalidateQueries({ queryKey: ['profile', vars.userId] });
       qc.invalidateQueries({ queryKey: ['followers'] });
       qc.invalidateQueries({ queryKey: ['my-following'] });
+      qc.invalidateQueries({ queryKey: ['my-follow-requests'] });
     },
   });
 }

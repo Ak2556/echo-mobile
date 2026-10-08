@@ -26,6 +26,7 @@ export const NOTIFICATION_TYPES = [
   'bookmark', 'quote', 'report_resolved', 'content_removed',
   'appeal_resolved', 'daily_react', 'personal_nudge', 'friend_post',
   'social_task_update', 'friend_answer', 'report_urgent', 'rules_reminder',
+  'follow_request', 'follow_accepted',
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -48,6 +49,8 @@ export const TYPE_COLOR: Record<string, string> = {
   like: '#A04E4E',
   comment: '#4E7A8B',
   follow: '#7A8B4E',
+  follow_request: '#7A8B4E',
+  follow_accepted: '#4E8B7A',
   repost: '#4E8B7A',
   mention: '#B08536',
   dm: '#5E748B',
@@ -77,6 +80,8 @@ export function actionTextFor(type: string, preview?: string | null): string {
     case 'like': return 'liked your echo';
     case 'comment': return 'commented on your echo';
     case 'follow': return 'started following you';
+    case 'follow_request': return 'asked to follow you';
+    case 'follow_accepted': return 'approved your follow request';
     case 'repost': return 're-echoed your post';
     case 'mention': return 'mentioned you';
     case 'dm': return 'sent you a message';
@@ -106,6 +111,8 @@ export function summaryTextFor(type: string, preview?: string | null): string {
   switch (type) {
     case 'comment': return 'commented';
     case 'follow': return 'followed you';
+    case 'follow_request': return 'asked to follow you';
+    case 'follow_accepted': return 'approved your request';
     case 'repost': return 're-echoed';
     case 'dm': return 'sent a message';
     case 'content_removed': return preview ?? 'Content was removed by a moderator';
@@ -115,11 +122,14 @@ export function summaryTextFor(type: string, preview?: string | null): string {
 
 /** Where tapping a notification should land. */
 export type NotificationDestination =
-  | 'profile' | 'thread' | 'dm' | 'daily' | 'appeal' | 'appeal-decision' | 'reports' | 'rules' | 'tasks' | 'none';
+  | 'profile' | 'follow-requests' | 'thread' | 'dm' | 'daily' | 'appeal' | 'appeal-decision' | 'reports' | 'rules' | 'tasks' | 'none';
 
 export function destinationFor(type: string): NotificationDestination {
   switch (type) {
     case 'follow': return 'profile';
+    // The person who accepted is the actor, so this opens their profile, where the posts now are.
+    case 'follow_accepted': return 'profile';
+    case 'follow_request': return 'follow-requests';
     case 'dm': return 'dm';
     case 'content_removed': return 'appeal-decision';
     case 'appeal_resolved': return 'appeal';

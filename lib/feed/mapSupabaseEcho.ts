@@ -16,6 +16,8 @@ export type SupabaseProfileRow = {
   mood?: string | null;
   mood_expires_at?: string | null;
   pronouns?: string | null;
+  /** Posts are visible only to approved followers. */
+  is_private?: boolean | null;
   /** ID of the echo the user has pinned to their profile, or null. */
   pinned_echo_id?: string | null;
   is_moderator?: boolean;

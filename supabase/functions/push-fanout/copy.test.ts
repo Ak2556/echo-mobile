@@ -24,7 +24,7 @@ function variants(fn: (pick: Pick) => string): string[] {
   return seen;
 }
 
-const SOCIAL = ['like', 'comment', 'follow', 'repost', 'mention', 'friend_post', 'friend_answer', 'dm', 'bookmark', 'quote', 'personal_nudge'];
+const SOCIAL = ['like', 'comment', 'follow', 'follow_request', 'follow_accepted', 'repost', 'mention', 'friend_post', 'friend_answer', 'dm', 'bookmark', 'quote', 'personal_nudge'];
 
 describe('push copy', () => {
   it('every title fits a lock screen and names the actor when it is about one', () => {

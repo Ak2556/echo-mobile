@@ -15,6 +15,8 @@ export interface User {
   /** 60-char status that expires after 24 hours. Hidden when expired. */
   mood?: string | null;
   moodExpiresAt?: string | null;
+  /** Posts are visible only to approved followers; following needs approval. */
+  isPrivate?: boolean;
 }
 
 export interface ChatSession {

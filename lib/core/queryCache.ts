@@ -5,6 +5,8 @@ type ProfileBundle = {
   user: User;
   echoes: FeedItem[];
   isFollowing: boolean;
+  /** The viewer has asked to follow a private account and is waiting. */
+  isRequested?: boolean;
   isSelf: boolean;
 } | null;
 
@@ -141,18 +143,45 @@ export function patchRepostCaches(qc: QueryClient, echoId: string, repost: boole
   }));
 }
 
-export function patchFollowCaches(qc: QueryClient, userId: string, follow: boolean) {
+/**
+ * `requested` marks a follow that is only a request (a private account): no
+ * follower is added until the owner approves. Cancelling a request is
+ * `follow = false` with `wasRequested`, which must not take a follower off the
+ * count either, because none was ever added.
+ */
+export function patchFollowCaches(
+  qc: QueryClient,
+  userId: string,
+  follow: boolean,
+  opts: { requested?: boolean; wasRequested?: boolean } = {},
+) {
   qc.setQueriesData<ProfileBundle>({ queryKey: ['profile'] }, (current) => {
     if (!current || current.user.id !== userId) return current;
+    if (opts.requested || opts.wasRequested) {
+      return { ...current, isFollowing: false, isRequested: !!opts.requested };
+    }
     return {
       ...current,
       isFollowing: follow,
+      isRequested: false,
       user: {
         ...current.user,
         followerCount: Math.max(0, current.user.followerCount + (follow ? 1 : -1)),
       },
     };
   });
+}
+
+/** Undo the optimistic change `patchFollowCaches` made for this tap. */
+export function patchFollowRevert(
+  qc: QueryClient,
+  userId: string,
+  follow: boolean,
+  mode?: 'request' | 'cancel-request',
+) {
+  if (follow && mode === 'request') patchFollowCaches(qc, userId, false, { wasRequested: true });
+  else if (!follow && mode === 'cancel-request') patchFollowCaches(qc, userId, true, { requested: true });
+  else patchFollowCaches(qc, userId, !follow);
 }
 
 export function appendCommentCache(

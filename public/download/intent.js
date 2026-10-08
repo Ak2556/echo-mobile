@@ -70,6 +70,7 @@ const DESTINATIONS = {
   story: '/create-story',
   bookmarks: '/bookmarks', saved: '/bookmarks',
   followers: '/followers', following: '/followers',
+  'follow requests': '/follow-requests', 'follow request': '/follow-requests', requests: '/follow-requests',
   tools: '/(tabs)/apps', apps: '/(tabs)/apps',
   // The Flow tab. lib/voice/localIntent.ts already emits destination 'watch'
   // for "video"/"flow", and without these keys that fast path dead-ended.

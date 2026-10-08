@@ -7,6 +7,7 @@ import {
   fetchRemoteProfile,
   getSessionUserId,
   isRemoteFollowing,
+  isRemoteFollowRequested,
 } from '../../lib/supabaseEchoApi';
 import { FeedItem, User } from '../../types';
 import { SupabaseProfileRow } from '../../lib/feed/mapSupabaseEcho';
@@ -29,6 +30,7 @@ function profileRowToUser(
     followingCount,
     echoCount,
     createdAt: p.created_at,
+    isPrivate: p.is_private === true,
   };
 }
 
@@ -43,6 +45,7 @@ export function useRemoteProfileBundle(userId: string | undefined) {
       user: User;
       echoes: FeedItem[];
       isFollowing: boolean;
+      isRequested: boolean;
       isSelf: boolean;
       pinnedEcho: FeedItem | null;
     } | null> => {
@@ -62,27 +65,33 @@ export function useRemoteProfileBundle(userId: string | undefined) {
       const idKnown = PROFILE_ID_RE.test(targetId);
       const profilePromise = fetchRemoteProfile(targetId);
       const following = (id: string) => (sessionUid && sessionUid !== id ? isRemoteFollowing(id) : Promise.resolve(false));
+      // Asked in the same breath: a request is a row nobody else can see, so it is one more
+      // primary-key read, not a second round trip.
+      const requested = (id: string) => (sessionUid && sessionUid !== id ? isRemoteFollowRequested(id) : Promise.resolve(false));
 
       let profile: Awaited<typeof profilePromise>;
       let echoes: FeedItem[];
       let followingCount: number;
       let isFollowing: boolean;
+      let isRequested: boolean;
       if (idKnown) {
-        [profile, echoes, followingCount, isFollowing] = await Promise.all([
+        [profile, echoes, followingCount, isFollowing, isRequested] = await Promise.all([
           profilePromise,
           fetchRemoteEchoesByAuthor(targetId, profilePromise),
           fetchRemoteFollowingCount(targetId),
           following(targetId),
+          requested(targetId),
         ]);
         if (!profile) return null;
       } else {
         // A username, not an id: the id is only known once the profile is back.
         profile = await profilePromise;
         if (!profile) return null;
-        [echoes, followingCount, isFollowing] = await Promise.all([
+        [echoes, followingCount, isFollowing, isRequested] = await Promise.all([
           fetchRemoteEchoesByAuthor(profile.id, profile),
           fetchRemoteFollowingCount(profile.id),
           following(profile.id),
+          requested(profile.id),
         ]);
       }
       const profileId = profile.id;
@@ -98,7 +107,7 @@ export function useRemoteProfileBundle(userId: string | undefined) {
         }
       }
       const user = profileRowToUser(profile, echoes.length, followerCount, followingCount);
-      return { user, echoes, isFollowing, isSelf, pinnedEcho };
+      return { user, echoes, isFollowing, isRequested, isSelf, pinnedEcho };
     },
   });
 }

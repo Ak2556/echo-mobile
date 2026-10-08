@@ -85,7 +85,11 @@ async function register(userId: string): Promise<LocalDevice> {
     // to it would become unreadable.
     if (error) throw error;
     if (data && !data.revoked_at) {
-      void supabase.from('user_devices').update({ last_seen_at: new Date().toISOString() }).eq('id', stored.deviceId);
+      // A supabase-js query is lazy: nothing is sent until it is awaited or .then() is called.
+      // This used to be `void supabase...update(...)`, which never ran, so last_seen_at stayed
+      // null on every device and stale keys could never be told from live ones.
+      supabase.from('user_devices').update({ last_seen_at: new Date().toISOString() }).eq('id', stored.deviceId)
+        .then(() => undefined, () => undefined);
       return stored;
     }
     // Revoked or gone: this key can never receive again. Start over.
