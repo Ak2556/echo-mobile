@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
@@ -13,6 +13,7 @@ import { EmptyState } from '../components/common/EmptyState';
 import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { useIncomingFollowRequests, useRespondFollowRequest } from '../hooks/queries/useFollowRequests';
 import type { IncomingFollowRequest } from '../lib/supabaseEchoApi';
+import { listIsCatchingUp } from '../lib/social/followRequestsView';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useTheme } from '../lib/ui/theme';
 import { ttx } from '../lib/i18n/i18n';
@@ -27,6 +28,7 @@ export default function FollowRequestsScreen() {
   const { colors, fontSizes, radius } = useTheme();
   const requests = useIncomingFollowRequests();
   const respond = useRespondFollowRequest();
+  const visitStartedAt = useRef(Date.now()).current;
 
   useVoiceScreenActions({ refresh: () => { void requests.refetch(); } });
 
@@ -43,11 +45,13 @@ export default function FollowRequestsScreen() {
   };
 
   const data = requests.data ?? [];
+  // An empty list left over from an earlier visit is not an answer until this visit has checked.
+  const catchingUp = listIsCatchingUp(requests, data.length, visitStartedAt);
 
   return (
     <ResponsiveScreen>
       <ScreenHeader title={ttx('Follow requests')} />
-      {requests.isPending ? (
+      {requests.isPending || catchingUp ? (
         <View style={{ paddingTop: 8 }}>
           <UserRowSkeleton />
           <UserRowSkeleton />
