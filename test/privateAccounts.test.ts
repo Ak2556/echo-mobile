@@ -130,3 +130,14 @@ describe('a supabase query that is never awaited never runs', () => {
     expect(offenders, 'a postgrest builder is lazy: `void` discards it before it sends. Use await, or .then(...)').toEqual([]);
   });
 });
+
+describe('the Follow requests row', () => {
+  it('lays out its name column with a plain Pressable, not AnimatedPressable', () => {
+    // Found on the emulator: inside AnimatedPressable the `flex: 1` is split from the row
+    // layout and the name and username rendered at zero width, leaving an avatar and two buttons.
+    const screen = readFileSync(join(ROOT, 'app/follow-requests.tsx'), 'utf8');
+    const row = screen.slice(screen.indexOf('renderItem'), screen.indexOf('answer(item, true)'));
+    expect(row).toMatch(/<Pressable[\s\S]*?flex: 1, minWidth: 0, flexDirection: 'row'/);
+    expect(row).not.toMatch(/<AnimatedPressable[^>]*flex: 1, minWidth: 0, flexDirection/);
+  });
+});
