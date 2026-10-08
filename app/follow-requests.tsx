@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { UserPlus } from 'phosphor-react-native';
@@ -67,9 +67,11 @@ export default function FollowRequestsScreen() {
           keyExtractor={r => r.requesterId}
           renderItem={({ item }) => (
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
-              <AnimatedPressable
+              {/* A plain Pressable: AnimatedPressable splits `flex` from the row layout, and the
+                  name column collapsed to zero width inside it. */}
+              <Pressable
                 onPress={() => router.push(`/user/${item.requesterId}`)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}
+                style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 }}
                 accessibilityRole="button"
                 accessibilityLabel={`${item.displayName}, @${item.username}`}
               >
@@ -78,7 +80,7 @@ export default function FollowRequestsScreen() {
                   <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{item.displayName}</Text>
                   <Text numberOfLines={1} style={{ color: colors.textMuted, fontSize: fontSizes.small }}>@{item.username}</Text>
                 </View>
-              </AnimatedPressable>
+              </Pressable>
               <AnimatedPressable
                 onPress={() => answer(item, true)}
                 accessibilityRole="button"
