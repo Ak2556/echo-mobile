@@ -1139,7 +1139,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Translate} label={t('settings.contentLanguage')} subtitle={t('settings.contentLanguageSubtitle')} onPress={() => setShowLanguagePicker(true)} right={chevronValue(s.contentLanguage)} />
             {divider}
-            <SettingsRow theme={theme} icon={WifiSlash} label={ttx("Data Saver")} subtitle={ttx("Reduce data usage on mobile")} right={SwitchEl(s.dataSaver, s.setDataSaver)} />
+            <SettingsRow theme={theme} icon={WifiSlash} label={ttx("Data Saver")} subtitle={ttx("Pause videos and load photos only when you tap them")} right={SwitchEl(s.dataSaver, s.setDataSaver)} />
           </GlassPanel>
         </Animated.View>}
 

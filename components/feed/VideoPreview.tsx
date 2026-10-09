@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { ActivityIndicator, Pressable, Text, View, AppState } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, AppState } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Pause, Play, SpeakerHigh, SpeakerSlash, WifiSlash } from 'phosphor-react-native';
 import { scrubFraction } from '../../lib/media/composerMedia';
@@ -7,6 +8,8 @@ import { probePlayerCreated, probePlayerReleased, probeTrace } from '../../lib/m
 import { useVideoMountPolicy } from '../../lib/feed/videoMountPolicy';
 import { FIRST_FRAME_GRACE_MS, useFirstFrameWatchdog } from '../../lib/feed/firstFrameWatchdog';
 import { videoSourceForUri } from '../../lib/media/videoMedia';
+import { useVideoPoster } from '../../lib/media/videoPoster';
+import { MEDIA_FADE_MS } from './mediaPlaceholder';
 import { videoFallbackHtml } from '../../lib/media/videoHtml';
 import { useAppStore } from '../../store/useAppStore';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
@@ -336,6 +339,9 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
         onFirstFrameRender={() => { setSawFirstFrame(true); setLoadState('ready'); }}
       />
 
+      {/* Covers the player until it has drawn a frame of its own. */}
+      {!sawFirstFrame && loadState !== 'error' && <PosterFrame uri={uri} />}
+
       {loadState === 'loading' && (
         <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)' }}>
           <ActivityIndicator color="#fff" />
@@ -443,14 +449,39 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
  * placeholder of a different size makes the list jump as cards mount and
  * release — which would be a worse artefact than the decoders this saves.
  */
-function ReleasedVideoPlaceholder({ height = 260, borderRadius = 16, onPress }: VideoPreviewProps) {
+/**
+ * A still from the clip, drawn under everything else while the player has none.
+ * It stood as a black rectangle until now: a card scrolled back to, or one whose
+ * player is still loading, showed nothing of the video. The frame is read from the
+ * clip itself (lib/media/videoPoster, cached on disk) and only for a remote
+ * clip: a file just picked in the composer is already on the device.
+ */
+function PosterFrame({ uri }: { uri: string }) {
+  const poster = useVideoPoster(/^https?:\/\//i.test(uri) ? uri : undefined);
+  if (!poster) return null;
+  return (
+    <Image
+      source={poster}
+      contentFit="cover"
+      cachePolicy="memory-disk"
+      recyclingKey={uri}
+      transition={MEDIA_FADE_MS}
+      pointerEvents="none"
+      style={StyleSheet.absoluteFill}
+    />
+  );
+}
+
+function ReleasedVideoPlaceholder({ uri, height = 260, borderRadius = 16, onPress }: VideoPreviewProps) {
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
       pointerEvents={onPress ? 'auto' : 'box-none'}
       style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#0C0B09' }}
-    />
+    >
+      <PosterFrame uri={uri} />
+    </Pressable>
   );
 }
 
