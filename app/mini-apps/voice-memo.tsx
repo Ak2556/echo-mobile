@@ -22,7 +22,7 @@ import {
 } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
-import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
@@ -212,17 +212,6 @@ export default function VoiceMemoApp() {
 
   return (
     <MiniAppShell title={ttx("Voice Memo")} subtitle={ttx("Record")} headerRight={CountBadge}>
-      <MiniCommandDeck
-        accent={isRecording ? REC_COLOR : accent}
-        title={ttx("Voice-to-action capture")}
-        subtitle={ttx("Thoughts, meetings, practice, proof.")}
-        metrics={[
-          { label: 'Memos', value: `${memos.length}`, detail: 'saved' },
-          { label: 'Minutes', value: `${Math.round(memos.reduce((sum, memo) => sum + memo.duration, 0) / 60)}`, detail: 'captured' },
-          { label: 'Now', value: formatMemoTime(recordDuration), detail: isRecording ? 'live' : 'idle' },
-        ]}
-        chips={['Turn into note', 'Practice proof', 'Draft from audio']}
-      />
       {/* Recording widget */}
       <GlassPanel
         variant="medium"

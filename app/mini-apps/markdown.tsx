@@ -152,7 +152,6 @@ export default function MarkdownScreen() {
           metrics={[
             { label: 'Words', value: `${words}` },
             { label: 'Chars', value: `${chars}` },
-            { label: 'View', value: tab === 'edit' ? 'Edit' : 'Preview' },
           ]}
         />
         <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 12 }}>

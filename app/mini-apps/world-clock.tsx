@@ -5,7 +5,6 @@ import { useFocusEffect } from 'expo-router';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import {
@@ -134,17 +133,6 @@ export default function WorldClockScreen() {
 
   return (
     <MiniAppShell title={ttx("World Clock")} subtitle={ttx("Meet")} headerRight={AddButton}>
-      <MiniCommandDeck
-        accent={accent}
-        title={ttx("Time, weather, and coordination")}
-        subtitle={ttx("Time, weather, meetings.")}
-        metrics={[
-          { label: 'Saved', value: `${cities.length}`, detail: 'locations' },
-          { label: 'Local', value: local.time.slice(0, 5), detail: isLocalDay ? 'day' : 'night' },
-          { label: 'Weather', value: `${Object.values(weather).filter(Boolean).length}`, detail: 'loaded' },
-        ]}
-        chips={['Custom places', 'Weather now', 'Meeting planning']}
-      />
 
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 18 }} style={{ marginBottom: 14, borderColor: `${isLocalDay ? colors.warning : colors.textMuted}44` }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>

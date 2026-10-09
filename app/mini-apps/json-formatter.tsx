@@ -75,17 +75,19 @@ export default function JsonFormatterScreen() {
   return (
     <MiniAppShell title={ttx("JSON Tools")} subtitle={ttx("Clean")} headerRight={HeaderActions}>
       <View>
-        <MiniCommandDeck
-          accent={statusAccent}
-          title={ttx("Format data into clarity")}
-          subtitle={ttx("Validate, inspect, copy.")}
-          metrics={[
-            { label: 'Status', value: status, detail: 'parser' },
-            { label: 'Keys', value: stats ? `${stats.keys}` : '0', detail: 'fields' },
-            { label: 'Size', value: stats?.size ?? '0B', detail: viewMode },
-          ]}
-          chips={['Pretty print', 'Minify', 'Schema read']}
-        />
+        {input.trim().length > 0 && (
+          <MiniCommandDeck
+            accent={statusAccent}
+            title={ttx("Format data into clarity")}
+            subtitle={ttx("Validate, inspect, copy.")}
+            metrics={[
+              { label: 'Status', value: status, detail: 'parser' },
+              { label: 'Keys', value: stats ? `${stats.keys}` : '0', detail: 'fields' },
+              { label: 'Size', value: stats?.size ?? '0B', detail: viewMode },
+            ]}
+            chips={['Pretty print', 'Minify', 'Schema read']}
+          />
+        )}
         {/* Input */}
         <View style={{ marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>

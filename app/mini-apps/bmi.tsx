@@ -153,17 +153,19 @@ export default function BmiScreen() {
 
   return (
     <MiniAppShell title={ttx("BMI Calculator")} subtitle={ttx("Body mass index")}>
-      <MiniCommandDeck
-        accent={healthAccent}
-        title={ttx("Body metrics into targets")}
-        subtitle={ttx("BMI, energy, macros, Fitness sync.")}
-        metrics={[
-          { label: cat?.label ?? 'BMI', value: bmi ? bmi.toFixed(1) : '–' },
-          { label: unit === 'metric' ? 'Ideal kg' : 'Ideal lbs', value: getIdealRange().replace(/ (kg|lbs)$/, '') },
-          { label: 'kcal / day', value: eNow ? `${eNow.tdee}` : '–' },
-        ]}
-        chips={['BMI range', 'Macro targets', 'Fitness sync']}
-      />
+      {bmi && (
+        <MiniCommandDeck
+          accent={healthAccent}
+          title={ttx("Body metrics into targets")}
+          subtitle={ttx("BMI, energy, macros, Fitness sync.")}
+          metrics={[
+            { label: cat?.label ?? 'BMI', value: bmi ? bmi.toFixed(1) : '–' },
+            { label: unit === 'metric' ? 'Ideal kg' : 'Ideal lbs', value: getIdealRange().replace(/ (kg|lbs)$/, '') },
+            { label: 'kcal / day', value: eNow ? `${eNow.tdee}` : '–' },
+          ]}
+          chips={['BMI range', 'Macro targets', 'Fitness sync']}
+        />
+      )}
       {/* Unit toggle */}
       <GlassPanel variant="light" borderRadius={radius.xl} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
         {(['metric', 'imperial'] as Unit[]).map(u => (
