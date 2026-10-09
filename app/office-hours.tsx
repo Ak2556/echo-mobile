@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Microphone, Plus, UsersThree, Clock } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
+import { HeaderAddButton } from '../components/ui/HeaderAddButton';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
@@ -60,18 +61,7 @@ function OfficeHoursScreenInner() {
     <ResponsiveScreen>
       <ScreenHeader
         title={ttx("Office Hours")}
-        right={
-          <AnimatedPressable
-            onPress={() => router.push('/create-office-hour')}
-            style={{ padding: 4, marginRight: 6 }}
-            scaleValue={0.88}
-            haptic="medium"
-            accessibilityRole="button"
-            accessibilityLabel={ttx("Schedule office hour")}
-          >
-            <Plus color={colors.accent} size={24} weight="bold" />
-          </AnimatedPressable>
-        }
+        right={<HeaderAddButton onPress={() => router.push('/create-office-hour')} label={ttx("Schedule office hour")} />}
       />
 
       {loading ? (

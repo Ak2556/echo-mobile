@@ -14,6 +14,7 @@ import {
 } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -276,10 +277,7 @@ export default function StudioApp() {
   };
 
   const GalleryBtn = (
-    <AnimatedPressable onPress={launchGallery} scaleValue={0.9} haptic="light"
-      style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover, borderRadius: radius.md }}>
-      <Images color={colors.textMuted} size={20} />
-    </AnimatedPressable>
+    <HeaderActionButton icon={Images} label={ttx("Pick from gallery")} onPress={launchGallery} />
   );
 
   if (rawPhotoUri) {

@@ -13,6 +13,8 @@ import { ActionCenter } from '../../components/ai/ActionCenter';
 import { ToolCallCard, ToolCallItem } from '../../components/ai/ToolCallCard';
 import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
 import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
@@ -28,7 +30,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
 import { Avatar } from '../../components/ui/Avatar';
 import { wantsToPost } from '../../lib/ai/postIntent';
-import { Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
+import { Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/feed/publishContext';
 import { track } from '../../lib/core/analytics';
@@ -54,33 +56,6 @@ function modelLabel(model: string): string {
   if (model.includes('pro')) return 'Pro';
   if (model.includes('lite')) return 'Lite';
   return 'Flash';
-}
-
-function HeaderIconButton({ icon, onPress, label, accent = false }: { icon: React.ReactNode; onPress: () => void; label: string; accent?: boolean }) {
-  const { colors } = useTheme();
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      scaleValue={0.9}
-      haptic="light"
-      accessibilityLabel={label}
-      accessibilityRole="button"
-    >
-      {/* Layout on the inner View: box props on a Pressable drop out in release builds. */}
-      <View style={{
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        backgroundColor: accent ? colors.accent : colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: accent ? colors.accent : colors.border,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        {icon}
-      </View>
-    </AnimatedPressable>
-  );
 }
 
 
@@ -1010,16 +985,16 @@ export default function ChatScreen() {
                     </View>
                   </Pressable>
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
-                  <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={ttx('New chat')} onPress={handleNewChat} />
-                  <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <HeaderActionButton icon={List} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
+                                    <HeaderActionButton icon={Question} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
                   {/* Shown only when there is a conversation and the "Draft ready"
                       banner is not already offering the same thing. */}
                   {hasExchange && !showShareNudge && !isStreaming ? (
-                    <HeaderIconButton icon={<ArrowUpRight color={colors.textSecondary} size={18} />} label={ttx('Share as Echo')} onPress={handleShare} />
+                    <HeaderActionButton icon={ArrowUpRight} label={ttx('Share as Echo')} onPress={handleShare} />
                   ) : null}
-                  <HeaderIconButton icon={<Lightning color={colors.accent} size={16} weight="fill" />} label={`${ttx('AI model')}: ${modelLabel(aiModel)}`} onPress={() => setModelSheetOpen(true)} />
+                  <HeaderActionButton icon={Lightning} tone="accent" label={`${ttx('AI model')}: ${modelLabel(aiModel)}`} onPress={() => setModelSheetOpen(true)} />
+                  <HeaderAddButton onPress={handleNewChat} label={ttx('New chat')} />
                 </View>
               </View>
             </Animated.View>

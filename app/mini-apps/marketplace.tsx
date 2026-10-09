@@ -32,6 +32,7 @@ import {
   Wrench,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { ListingCardSkeleton } from '../../components/ui/Skeleton';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
@@ -558,24 +559,7 @@ export default function MarketplaceScreen() {
               </Text>
             </View>
           </View>
-          <AnimatedPressable
-            onPress={() => router.push('/create-listing' as Href)}
-            depth="medium"
-            fadeOnPress
-            haptic="medium"
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 7,
-              backgroundColor: colors.accent,
-              paddingHorizontal: 14,
-              minHeight: 38,
-              borderRadius: 999,
-            }}
-          >
-            <Plus color={colors.onAccent} size={15} weight="bold" />
-            <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 13 }]}>{ttx("Sell")}</Text>
-          </AnimatedPressable>
+          <HeaderAddButton onPress={() => router.push('/create-listing' as Href)} label={ttx("Sell")} />
         </View>
       </View>
 

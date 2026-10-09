@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, Share, Clipboard } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Backspace, ClockCounterClockwise, Copy, Equals, Function as FunctionIcon, ShareNetwork } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
@@ -295,12 +296,8 @@ export default function CalculatorScreen() {
 
   const HeaderActions = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <AnimatedPressable onPress={copyResult} haptic="light" style={{ width: 38, height: 38, borderRadius: radius.md, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-        <Copy color={colors.textSecondary} size={17} weight="bold" />
-      </AnimatedPressable>
-      <AnimatedPressable onPress={shareCalculation} haptic="light" style={{ width: 38, height: 38, borderRadius: radius.md, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
-        <ShareNetwork color={colors.bg} size={17} weight="bold" />
-      </AnimatedPressable>
+      <HeaderActionButton icon={Copy} label={ttx("Copy result")} onPress={copyResult} />
+      <HeaderActionButton icon={ShareNetwork} label={ttx("Share calculation")} onPress={shareCalculation} tone="accent" />
     </View>
   );
 

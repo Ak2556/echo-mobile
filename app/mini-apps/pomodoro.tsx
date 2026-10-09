@@ -20,6 +20,7 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { CollapsibleSection } from '../../components/mini-apps/CollapsibleSection';
 import { progressSummary, showFocusPresets, showStageRail } from '../../lib/mini-apps/pomodoroView';
@@ -934,9 +935,7 @@ export default function PomodoroScreen() {
       <View style={{ backgroundColor: accent + '22', borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: accent + '44' }}>
         <Text style={{ color: accent, fontWeight: '800', fontSize: 15, lineHeight: 18 }}>{stats.count}/{stats.goal}</Text>
       </View>
-      <AnimatedPressable onPress={() => setShowSettings(true)} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }} accessibilityLabel={tt('Timer settings')}>
-        <GearSix color={colors.textSecondary} size={17} weight="fill" />
-      </AnimatedPressable>
+      <HeaderActionButton icon={GearSix} label={tt('Timer settings')} onPress={() => setShowSettings(true)} />
     </View>
   );
 

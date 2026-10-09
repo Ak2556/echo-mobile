@@ -30,7 +30,8 @@ describe('Khata navigation', () => {
 describe('Khata header', () => {
   it('carries two buttons, with reminder, profile and currency behind one gear', () => {
     const header = screen.slice(screen.indexOf('const HeaderBtns'), screen.indexOf("const profile = doc.profile"));
-    expect(header.match(/<AnimatedPressable/g)?.length).toBe(2);
+    // settings gear and export, then the shared "+"
+    expect(header.match(/<HeaderActionButton/g)?.length).toBe(2);
     expect(header).toMatch(/setShowSettings\(true\)/);
     expect(header).toMatch(/handleExport/);
   });

@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Plus, UsersThree, Hash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
+import { HeaderAddButton } from '../components/ui/HeaderAddButton';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useTheme } from '../lib/ui/theme';
 import { fetchSalons, setSalonMembership, type Salon } from '../lib/supabaseEchoApi';
@@ -49,18 +50,7 @@ function SalonsScreenInner() {
     <ResponsiveScreen>
       <ScreenHeader
         title={ttx("Salons")}
-        right={
-          <AnimatedPressable
-            onPress={() => router.push('/create-salon')}
-            style={{ padding: 4, marginRight: 6 }}
-            scaleValue={0.88}
-            haptic="medium"
-            accessibilityRole="button"
-            accessibilityLabel={ttx("Create salon")}
-          >
-            <Plus color={colors.accent} size={24} weight="bold" />
-          </AnimatedPressable>
-        }
+        right={<HeaderAddButton onPress={() => router.push('/create-salon')} label={ttx("Create salon")} />}
       />
 
       {loading ? (

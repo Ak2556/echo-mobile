@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, StyleSheet, Share } from 'react-nativ
 import { Minus, Plus, Users, ShareNetwork, X } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
@@ -87,9 +88,7 @@ export default function BillSplitterScreen() {
   };
 
   const ShareBtn = (
-    <AnimatedPressable onPress={shareSummary} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.inputBg, borderRadius: radius.md }}>
-      <ShareNetwork color={colors.text} size={18} weight="bold" />
-    </AnimatedPressable>
+    <HeaderActionButton icon={ShareNetwork} label={ttx("Share split")} onPress={shareSummary} />
   );
 
   return (

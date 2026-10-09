@@ -9,6 +9,7 @@ import Svg, { Circle, Polyline } from 'react-native-svg';
 import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus, Play, Fire, FloppyDisk, GearSix, Star, ClockCounterClockwise, Globe } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
@@ -925,14 +926,7 @@ export default function FitnessApp() {
   // (the calorie-card pencil can sit under the floating agent overlay).
   const HeaderActions = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <AnimatedPressable
-        onPress={() => setShowGoals(true)}
-        scaleValue={0.88} haptic="light"
-        style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover, borderRadius: radius.md }}
-        accessibilityRole="button" accessibilityLabel={ttx("Fitness settings")}
-      >
-        <GearSix color={colors.textSecondary} size={19} weight="fill" />
-      </AnimatedPressable>
+      <HeaderActionButton icon={GearSix} label={ttx("Fitness settings")} onPress={() => setShowGoals(true)} />
       {AddBtn}
     </View>
   );
