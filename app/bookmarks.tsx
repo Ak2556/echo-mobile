@@ -18,6 +18,7 @@ import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
 import { ttx } from '../lib/i18n/i18n';
 import { BRAND } from '../lib/ui/fixedColors';
+import { useUserRefresh } from '../hooks/useUserRefresh';
 
 export default function BookmarksScreen() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function BookmarksScreen() {
   const { bookmarkedIds, bookmarkCollections, bookmarkCollectionByEchoId, createBookmarkCollection, setBookmarkCollection } = useAppStore();
   const { data: feed } = useFeed();
   const remoteQ = useRemoteBookmarks();
+  const { refreshing: pulling, onRefresh: onPull } = useUserRefresh(remoteQ.refetch);
 
   // Voice can move this list a page at a time; see lib/voice/useVoiceScrollTarget.
   const voiceList = useVoiceScrollTarget();
@@ -132,7 +134,7 @@ export default function BookmarksScreen() {
           contentContainerStyle={{ paddingVertical: 8 }}
           refreshControl={
             remote ? (
-              <RefreshControl refreshing={remoteQ.isFetching} onRefresh={() => remoteQ.refetch()} tintColor={colors.accent} />
+              <RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.accent} />
             ) : undefined
           }
         />

@@ -58,6 +58,7 @@ import { ttx, useI18n, type TranslationKey } from '../../lib/i18n/i18n';
 import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/retention/dailyThoughts';
 import { personName } from '../../lib/social/personName';
 import { BRAND, ON_MEDIA, ON_STATUS } from '../../lib/ui/fixedColors';
+import { useUserRefresh } from '../../hooks/useUserRefresh';
 
 
 const NAV_BAR_HEIGHT = 56;
@@ -442,13 +443,13 @@ export default function DiscoverScreen() {
     data: feedData,
     isLoading,
     refetch,
-    isRefetching,
     isError,
     error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteFeed();
+  const { refreshing: pulling, onRefresh: onPull } = useUserRefresh(refetch);
   const feed = useMemo(() => feedData?.pages.flat() ?? [], [feedData]);
   const realtime = useRealtimeNewEchoes();
   // Voice contextual actions operate on the post currently in view.
@@ -778,8 +779,8 @@ export default function DiscoverScreen() {
             onEndReachedThreshold={0.4}
             refreshControl={
               <RefreshControl
-                refreshing={isRefetching}
-                onRefresh={refetch}
+                refreshing={pulling}
+                onRefresh={onPull}
                 tintColor={colors.accent}
                 progressViewOffset={headerHeight}
               />
