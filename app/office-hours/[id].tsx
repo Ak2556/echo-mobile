@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { ArrowLeft, Microphone, ArrowUp, Clock, UsersThree, PaperPlaneTilt } from 'phosphor-react-native';
+import { Microphone, ArrowUp, Clock, UsersThree, PaperPlaneTilt } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { TextInput } from '../../components/ui/TextInput';
@@ -21,9 +21,9 @@ import {
   type OfficeHourQuestion,
 } from '../../lib/supabaseEchoApi';
 import { ttx } from '../../lib/i18n/i18n';
+import { BackButton } from '../../components/ui/BackButton';
 
 function OfficeHourDetailScreenInner() {
-  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, radius } = useTheme();
 
@@ -98,9 +98,7 @@ function OfficeHourDetailScreenInner() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
-          <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88}>
-            <ArrowLeft color={colors.text} size={24} />
-          </AnimatedPressable>
+          <BackButton />
         </View>
         <View style={{ padding: 24, alignItems: 'center', marginTop: 60 }}>
           <Text style={{ color: colors.textMuted, fontSize: 15 }}>{ttx("Session not found.")}</Text>
@@ -114,9 +112,7 @@ function OfficeHourDetailScreenInner() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 8 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
+        <BackButton />
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, flex: 1 }} numberOfLines={1}>
           {ttx("Office Hours")}
         </Text>

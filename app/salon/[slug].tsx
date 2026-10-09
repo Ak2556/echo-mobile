@@ -3,9 +3,9 @@ import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { ArrowLeft, Hash, UsersThree } from 'phosphor-react-native';
+import { Hash, UsersThree } from 'phosphor-react-native';
 import { FeedCard } from '../../components/feed/FeedCard';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -13,9 +13,9 @@ import { useTheme } from '../../lib/ui/theme';
 import { fetchSalonBySlug, fetchSalonEchoes, setSalonMembership, type Salon } from '../../lib/supabaseEchoApi';
 import type { FeedItem } from '../../types';
 import { V2FeatureGuard } from '../../components/common/V2FeatureGuard';
+import { BackButton } from '../../components/ui/BackButton';
 
 function SalonDetailScreenInner() {
-  const router = useRouter();
 
   // Voice can move this list a page at a time; see lib/voice/useVoiceScrollTarget.
   const voiceList = useVoiceScrollTarget();
@@ -66,9 +66,7 @@ function SalonDetailScreenInner() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
-          <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88}>
-            <ArrowLeft color={colors.text} size={24} />
-          </AnimatedPressable>
+          <BackButton />
         </View>
         <View style={{ padding: 24, alignItems: 'center', marginTop: 60 }}>
           <Text style={{ color: colors.textMuted, fontSize: 15, textAlign: 'center' }}>
@@ -95,9 +93,7 @@ function SalonDetailScreenInner() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 8 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
+        <BackButton />
         <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: salon.cover_color, marginRight: 8 }} />
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, flex: 1 }} numberOfLines={1}>
           {salon.name}

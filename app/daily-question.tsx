@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { safeBack } from '../lib/routing/safeBack';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
-import { ArrowLeft, LockSimple, Question, ChatCircleDots, Lightning, Clock, Users } from 'phosphor-react-native';
+import { LockSimple, Question, ChatCircleDots, Lightning, Clock, Users } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { LinkifiedText } from '../components/feed/LinkifiedText';
@@ -31,6 +31,7 @@ import {
 import { track } from '../lib/core/analytics';
 import { captureException } from '../lib/core/monitoring';
 import { recordAppOpen } from '../lib/ai/personalNudges';
+import { BackButton } from '../components/ui/BackButton';
 
 /**
  * Daily Question — Echo's twist on BeReal's daily ritual.
@@ -354,9 +355,7 @@ function ScreenHeader({ title, onBack }: { title: string; onBack: () => void }) 
         borderBottomColor: colors.border,
       }}
     >
-      <AnimatedPressable onPress={onBack} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
-        <ArrowLeft color={colors.text} size={24} />
-      </AnimatedPressable>
+      <BackButton onPress={onBack} />
       <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{title}</Text>
       <View style={{ width: 28 }} />
     </View>

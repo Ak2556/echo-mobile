@@ -13,7 +13,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
   withRepeat, withSequence, withDecay,
 } from 'react-native-reanimated';
-import { ArrowLeft, Check, At, Brain, UsersThree, Plus, Camera } from 'phosphor-react-native';
+import { Check, At, Brain, UsersThree, Plus, Camera } from 'phosphor-react-native';
 import { ARCHETYPE_QUESTIONS, ARCHETYPES, ThinkingArchetype, scoreArchetype } from '../../lib/ai/thinkingArchetype';
 import { supabase } from '../../lib/supabase';
 import { isUsernameTaken, setRemoteFollow, uploadAvatar } from '../../lib/supabaseEchoApi';
@@ -31,6 +31,7 @@ import { MINIMUM_AGE, checkDateOfBirth, ageRejectionMessage } from '../../consta
 import { APP_LANGUAGES } from '../../lib/i18n/languages';
 import { ttx } from '../../lib/i18n/i18n';
 import { personName } from '../../lib/social/personName';
+import { BackButton } from '../../components/ui/BackButton';
 
 const ACCENT = '#E06030';
 const SPRING = { damping: 24, stiffness: 300 };
@@ -650,15 +651,7 @@ export default function SignupWizard() {
           paddingHorizontal: 16, paddingVertical: 14,
         }]}>
           <Animated.View style={backOpacityStyle}>
-            <AnimatedPressable
-              onPress={() => goToStep(currentStep - 1)}
-              disabled={backHidden}
-              scaleValue={0.9}
-              haptic="light"
-              style={{ padding: 4 }}
-            >
-              <ArrowLeft color="#A1A1AA" size={22} />
-            </AnimatedPressable>
+            <BackButton onPress={() => goToStep(currentStep - 1)} disabled={backHidden} />
           </Animated.View>
 
           <Animated.Text style={[{

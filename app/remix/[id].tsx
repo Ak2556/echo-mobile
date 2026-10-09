@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView, Alert, StyleSheet, TextInput } from 'react-native';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, GitBranch, PaperPlaneRight, Waveform } from 'phosphor-react-native';
+import { GitBranch, PaperPlaneRight, Waveform } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ import { track } from '../../lib/core/analytics';
 import { PERSPECTIVE_DESCRIPTIONS, PERSPECTIVE_LABELS, PERSPECTIVE_TYPES, isValidSourceUrl } from '../../lib/ai/perspectives';
 import type { ChatMessage, PerspectiveType } from '../../types';
 import { ttx } from '../../lib/i18n/i18n';
+import { BackButton } from '../../components/ui/BackButton';
 
 /**
  * Add Perspective entry screen.
@@ -108,9 +109,7 @@ export default function RemixScreen() {
     <ResponsiveScreen background="#0A0A0F">
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={{ padding: 4 }}>
-          <ArrowLeft color="#fff" size={24} />
-        </Pressable>
+        <BackButton tone="media" />
         <View style={styles.headerCenter}>
           <GitBranch color={ACCENT_COLORS.cyan} size={18} weight="fill" />
           <Text style={styles.headerTitle}>{ttx("ADD PERSPECTIVE")}</Text>

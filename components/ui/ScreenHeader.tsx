@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, X } from 'phosphor-react-native';
+import { X } from 'phosphor-react-native';
 import { IconButton } from './IconButton';
+import { BackButton } from './BackButton';
 import { useTheme } from '../../lib/ui/theme';
 import { safeBack } from '../../lib/routing/safeBack';
 
@@ -57,16 +58,10 @@ export function ScreenHeader({ title, subtitle, leading = 'back', onLeading, rig
         borderBottomColor: colors.border,
       }}
     >
-      {leading !== 'none' ? (
-        <IconButton
-          icon={leading === 'close' ? X : ArrowLeft}
-          label={leading === 'close' ? 'Close' : 'Back'}
-          onPress={handleLeading}
-          size="lg"
-          // 44 is Apple's minimum. The primitive defaults to 40, and back is the
-          // one control on these screens that must never be missed.
-          hitSize={44}
-        />
+      {leading === 'back' ? (
+        <BackButton onPress={onLeading} />
+      ) : leading === 'close' ? (
+        <IconButton icon={X} label="Close" onPress={handleLeading} size="lg" hitSize={44} />
       ) : (
         <View style={{ width: 8 }} />
       )}

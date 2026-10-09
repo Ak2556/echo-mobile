@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Linking, StyleSheet, useWindowDimensions } from 'react-native';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, LinkSimple, Images as ImagesIcon } from 'phosphor-react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { LinkSimple, Images as ImagesIcon } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { fetchConversationMedia, type ConversationMedia } from '../../lib/supabaseEchoApi';
 import { ttx } from '../../lib/i18n/i18n';
 import { useAuth } from '../../lib/auth';
+import { BackButton } from '../../components/ui/BackButton';
 
 export default function ChatMediaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const { colors, font } = useTheme();
   const { width } = useWindowDimensions();
   // DM photos are served by the worker's /dm-media route, which checks the
@@ -39,9 +39,7 @@ export default function ChatMediaScreen() {
   return (
     <ResponsiveScreen>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Back")} style={{ padding: 4, marginRight: 8 }}>
-          <ArrowLeft color={colors.text} size={24} />
-        </Pressable>
+        <BackButton />
         <Text style={{ color: colors.text, fontSize: 18, ...font.displayBlack }}>{ttx("Shared media")}</Text>
       </View>
 

@@ -8,7 +8,7 @@ import { safeBack } from '../../lib/routing/safeBack';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import {
-  ArrowLeft, SealCheck, DotsThreeOutline, Envelope,
+  SealCheck, DotsThreeOutline, Envelope,
   UserMinus, Flag, ShareNetwork, Images, Lock, Compass, Users, PencilSimple, ChatTeardropDots,
 } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
@@ -39,6 +39,7 @@ import { ttx } from '../../lib/i18n/i18n';
 import { countLabel } from '../../lib/ui/a11yCount';
 import { ProfileRank } from '../../components/ranks/ProfileRank';
 import { personName } from '../../lib/social/personName';
+import { BackButton } from '../../components/ui/BackButton';
 
 // FlashList still owns the header and scrolling; the grid is the footer.
 const EMPTY_LIST: any[] = [];
@@ -165,15 +166,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
   return (
     <View>
       <View className="flex-row items-center justify-between px-4 py-2">
-        <AnimatedPressable
-          onPress={() => safeBack()}
-          className="p-1"
-          scaleValue={0.88}
-          haptic="light"
-          accessibilityLabel={ttx("Go back")}
-        >
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
+        <BackButton />
         <AnimatedPressable
           onPress={() => setShowMenu(true)}
           className="p-1"

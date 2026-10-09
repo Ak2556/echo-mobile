@@ -1,18 +1,15 @@
 import React from 'react';
-import {
-  View, Text, ScrollView, Pressable, Platform, StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { usePathname, useRouter } from 'expo-router';
+import { usePathname } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft } from 'phosphor-react-native';
+import { BackButton } from '../ui/BackButton';
 import { useTheme, GLASS_INTENSITY } from '../../lib/ui/theme';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { miniAppByRoute } from '../../lib/mini-apps/miniAppCatalog';
 import { useMiniAppEmbedded } from '../../lib/mini-apps/miniAppEmbed';
 import { MiniAppIcon } from './MiniAppIcon';
-import { useI18n } from '../../lib/i18n/i18n';
 
 interface MiniAppShellProps {
   title: string;
@@ -36,10 +33,8 @@ export function MiniAppShell({
   headerRight,
   bottomPad = 32,
 }: MiniAppShellProps) {
-  const { colors, radius, glass, reduceAnimations, font } = useTheme();
-  const { t } = useI18n();
+  const { colors, glass, reduceAnimations, font } = useTheme();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const pathname = usePathname();
   const layout = useResponsiveLayout();
   const embedded = useMiniAppEmbedded();
@@ -50,10 +45,6 @@ export function MiniAppShell({
   const tint = colors.isDark ? 'dark' : 'extraLight';
   // Embedded in the floating panel: the panel owns the header + top inset.
   const HEADER_H = embedded ? 0 : insets.top + 70;
-  const goBack = () => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/apps');
-  };
   const contentStyle = {
     width: '100%' as const,
     maxWidth: layout.isDesktop ? 760 : layout.contentMaxWidth,
@@ -136,32 +127,7 @@ export function MiniAppShell({
             alignSelf: 'center',
           }}
         >
-          <Pressable
-            onPress={goBack}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.back')}
-            style={{
-              minWidth: 36,
-              height: 36,
-              borderRadius: radius.xl,
-              paddingHorizontal: 10,
-              backgroundColor: 'transparent',
-              borderWidth: 0,
-              borderColor: 'transparent',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 6,
-              marginRight: 12,
-            }}
-          >
-            <ArrowLeft color={colors.text} size={18} weight="bold" />
-            {!layout.isPhone && (
-              <Text style={{ color: colors.text, fontSize: 13, ...font.bodySemibold }}>
-                {t('mini.tools')}
-              </Text>
-            )}
-          </Pressable>
+          <BackButton fallback="/(tabs)/apps" />
 
           <View style={{ flex: 1, minWidth: 0 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
