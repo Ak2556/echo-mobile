@@ -10,7 +10,9 @@ import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, Pencil
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { CollapsibleSection } from '../../components/mini-apps/CollapsibleSection';
+import { goalsAreSet, recentWeights } from '../../lib/mini-apps/fitnessView';
 import { ExerciseDemo } from '../../components/mini-apps/ExerciseDemo';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
@@ -21,7 +23,7 @@ import {
   FitnessSettings, FitnessGoals, Sex, ActivityLevel, GoalType, ACTIVITY_LABELS, computeTargets,
   loadFitness, saveFitness, todayMealTotals, todayWaterMl, workoutVolume, isSameDay,
   liftHistory, est1RM, weeklySummaries, monthlySummaries,
-  thisWeekWorkoutCount, weeklyStreak, detectPRs,
+  thisWeekWorkoutCount, weeklyStreak, detectPRs, DEFAULT_GOALS, DEFAULT_SETTINGS,
 } from '../../lib/mini-apps/fitness';
 import { localDayKey } from '../../lib/core/localDate';
 import { syncFitnessReminders } from '../../lib/mini-apps/fitnessReminders';
@@ -872,6 +874,9 @@ export default function FitnessApp() {
   const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
   const [libQuery, setLibQuery] = useState('');
   const [libGroup, setLibGroup] = useState<MuscleGroup | 'All'>('All');
+  const [showAllWeights, setShowAllWeights] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
   const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
   const didVoiceRef = React.useRef(false);
 
@@ -938,6 +943,8 @@ export default function FitnessApp() {
 
   const totals = todayMealTotals(doc.meals);
   const calPct = Math.min(100, Math.round((totals.calories / doc.goals.calories) * 100));
+  // Targets are shown only once the person has set them; before that they are guesses from a default body.
+  const goalsSet = goalsAreSet(doc, { goals: DEFAULT_GOALS, settings: DEFAULT_SETTINGS });
   const waterToday = todayWaterMl(doc.water);
 
   const addWater = (ml: number) => {
@@ -984,17 +991,6 @@ export default function FitnessApp() {
 
   return (
     <MiniAppShell title={ttx("Fitness")} subtitle={ttx("Fit")} headerRight={HeaderActions}>
-      <MiniCommandDeck
-        accent={colors.accent}
-        title={ttx("Health operating system")}
-        subtitle={ttx("Meals, workouts, metrics.")}
-        metrics={[
-          { label: 'Calories', value: `${Math.round(totals.calories)}`, detail: `${calPct}% goal` },
-          { label: 'Water', value: `${Math.round(waterToday / 1000)}L`, detail: 'today' },
-          { label: 'Workouts', value: `${weekCount}`, detail: 'this week' },
-        ]}
-        chips={['Meals + macros', 'Workout flow', 'Progress trends']}
-      />
       {/* Tabs */}
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
         {TABS.map(t => (
@@ -1022,26 +1018,31 @@ export default function FitnessApp() {
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{ttx("Today")}</Text>
                 <Text style={{ color: colors.text, fontSize: 38, ...font.displayBlack, letterSpacing: -1 }}>
                   {Math.round(totals.calories)}
-                  <Text style={{ color: colors.textMuted, fontSize: 17 }}> / {doc.goals.calories} {ttx("kcal")}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 17 }}>{goalsSet ? ` / ${doc.goals.calories} ` : ' '}{ttx("kcal")}</Text>
                 </Text>
+                {!goalsSet && (
+                  <Pressable onPress={() => setShowGoals(true)} accessibilityRole="button" accessibilityLabel={ttx("Set your daily goal")} hitSlop={8} style={{ paddingVertical: 4, alignSelf: 'flex-start' }}>
+                    <Text style={{ color: colors.accent, fontSize: 13.5, fontWeight: '700' }}>{ttx("Set your daily goal")}</Text>
+                  </Pressable>
+                )}
               </View>
               <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" hitSlop={10} style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.surfaceHover }} accessibilityRole="button" accessibilityLabel={ttx("Fitness settings")}>
                 <PencilSimple color={colors.textSecondary} size={17} />
               </AnimatedPressable>
             </View>
-            <View style={{ height: 8, backgroundColor: colors.surfaceHover, borderRadius: 4, overflow: 'hidden', marginTop: 12 }}>
+            {goalsSet && <View style={{ height: 8, backgroundColor: colors.surfaceHover, borderRadius: 4, overflow: 'hidden', marginTop: 12 }}>
               <View style={{ height: '100%', width: `${calPct}%`, backgroundColor: totals.calories > doc.goals.calories ? colors.danger : colors.accent, borderRadius: 4 }} />
-            </View>
+            </View>}
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
               {[
-                { label: 'Protein', value: `${Math.round(totals.protein)}g`, sub: `of ${doc.goals.protein}g` },
-                { label: 'Carbs', value: `${Math.round(totals.carbs)}g`, sub: `of ${doc.goals.carbs}g` },
-                { label: 'Fat', value: `${Math.round(totals.fat)}g`, sub: `of ${doc.goals.fat}g` },
+                { label: 'Protein', value: `${Math.round(totals.protein)}g`, sub: goalsSet ? `of ${doc.goals.protein}g` : '' },
+                { label: 'Carbs', value: `${Math.round(totals.carbs)}g`, sub: goalsSet ? `of ${doc.goals.carbs}g` : '' },
+                { label: 'Fat', value: `${Math.round(totals.fat)}g`, sub: goalsSet ? `of ${doc.goals.fat}g` : '' },
               ].map(m => (
                 <View key={m.label} style={{ flex: 1, backgroundColor: colors.accentMuted, borderRadius: radius.card, padding: 12, borderWidth: 1, borderColor: colors.accentMuted }}>
                   <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{m.label.toUpperCase()}</Text>
                   <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 3 }}>{m.value}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 11 }}>{m.sub}</Text>
+                  {m.sub ? <Text style={{ color: colors.textMuted, fontSize: 11 }}>{m.sub}</Text> : null}
                 </View>
               ))}
             </View>
@@ -1280,7 +1281,7 @@ export default function FitnessApp() {
             </AnimatedPressable>
           </GlassPanel>
 
-          {sortedWeights.map(w => (
+          {recentWeights(sortedWeights, showAllWeights).rows.map(w => (
             <View key={w.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
               <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', flex: 1 }}>{w.kg.toFixed(1)} {ttx("kg")}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 13, marginRight: 14 }}>
@@ -1291,19 +1292,36 @@ export default function FitnessApp() {
               </AnimatedPressable>
             </View>
           ))}
+          {recentWeights(sortedWeights, showAllWeights).hidden > 0 || (showAllWeights && sortedWeights.length > 3) ? (
+            <Pressable
+              onPress={() => setShowAllWeights(v => !v)}
+              accessibilityRole="button"
+              hitSlop={8}
+              style={{ paddingVertical: 12, alignItems: 'center' }}
+            >
+              <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 13.5 }}>
+                {showAllWeights ? ttx("Show fewer") : `${ttx("Show all")} ${sortedWeights.length} ${ttx("entries")}`}
+              </Text>
+            </Pressable>
+          ) : null}
           {sortedWeights.length === 0 && (
             <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', paddingVertical: 24 }}>
               {ttx("Log your weight to start the trend line.")}
             </Text>
           )}
 
-          {/* Body measurements */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 10 }}>
-            <Text style={[font.eyebrow, { color: colors.textMuted, flex: 1 }]}>{ttx("Measurements")}</Text>
-            <AnimatedPressable onPress={() => setShowMeasure(true)} scaleValue={0.9} haptic="light" style={{ backgroundColor: colors.accentMuted, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 7 }}>
+          {/* Body measurements: closed by default; the header says when it was last logged. */}
+          <CollapsibleSection
+            title={ttx("Measurements")}
+            summary={latestMeasure ? `${ttx("Last logged")} ${new Date(latestMeasure.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}` : ttx("Not logged yet")}
+            open={!!openSections.measure}
+            onToggle={() => toggleSection('measure')}
+            action={
+              <AnimatedPressable onPress={() => setShowMeasure(true)} scaleValue={0.9} haptic="light" style={{ backgroundColor: colors.accentMuted, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 7 }}>
               <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 12.5 }}>{ttx("+ Log")}</Text>
             </AnimatedPressable>
-          </View>
+            }
+          >
           {latestMeasure ? (
             <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', flexWrap: 'wrap', padding: 14 }} style={{ marginBottom: 8 }}>
               {MEASUREMENT_FIELDS.map(f => {
@@ -1327,11 +1345,16 @@ export default function FitnessApp() {
               {ttx("Track chest, waist, hips, arms and thighs over time.")}
             </Text>
           )}
+          </CollapsibleSection>
 
           {/* Lift progress */}
           {lifts.length > 0 && (
-            <>
-              <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 24, marginBottom: 10 }]}>{ttx("Lifts")}</Text>
+            <CollapsibleSection
+              title={ttx("Lifts")}
+              summary={`${lifts.length} ${lifts.length === 1 ? ttx("exercise") : ttx("exercises")}`}
+              open={!!openSections.lifts}
+              onToggle={() => toggleSection('lifts')}
+            >
               <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
                 {lifts.map(({ name, points }, i) => {
                   const [latest, prev] = points;
@@ -1354,11 +1377,17 @@ export default function FitnessApp() {
                   );
                 })}
               </GlassPanel>
-            </>
+            </CollapsibleSection>
           )}
 
-          {/* Weekly + monthly logs */}
-          <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 24, marginBottom: 10 }]}>{ttx("Weekly log")}</Text>
+          {/* Weekly + monthly logs, closed by default */}
+          <CollapsibleSection
+            title={ttx("Weekly & monthly log")}
+            summary={`${weekCount} ${weekCount === 1 ? ttx("workout") : ttx("workouts")} ${ttx("this week")}`}
+            open={!!openSections.logs}
+            onToggle={() => toggleSection('logs')}
+          >
+          <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 8 }]}>{ttx("Weekly")}</Text>
           <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
             {weekly.map((wk, i) => (
               <View key={wk.label} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: i < weekly.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
@@ -1372,7 +1401,7 @@ export default function FitnessApp() {
             ))}
           </GlassPanel>
 
-          <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 20, marginBottom: 10 }]}>{ttx("Monthly log")}</Text>
+          <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 14, marginBottom: 8 }]}>{ttx("Monthly")}</Text>
           <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }}>
             {monthly.map((mo, i) => (
               <View key={mo.label} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: i < monthly.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
@@ -1384,6 +1413,7 @@ export default function FitnessApp() {
               </View>
             ))}
           </GlassPanel>
+          </CollapsibleSection>
         </>
       )}
 
