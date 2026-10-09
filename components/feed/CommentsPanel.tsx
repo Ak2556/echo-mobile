@@ -13,6 +13,7 @@ import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useEchoComments, useAddRemoteComment } from '../../hooks/queries/useEchoComments';
 import { useTheme } from '../../lib/ui/theme';
 import { ttx } from '../../lib/i18n/i18n';
+import { useUserRefresh } from '../../hooks/useUserRefresh';
 
 /**
  * The comment list and composer, with no opinion about how it is presented.
@@ -42,6 +43,7 @@ interface Props {
 export function CommentsPanel({ echoId, bottomInset = 0, onCountChange }: Props) {
   const remote = isSupabaseRemote();
   const remoteQ = useEchoComments(remote ? echoId : undefined);
+  const { refreshing: pulling, onRefresh: onPull } = useUserRefresh(remoteQ.refetch);
   const addRemote = useAddRemoteComment(remote ? echoId : undefined);
   const { colors } = useTheme();
 
@@ -144,8 +146,8 @@ export function CommentsPanel({ echoId, bottomInset = 0, onCountChange }: Props)
           refreshControl={
             remote ? (
               <RefreshControl
-                refreshing={remoteQ.isFetching}
-                onRefresh={() => remoteQ.refetch()}
+                refreshing={pulling}
+                onRefresh={onPull}
                 tintColor={colors.accent}
               />
             ) : undefined

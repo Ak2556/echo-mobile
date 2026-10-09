@@ -27,6 +27,7 @@ import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { MINI_APP_CATALOG } from '../../lib/mini-apps/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { WARM, TOPIC, ON_MEDIA } from '../../lib/ui/fixedColors';
+import { useUserRefresh } from '../../hooks/useUserRefresh';
 
 type SearchTab = 'all' | 'people' | 'echoes' | 'topics' | 'tools';
 
@@ -91,7 +92,8 @@ export default function SearchScreen() {
   const { colors, radius, font } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
-  const { data: feed = [], refetch: refetchFeed, isRefetching: isRefetchingFeed } = useFeed();
+  const { data: feed = [], refetch: refetchFeed } = useFeed();
+  const { refreshing: pulling, onRefresh: onPull } = useUserRefresh(refetchFeed);
 
   // Scroll and refresh by voice. postAction is deliberately absent: this is a
   // results list, not a pager, so "this post" has no single answer here and
@@ -221,8 +223,8 @@ export default function SearchScreen() {
           contentContainerStyle={{ paddingTop: headerHeight + EDGE_GLASS_FADE, paddingBottom: layout.bottomChromePadding }}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetchingFeed}
-              onRefresh={refetchFeed}
+              refreshing={pulling}
+              onRefresh={onPull}
               tintColor={colors.accent}
               colors={[colors.accent]}
             />

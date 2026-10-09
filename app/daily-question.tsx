@@ -32,6 +32,7 @@ import { track } from '../lib/core/analytics';
 import { captureException } from '../lib/core/monitoring';
 import { recordAppOpen } from '../lib/ai/personalNudges';
 import { BackButton } from '../components/ui/BackButton';
+import { useUserRefresh } from '../hooks/useUserRefresh';
 
 /**
  * Daily Question — Echo's twist on BeReal's daily ritual.
@@ -114,6 +115,7 @@ function DailyQuestionScreenInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [question?.id, myAnswer],
   );
+  const { refreshing: pulling, onRefresh: onPull } = useUserRefresh(loadAnswers);
 
   // Whenever the viewer has answered, load (and refresh) the answer feed.
   useEffect(() => { void loadAnswers(); }, [loadAnswers]);
@@ -193,7 +195,7 @@ function DailyQuestionScreenInner() {
           keyboardShouldPersistTaps="handled"
           refreshControl={
             myAnswer ? (
-              <RefreshControl refreshing={answersLoading} onRefresh={() => void loadAnswers()} tintColor={colors.accent} />
+              <RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.accent} />
             ) : undefined
           }
         >

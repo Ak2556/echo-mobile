@@ -12,6 +12,7 @@ import { useI18n } from '../../lib/i18n/i18n';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { useTheme } from '../../lib/ui/theme';
 import { ON_MEDIA } from '../../lib/ui/fixedColors';
+import { useUserRefresh } from '../../hooks/useUserRefresh';
 
 // Trending | New, centred over the video like the rest of Flow's chrome. Layout
 // sits on inner Views: box props on a Pressable drop out in release builds.
@@ -69,11 +70,11 @@ export default function WatchScreen() {
     data: feedData,
     isLoading,
     refetch,
-    isRefetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteVideoFeed(sort);
+  const { refreshing: pulling, onRefresh: onPull } = useUserRefresh(refetch);
   
   // A tap on a friend's "just posted" notification lands here with that video's
   // id (lib/notifications/tapTarget.ts): it plays first, and the feed follows.
@@ -209,8 +210,8 @@ export default function WatchScreen() {
         onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
+            refreshing={pulling}
+            onRefresh={onPull}
             tintColor={colors.accent}
             colors={[colors.accent]}
             progressViewOffset={insets.top + 20}

@@ -30,6 +30,7 @@ import {
   useMarkAllNotificationsRead,
   useDismissNotification,
 } from '../../hooks/queries/useNotifications';
+import { useUserRefresh } from '../../hooks/useUserRefresh';
 const FlashList = _FlashList as React.ComponentType<any>;
 
 type SectionHeader = { type: 'header'; label: 'Today' | 'This Week' | 'Earlier' };
@@ -99,11 +100,14 @@ export default function NotificationsScreen() {
   const {
     data: remotePages,
     refetch,
-    isRefetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useRemoteNotifications();
+  const { refreshing: pulling, onRefresh: onPull } = useUserRefresh(async () => {
+    if (remote) await refetch();
+    else setFilter(f => f);
+  });
   // The cache is paged; the screen wants one list.
   const remoteNotifications = useMemo(() => remotePages?.pages.flat(), [remotePages]);
   const markAllRemote = useMarkAllNotificationsRead();
@@ -308,8 +312,8 @@ export default function NotificationsScreen() {
           }
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={remote ? refetch : () => setFilter(f => f)}
+              refreshing={pulling}
+              onRefresh={onPull}
               tintColor={colors.accent}
               progressViewOffset={headerHeight}
             />
