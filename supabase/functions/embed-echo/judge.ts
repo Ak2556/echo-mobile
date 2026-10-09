@@ -12,6 +12,7 @@
 // once the content passes. If moderation is unavailable the row stays hidden
 // and pending, and the caller retries.
 
+import { moderationTextFor } from "./moderationText.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { moderateContent, moderateImages, moderateVideos } from "./moderation.ts";
 import { videoModerationEnabled } from "./videoModeration.ts";
@@ -41,6 +42,7 @@ interface EchoRow {
   response: string;
   conversation_snapshot: { role: string; content: string }[] | null;
   media_urls: string[] | null;
+  media_alt: string[] | null;
   content_version: number;
 }
 
@@ -126,7 +128,7 @@ const unavailable = (v: { ok: boolean; categories: string[] }) =>
 export async function judgeEcho(db: SupabaseClient<any, any, any>, echoId: string, opts: JudgeOptions): Promise<JudgeResult> {
   const { data: row, error: fetchErr } = await db
     .from("public_echoes")
-    .select("id, author_id, title, prompt, response, conversation_snapshot, media_urls, content_version")
+    .select("id, author_id, title, prompt, response, conversation_snapshot, media_urls, media_alt, content_version")
     .eq("id", echoId)
     .single();
   if (fetchErr || !row) return { kind: "not_found", error: fetchErr?.message ?? "echo not found" };
@@ -134,9 +136,7 @@ export async function judgeEcho(db: SupabaseClient<any, any, any>, echoId: strin
 
   // Moderation gate (runs FIRST, independent of embedding). Decide visibility
   // and persist it before doing anything that can fail.
-  const moderationText = [echoRow.title, echoRow.prompt, echoRow.response]
-    .filter(Boolean)
-    .join("\n\n");
+  const moderationText = moderationTextFor(echoRow);
   let verdict = await moderateContent(moderationText);
   // Infra failure is not a verdict. If the gate is unreachable, leave the row
   // PENDING (check_content stays at its default false, no verdict written) and

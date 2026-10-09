@@ -11,6 +11,9 @@ import { isTabletPortrait, singleMediaFrame } from '../../lib/media/mediaFrame';
 import { useDataSaverPhoto } from '../../lib/media/dataSaverImages';
 import { useAppStore } from '../../store/useAppStore';
 import { ttx } from '../../lib/i18n/i18n';
+import { useA11ySignals } from '../../lib/ui/a11ySignals';
+import { photoLabel } from '../../lib/media/altText';
+import { useEchoAltTexts } from '../../hooks/queries/useEchoAltTexts';
 
 interface MediaGridProps {
   uris: string[];
@@ -19,6 +22,8 @@ interface MediaGridProps {
   height?: number;
   /** Whether the author permits their media to be saved to a device. */
   allowDownloads?: boolean;
+  /** The post these photos belong to, so a screen reader can be told what they show. */
+  echoId?: string;
 }
 
 /**
@@ -73,13 +78,36 @@ function HeldPhoto({ uri, onLoad }: { uri: string; onLoad: () => void }) {
 
 export { isTabletPortrait };
 
-export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridProps) {
+/**
+ * The photos of a post. While a screen reader is running the photos' descriptions
+ * are fetched and read; for everyone else this renders the grid directly and asks
+ * for nothing.
+ */
+export function MediaGrid(props: MediaGridProps) {
+  const { screenReaderEnabled } = useA11ySignals();
+  return screenReaderEnabled && props.echoId ? <MediaGridWithAlt {...props} /> : <MediaGridView {...props} />;
+}
+
+function MediaGridWithAlt(props: MediaGridProps) {
+  const alts = useEchoAltTexts(props.echoId);
+  return <MediaGridView {...props} alts={alts} />;
+}
+
+function MediaGridView({ uris, height, allowDownloads = false, alts }: MediaGridProps & { alts?: string[] }) {
   const { radius } = useTheme();
   const { width: winW, height: winH } = useWindowDimensions();
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const count = uris.length;
 
   const open = (idx: number) => setViewerIndex(idx);
+  // What a screen reader says for each photo: the author's description when there is
+  // one, otherwise at least which photo of how many.
+  const label = (idx: number) => photoLabel(alts?.[idx], idx, count, ttx('Photo'));
+  const photoProps = (idx: number) => ({
+    accessibilityRole: 'imagebutton' as const,
+    accessibilityLabel: label(idx),
+    accessibilityHint: ttx('Opens the photo full screen'),
+  });
   const close = () => setViewerIndex(null);
 
   const r = radius.md;
@@ -92,8 +120,7 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
     <>
       {/* 1 image */}
       {count === 1 && (
-        <Pressable
-          onPress={() => open(0)}
+        <Pressable {...photoProps(0)} onPress={() => open(0)}
           style={[
             { borderRadius: height ? 0 : radius.card, overflow: 'hidden' },
             height ? { height } : singleMediaFrame(winW, winH),
@@ -108,7 +135,7 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
       {count === 2 && (
         <View style={{ flexDirection: 'row', gap: 3, height: height ?? 200 }}>
           {uris.map((uri, i) => (
-            <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
+            <Pressable key={i} {...photoProps(i)} onPress={() => open(i)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
               <GridImage uri={uri} />
             </Pressable>
           ))}
@@ -118,12 +145,12 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
       {/* 3 images */}
       {count === 3 && (
         <View style={{ flexDirection: 'row', gap: 3, height: height ?? 220 }}>
-          <Pressable onPress={() => open(0)} style={{ flex: 1.4, borderRadius: rowRadius, overflow: 'hidden' }}>
+          <Pressable {...photoProps(0)} onPress={() => open(0)} style={{ flex: 1.4, borderRadius: rowRadius, overflow: 'hidden' }}>
             <GridImage uri={uris[0]} />
           </Pressable>
           <View style={{ flex: 1, gap: 3 }}>
             {uris.slice(1).map((uri, i) => (
-              <Pressable key={i} onPress={() => open(i + 1)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
+              <Pressable key={i} {...photoProps(i + 1)} onPress={() => open(i + 1)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
                 <GridImage uri={uri} />
               </Pressable>
             ))}
@@ -136,14 +163,14 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
         <View style={{ gap: 3 }}>
           <View style={{ flexDirection: 'row', gap: 3, height: rowH2 }}>
             {uris.slice(0, 2).map((uri, i) => (
-              <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
+              <Pressable key={i} {...photoProps(i)} onPress={() => open(i)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
                 <GridImage uri={uri} />
               </Pressable>
             ))}
           </View>
           <View style={{ flexDirection: 'row', gap: 3, height: rowH2 }}>
             {uris.slice(2, 4).map((uri, i) => (
-              <Pressable key={i} onPress={() => open(i + 2)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
+              <Pressable key={i} {...photoProps(i + 2)} onPress={() => open(i + 2)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
                 <GridImage uri={uri} />
                 {i === 1 && count > 4 && (
                   <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
@@ -161,6 +188,7 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
         uris={uris}
         initialIndex={viewerIndex ?? 0}
         canDownload={allowDownloads}
+        altTexts={alts}
         onClose={close}
       />
     </>

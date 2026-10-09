@@ -69,6 +69,8 @@ export type LocalImageUpload = {
   /** Pixel size from the picker; the composer preview uses it for the real shape. */
   width?: number | null;
   height?: number | null;
+  /** What the photo shows, for people who cannot see it. Read aloud by a screen reader. */
+  alt?: string | null;
 };
 
 export type LocalVideoUpload = {
@@ -740,6 +742,8 @@ export async function insertRemoteEcho(params: {
   coAuthorId?: string;
   coAuthorResponse?: string;
   postType?: string;
+  /** One description per photo, aligned with mediaUrls; empty strings mean none. */
+  mediaAlt?: string[];
 }): Promise<SupabaseEchoRow> {
   const title =
     params.title?.trim() ||
@@ -754,6 +758,7 @@ export async function insertRemoteEcho(params: {
       response: params.response,
       ...(params.postType && params.postType !== 'text' ? { post_type: params.postType } : {}),
       ...(params.mediaUrls?.length ? { media_urls: params.mediaUrls } : {}),
+      ...(params.mediaAlt?.some(a => a.trim()) ? { media_alt: params.mediaAlt.map(a => a.trim()) } : {}),
       ...(params.quotedEchoId ? { quoted_echo_id: params.quotedEchoId } : {}),
       ...(params.parentEchoId ? { parent_echo_id: params.parentEchoId } : {}),
       ...(params.perspectiveType ? { perspective_type: params.perspectiveType } : {}),
@@ -1855,6 +1860,26 @@ export async function setRemoteFollow(targetUserId: string, follow: boolean): Pr
 }
 
 /** Has the viewer asked to follow this (private) account and not yet been answered? */
+/**
+ * The photo descriptions of these posts, by id. Read from the table (row-level
+ * security decides what the viewer may see), not the feed functions, which return
+ * a fixed column list. Posts with none are left out.
+ */
+export async function fetchEchoAltTexts(echoIds: string[]): Promise<Record<string, string[]>> {
+  if (echoIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from('public_echoes')
+    .select('id, media_alt')
+    .in('id', echoIds)
+    .not('media_alt', 'is', null);
+  if (error) throw error;
+  const out: Record<string, string[]> = {};
+  for (const row of (data ?? []) as { id: string; media_alt: string[] | null }[]) {
+    if (row.media_alt?.some(a => a?.trim())) out[row.id] = row.media_alt.map(a => a ?? '');
+  }
+  return out;
+}
+
 export async function isRemoteFollowRequested(targetUserId: string): Promise<boolean> {
   const uid = await getSessionUserId();
   if (!uid) return false;

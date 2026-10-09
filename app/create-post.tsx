@@ -41,6 +41,8 @@ import { PushPrePrompt } from '../components/onboarding/PushPrePrompt';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, searchRemoteUsers } from '../lib/supabaseEchoApi';
 import { publishOrQueue } from '../lib/feed/publishEcho';
+import { AltTextSheet } from '../components/feed/AltTextSheet';
+import { altForPublish } from '../lib/media/altText';
 import { PhotoEditor } from '../components/feed/PhotoEditor';
 import { isAppOnline } from '../lib/core/net';
 import { outbox } from '../store/outbox';
@@ -181,6 +183,7 @@ export default function CreatePostScreen() {
   // Photo state — up to 4 device assets
   const [images, setImages] = useState<LocalImageUpload[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [altIndex, setAltIndex] = useState<number | null>(null);
   const imageUris = images.map(image => image.uri);
 
   // Photos handed over by a share from another app. Seeded once: re-running on
@@ -500,7 +503,7 @@ export default function CreatePostScreen() {
           const finalUris = remoteMediaUrls ?? imageUris;
           echo = coerceFeedItem({ ...base, postType: 'photo', prompt: response.trim() || 'Photo post', response: '', mediaUris: finalUris });
           if (remoteAuthorId) {
-            const publishPayload = { id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls || imageUris, postType: 'photo', musicTitle: selectedMusic?.title, musicArtist: selectedMusic?.artist, musicUrl: selectedMusic?.url };
+            const publishPayload = { id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls || imageUris, mediaAlt: altForPublish(images), postType: 'photo', musicTitle: selectedMusic?.title, musicArtist: selectedMusic?.artist, musicUrl: selectedMusic?.url };
             if (!isAppOnline()) {
               echo.isPending = true;
               outbox.enqueue('publish', publishPayload);
@@ -870,6 +873,17 @@ export default function CreatePostScreen() {
                         <PencilSimple color="#fff" size={14} weight="bold" />
                       </View>
                     </Pressable>
+                    <Pressable
+                      onPress={() => setAltIndex(idx)}
+                      hitSlop={6}
+                      accessibilityRole="button"
+                      accessibilityLabel={img.alt ? ttx('Edit photo description') : ttx('Add photo description')}
+                      style={{ position: 'absolute', bottom: 8, left: 8 }}
+                    >
+                      <View style={{ paddingHorizontal: 9, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: img.alt ? colors.accent : 'rgba(0,0,0,0.6)' }}>
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>{img.alt ? ttx('ALT ✓') : ttx('+ ALT')}</Text>
+                      </View>
+                    </Pressable>
                     {images.length > 1 && (
                       <View style={{ position: 'absolute', bottom: 8, alignSelf: 'center', flexDirection: 'row', gap: 8 }}>
                         {([[-1, CaretLeft, ttx("Move photo left"), idx === 0], [1, CaretRight, ttx("Move photo right"), idx === images.length - 1]] as const).map(([dir, Caret, a11y, off]) => (
@@ -1067,6 +1081,17 @@ export default function CreatePostScreen() {
         uri={editingIndex !== null ? imageUris[editingIndex] : null}
         onDone={applyEdit}
         onCancel={() => setEditingIndex(null)}
+      />
+
+      <AltTextSheet
+        visible={altIndex !== null}
+        uri={altIndex !== null ? imageUris[altIndex] : null}
+        initial={altIndex !== null ? (images[altIndex]?.alt ?? '') : ''}
+        onSave={(text) => {
+          setImages(prev => prev.map((img, i) => (i === altIndex ? { ...img, alt: text || null } : img)));
+          setAltIndex(null);
+        }}
+        onClose={() => setAltIndex(null)}
       />
 
       <ActionSheet
