@@ -23,7 +23,10 @@ import { useI18n, type TranslationKey } from '../../lib/i18n/i18n';
 import { PushPromptGate } from '../../components/onboarding/PushPromptGate';
 import { DateOfBirthGate } from '../../components/onboarding/DateOfBirthGate';
 
-const HIDDEN_ROUTES = new Set(['notifications']);
+// Five tabs, the most a bar can hold at a glance. Alerts is reached from the bell; Reverb from the
+// Reverb chip on Home, and Home stays lit while you are in it. The desktop sidebar has the room
+// for both and lists them (DESKTOP_ROUTES).
+const HIDDEN_ROUTES = new Set(['notifications', 'watch']);
 const DESKTOP_ROUTES = new Set(['home', 'explore', 'watch', 'chat', 'you', 'notifications', 'apps']);
 
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
@@ -396,6 +399,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
   // Reverb is full-bleed video: the bar goes dark with white icons, like the video
   // it sits on, instead of a pale slab across the bottom of the picture.
   const onVideoTab = state.routes[state.index].name === 'watch';
+  const onWatch = onVideoTab;
   const activeTint = onVideoTab ? '#FFFFFF' : colors.accent;
   const idleTint = onVideoTab ? 'rgba(255,255,255,0.62)' : colors.textMuted;
 
@@ -414,10 +418,12 @@ function FloatingTabBar(props: BottomTabBarProps) {
         <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5, width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center' }}>
           {visibleRoutes.map(route => {
             const isFocused = state.routes[state.index].name === route.name;
+            // Reverb is a mode of Home, not a tab of its own: while you are in it, Home is the lit tab.
+            const isLit = isFocused || (onWatch && route.name === 'home');
             const IconComp = TAB_ICONS[route.name];
             if (!IconComp) return null;
 
-            const color = isFocused ? activeTint : idleTint;
+            const color = isLit ? activeTint : idleTint;
             const badgeCount = badges[route.name] ?? 0;
 
             return (
@@ -449,7 +455,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={descriptors[route.key]?.options.title ?? routeLabel(route.name, t)}
-                accessibilityState={{ selected: isFocused }}
+                accessibilityState={{ selected: isLit }}
                 style={{
                   flex: 1,
                   alignItems: 'center',
@@ -459,12 +465,12 @@ function FloatingTabBar(props: BottomTabBarProps) {
                   minWidth: 0,
                 }}
               >
-                <ReflectiveNavIcon active={isFocused} size={isTabletTabs ? 34 : 30} radius={12}>
+                <ReflectiveNavIcon active={isLit} size={isTabletTabs ? 34 : 30} radius={12}>
                   {badgeCount > 0 ? (
                     <BadgeIcon count={badgeCount}>
                       <IconComp color={color} size={iconSize} weight="regular" />
                     </BadgeIcon>
-                  ) : route.name === 'chat' && checkinPending && !isFocused ? (
+                  ) : route.name === 'chat' && checkinPending && !isLit ? (
                     <DotIcon>
                       <IconComp color={color} size={iconSize} weight="regular" />
                     </DotIcon>
@@ -475,7 +481,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
                 <Text
                   style={{
                     ...font.bodySemibold,
-                    color: isFocused ? activeTint : idleTint,
+                    color: isLit ? activeTint : idleTint,
                     fontSize: labelSize,
                     lineHeight: lineHeights.caption,
                     marginTop: 1,
