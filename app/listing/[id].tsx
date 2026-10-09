@@ -28,6 +28,7 @@ import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { ttx } from '../../lib/i18n/i18n';
 import { BackButton } from '../../components/ui/BackButton';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 
 const CONDITION_COLOR: Record<string, string> = {
   'New': '#10B981',
@@ -155,17 +156,7 @@ export default function ListingDetailScreen() {
         zIndex: 10,
       }}>
         <BackButton fallback={'/mini-apps/marketplace'} tone="media" />
-        <Pressable
-          onPress={handleShare}
-          hitSlop={12}
-          style={{
-            width: 36, height: 36, borderRadius: 18,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <ShareNetwork color="#fff" size={20} />
-        </Pressable>
+        <HeaderActionButton icon={ShareNetwork} label={ttx("Share listing")} onPress={handleShare} tone="media" />
       </View>
 
       <ScrollView

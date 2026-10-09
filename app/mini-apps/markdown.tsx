@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { Trash } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/ui/theme';
 import { countWords } from '../../lib/mini-apps/wordCount';
@@ -127,19 +128,7 @@ export default function MarkdownScreen() {
   const words = countWords(text);
   const chars = text.length;
 
-  const ClearBtn = (
-    <Pressable
-      onPress={() => setText('')}
-      style={{
-        width: 34, height: 34, borderRadius: radius.full,
-        backgroundColor: colors.inputBg,
-        alignItems: 'center', justifyContent: 'center',
-        borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
-      }}
-    >
-      <Trash color={colors.textMuted} size={16} weight="bold" />
-    </Pressable>
-  );
+  const ClearBtn = <HeaderActionButton icon={Trash} label={ttx("Clear text")} onPress={() => setText('')} />;
 
   return (
     <MiniAppShell title={ttx("Markdown")} subtitle={ttx("Write")} headerRight={ClearBtn} scrollable={false}>
