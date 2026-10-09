@@ -9,7 +9,7 @@ import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon, Bell, GearSix } from 'phosphor-react-native';
+import { Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon, Bell, GearSix } from 'phosphor-react-native';
 import { ActionSheet } from '../../components/common/ActionSheet';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
