@@ -43,7 +43,8 @@ export function CollapsibleSection({ title, summary, open, onToggle, action, chi
         </Pressable>
         {action}
       </View>
-      {open ? <View style={{ marginTop: 2 }}>{children}</View> : null}
+      {/* The bottom margin is what keeps an open section from touching whatever follows it. */}
+      {open ? <View style={{ marginTop: 2, marginBottom: 12 }}>{children}</View> : null}
     </View>
   );
 }
