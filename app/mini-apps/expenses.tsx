@@ -9,7 +9,8 @@ import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon, Bell } from 'phosphor-react-native';
+import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon, Bell, GearSix } from 'phosphor-react-native';
+import { ActionSheet } from '../../components/common/ActionSheet';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
@@ -500,6 +501,7 @@ export default function ExpensesApp() {
   const [showBudget, setShowBudget] = useState(false);
   const [showCurrency, setShowCurrency] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [filter, setFilter] = useState<'all' | TxType>('all');
   const [month, setMonth] = useState(currentMonthKey());
   const [query, setQuery] = useState('');
@@ -585,22 +587,14 @@ export default function ExpensesApp() {
     setShowExportMenu(true);
   };
 
+  // Reminder, profile and currency are set once and rarely changed; they share one gear so the header
+  // carries two buttons, not four.
   const HeaderBtns = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <AnimatedPressable onPress={() => {
-        const next = !doc.reminders;
-        update({ ...doc, reminders: next });
-        showToast(next ? 'Daily Khata reminder ON' : 'Daily Khata reminder OFF');
-      }} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: doc.reminders ? colors.accent + '22' : colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
-        <Bell color={doc.reminders ? colors.accent : colors.text} size={18} weight={doc.reminders ? 'fill' : 'bold'} />
+      <AnimatedPressable onPress={() => setShowSettings(true)} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={tt('Khata settings')} style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
+        <GearSix color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
-      <AnimatedPressable onPress={() => setShowProfile(true)} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
-        <UserCircle color={colors.text} size={18} weight="bold" />
-      </AnimatedPressable>
-      <AnimatedPressable onPress={() => setShowCurrency(true)} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md, paddingHorizontal: 11, paddingVertical: 10 }}>
-        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900' }}>{doc.currency}</Text>
-      </AnimatedPressable>
-      <AnimatedPressable onPress={handleExport} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
+      <AnimatedPressable onPress={handleExport} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={tt('Export')} style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
         <Export color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
     </View>
@@ -613,20 +607,6 @@ export default function ExpensesApp() {
     <MiniAppShell title={tt('Khata')} subtitle={tt('Accounting')} scrollable={false} headerRight={HeaderBtns}>
       <View style={{ flex: 1 }}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
-      {/* Top Tab Bar */}
-      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
-        <Pressable onPress={() => setActiveTab('dashboard')} style={{ flex: 1 }}>
-          <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: activeTab === 'dashboard' ? colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' : 'transparent' }}>
-            <Text style={{ color: activeTab === 'dashboard' ? colors.text : colors.textMuted, fontWeight: '800', fontSize: 13 }}>{tt('Dashboard')}</Text>
-          </View>
-        </Pressable>
-        <Pressable onPress={() => setActiveTab('parties')} style={{ flex: 1 }}>
-          <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: activeTab === 'parties' ? colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' : 'transparent' }}>
-            <Text style={{ color: activeTab === 'parties' ? colors.text : colors.textMuted, fontWeight: '800', fontSize: 13 }}>{tt(terms.partiesTab)}</Text>
-          </View>
-        </Pressable>
-      </GlassPanel>
-
       {activeTab === 'parties' && (
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingHorizontal: 4 }}>
@@ -853,18 +833,26 @@ export default function ExpensesApp() {
       <View style={{ position: 'absolute', bottom: 32, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'box-none' }}>
         <View style={{ flex: 1, alignItems: 'center', pointerEvents: 'box-none' }}>
           <View style={{ flexDirection: 'row', backgroundColor: colors.isDark ? 'rgba(40,40,40,0.85)' : 'rgba(255,255,255,0.9)', borderRadius: radius.full, padding: 6, shadowColor: colors.bgPure, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
-            <Pressable onPress={() => setActiveTab('dashboard')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.full, backgroundColor: activeTab === 'dashboard' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <ChartPieSlice color={activeTab === 'dashboard' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'dashboard' ? 'fill' : 'regular'} />
-              {activeTab === 'dashboard' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt('Dashboard')}</Text>}
-            </Pressable>
-            <Pressable onPress={() => setActiveTab('table')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.full, backgroundColor: activeTab === 'table' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <TableIcon color={activeTab === 'table' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'table' ? 'fill' : 'regular'} />
-              {activeTab === 'table' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt('Table')}</Text>}
-            </Pressable>
-            <Pressable onPress={() => setActiveTab('parties')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.full, backgroundColor: activeTab === 'parties' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Users color={activeTab === 'parties' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'parties' ? 'fill' : 'regular'} />
-              {activeTab === 'parties' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt(profile === 'personal' ? 'Friends' : 'Parties')}</Text>}
-            </Pressable>
+            {([
+              { key: 'dashboard', label: tt('Dashboard'), Icon: ChartPieSlice },
+              { key: 'table', label: tt('Table'), Icon: TableIcon },
+              { key: 'parties', label: profile === 'personal' ? tt('Friends') : tt('Parties'), Icon: Users },
+            ] as const).map(({ key, label, Icon }) => {
+              const active = activeTab === key;
+              return (
+                <Pressable
+                  key={key}
+                  onPress={() => setActiveTab(key)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={label}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.full, alignItems: 'center', gap: 2, backgroundColor: active ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent' }}
+                >
+                  <Icon color={active ? colors.text : colors.textMuted} size={20} weight={active ? 'fill' : 'regular'} />
+                  <Text style={{ color: active ? colors.text : colors.textMuted, fontWeight: '800', fontSize: 11 }}>{label}</Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
         <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.9} haptic="medium" style={{ position: 'absolute', right: 0, width: 64, height: 64, borderRadius: radius.full, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', shadowColor: colors.accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
@@ -877,6 +865,25 @@ export default function ExpensesApp() {
       {showBudget && <BudgetModal budget={doc.budget} currency={doc.currency} onSave={b => update({ ...doc, budget: b })} onClose={() => setShowBudget(false)} />}
       {showCurrency && <CurrencyModal value={doc.currency} onSelect={currency => update({ ...doc, currency })} onClose={() => setShowCurrency(false)} />}
       {showProfile && <ProfileModal value={profile} onSelect={p => update({ ...doc, profile: p })} onClose={() => setShowProfile(false)} />}
+      <ActionSheet
+        visible={showSettings}
+        onClose={() => setShowSettings(false)}
+        title={tt('Khata settings')}
+        actions={[
+          {
+            key: 'reminder',
+            label: `${tt('Daily reminder')}: ${doc.reminders ? tt('On') : tt('Off')}`,
+            icon: <Bell color={colors.accent} size={18} weight={doc.reminders ? 'fill' : 'bold'} />,
+            onPress: () => {
+              const next = !doc.reminders;
+              update({ ...doc, reminders: next });
+              showToast(next ? 'Daily Khata reminder ON' : 'Daily Khata reminder OFF');
+            },
+          },
+          { key: 'profile', label: `${tt('Profile')}: ${profile === 'personal' ? tt('Personal') : tt('Business')}`, icon: <UserCircle color={colors.accent} size={18} weight="bold" />, onPress: () => setShowProfile(true) },
+          { key: 'currency', label: `${tt('Currency')}: ${doc.currency}`, icon: <HandCoins color={colors.accent} size={18} weight="bold" />, onPress: () => setShowCurrency(true) },
+        ]}
+      />
       <ExportModal visible={showExportMenu} onClose={() => setShowExportMenu(false)} onExport={doExport} />
     </MiniAppShell>
   );
