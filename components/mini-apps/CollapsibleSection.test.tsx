@@ -52,6 +52,12 @@ describe('CollapsibleSection', () => {
     expect(source).toMatch(/accessibilityRole="button"/);
   });
 
+  it('leaves a gap below its content, so an open section does not touch what follows', () => {
+    // Seen on the emulator: the open monthly log sat flush against the panel under it.
+    const source = readFileSync('components/mini-apps/CollapsibleSection.tsx', 'utf8');
+    expect(source).toMatch(/open \? <View style=\{\{ marginTop: 2, marginBottom: 12 \}\}>/);
+  });
+
   it('tapping the header asks to toggle', () => {
     const { getByLabelText, onToggle } = setup(false);
     fireEvent.click(getByLabelText('Measurements. Last logged Jul 19'));
