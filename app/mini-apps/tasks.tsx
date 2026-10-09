@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, Keyboard, Modal, ScrollView, Platform
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Bell, CheckCircle, CircleDashed, Flag, Plus, Trash, Tag, NotePencil, X, WarningCircle } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniChip, MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
@@ -228,7 +229,7 @@ export default function TasksScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <MiniAppShell title={tt('Tasks')} subtitle={tt('Action')}>
+      <MiniAppShell title={tt('Tasks')} subtitle={tt('Action')} headerRight={<HeaderAddButton onPress={() => setShowAddSheet(true)} label={tt('Add task')} />}>
         <MiniCommandDeck
           accent={accent}
           title={tt('Your execution queue')}
@@ -510,13 +511,6 @@ export default function TasksScreen() {
 
       </MiniAppShell>
       
-      {/* FAB */}
-      <Pressable 
-        onPress={() => setShowAddSheet(true)}
-        style={{ position: 'absolute', bottom: 40, right: 24, width: 64, height: 64, borderRadius: radius.full, backgroundColor: accent, justifyContent: 'center', alignItems: 'center', elevation: 10 }}
-      >
-        <Plus color={colors.bg} size={28} weight="bold" />
-      </Pressable>
 
       {/* Bottom Sheet */}
       {showAddSheet && (

@@ -13,6 +13,7 @@ import { Plus, Minus, CheckCircle, CircleDashed, Fire, X, Camera, Images, Clock,
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { HabitMarkerIcon, habitMarkerLabel } from '../../components/mini-apps/HabitMarkerIcon';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -659,7 +660,7 @@ export default function HabitsApp() {
 
   return (
     <View style={{ flex: 1 }}>
-      <MiniAppShell title={tt('Habits')} subtitle={tt('Streak')}>
+      <MiniAppShell title={tt('Habits')} subtitle={tt('Streak')} headerRight={<HeaderAddButton onPress={() => setShowAdd(true)} label={tt('Add habit')} />}>
       <MiniCommandDeck
         accent={colors.accent}
         title={tt('Consistency engine')}
@@ -844,29 +845,6 @@ export default function HabitsApp() {
     {showAdd && <AddHabitModal onSave={saveHabit} onClose={() => setShowAdd(false)} />}
     {editHabit && <AddHabitModal initial={editHabit} onSave={saveHabit} onClose={() => setEditHabit(null)} />}
 
-      <AnimatedPressable
-        onPress={() => setShowAdd(true)}
-        scaleValue={0.9}
-        haptic="medium"
-        style={{
-          position: 'absolute',
-          bottom: 40,
-          right: 20,
-        width: 60,
-        height: 60,
-        borderRadius: radius.full,
-        backgroundColor: colors.accent,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: colors.accent,
-        shadowOpacity: 0.5,
-        shadowRadius: 15,
-        shadowOffset: { width: 0, height: 6 },
-        elevation: 8,
-      }}
-    >
-      <Plus color={colors.bgPure} size={28} weight="bold" />
-    </AnimatedPressable>
     </View>
   );
 }

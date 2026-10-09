@@ -39,7 +39,7 @@ import { usePerformanceProfile } from '../../lib/ui/performance';
 import { groupDiscovery } from '../../lib/feed/echoUX';
 import { useRealtimeNewEchoes } from '../../lib/core/realtime';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
-import { ComposeFAB } from '../../components/ui/ComposeFAB';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { UserRow } from '../../components/feed/UserRow';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
@@ -457,6 +457,7 @@ export default function DiscoverScreen() {
 
   // Interactive coach-mark tour — runs once for a fresh first-run user.
   const feedTarget = useTutorialTarget('home-feed');
+  const composeTarget = useTutorialTarget('compose-fab');
   const startTour = useTutorialStore(s => s.startTour);
   const hasSeenHomeTutorial = useAppStore(s => s.hasSeenHomeTutorial);
   useEffect(() => {
@@ -863,12 +864,16 @@ export default function DiscoverScreen() {
                 )}
               </View>
             </Pressable>
+
+            {/* Making an echo is the one thing the header always offers: top right, same as every add. */}
+            <View ref={composeTarget.ref} onLayout={composeTarget.onLayout}>
+              <HeaderAddButton onPress={() => router.push('/create-post')} label="Compose new echo" />
+            </View>
           </View>
         </View>
 
       </EdgeGlass>
 
-      <ComposeFAB />
     </View>
   );
 }
