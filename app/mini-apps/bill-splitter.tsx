@@ -4,7 +4,6 @@ import { Minus, Plus, Users, ShareNetwork, X } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -95,17 +94,6 @@ export default function BillSplitterScreen() {
 
   return (
     <MiniAppShell title={ttx("Bill Splitter")} subtitle={ttx("Split")} headerRight={ShareBtn}>
-      <MiniCommandDeck
-        accent={accent}
-        title={ttx("Split the bill without friction")}
-        subtitle={ttx("Tax, tip, shares, exact orders.")}
-        metrics={[
-          { label: 'Total', value: `${CUR}${fmt(total)}`, detail: 'with extras' },
-          { label: 'People', value: `${people.length}`, detail: 'included' },
-          { label: 'Mode', value: mode === 'even' ? 'Even' : mode === 'shares' ? 'Shares' : 'Exact', detail: 'split logic' },
-        ]}
-        chips={['One tap share', 'Exact orders', 'Tip logic']}
-      />
       {/* Bill + tax */}
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("BILL AMOUNT")}</Text>

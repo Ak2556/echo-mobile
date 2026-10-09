@@ -5,7 +5,6 @@ import { Check, Copy, FloppyDisk, Shuffle } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/ui/theme';
 import { ttx } from '../../lib/i18n/i18n';
 
@@ -99,17 +98,6 @@ export default function ColorToolsScreen() {
 
   return (
     <MiniAppShell title={ttx("Color Tools")} subtitle={ttx("Color")}>
-      <MiniCommandDeck
-        accent={hex}
-        title={ttx("Design color that can ship")}
-        subtitle={ttx("Pick, test, copy, reuse.")}
-        metrics={[
-          { label: 'HEX', value: hex.toUpperCase(), detail: 'current' },
-          { label: 'Contrast', value: rgb ? contrast(hex).split(' ')[0] : '-', detail: 'vs white' },
-          { label: 'Saved', value: `${saved.length}`, detail: 'palette' },
-        ]}
-        chips={['Accessible', 'Swatches', 'Specs']}
-      />
       <ColorIntelligencePanel hex={hex} saved={saved} />
       {/* Hero swatch */}
       <View style={{ height: 160, borderRadius: radius.card, backgroundColor: hex, alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, shadowColor: hex, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 8 } }}>

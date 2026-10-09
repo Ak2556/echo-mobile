@@ -11,7 +11,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '../../lib/routing/safeBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   ChatCircle,
   ShareNetwork,
   Tag,
@@ -28,6 +27,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { ttx } from '../../lib/i18n/i18n';
+import { BackButton } from '../../components/ui/BackButton';
 
 const CONDITION_COLOR: Record<string, string> = {
   'New': '#10B981',
@@ -154,17 +154,7 @@ export default function ListingDetailScreen() {
         justifyContent: 'space-between',
         zIndex: 10,
       }}>
-        <Pressable
-          onPress={() => safeBack('/mini-apps/marketplace')}
-          hitSlop={12}
-          style={{
-            width: 36, height: 36, borderRadius: 18,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <ArrowLeft color="#fff" size={20} />
-        </Pressable>
+        <BackButton fallback={'/mini-apps/marketplace'} tone="media" />
         <Pressable
           onPress={handleShare}
           hitSlop={12}

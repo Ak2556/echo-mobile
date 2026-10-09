@@ -666,7 +666,6 @@ export default function HabitsApp() {
         title={tt('Consistency engine')}
         subtitle={tt('Streaks, proof, recovery.')}
         metrics={[
-          { label: tt('Today'), value: `${doneToday}/${dueToday.length}`, detail: tt('due') },
           { label: tt('Best'), value: `${bestStreak}`, detail: tt('streak') },
           { label: tt('Proof'), value: `${proofCount}`, detail: tt('logs') },
         ]}

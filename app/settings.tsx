@@ -8,7 +8,7 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  ArrowLeft, CaretRight, Bell, Vibrate, Lock, UserPlus, Moon, SpeakerHigh,
+  CaretRight, Bell, Vibrate, Lock, UserPlus, Moon, SpeakerHigh,
   Shield, Info, Question, SignOut, Trash, Eye, EyeSlash,
   ChatTeardropDots, Lightning, Translate, WifiSlash, ShieldCheck,
   Palette, TextT, SquaresFour, Star, Robot, FloppyDisk,
@@ -47,6 +47,7 @@ import { speak } from '../lib/mini-apps/tts';
 import { useAiConsent } from '../lib/privacy/aiConsent';
 import { useHealthConsent } from '../lib/privacy/healthConsent';
 import { deleteRemoteFitness } from '../lib/mini-apps/fitnessRemote';
+import { BackButton } from '../components/ui/BackButton';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@downloadecho.com';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@downloadecho.com';
@@ -942,9 +943,7 @@ export default function SettingsScreen() {
             gap: 12,
           }}
         >
-          <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
-            <ArrowLeft color={colors.text} size={28} />
-          </AnimatedPressable>
+          <BackButton />
           <Text style={{ color: colors.text, fontSize: layout.isPhone ? 32 : 36, ...theme.font.displayBlack, letterSpacing: -0.5 }}>{t('settings.title')}</Text>
         </View>
       </View>

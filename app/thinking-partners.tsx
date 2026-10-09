@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Brain, UsersThree, Lightning } from 'phosphor-react-native';
+import { Brain, UsersThree, Lightning } from 'phosphor-react-native';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { useThinkingPartners } from '../hooks/queries/useThinkingPartners';
 import { useToggleRemoteFollow } from '../hooks/useSupabaseSocial';
@@ -18,6 +18,7 @@ import { track } from '../lib/core/analytics';
 import type { ThinkingPartnerMode } from '../lib/supabaseEchoApi';
 import type { User } from '../types';
 import { ttx } from '../lib/i18n/i18n';
+import { BackButton } from '../components/ui/BackButton';
 
 type Partner = User & { affinity: number };
 
@@ -26,7 +27,6 @@ type Partner = User & { affinity: number };
  * Toggle between kindred minds ('similar') and productive friction ('different').
  */
 export default function ThinkingPartnersScreen() {
-  const router = useRouter();
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const [mode, setMode] = useState<ThinkingPartnerMode>('similar');
   const { data, isLoading, isError, error, refetch } = useThinkingPartners(mode);
@@ -52,9 +52,7 @@ export default function ThinkingPartnersScreen() {
     <ResponsiveScreen background="#0A0A0F">
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={{ padding: 4 }} accessibilityRole="button" accessibilityLabel={ttx("Go back")}>
-          <ArrowLeft color="#fff" size={24} />
-        </Pressable>
+        <BackButton tone="media" />
         <View style={styles.headerCenter}>
           <Brain color={ACCENT_COLORS.violet} size={18} weight="fill" />
           <Text style={styles.headerTitle}>{ttx("MINDS")}</Text>

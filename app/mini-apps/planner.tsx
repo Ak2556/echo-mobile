@@ -80,17 +80,19 @@ export default function PlannerScreen() {
 
   return (
     <MiniAppShell title={ttx("Planner")} subtitle={ttx("Plan")}>
-      <MiniCommandDeck
-        accent={accent}
-        title={ttx("A day you can actually run")}
-        subtitle={ttx("Morning, afternoon, evening.")}
-        metrics={[
-          { label: 'Total', value: `${stats.total}`, detail: dayLabel },
-          { label: 'Open', value: `${stats.open}`, detail: 'left' },
-          { label: 'Done', value: `${stats.done}`, detail: 'closed' },
-        ]}
-        chips={['Rebalance day', 'Protect focus', 'End-of-day recap']}
-      />
+      {stats.total > 0 && (
+        <MiniCommandDeck
+          accent={accent}
+          title={ttx("A day you can actually run")}
+          subtitle={ttx("Morning, afternoon, evening.")}
+          metrics={[
+            { label: 'Total', value: `${stats.total}`, detail: dayLabel },
+            { label: 'Open', value: `${stats.open}`, detail: 'left' },
+            { label: 'Done', value: `${stats.done}`, detail: 'closed' },
+          ]}
+          chips={['Rebalance day', 'Protect focus', 'End-of-day recap']}
+        />
+      )}
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Pressable onPress={() => setDate(shiftPlannerDate(date, -1))} hitSlop={8}>

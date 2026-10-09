@@ -8,7 +8,6 @@ import { ArrowClockwise, DiceSix } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import { ttx } from '../../lib/i18n/i18n';
@@ -111,17 +110,6 @@ export default function DiceApp() {
 
   return (
     <MiniAppShell title={ttx("Dice & Coin")} subtitle={ttx("Chance")} headerRight={ClearBtn}>
-      <MiniCommandDeck
-        accent={selectedDie.color}
-        title={ttx("Fair random decisions")}
-        subtitle={ttx("Roll, flip, explain, share.")}
-        metrics={[
-          { label: 'Die', value: selectedDie.label, detail: `${selectedDie.sides} sides` },
-          { label: 'Count', value: `${diceCount}`, detail: 'dice' },
-          { label: 'History', value: `${history.length}`, detail: 'logged' },
-        ]}
-        chips={['Games', 'Draws', 'Group proof']}
-      />
       {/* Die selector */}
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SELECT DIE")}</Text>
