@@ -229,17 +229,19 @@ export default function TasksScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <MiniAppShell title={tt('Tasks')} subtitle={tt('Action')}>
-        <MiniCommandDeck
-          accent={accent}
-          title={tt('Your execution queue')}
-          subtitle={tt('Priorities, dates, action.')}
-          metrics={[
-            { label: tt('Open'), value: `${stats.open}`, detail: tt('active') },
-            { label: tt('Today'), value: `${stats.dueToday}`, detail: tt('due now') },
-            { label: tt('High'), value: `${stats.high}`, detail: tt('priority') },
-          ]}
-          chips={[tt('Plan next 3'), tt('Share progress'), tt('Break blockers')]}
-        />
+        {stats.open > 0 && (
+          <MiniCommandDeck
+            accent={accent}
+            title={tt('Your execution queue')}
+            subtitle={tt('Priorities, dates, action.')}
+            metrics={[
+              { label: tt('Open'), value: `${stats.open}`, detail: tt('active') },
+              { label: tt('Today'), value: `${stats.dueToday}`, detail: tt('due now') },
+              { label: tt('High'), value: `${stats.high}`, detail: tt('priority') },
+            ]}
+            chips={[tt('Plan next 3'), tt('Share progress'), tt('Break blockers')]}
+          />
+        )}
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 14, paddingHorizontal: 4 }}>
           {(['today', 'upcoming', 'someday', 'any'] as Filter[]).map(item => (
