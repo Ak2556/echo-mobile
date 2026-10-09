@@ -49,6 +49,7 @@ import { persistGet } from '../../store/persist';
 import { assistantLanguageInstruction } from '../../lib/i18n/languages';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
 import type { AiMode } from '../../supabase/functions/echo-ai/mode';
+import { ON_MEDIA } from '../../lib/ui/fixedColors';
 
 
 function modelLabel(model: string): string {
@@ -976,7 +977,7 @@ export default function ChatScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
                   <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Echo</Text>
+                    <Text style={{ color: ON_MEDIA, fontSize: 13, fontWeight: '700' }}>Echo</Text>
                   </View>
                   <Pressable onPress={() => router.push('/messages' as Href)} accessibilityRole="button">
                     <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
@@ -1018,7 +1019,7 @@ export default function ChatScreen() {
             zIndex: 20,
           }}
         >
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Tip · long-press the Chat tab to open quick actions</Text>
+          <Text style={{ color: ON_MEDIA, fontSize: 13, fontWeight: '600' }}>Tip · long-press the Chat tab to open quick actions</Text>
         </Animated.View>
       )}
 

@@ -13,6 +13,7 @@ import { showToast } from '../components/ui/Toast';
 import { clearPushToken, registerForPush } from '../lib/notifications/push';
 import { syncNotificationPrefs } from '../lib/notifications/prefsSync';
 import { ttx } from '../lib/i18n/i18n';
+import { SWITCH_THUMB } from '../lib/ui/fixedColors';
 
 export default function NotificationPrefsScreen() {
   const { colors, radius, fontSizes, switchTrack, animation } = useTheme();
@@ -60,7 +61,7 @@ export default function NotificationPrefsScreen() {
         value={value}
         onValueChange={onValueChange}
         trackColor={switchTrack}
-        thumbColor="#fff"
+        thumbColor={SWITCH_THUMB}
       />
     </View>
   );

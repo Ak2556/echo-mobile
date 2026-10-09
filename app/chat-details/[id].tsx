@@ -17,16 +17,17 @@ import {
 } from '../../lib/supabaseEchoApi';
 import { ttx } from '../../lib/i18n/i18n';
 import { BackButton } from '../../components/ui/BackButton';
+import { WARM, ON_MEDIA } from '../../lib/ui/fixedColors';
 
 // Reuse the thread's wallpaper palette so a theme choice shows instantly there.
 const THEMES: { id: string; tint: string | null; label: string }[] = [
   { id: 'default', tint: null, label: 'Default' },
-  { id: 'terracotta', tint: '#C65F3F', label: 'Terracotta' },
-  { id: 'ochre', tint: '#B08536', label: 'Ochre' },
-  { id: 'sage', tint: '#4E8B7A', label: 'Sage' },
-  { id: 'dusk', tint: '#5E748B', label: 'Dusk' },
-  { id: 'plum', tint: '#8B5E7D', label: 'Plum' },
-  { id: 'rose', tint: '#B35D6B', label: 'Rose' },
+  { id: 'terracotta', tint: WARM.terracotta, label: 'Terracotta' },
+  { id: 'ochre', tint: WARM.ochre, label: 'Ochre' },
+  { id: 'sage', tint: WARM.sage, label: 'Sage' },
+  { id: 'dusk', tint: WARM.dusk, label: 'Dusk' },
+  { id: 'plum', tint: WARM.plum, label: 'Plum' },
+  { id: 'rose', tint: WARM.roseClay, label: 'Rose' },
 ];
 
 const QUICK_REACTIONS = ['❤️', '😂', '👍', '🔥', '😮', '😢', '🙏'];
@@ -130,7 +131,7 @@ export default function ChatDetailsScreen() {
         {/* Identity */}
         <View style={{ alignItems: 'center', paddingVertical: 22, gap: 10 }}>
           <Avatar name={name} color={conv?.otherAvatarColor} url={isGroup ? undefined : conv?.otherAvatarUrl ?? undefined} size={84} zoomable>
-            {isGroup ? <Users color="#fff" size={32} weight="fill" /> : undefined}
+            {isGroup ? <Users color={ON_MEDIA} size={32} weight="fill" /> : undefined}
           </Avatar>
           <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack, letterSpacing: -0.3 }}>{name}</Text>
           {!isGroup && conv?.otherUsername ? (
@@ -171,7 +172,7 @@ export default function ChatDetailsScreen() {
             return (
               <Pressable key={t.id} onPress={() => chooseTheme(t.id)} accessibilityRole="button" accessibilityLabel={`Theme ${t.label}`} style={{ alignItems: 'center', gap: 5 }}>
                 <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: t.tint ?? colors.surfaceHover, borderWidth: active ? 2 : StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border, alignItems: 'center', justifyContent: 'center' }}>
-                  {active && <Check color={t.tint ? '#fff' : colors.accent} size={18} weight="bold" />}
+                  {active && <Check color={t.tint ? ON_MEDIA : colors.accent} size={18} weight="bold" />}
                 </View>
                 <Text style={{ color: active ? colors.text : colors.textMuted, fontSize: 10.5, fontWeight: '700' }}>{t.label}</Text>
               </Pressable>

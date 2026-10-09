@@ -128,13 +128,13 @@ function OfficeHourDetailScreenInner() {
               borderRadius: radius.lg,
               padding: 16,
               borderWidth: 1,
-              borderColor: liveNow ? '#EF4444' : colors.border,
+              borderColor: liveNow ? colors.danger : colors.border,
               marginBottom: 16,
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              <Clock color={liveNow ? '#EF4444' : colors.accent} size={13} weight={liveNow ? 'fill' : 'regular'} />
-              <Text style={{ color: liveNow ? '#EF4444' : colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>
+              <Clock color={liveNow ? colors.danger : colors.accent} size={13} weight={liveNow ? 'fill' : 'regular'} />
+              <Text style={{ color: liveNow ? colors.danger : colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>
                 {liveNow ? 'LIVE NOW' : new Date(oh.starts_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }).toUpperCase()}
               </Text>
             </View>
@@ -185,7 +185,7 @@ function OfficeHourDetailScreenInner() {
               scaleValue={0.96}
               haptic="medium"
             >
-              <Text style={{ color: oh.has_rsvp ? colors.text : '#fff', fontWeight: '700' }}>
+              <Text style={{ color: oh.has_rsvp ? colors.text : colors.onAccent, fontWeight: '700' }}>
                 {oh.has_rsvp ? 'RSVP confirmed' : 'RSVP'}
               </Text>
             </AnimatedPressable>
@@ -286,7 +286,7 @@ function OfficeHourDetailScreenInner() {
             scaleValue={0.9}
             haptic="medium"
           >
-            {submitting ? <ActivityIndicator color="#fff" size="small" /> : <PaperPlaneTilt color="#fff" size={18} weight="fill" />}
+            {submitting ? <ActivityIndicator color={colors.onAccent} size="small" /> : <PaperPlaneTilt color={colors.onAccent} size={18} weight="fill" />}
           </AnimatedPressable>
         </View>
       </KeyboardAvoidingView>

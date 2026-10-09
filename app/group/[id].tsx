@@ -19,6 +19,7 @@ import {
   searchRemoteUsers, type GroupMember, type UserSearchHit, type RemoteConversation,
 } from '../../lib/supabaseEchoApi';
 import { ttx } from '../../lib/i18n/i18n';
+import { WARM, ON_MEDIA } from '../../lib/ui/fixedColors';
 
 async function suggestGroupName(memberNames: string[]): Promise<string | null> {
   let acc = '';
@@ -49,7 +50,7 @@ export default function GroupInfoScreen() {
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#C65F3F');
+  const [color, setColor] = useState<string>(WARM.terracotta);
   const [muted, setMuted] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -62,7 +63,7 @@ export default function GroupInfoScreen() {
       const [c, m] = await Promise.all([fetchConversationById(id), fetchGroupMembers(id)]);
       setConv(c);
       setMembers(m);
-      if (c) { setName(c.groupTitle ?? c.otherDisplayName); setColor(c.groupAvatarColor ?? '#C65F3F'); setMuted(c.muted); }
+      if (c) { setName(c.groupTitle ?? c.otherDisplayName); setColor(c.groupAvatarColor ?? WARM.terracotta); setMuted(c.muted); }
     } finally {
       setLoading(false);
     }
@@ -172,7 +173,7 @@ export default function GroupInfoScreen() {
           {/* Hero */}
           <View style={{ alignItems: 'center', gap: 12, marginBottom: 8 }}>
             <Avatar name={name || 'Group'} color={color} size={80}>
-              <Users color="#fff" size={34} weight="fill" />
+              <Users color={ON_MEDIA} size={34} weight="fill" />
             </Avatar>
             {isAdmin ? (
               <TextInput
@@ -289,10 +290,10 @@ export default function GroupInfoScreen() {
           <AnimatedPressable
             onPress={confirmLeave}
             scaleValue={0.98} haptic="medium"
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, borderWidth: 1, borderColor: '#EF444455', paddingVertical: 14, marginTop: 8 }}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, borderWidth: 1, borderColor: `${colors.danger}55`, paddingVertical: 14, marginTop: 8 }}
           >
-            <SignOut color="#EF4444" size={17} weight="bold" />
-            <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 15 }}>{ttx("Leave group")}</Text>
+            <SignOut color={colors.danger} size={17} weight="bold" />
+            <Text style={{ color: colors.danger, fontWeight: '700', fontSize: 15 }}>{ttx("Leave group")}</Text>
           </AnimatedPressable>
         </ScrollView>
       )}

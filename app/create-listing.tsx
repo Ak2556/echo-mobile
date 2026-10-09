@@ -32,6 +32,7 @@ import {
   uploadListingImages,
 } from '../lib/mini-apps/marketplaceApi';
 import { ttx } from '../lib/i18n/i18n';
+import { ON_MEDIA } from '../lib/ui/fixedColors';
 
 const MAX_PHOTOS = 6;
 
@@ -63,7 +64,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
         borderColor: active ? 'transparent' : colors.border,
       }}>
         <Text style={{
-          color: active ? '#fff' : colors.text,
+          color: active ? colors.onAccent : colors.text,
           fontSize: 13.5,
           fontFamily: active ? 'Inter_600SemiBold' : 'Inter_500Medium',
         }}>
@@ -221,8 +222,8 @@ export default function CreateListingScreen() {
               borderRadius: 999,
             }}>
               {saving
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <Text style={{ color: canSubmit ? '#fff' : colors.textMuted, ...font.bodySemibold, fontSize: 14 }}>{ttx("Post")}</Text>
+                ? <ActivityIndicator size="small" color={colors.onAccent} />
+                : <Text style={{ color: canSubmit ? colors.onAccent : colors.textMuted, ...font.bodySemibold, fontSize: 14 }}>{ttx("Post")}</Text>
               }
             </View>
           </AnimatedPressable>
@@ -279,7 +280,7 @@ export default function CreateListingScreen() {
                         borderRadius: 7,
                         paddingHorizontal: 7, paddingVertical: 3,
                       }}>
-                        <Text style={{ color: '#fff', fontSize: 10, ...font.bodySemibold, letterSpacing: 0.4 }}>{ttx("COVER")}</Text>
+                        <Text style={{ color: ON_MEDIA, fontSize: 10, ...font.bodySemibold, letterSpacing: 0.4 }}>{ttx("COVER")}</Text>
                       </View>
                     )}
                     <Pressable
@@ -292,7 +293,7 @@ export default function CreateListingScreen() {
                         alignItems: 'center', justifyContent: 'center',
                       }}
                     >
-                      <X color="#fff" size={12} weight="bold" />
+                      <X color={ON_MEDIA} size={12} weight="bold" />
                     </Pressable>
                   </View>
                 ))}

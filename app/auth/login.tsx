@@ -29,6 +29,7 @@ import { WebLandingPanel } from '../../components/pwa/WebLandingPanel';
 import { showToast } from '../../components/ui/Toast';
 import { ReviewerSignInSheet } from '../../components/auth/ReviewerSignInSheet';
 import { useI18n, type TranslationKey } from '../../lib/i18n/i18n';
+import { BRAND, ON_MEDIA } from '../../lib/ui/fixedColors';
 
 const ROTATING_PROMPT_KEYS: TranslationKey[] = [
   'auth.prompt.song',
@@ -145,7 +146,7 @@ export default function LoginScreen() {
     transform: [{ scale: dotScale.value }],
   }));
 
-  const bgBase = isDark ? '#08080C' : '#FAFAFB';
+  const bgBase = colors.bg;
 
   return (
     <View style={{ flex: 1, backgroundColor: bgBase }}>
@@ -243,11 +244,11 @@ export default function LoginScreen() {
                 <PrimaryButton
                   icon={appleLoading
                     ? null
-                    : <AppleLogo color={isDark ? '#0C0B09' : '#fff'} size={22} weight="fill" />}
+                    : <AppleLogo color={isDark ? BRAND.ink : ON_MEDIA} size={22} weight="fill" />}
                   label={appleLoading ? t('auth.signingIn') : (authMode === 'signup' ? 'Sign up with Apple' : 'Log in with Apple')}
                   onPress={handleApple}
-                  bg={isDark ? '#FFFFFF' : '#0C0B09'}
-                  fg={isDark ? '#0C0B09' : '#fff'}
+                  bg={isDark ? ON_MEDIA : BRAND.ink}
+                  fg={isDark ? BRAND.ink : ON_MEDIA}
                   radius={radius.full}
                   font={font.bodyBold}
                   glow={true}
@@ -259,11 +260,11 @@ export default function LoginScreen() {
               <PrimaryButton
                 icon={googleLoading
                   ? null
-                  : <GoogleLogo color={isDark ? '#0C0B09' : '#fff'} size={22} weight="fill" />}
+                  : <GoogleLogo color={isDark ? BRAND.ink : ON_MEDIA} size={22} weight="fill" />}
                 label={googleLoading ? t('auth.signingIn') : (authMode === 'signup' ? 'Sign up with Google' : 'Log in with Google')}
                 onPress={handleGoogle}
-                bg={isDark ? '#FFFFFF' : '#0C0B09'}
-                fg={isDark ? '#0C0B09' : '#fff'}
+                bg={isDark ? ON_MEDIA : BRAND.ink}
+                fg={isDark ? BRAND.ink : ON_MEDIA}
                 radius={radius.full}
                 font={font.bodyBold}
                 glow={true}
@@ -272,7 +273,7 @@ export default function LoginScreen() {
 
             <Animated.View entering={FadeInDown.delay(160).duration(400).springify().mass(0.7)}>
               <PrimaryButton
-                icon={<EnvelopeSimple color="#fff" size={22} weight="fill" />}
+                icon={<EnvelopeSimple color={colors.onAccent} size={22} weight="fill" />}
                 label={authMode === 'signup' ? 'Sign up with Email' : 'Log in with Email'}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -283,7 +284,7 @@ export default function LoginScreen() {
                   }
                 }}
                 bg={colors.accent}
-                fg="#fff"
+                fg={colors.onAccent}
                 radius={radius.full}
                 font={font.bodyBold}
               />

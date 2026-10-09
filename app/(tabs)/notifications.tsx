@@ -352,7 +352,7 @@ export default function NotificationsScreen() {
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={[font.bodyBold, { color: '#fff', fontSize: 11 }]}>{unreadCount}</Text>
+                    <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 11 }]}>{unreadCount}</Text>
                   </View>
                 )}
               </View>
@@ -400,7 +400,7 @@ export default function NotificationsScreen() {
                       {
                         fontSize: 13,
                         textTransform: 'capitalize',
-                        color: filter === tab ? '#fff' : colors.textSecondary,
+                        color: filter === tab ? colors.onAccent : colors.textSecondary,
                       }
                     ]}
                   >

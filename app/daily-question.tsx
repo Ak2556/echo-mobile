@@ -243,7 +243,7 @@ function DailyQuestionScreenInner() {
                 <ViewChip
                   active={view === 'recent'}
                   onPress={() => setView('recent')}
-                  icon={<Clock size={14} weight="fill" color={view === 'recent' ? '#fff' : colors.textMuted} />}
+                  icon={<Clock size={14} weight="fill" color={view === 'recent' ? colors.onAccent : colors.textMuted} />}
                   label={t('daily.recent')}
                 />
                 <ViewChip
@@ -252,7 +252,7 @@ function DailyQuestionScreenInner() {
                     if (view !== 'following') track('daily_following_viewed', { question_id: question.id, answer_count: following.length });
                     setView('following');
                   }}
-                  icon={<Users size={14} weight="fill" color={view === 'following' ? '#fff' : colors.textMuted} />}
+                  icon={<Users size={14} weight="fill" color={view === 'following' ? colors.onAccent : colors.textMuted} />}
                   label={t('daily.following')}
                 />
                 <ViewChip
@@ -261,7 +261,7 @@ function DailyQuestionScreenInner() {
                     if (view !== 'divergent') track('daily_divergence_viewed', { question_id: question.id, answer_count: divergent.length });
                     setView('divergent');
                   }}
-                  icon={<Lightning size={14} weight="fill" color={view === 'divergent' ? '#fff' : colors.textMuted} />}
+                  icon={<Lightning size={14} weight="fill" color={view === 'divergent' ? colors.onAccent : colors.textMuted} />}
                   label={t('daily.divergent')}
                 />
               </View>
@@ -392,7 +392,7 @@ function ViewChip({
       haptic="light"
     >
       {icon}
-      <Text style={{ color: active ? '#fff' : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>
+      <Text style={{ color: active ? colors.onAccent : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>
         {label}
       </Text>
     </AnimatedPressable>

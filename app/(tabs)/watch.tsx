@@ -11,6 +11,7 @@ import { useInfiniteVideoFeed, type FlowSort } from '../../hooks/useFeed';
 import { useI18n } from '../../lib/i18n/i18n';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { useTheme } from '../../lib/ui/theme';
+import { ON_MEDIA } from '../../lib/ui/fixedColors';
 
 // Trending | New, centred over the video like the rest of Flow's chrome. Layout
 // sits on inner Views: box props on a Pressable drop out in release builds.
@@ -19,7 +20,7 @@ import { useTheme } from '../../lib/ui/theme';
 function FlowSortTabs({ sort, onChange, top, overVideo }: { sort: FlowSort; onChange: (s: FlowSort) => void; top: number; overVideo: boolean }) {
   const { t } = useI18n();
   const { font, colors } = useTheme();
-  const on = overVideo ? '#fff' : colors.text;
+  const on = overVideo ? ON_MEDIA : colors.text;
   const off = overVideo ? 'rgba(255,255,255,0.6)' : colors.textMuted;
   const tabs: { key: FlowSort; label: string }[] = [
     { key: 'trending', label: t('home.trending') },

@@ -32,8 +32,9 @@ import { APP_LANGUAGES } from '../../lib/i18n/languages';
 import { ttx } from '../../lib/i18n/i18n';
 import { personName } from '../../lib/social/personName';
 import { BackButton } from '../../components/ui/BackButton';
+import { BRAND, DARK, STATUS } from '../../lib/ui/fixedColors';
 
-const ACCENT = '#E06030';
+const ACCENT = BRAND.ember;
 const SPRING = { damping: 24, stiffness: 300 };
 
 // Named panel indices — the wizard is an animated horizontal "tape" of panels.
@@ -106,7 +107,7 @@ function SwatchItem({ color, selected, onPress }: {
         borderWidth: selected ? 3 : 0,
         borderColor: 'rgba(255,255,255,0.9)',
       }, animStyle]}>
-        {selected && <Check color="#fff" size={20} weight="bold" />}
+        {selected && <Check color={DARK.text} size={20} weight="bold" />}
       </Animated.View>
     </AnimatedPressable>
   );
@@ -142,11 +143,11 @@ function InterestChip({ label, selected, onPress }: {
       <Animated.View style={[{
         paddingHorizontal: 14, paddingVertical: 9,
         borderRadius: 20,
-        backgroundColor: selected ? ACCENT : '#18181B',
+        backgroundColor: selected ? ACCENT : DARK.raised,
         borderWidth: 1,
-        borderColor: selected ? ACCENT : '#3F3F46',
+        borderColor: selected ? ACCENT : DARK.lineStrong,
       }, animStyle]}>
-        <Text style={{ color: selected ? '#fff' : '#A1A1AA', fontWeight: '600', fontSize: 14 }}>
+        <Text style={{ color: selected ? DARK.text : DARK.soft, fontWeight: '600', fontSize: 14 }}>
           {label}
         </Text>
       </Animated.View>
@@ -169,8 +170,8 @@ function SuggestedFollowRow({ user, selected, onToggle }: {
         flexDirection: 'row', alignItems: 'center', gap: 12,
         paddingVertical: 10, paddingHorizontal: 12, marginBottom: 8,
         borderRadius: 14, borderWidth: 1,
-        borderColor: selected ? ACCENT : '#27272A',
-        backgroundColor: selected ? `${ACCENT}1A` : '#18181B',
+        borderColor: selected ? ACCENT : DARK.line,
+        backgroundColor: selected ? `${ACCENT}1A` : DARK.raised,
       }}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: selected }}
@@ -178,14 +179,14 @@ function SuggestedFollowRow({ user, selected, onToggle }: {
     >
       <View style={{
         width: 44, height: 44, borderRadius: 22,
-        backgroundColor: user.avatarColor || '#6366F1',
+        backgroundColor: user.avatarColor || BRAND.indigo,
         alignItems: 'center', justifyContent: 'center',
       }}>
-        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{initial}</Text>
+        <Text style={{ color: DARK.text, fontSize: 18, fontWeight: '800' }}>{initial}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{personName(user)}</Text>
-        <Text numberOfLines={1} style={{ color: '#52525B', fontSize: 13 }}>
+        <Text numberOfLines={1} style={{ color: DARK.text, fontSize: 15, fontWeight: '700' }}>{personName(user)}</Text>
+        <Text numberOfLines={1} style={{ color: DARK.faint, fontSize: 13 }}>
           @{user.username}{user.followerCount ? ` · ${user.followerCount} ${ttx("followers")}` : ''}
         </Text>
       </View>
@@ -193,9 +194,9 @@ function SuggestedFollowRow({ user, selected, onToggle }: {
         width: 30, height: 30, borderRadius: 15,
         alignItems: 'center', justifyContent: 'center',
         backgroundColor: selected ? ACCENT : 'transparent',
-        borderWidth: selected ? 0 : 1.5, borderColor: '#3F3F46',
+        borderWidth: selected ? 0 : 1.5, borderColor: DARK.lineStrong,
       }}>
-        {selected ? <Check color="#fff" size={17} weight="bold" /> : <Plus color="#A1A1AA" size={17} weight="bold" />}
+        {selected ? <Check color={DARK.text} size={17} weight="bold" /> : <Plus color={DARK.soft} size={17} weight="bold" />}
       </View>
     </AnimatedPressable>
   );
@@ -370,7 +371,7 @@ export default function SignupWizard() {
   };
 
   useEffect(() => { track('signup_started'); }, []);
-  const [avatarColor, setAvatarColorLocal] = useState(ACCENT);
+  const [avatarColor, setAvatarColorLocal] = useState<string>(ACCENT);
   const [avatarUrl, setAvatarUrlLocal] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [bioText, setBioText] = useState('');
@@ -637,12 +638,12 @@ export default function SignupWizard() {
   const backHidden = currentStep === STEP.EMAIL || currentStep === STEP.NAME || currentStep === STEP.CONFIRM;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: DARK.bg }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={{ height: 3, backgroundColor: '#18181B', width: '100%' }}>
+        <View style={{ height: 3, backgroundColor: DARK.raised, width: '100%' }}>
           <Animated.View style={[{ height: 3, backgroundColor: ACCENT }, progressBarStyle]} />
         </View>
 
@@ -655,7 +656,7 @@ export default function SignupWizard() {
           </Animated.View>
 
           <Animated.Text style={[{
-            color: '#52525B', fontSize: 13, fontWeight: '600',
+            color: DARK.faint, fontSize: 13, fontWeight: '600',
           }, counterOpacityStyle]}>
             {ttx("Step")} {currentStep + 1} {ttx("of")} {NUMBERED_STEPS}
           </Animated.Text>
@@ -674,22 +675,22 @@ export default function SignupWizard() {
             {/* STEP 0: EMAIL */}
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
-                <Text style={{ color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
+                <Text style={{ color: DARK.text, fontSize: 28, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
                   {ttx("What's your email?")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 28 }}>
+                <Text style={{ color: DARK.faint, fontSize: 15, marginBottom: 28 }}>
                   {ttx("We'll send you a secure code.")}
                 </Text>
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
                   placeholder="you@example.com"
-                  placeholderTextColor="#3F3F46"
+                  placeholderTextColor={DARK.lineStrong}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   returnKeyType="send"
                   onSubmitEditing={handleSendOtp}
-                  style={{ fontSize: 20, color: '#fff', backgroundColor: '#18181B', borderRadius: 14, borderWidth: 1, borderColor: email ? '#3F3F46' : '#27272A', paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20 }}
+                  style={{ fontSize: 20, color: DARK.text, backgroundColor: DARK.raised, borderRadius: 14, borderWidth: 1, borderColor: email ? DARK.lineStrong : DARK.line, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20 }}
                 />
               </View>
               <View style={{ paddingBottom: 16 }}>
@@ -697,9 +698,9 @@ export default function SignupWizard() {
                   onPress={handleSendOtp}
                   disabled={!canSendOtp}
                   scaleValue={0.97} haptic="medium"
-                  style={{ backgroundColor: canSendOtp ? ACCENT : '#27272A', opacity: canSendOtp ? 1 : 0.5, borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
+                  style={{ backgroundColor: canSendOtp ? ACCENT : DARK.line, opacity: canSendOtp ? 1 : 0.5, borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
                 >
-                  {authLoading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{authCooldown > 0 ? ttx("Wait") + " " + authCooldown + "s" : ttx("Send Code")}</Text>}
+                  {authLoading ? <ActivityIndicator color={DARK.text} /> : <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{authCooldown > 0 ? ttx("Wait") + " " + authCooldown + "s" : ttx("Send Code")}</Text>}
                 </AnimatedPressable>
               </View>
             </View>
@@ -707,21 +708,21 @@ export default function SignupWizard() {
             {/* STEP 1: OTP */}
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
-                <Text style={{ color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
+                <Text style={{ color: DARK.text, fontSize: 28, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
                   {ttx("Enter the code")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 28 }}>
+                <Text style={{ color: DARK.faint, fontSize: 15, marginBottom: 28 }}>
                   {ttx("Sent to")} {trimmedEmail}
                 </Text>
                 <TextInput
                   value={otp}
                   onChangeText={(t) => setOtp(t.replace(/\D/g, '').slice(0, 6))}
                   placeholder="000000"
-                  placeholderTextColor="#3F3F46"
+                  placeholderTextColor={DARK.lineStrong}
                   keyboardType="number-pad"
                   returnKeyType="done"
                   onSubmitEditing={handleVerifyOtp}
-                  style={{ fontSize: 32, letterSpacing: 12, textAlign: 'center', color: '#fff', backgroundColor: '#18181B', borderRadius: 14, borderWidth: 1, borderColor: otp.length === 6 ? ACCENT : '#27272A', paddingVertical: 20, marginBottom: 20 }}
+                  style={{ fontSize: 32, letterSpacing: 12, textAlign: 'center', color: DARK.text, backgroundColor: DARK.raised, borderRadius: 14, borderWidth: 1, borderColor: otp.length === 6 ? ACCENT : DARK.line, paddingVertical: 20, marginBottom: 20 }}
                   maxLength={6}
                 />
               </View>
@@ -730,9 +731,9 @@ export default function SignupWizard() {
                   onPress={handleVerifyOtp}
                   disabled={!canVerifyOtp}
                   scaleValue={0.97} haptic="medium"
-                  style={{ backgroundColor: canVerifyOtp ? ACCENT : '#27272A', opacity: canVerifyOtp ? 1 : 0.5, borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
+                  style={{ backgroundColor: canVerifyOtp ? ACCENT : DARK.line, opacity: canVerifyOtp ? 1 : 0.5, borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
                 >
-                  {authLoading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Verify")}</Text>}
+                  {authLoading ? <ActivityIndicator color={DARK.text} /> : <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{ttx("Verify")}</Text>}
                 </AnimatedPressable>
               </View>
             </View>
@@ -741,19 +742,19 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
+                  color: DARK.text, fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
                   marginBottom: 6,
                 }}>
                   {ttx("Welcome to Echo")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 20 }}>
+                <Text style={{ color: DARK.faint, fontSize: 15, marginBottom: 20 }}>
                   {ttx("The social network for thinking out loud. Let's set up your account.")}
                 </Text>
 
                 {/* Pick a language up front — the whole flow switches instantly
                     (the wizard subscribes to the store, so ttx() re-renders). */}
                 <Text style={{
-                  color: '#A1A1AA', fontSize: 12, fontWeight: '700',
+                  color: DARK.soft, fontSize: 12, fontWeight: '700',
                   letterSpacing: 0.8, marginBottom: 8,
                 }}>
                   {ttx("LANGUAGE")}
@@ -782,11 +783,11 @@ export default function SignupWizard() {
                         <View style={{
                           paddingHorizontal: 14, paddingVertical: 9,
                           borderRadius: 20,
-                          backgroundColor: selected ? ACCENT : '#18181B',
+                          backgroundColor: selected ? ACCENT : DARK.raised,
                           borderWidth: 1,
-                          borderColor: selected ? ACCENT : '#3F3F46',
+                          borderColor: selected ? ACCENT : DARK.lineStrong,
                         }}>
-                          <Text style={{ color: selected ? '#fff' : '#A1A1AA', fontWeight: '600', fontSize: 14 }}>
+                          <Text style={{ color: selected ? DARK.text : DARK.soft, fontWeight: '600', fontSize: 14 }}>
                             {lang.nativeName}
                           </Text>
                         </View>
@@ -796,7 +797,7 @@ export default function SignupWizard() {
                 </ScrollView>
 
                 <Text style={{
-                  color: '#A1A1AA', fontSize: 12, fontWeight: '700',
+                  color: DARK.soft, fontSize: 12, fontWeight: '700',
                   letterSpacing: 0.8, marginBottom: 8,
                 }}>
                   {ttx("DISPLAY NAME")}
@@ -806,61 +807,61 @@ export default function SignupWizard() {
                   value={displayName}
                   onChangeText={setDisplayNameLocal}
                   placeholder={ttx("Your name")}
-                  placeholderTextColor="#3F3F46"
+                  placeholderTextColor={DARK.lineStrong}
                   returnKeyType="next"
                   style={{
-                    fontSize: 20, color: '#fff', fontWeight: '600',
-                    backgroundColor: '#18181B',
+                    fontSize: 20, color: DARK.text, fontWeight: '600',
+                    backgroundColor: DARK.raised,
                     borderRadius: 14, borderWidth: 1,
-                    borderColor: displayName ? '#3F3F46' : '#27272A',
+                    borderColor: displayName ? DARK.lineStrong : DARK.line,
                     paddingHorizontal: 16, paddingVertical: 14,
                     marginBottom: 20,
                   }}
                 />
 
                 <Text style={{
-                  color: '#A1A1AA', fontSize: 12, fontWeight: '700',
+                  color: DARK.soft, fontSize: 12, fontWeight: '700',
                   letterSpacing: 0.8, marginBottom: 8,
                 }}>
                   {ttx("USERNAME")}
                 </Text>
                 <View style={{
                   flexDirection: 'row', alignItems: 'center',
-                  backgroundColor: '#18181B', borderRadius: 14, borderWidth: 1,
+                  backgroundColor: DARK.raised, borderRadius: 14, borderWidth: 1,
                   borderColor:
-                    usernameStatus === 'taken' ? '#EF4444'
-                    : usernameStatus === 'available' ? '#22C55E'
-                    : usernameRaw ? '#3F3F46' : '#27272A',
+                    usernameStatus === 'taken' ? STATUS.danger
+                    : usernameStatus === 'available' ? STATUS.success
+                    : usernameRaw ? DARK.lineStrong : DARK.line,
                   paddingHorizontal: 14, marginBottom: 8,
                 }}>
-                  <At color="#52525B" size={18} style={{ marginRight: 8 }} />
+                  <At color={DARK.faint} size={18} style={{ marginRight: 8 }} />
                   <TextInput
                     value={usernameRaw}
                     onChangeText={setUsernameRaw}
                     placeholder={ttx("username")}
-                    placeholderTextColor="#3F3F46"
+                    placeholderTextColor={DARK.lineStrong}
                     autoCapitalize="none"
                     autoCorrect={false}
                     returnKeyType="done"
                     style={{
-                      flex: 1, fontSize: 16, color: '#fff',
+                      flex: 1, fontSize: 16, color: DARK.text,
                       paddingVertical: 14,
                     }}
                   />
                   {usernameStatus === 'checking' && (
-                    <ActivityIndicator color="#52525B" size="small" style={{ marginLeft: 8 }} />
+                    <ActivityIndicator color={DARK.faint} size="small" style={{ marginLeft: 8 }} />
                   )}
                   {usernameStatus === 'available' && (
-                    <Check color="#22C55E" size={18} weight="bold" style={{ marginLeft: 8 }} />
+                    <Check color={STATUS.success} size={18} weight="bold" style={{ marginLeft: 8 }} />
                   )}
                 </View>
                 {usernameClean.length > 0 && (
                   <View style={{ marginLeft: 2, gap: 2 }}>
                     <Text style={{
                       color:
-                        usernameStatus === 'taken' ? '#EF4444'
-                        : usernameStatus === 'available' ? '#22C55E'
-                        : '#52525B',
+                        usernameStatus === 'taken' ? STATUS.danger
+                        : usernameStatus === 'available' ? STATUS.success
+                        : DARK.faint,
                       fontSize: 13,
                     }}>
                       {usernameStatus === 'taken'
@@ -870,12 +871,12 @@ export default function SignupWizard() {
                           : `@${usernameClean}`}
                     </Text>
                     {usernameClean.length < 3 && (
-                      <Text style={{ color: '#3F3F46', fontSize: 12 }}>
+                      <Text style={{ color: DARK.lineStrong, fontSize: 12 }}>
                         {ttx("At least 3 characters")}
                       </Text>
                     )}
                     {usernameRaw !== usernameClean && (
-                      <Text style={{ color: '#3F3F46', fontSize: 12 }}>
+                      <Text style={{ color: DARK.lineStrong, fontSize: 12 }}>
                         {ttx("letters, numbers & _ only")}
                       </Text>
                     )}
@@ -890,7 +891,7 @@ export default function SignupWizard() {
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
-                    backgroundColor: canStep0 ? ACCENT : '#27272A',
+                    backgroundColor: canStep0 ? ACCENT : DARK.line,
                     borderRadius: 14, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     opacity: canStep0 ? 1 : 0.5,
@@ -899,7 +900,7 @@ export default function SignupWizard() {
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
+                  <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
                 </AnimatedPressable>
               </View>
             </View>
@@ -913,12 +914,12 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, ...font.displayBlack,
+                  color: DARK.text, fontSize: 28, ...font.displayBlack,
                   letterSpacing: -0.5, marginBottom: 6,
                 }}>
                   {ttx("When were you born?")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 24 }}>
+                <Text style={{ color: DARK.faint, fontSize: 15, marginBottom: 24 }}>
                   {ttx("We ask once, to check you're old enough and to keep ads and tracking away from younger accounts. It never appears on your profile.")}
                 </Text>
 
@@ -930,7 +931,7 @@ export default function SignupWizard() {
                   ] as const).map(f => (
                     <View key={f.key} style={{ flex: f.flex }}>
                       <Text style={{
-                        color: '#A1A1AA', fontSize: 12, fontWeight: '700',
+                        color: DARK.soft, fontSize: 12, fontWeight: '700',
                         letterSpacing: 0.8, marginBottom: 8,
                       }}>
                         {f.label}
@@ -941,12 +942,12 @@ export default function SignupWizard() {
                         keyboardType="number-pad"
                         maxLength={f.max}
                         placeholder={'0'.repeat(f.max)}
-                        placeholderTextColor="#3F3F46"
+                        placeholderTextColor={DARK.lineStrong}
                         accessibilityLabel={f.label}
                         style={{
-                          fontSize: 20, color: '#fff', backgroundColor: '#18181B',
+                          fontSize: 20, color: DARK.text, backgroundColor: DARK.raised,
                           borderRadius: 14, borderWidth: 1,
-                          borderColor: f.value ? '#3F3F46' : '#27272A',
+                          borderColor: f.value ? DARK.lineStrong : DARK.line,
                           paddingHorizontal: 16, paddingVertical: 14, textAlign: 'center',
                         }}
                       />
@@ -955,12 +956,12 @@ export default function SignupWizard() {
                 </View>
 
                 {dobResult && !dobResult.ok && (
-                  <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 14 }}>
+                  <Text style={{ color: STATUS.danger, fontSize: 13, marginTop: 14 }}>
                     {ageRejectionMessage(dobResult.reason)}
                   </Text>
                 )}
                 {dobResult?.ok && !dobResult.isAdult && (
-                  <Text style={{ color: '#A1A1AA', fontSize: 13, marginTop: 14, lineHeight: 19 }}>
+                  <Text style={{ color: DARK.soft, fontSize: 13, marginTop: 14, lineHeight: 19 }}>
                     {ttx("You'll get Echo without advertising or personalised tracking.")}
                   </Text>
                 )}
@@ -973,7 +974,7 @@ export default function SignupWizard() {
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
-                    backgroundColor: dobResult?.ok ? ACCENT : '#27272A',
+                    backgroundColor: dobResult?.ok ? ACCENT : DARK.line,
                     borderRadius: 14, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     opacity: dobResult?.ok ? 1 : 0.5,
@@ -982,9 +983,9 @@ export default function SignupWizard() {
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
+                  <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
                 </AnimatedPressable>
-                <Text style={{ color: '#3F3F46', fontSize: 12, textAlign: 'center', marginTop: 12 }}>
+                <Text style={{ color: DARK.lineStrong, fontSize: 12, textAlign: 'center', marginTop: 12 }}>
                   {ttx("You must be at least")} {MINIMUM_AGE} {ttx("to use Echo.")}
                 </Text>
               </View>
@@ -993,12 +994,12 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
+                  color: DARK.text, fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
                   marginBottom: 6,
                 }}>
                   {ttx("Make it yours")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 28 }}>
+                <Text style={{ color: DARK.faint, fontSize: 15, marginBottom: 28 }}>
                   {ttx("Add a photo, or pick a color that represents you.")}
                 </Text>
 
@@ -1025,11 +1026,11 @@ export default function SignupWizard() {
                       overflow: 'hidden',
                     }}>
                       {uploadingAvatar ? (
-                        <ActivityIndicator color="#fff" />
+                        <ActivityIndicator color={DARK.text} />
                       ) : avatarUrl ? (
                         <Image source={{ uri: avatarUrl }} style={{ width: 100, height: 100 }} />
                       ) : (
-                        <Text style={{ color: '#fff', fontSize: 40, fontWeight: '800' }}>
+                        <Text style={{ color: DARK.text, fontSize: 40, fontWeight: '800' }}>
                           {displayName ? displayName[0].toUpperCase() : '?'}
                         </Text>
                       )}
@@ -1038,10 +1039,10 @@ export default function SignupWizard() {
                     <View style={{
                       position: 'absolute', right: 6, bottom: 6,
                       width: 34, height: 34, borderRadius: 17,
-                      backgroundColor: '#18181B', borderWidth: 2, borderColor: '#000',
+                      backgroundColor: DARK.raised, borderWidth: 2, borderColor: DARK.bg,
                       alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Camera color="#fff" size={17} weight="fill" />
+                      <Camera color={DARK.text} size={17} weight="fill" />
                     </View>
                   </AnimatedPressable>
                   <AnimatedPressable
@@ -1081,7 +1082,7 @@ export default function SignupWizard() {
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
+                  <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
                 </AnimatedPressable>
               </View>
             </View>
@@ -1089,35 +1090,35 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
+                  color: DARK.text, fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
                   marginBottom: 6,
                 }}>
                   {ttx("Your story")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 24 }}>
+                <Text style={{ color: DARK.faint, fontSize: 15, marginBottom: 24 }}>
                   {ttx("Tell the world a little about yourself.")}
                 </Text>
 
                 <View style={{
-                  backgroundColor: '#18181B', borderRadius: 16, borderWidth: 1,
-                  borderColor: '#27272A', padding: 16, marginBottom: 6,
+                  backgroundColor: DARK.raised, borderRadius: 16, borderWidth: 1,
+                  borderColor: DARK.line, padding: 16, marginBottom: 6,
                 }}>
                   <TextInput
                     value={bioText}
                     onChangeText={setBioText}
                     placeholder={ttx("What's on your mind?")}
-                    placeholderTextColor="#3F3F46"
+                    placeholderTextColor={DARK.lineStrong}
                     multiline
                     maxLength={150}
                     textAlignVertical="top"
                     style={{
-                      color: '#fff', fontSize: 16, lineHeight: 24,
+                      color: DARK.text, fontSize: 16, lineHeight: 24,
                       minHeight: 100, maxHeight: 160,
                     }}
                   />
                 </View>
                 <Text style={{
-                  color: bioText.length >= 100 ? ACCENT : '#52525B',
+                  color: bioText.length >= 100 ? ACCENT : DARK.faint,
                   fontSize: 12, textAlign: 'right',
                 }}>
                   {bioText.length}/150
@@ -1136,7 +1137,7 @@ export default function SignupWizard() {
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
+                  <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
                 </AnimatedPressable>
 
                 <AnimatedPressable
@@ -1145,7 +1146,7 @@ export default function SignupWizard() {
                   haptic="light"
                   style={{ alignItems: 'center', paddingVertical: 8 }}
                 >
-                  <Text style={{ color: '#52525B', fontSize: 14, fontWeight: '600' }}>{ttx("Skip for now")}</Text>
+                  <Text style={{ color: DARK.faint, fontSize: 14, fontWeight: '600' }}>{ttx("Skip for now")}</Text>
                 </AnimatedPressable>
               </View>
             </View>
@@ -1153,16 +1154,16 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%' }}>
               <View style={{ paddingHorizontal: 24, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
+                  color: DARK.text, fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
                   marginBottom: 6,
                 }}>
                   {ttx("What lights you up?")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 4 }}>
+                <Text style={{ color: DARK.faint, fontSize: 15, marginBottom: 4 }}>
                   {ttx("Pick topics that interest you.")}
                 </Text>
                 <Text style={{
-                  color: selectedInterests.length >= 3 ? ACCENT : '#52525B',
+                  color: selectedInterests.length >= 3 ? ACCENT : DARK.faint,
                   fontSize: 13, fontWeight: '600', marginBottom: 14,
                 }}>
                   {selectedInterests.length} {ttx("selected")}
@@ -1199,7 +1200,7 @@ export default function SignupWizard() {
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
-                    backgroundColor: selectedInterests.length >= 3 ? ACCENT : '#27272A',
+                    backgroundColor: selectedInterests.length >= 3 ? ACCENT : DARK.line,
                     borderRadius: 14, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     opacity: selectedInterests.length >= 3 ? 1 : 0.5,
@@ -1208,7 +1209,7 @@ export default function SignupWizard() {
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
+                  <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
                 </AnimatedPressable>
 
                 <AnimatedPressable
@@ -1217,7 +1218,7 @@ export default function SignupWizard() {
                   haptic="light"
                   style={{ alignItems: 'center', paddingVertical: 8 }}
                 >
-                  <Text style={{ color: '#52525B', fontSize: 14, fontWeight: '600' }}>{ttx("Skip for now")}</Text>
+                  <Text style={{ color: DARK.faint, fontSize: 14, fontWeight: '600' }}>{ttx("Skip for now")}</Text>
                 </AnimatedPressable>
               </View>
             </View>
@@ -1233,18 +1234,18 @@ export default function SignupWizard() {
                   <Brain color={ACCENT} size={22} weight="fill" />
                   <Text style={{ color: ACCENT, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>{ttx("THINKING ARCHETYPE")}</Text>
                 </View>
-                <Text style={{ color: '#fff', fontSize: 26, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
+                <Text style={{ color: DARK.text, fontSize: 26, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
                   {ttx("How do you think?")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
+                <Text style={{ color: DARK.faint, fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
                   {ttx("3 quick questions to find your intellectual style. It shapes how Echo introduces you.")}
                 </Text>
                 {ARCHETYPE_QUESTIONS.map((q, qi) => (
                   <View key={q.id} style={{ marginBottom: 22 }}>
-                    <Text style={{ color: '#A1A1AA', fontSize: 12, fontWeight: '700', letterSpacing: 0.5, marginBottom: 8 }}>
+                    <Text style={{ color: DARK.soft, fontSize: 12, fontWeight: '700', letterSpacing: 0.5, marginBottom: 8 }}>
                       {qi + 1} {ttx("of")} {ARCHETYPE_QUESTIONS.length}
                     </Text>
-                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', lineHeight: 22, marginBottom: 10 }}>
+                    <Text style={{ color: DARK.text, fontSize: 16, fontWeight: '700', lineHeight: 22, marginBottom: 10 }}>
                       {q.question}
                     </Text>
                     {q.options.map((opt) => {
@@ -1260,13 +1261,13 @@ export default function SignupWizard() {
                             marginBottom: 8,
                             borderRadius: 12,
                             borderWidth: 1.5,
-                            borderColor: selected ? info.color : '#27272A',
-                            backgroundColor: selected ? info.dimColor : '#18181B',
+                            borderColor: selected ? info.color : DARK.line,
+                            backgroundColor: selected ? info.dimColor : DARK.raised,
                             paddingHorizontal: 14,
                             paddingVertical: 12,
                           }}
                         >
-                          <Text style={{ color: selected ? info.color : '#A1A1AA', fontSize: 14, fontWeight: selected ? '700' : '500', lineHeight: 20 }}>
+                          <Text style={{ color: selected ? info.color : DARK.soft, fontSize: 14, fontWeight: selected ? '700' : '500', lineHeight: 20 }}>
                             {opt.label}
                           </Text>
                         </AnimatedPressable>
@@ -1280,8 +1281,8 @@ export default function SignupWizard() {
                   return (
                     <View style={{ borderRadius: 16, borderWidth: 1.5, borderColor: archetype.color + '66', backgroundColor: archetype.dimColor, padding: 16, marginBottom: 16 }}>
                       <Text style={{ color: archetype.color, fontSize: 11, fontWeight: '800', letterSpacing: 1, marginBottom: 4 }}>{ttx("YOUR ARCHETYPE")}</Text>
-                      <Text style={{ color: '#fff', fontSize: 19, fontWeight: '800', marginBottom: 4 }}>{archetype.label}</Text>
-                      <Text style={{ color: '#A1A1AA', fontSize: 13, lineHeight: 19 }}>{archetype.description}</Text>
+                      <Text style={{ color: DARK.text, fontSize: 19, fontWeight: '800', marginBottom: 4 }}>{archetype.label}</Text>
+                      <Text style={{ color: DARK.soft, fontSize: 13, lineHeight: 19 }}>{archetype.description}</Text>
                     </View>
                   );
                 })()}
@@ -1292,7 +1293,7 @@ export default function SignupWizard() {
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
-                    backgroundColor: Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? ACCENT : '#27272A',
+                    backgroundColor: Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? ACCENT : DARK.line,
                     borderRadius: 14, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     opacity: Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? 1 : 0.5,
@@ -1301,7 +1302,7 @@ export default function SignupWizard() {
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+                  <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>
                     {Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? 'Continue' : `${ARCHETYPE_QUESTIONS.length - Object.keys(archetypeAnswers).length} questions left`}
                   </Text>
                 </AnimatedPressable>
@@ -1311,7 +1312,7 @@ export default function SignupWizard() {
                   haptic="light"
                   style={{ alignItems: 'center', paddingVertical: 8 }}
                 >
-                  <Text style={{ color: '#52525B', fontSize: 14, fontWeight: '600' }}>{ttx("Skip")}</Text>
+                  <Text style={{ color: DARK.faint, fontSize: 14, fontWeight: '600' }}>{ttx("Skip")}</Text>
                 </AnimatedPressable>
               </View>
             </View>
@@ -1323,10 +1324,10 @@ export default function SignupWizard() {
                   <UsersThree color={ACCENT} size={22} weight="fill" />
                   <Text style={{ color: ACCENT, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>{ttx("FILL YOUR FEED")}</Text>
                 </View>
-                <Text style={{ color: '#fff', fontSize: 26, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
+                <Text style={{ color: DARK.text, fontSize: 26, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
                   {ttx("Follow a few people")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 14, marginBottom: 16, lineHeight: 20 }}>
+                <Text style={{ color: DARK.faint, fontSize: 14, marginBottom: 16, lineHeight: 20 }}>
                   {ttx("We picked a few voices to get your feed started. Tap to remove any you don't want.")}
                 </Text>
               </View>
@@ -1342,7 +1343,7 @@ export default function SignupWizard() {
                   </View>
                 ) : suggested.length === 0 ? (
                   <View style={{ paddingTop: 24, paddingHorizontal: 4 }}>
-                    <Text style={{ color: '#52525B', fontSize: 14, lineHeight: 20 }}>
+                    <Text style={{ color: DARK.faint, fontSize: 14, lineHeight: 20 }}>
                       {ttx("No suggestions yet. You can find people to follow from Explore once you're in.")}
                     </Text>
                   </View>
@@ -1370,7 +1371,7 @@ export default function SignupWizard() {
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+                  <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>
                     {followIds.length > 0 ? `${ttx("Follow")} ${followIds.length} & ${ttx("continue")}` : ttx("Continue")}
                   </Text>
                 </AnimatedPressable>
@@ -1380,7 +1381,7 @@ export default function SignupWizard() {
                   haptic="light"
                   style={{ alignItems: 'center', paddingVertical: 8 }}
                 >
-                  <Text style={{ color: '#52525B', fontSize: 14, fontWeight: '600' }}>{ttx("Skip for now")}</Text>
+                  <Text style={{ color: DARK.faint, fontSize: 14, fontWeight: '600' }}>{ttx("Skip for now")}</Text>
                 </AnimatedPressable>
               </View>
             </View>
@@ -1403,20 +1404,20 @@ export default function SignupWizard() {
                   {avatarUrl ? (
                     <Image source={{ uri: avatarUrl }} style={{ width: 120, height: 120 }} />
                   ) : (
-                    <Text style={{ color: '#fff', fontSize: 48, fontWeight: '800' }}>
+                    <Text style={{ color: DARK.text, fontSize: 48, fontWeight: '800' }}>
                       {displayName ? displayName[0].toUpperCase() : '?'}
                     </Text>
                   )}
                 </View>
 
                 <Text style={{
-                  color: '#fff', fontSize: 26, fontWeight: '800',
+                  color: DARK.text, fontSize: 26, fontWeight: '800',
                   letterSpacing: -0.5, textAlign: 'center', marginBottom: 10,
                 }}>
                   {ttx("Welcome to Echo,")} {firstName}!
                 </Text>
                 <Text style={{
-                  color: '#52525B', fontSize: 15, textAlign: 'center',
+                  color: DARK.faint, fontSize: 15, textAlign: 'center',
                   lineHeight: 22,
                 }}>
                   {ttx("Your profile is ready. Next, make your first Echo.")}
@@ -1445,8 +1446,8 @@ export default function SignupWizard() {
                     }}
                   >
                     {saving
-                      ? <ActivityIndicator color="#fff" />
-                      : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>}
+                      ? <ActivityIndicator color={DARK.text} />
+                      : <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>}
                   </AnimatedPressable>
                 </View>
               </View>

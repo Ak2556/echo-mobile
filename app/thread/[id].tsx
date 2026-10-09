@@ -31,6 +31,7 @@ import { ttx } from '../../lib/i18n/i18n';
 import { countLabel } from '../../lib/ui/a11yCount';
 import { CommentsSheet } from '../../components/feed/CommentsSheet';
 import { BackButton } from '../../components/ui/BackButton';
+import { STAGE } from '../../lib/ui/fixedColors';
 
 export default function ThreadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -198,14 +199,14 @@ export default function ThreadDetailScreen() {
           {
             key: 'delete',
             label: 'Delete Echo',
-            icon: <Trash color="#EF4444" size={18} />,
+            icon: <Trash color={colors.danger} size={18} />,
             destructive: true,
             onPress: handleDelete,
           },
           {
             key: 'report',
             label: 'Report',
-            icon: <Flag color="#F59E0B" size={18} weight="fill" />,
+            icon: <Flag color={colors.warning} size={18} weight="fill" />,
             destructive: true,
             onPress: () => router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } }),
           },
@@ -222,7 +223,7 @@ export default function ThreadDetailScreen() {
         statusBarTranslucent
         onRequestClose={closeVideoFullscreen}
       >
-        <View style={{ flex: 1, backgroundColor: '#000' }}>
+        <View style={{ flex: 1, backgroundColor: STAGE }}>
           <FlowCard item={item} index={0} />
           <View style={{ position: 'absolute', top: insets.top + 6, left: 12 }}>
             <BackButton tone="media" onPress={closeVideoFullscreen} label={ttx('Close full screen')} />

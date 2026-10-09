@@ -83,8 +83,8 @@ function OfficeHoursScreenInner() {
             scaleValue={0.94}
             haptic="medium"
           >
-            <Plus color="#fff" size={16} weight="bold" />
-            <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Schedule")}</Text>
+            <Plus color={colors.onAccent} size={16} weight="bold" />
+            <Text style={{ color: colors.onAccent, fontWeight: '700' }}>{ttx("Schedule")}</Text>
           </AnimatedPressable>
         </View>
       ) : (
@@ -133,15 +133,15 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
         padding: 14,
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: liveNow ? '#EF4444' : colors.border,
+        borderColor: liveNow ? colors.danger : colors.border,
       }}
       scaleValue={0.98}
       haptic="none"
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Clock color={liveNow ? '#EF4444' : colors.accent} size={13} weight={liveNow ? 'fill' : 'regular'} />
-          <Text style={{ color: liveNow ? '#EF4444' : colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.4 }}>
+          <Clock color={liveNow ? colors.danger : colors.accent} size={13} weight={liveNow ? 'fill' : 'regular'} />
+          <Text style={{ color: liveNow ? colors.danger : colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.4 }}>
             {liveNow ? 'LIVE' : relativeStart(oh.starts_at).toUpperCase()}
           </Text>
         </View>
@@ -158,7 +158,7 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
           scaleValue={0.92}
           haptic="medium"
         >
-          <Text style={{ color: oh.has_rsvp ? colors.textMuted : '#fff', fontWeight: '700', fontSize: 12 }}>
+          <Text style={{ color: oh.has_rsvp ? colors.textMuted : colors.onAccent, fontWeight: '700', fontSize: 12 }}>
             {oh.has_rsvp ? 'Going' : 'RSVP'}
           </Text>
         </AnimatedPressable>

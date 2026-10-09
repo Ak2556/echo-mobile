@@ -66,7 +66,7 @@ function CreateStoryScreenInner() {
             style={{ marginTop: 24, backgroundColor: colors.accent, borderRadius: radius.full, paddingHorizontal: 24, paddingVertical: 12 }}
             haptic="medium"
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{ttx("Share an Echo instead")}</Text>
+            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: 14 }}>{ttx("Share an Echo instead")}</Text>
           </AnimatedPressable>
           <AnimatedPressable
             onPress={() => router.back()}
@@ -132,8 +132,8 @@ function CreateStoryScreenInner() {
             opacity: canPublish ? 1 : 0.6,
           }}
         >
-          <PaperPlaneTilt color="#fff" size={14} />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>
+          <PaperPlaneTilt color={colors.onAccent} size={14} />
+          <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>
             {publishing ? 'Sharing...' : 'Share'}
           </Text>
         </AnimatedPressable>

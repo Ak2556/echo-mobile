@@ -31,6 +31,7 @@ import { ttx } from '../../lib/i18n/i18n';
 import { MusicPickerModal, Song } from '../../components/ui/MusicPicker';
 import { ChatDetailsSidebar } from '../../components/chat/ChatDetailsSidebar';
 import { BackButton } from '../../components/ui/BackButton';
+import { WARM, ON_MEDIA, ON_STATUS, SHADOW } from '../../lib/ui/fixedColors';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -229,7 +230,7 @@ function CreateGroupModal({
                   borderWidth: StyleSheet.hairlineWidth,
                   borderColor: active ? colors.accent : colors.border,
                 }}>
-                  {active ? <Check color="#fff" size={15} weight="bold" /> : null}
+                  {active ? <Check color={colors.onAccent} size={15} weight="bold" /> : null}
                 </View>
               </Pressable>
             );
@@ -266,7 +267,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
           marginVertical: 4,
           padding: 14,
           borderRadius: 20,
-          backgroundColor: colors.isDark ? '#1C1C1E' : colors.surface,
+          backgroundColor: colors.surface,
         }}
         scaleValue={0.98}
         haptic="light"
@@ -281,7 +282,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
               online={online}
               squircle
             >
-              {conversation.isGroup ? <Users color="#fff" size={19} weight="fill" /> : undefined}
+              {conversation.isGroup ? <Users color={ON_MEDIA} size={19} weight="fill" /> : undefined}
             </Avatar>
           </View>
         )}
@@ -335,7 +336,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
           </Text>
           {showUnread && (
             <View style={{ minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }}>
-              <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{conversation.unreadCount > 9 ? '9+' : conversation.unreadCount > 0 ? conversation.unreadCount : ''}</Text>
+              <Text style={{ color: colors.onAccent, fontSize: 11, fontWeight: '800' }}>{conversation.unreadCount > 9 ? '9+' : conversation.unreadCount > 0 ? conversation.unreadCount : ''}</Text>
             </View>
           )}
         </View>
@@ -377,7 +378,7 @@ function InboxHero({
       <View style={{ padding: 18, gap: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
           <View style={{ width: 52, height: 52, borderRadius: 19, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-            <ChatCircleText color="#fff" size={27} weight="fill" />
+            <ChatCircleText color={colors.onAccent} size={27} weight="fill" />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={{ color: colors.text, fontSize: 26, lineHeight: 31, ...font.displayBlack, letterSpacing: -0.4 }}>
@@ -409,8 +410,8 @@ function InboxHero({
           <View style={{ flex: 1 }}>
             <Pressable onPress={onFindPeople} accessibilityRole="button" accessibilityLabel={ttx("New chat")} style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}>
               <View style={{ minHeight: 46, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-                <PencilSimple color="#fff" size={17} weight="bold" />
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '900' }}>{ttx("New chat")}</Text>
+                <PencilSimple color={colors.onAccent} size={17} weight="bold" />
+                <Text style={{ color: colors.onAccent, fontSize: 14, fontWeight: '900' }}>{ttx("New chat")}</Text>
               </View>
             </Pressable>
           </View>
@@ -457,7 +458,7 @@ function InboxToolbar({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
-        backgroundColor: colors.isDark ? '#222224' : colors.inputBg,
+        backgroundColor: colors.inputBg,
       }}>
         <MagnifyingGlass color={colors.textMuted} size={18} weight="bold" />
         <TextInput
@@ -498,7 +499,7 @@ function InboxToolbar({
             >
               <Text
                 style={{
-                  color: active ? '#fff' : colors.textMuted,
+                  color: active ? colors.onAccent : colors.textMuted,
                   fontSize: 14,
                   fontWeight: '600',
                 }}
@@ -523,7 +524,7 @@ export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
           backgroundColor: colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.85)',
           paddingHorizontal: 10, paddingVertical: 5,
           borderRadius: 16, borderWidth: 1, borderColor: colors.glassBorder,
-          shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10,
+          shadowColor: SHADOW, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10,
         }}>
           <Text style={{ fontSize: 11, color: colors.text, fontWeight: '700' }} numberOfLines={1}>{aura.text_content || 'Voice Note'}</Text>
         </Animated.View>
@@ -540,7 +541,7 @@ export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
             alignItems: 'center', justifyContent: 'center',
             borderWidth: 2, borderColor: colors.bg,
           }}>
-            <Text style={{ color: '#fff', fontSize: 18, lineHeight: 20, fontWeight: 'bold' }}>+</Text>
+            <Text style={{ color: colors.onAccent, fontSize: 18, lineHeight: 20, fontWeight: 'bold' }}>+</Text>
           </View>
         ) : null}
       </View>
@@ -618,8 +619,8 @@ export function AurasRow() {
         ))}
         {!remote && (
           <>
-            <StatusAvatar key="m1" name="Akash" color={colors.accent} aura={{ text_content: 'Deep work' }} onPress={() => setViewingAura({ name: 'Akash', color: '#FF5733', aura: { text_content: 'Deep work 🎧' } })} />
-            <StatusAvatar key="m2" name="Elena" color={colors.textMuted} aura={{ text_content: 'At the gym' }} onPress={() => setViewingAura({ name: 'Elena', color: '#33FF57', aura: { text_content: 'At the gym 💪' } })} />
+            <StatusAvatar key="m1" name="Akash" color={colors.accent} aura={{ text_content: 'Deep work' }} onPress={() => setViewingAura({ name: 'Akash', color: WARM.terracotta, aura: { text_content: 'Deep work 🎧' } })} />
+            <StatusAvatar key="m2" name="Elena" color={colors.textMuted} aura={{ text_content: 'At the gym' }} onPress={() => setViewingAura({ name: 'Elena', color: WARM.olive, aura: { text_content: 'At the gym 💪' } })} />
           </>
         )}
       </ScrollView>
@@ -629,15 +630,15 @@ export function AurasRow() {
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setViewingAura(null)}>
           <View style={{ alignItems: 'center', gap: 16 }}>
             <Avatar name={viewingAura?.name ?? '?'} color={viewingAura?.color} size={100} />
-            <Text style={{ color: '#fff', fontSize: 24, fontWeight: 'bold' }}>{viewingAura?.name}</Text>
+            <Text style={{ color: ON_MEDIA, fontSize: 24, fontWeight: 'bold' }}>{viewingAura?.name}</Text>
             {viewingAura?.text_content || viewingAura?.aura?.text_content ? (
               <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 24 }}>
-                <Text style={{ color: '#fff', fontSize: 20 }}>{viewingAura?.text_content || viewingAura?.aura?.text_content}</Text>
+                <Text style={{ color: ON_MEDIA, fontSize: 20 }}>{viewingAura?.text_content || viewingAura?.aura?.text_content}</Text>
               </View>
             ) : null}
             {viewingAura?.music_title ? (
               <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ color: '#fff', fontSize: 16 }}>🎵 {viewingAura.music_title} - {viewingAura.music_artist}</Text>
+                <Text style={{ color: ON_MEDIA, fontSize: 16 }}>🎵 {viewingAura.music_title} - {viewingAura.music_artist}</Text>
               </View>
             ) : null}
           </View>
@@ -669,7 +670,7 @@ export function AurasRow() {
               <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>Expires in:</Text>
               {[8, 12, 24].map(hrs => (
                 <Pressable key={hrs} onPress={() => setExpiresInHours(hrs)} style={{ backgroundColor: expiresInHours === hrs ? colors.accent : colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-                  <Text style={{ color: expiresInHours === hrs ? '#fff' : colors.text, fontSize: 13, fontWeight: '600' }}>{hrs}h</Text>
+                  <Text style={{ color: expiresInHours === hrs ? colors.onAccent : colors.text, fontSize: 13, fontWeight: '600' }}>{hrs}h</Text>
                 </Pressable>
               ))}
             </View>
@@ -678,7 +679,7 @@ export function AurasRow() {
                 <Text style={{ color: colors.text, fontWeight: '700' }}>Cancel</Text>
               </Pressable>
               <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.accent }} onPress={handlePublish}>
-                <Text style={{ color: '#fff', fontWeight: '700' }}>Publish</Text>
+                <Text style={{ color: colors.onAccent, fontWeight: '700' }}>Publish</Text>
               </Pressable>
             </View>
           </View>
@@ -807,7 +808,7 @@ export default function MessagesListScreen() {
   const SwipeAction = ({ icon, label, bg, onPress }: { icon: React.ReactNode; label: string; bg: string; onPress: () => void }) => (
     <Pressable onPress={onPress} style={{ width: 76, alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: bg }}>
       {icon}
-      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{label}</Text>
+      <Text style={{ color: ON_STATUS, fontSize: 11, fontWeight: '700' }}>{label}</Text>
     </Pressable>
   );
 
@@ -818,14 +819,14 @@ export default function MessagesListScreen() {
       renderRightActions={() => (
         <View style={{ flexDirection: 'row' }}>
           <SwipeAction
-            icon={<PushPin color="#fff" size={19} weight={isPinned(item.id) ? 'fill' : 'regular'} />}
+            icon={<PushPin color={colors.onAccent} size={19} weight={isPinned(item.id) ? 'fill' : 'regular'} />}
             label={isPinned(item.id) ? 'Unpin' : 'Pin'}
             bg={colors.accent}
             onPress={() => togglePin(item.id)}
           />
           {remote && (
             <SwipeAction
-              icon={<BellSlash color="#fff" size={19} weight={item.muted ? 'fill' : 'regular'} />}
+              icon={<BellSlash color={colors.onAccent} size={19} weight={item.muted ? 'fill' : 'regular'} />}
               label={item.muted ? 'Unmute' : 'Mute'}
               bg={colors.textMuted}
               onPress={() => setPref.mutate({ conversationId: item.id, patch: { muted: !item.muted } })}
@@ -833,7 +834,7 @@ export default function MessagesListScreen() {
           )}
           {remote && (
             <SwipeAction
-              icon={<Archive color="#fff" size={19} weight={item.archived ? 'fill' : 'regular'} />}
+              icon={<Archive color={ON_STATUS} size={19} weight={item.archived ? 'fill' : 'regular'} />}
               label={item.archived ? 'Restore' : 'Archive'}
               bg={colors.danger}
               onPress={() => setPref.mutate({ conversationId: item.id, patch: { archived: !item.archived } })}
@@ -865,7 +866,7 @@ export default function MessagesListScreen() {
                 <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Echo</Text>
               </Pressable>
               <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Messages</Text>
+                <Text style={{ color: colors.onAccent, fontSize: 13, fontWeight: '700' }}>Messages</Text>
               </View>
             </View>
           </View>
@@ -902,7 +903,7 @@ export default function MessagesListScreen() {
               <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Echo</Text>
             </Pressable>
             <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Messages</Text>
+              <Text style={{ color: colors.onAccent, fontSize: 13, fontWeight: '700' }}>Messages</Text>
             </View>
           </View>
         </View>
@@ -911,7 +912,7 @@ export default function MessagesListScreen() {
             <Users color={colors.accent} size={20} weight="bold" />
           </AnimatedPressable>
           <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} style={{ width: 40, height: 40, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }} scaleValue={0.88} haptic="light">
-            <PencilSimple color="#fff" size={20} weight="bold" />
+            <PencilSimple color={colors.onAccent} size={20} weight="bold" />
           </AnimatedPressable>
         </View>
       </View>

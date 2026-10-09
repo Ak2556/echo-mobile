@@ -12,6 +12,7 @@ import {
   VerificationState, getVerificationState, randomPose, submitVerification,
 } from '../lib/social/verificationApi';
 import { ttx } from '../lib/i18n/i18n';
+import { ON_MEDIA } from '../lib/ui/fixedColors';
 
 type Phase = 'loading' | 'intro' | 'preview' | 'submitting' | 'approved' | 'pending' | 'rejected';
 
@@ -117,13 +118,13 @@ export default function GetVerifiedScreen() {
 
       {phase === 'rejected' && (
         <Center>
-          <XCircle color="#EF4444" size={64} weight="fill" />
+          <XCircle color={colors.danger} size={64} weight="fill" />
           <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack }}>{ttx("Not this time")}</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' }}>
             {rejectReason ?? 'The selfie couldn’t be confirmed.'}
           </Text>
           <AnimatedPressable onPress={retry} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingHorizontal: 24, paddingVertical: 14, marginTop: 8 }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>{ttx("Try again")}</Text>
+            <Text style={{ color: colors.onAccent, fontWeight: '800', fontSize: 15 }}>{ttx("Try again")}</Text>
           </AnimatedPressable>
         </Center>
       )}
@@ -139,7 +140,7 @@ export default function GetVerifiedScreen() {
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{ttx("Retake")}</Text>
             </AnimatedPressable>
             <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingHorizontal: 26, paddingVertical: 14 }}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>{ttx("Submit")}</Text>
+              <Text style={{ color: colors.onAccent, fontWeight: '800', fontSize: 15 }}>{ttx("Submit")}</Text>
             </AnimatedPressable>
           </View>
         </ScrollView>
@@ -155,8 +156,8 @@ export default function GetVerifiedScreen() {
           </Text>
 
           {rejectReason ? (
-            <View style={{ backgroundColor: '#EF444414', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#EF444433' }}>
-              <Text style={{ color: '#EF4444', fontSize: 13.5, lineHeight: 19 }}>{ttx("Last attempt:")} {rejectReason}</Text>
+            <View style={{ backgroundColor: `${colors.danger}14`, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: `${colors.danger}33` }}>
+              <Text style={{ color: colors.danger, fontSize: 13.5, lineHeight: 19 }}>{ttx("Last attempt:")} {rejectReason}</Text>
             </View>
           ) : null}
 
@@ -174,8 +175,8 @@ export default function GetVerifiedScreen() {
           </View>
 
           {!profile?.avatar_url ? (
-            <View style={{ backgroundColor: '#F59E0B14', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#F59E0B33' }}>
-              <Text style={{ color: '#F59E0B', fontSize: 13.5, lineHeight: 19 }}>
+            <View style={{ backgroundColor: `${colors.warning}14`, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: `${colors.warning}33` }}>
+              <Text style={{ color: colors.warning, fontSize: 13.5, lineHeight: 19 }}>
                 {ttx("You need a profile photo with your face first. Add one in Edit profile, then come back.")}
               </Text>
             </View>
@@ -186,8 +187,8 @@ export default function GetVerifiedScreen() {
                 <Text style={{ color: colors.text, fontSize: 17, ...font.displayBlack }}>{pose}</Text>
               </View>
               <AnimatedPressable onPress={takeSelfie} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
-                <Camera color="#fff" size={18} weight="fill" />
-                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{ttx("Take the selfie")}</Text>
+                <Camera color={ON_MEDIA} size={18} weight="fill" />
+                <Text style={{ color: ON_MEDIA, fontWeight: '800', fontSize: 16 }}>{ttx("Take the selfie")}</Text>
               </AnimatedPressable>
             </>
           )}

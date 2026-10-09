@@ -581,7 +581,7 @@ export default function NotesApp() {
     { key: 'duplicate', label: tt('Duplicate note'), icon: <Copy color={colors.text} size={18} />, onPress: () => duplicateNote(menuNote) },
     { key: 'publish', label: tt('Publish note as an Echo'), icon: <ArrowUpRight color={colors.text} size={18} />, onPress: () => publishAsEcho(menuNote) },
     { key: 'archive', label: menuNote.archived ? tt('Restore note') : tt('Archive note'), icon: <Archive color={colors.text} size={18} />, onPress: () => mutateNote(menuNote.id, n => ({ ...n, archived: !n.archived, pinned: n.archived ? n.pinned : false }), menuNote.archived ? tt('Restored') : tt('Archived')) },
-    { key: 'delete', label: tt('Delete note'), icon: <Trash color="#EF4444" size={18} />, destructive: true, onPress: () => deleteNote(menuNote.id) },
+    { key: 'delete', label: tt('Delete note'), icon: <Trash color={colors.danger} size={18} />, destructive: true, onPress: () => deleteNote(menuNote.id) },
   ] : [];
 
   const NewBtn = <HeaderAddButton onPress={() => openNew()} label={tt('New note')} />;

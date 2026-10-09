@@ -13,7 +13,7 @@ describe('Reverb footer', () => {
   it('the tab bar goes dark and white-iconed on the video tab only', () => {
     expect(layout).toMatch(/const onVideoTab = state\.routes\[state\.index\]\.name === 'watch'/);
     expect(layout).toMatch(/tone=\{onVideoTab \? 'dark' : 'auto'\}/);
-    expect(layout).toMatch(/const activeTint = onVideoTab \? '#FFFFFF' : colors\.accent/);
+    expect(layout).toMatch(/const activeTint = onVideoTab \? ON_MEDIA : colors\.accent/);
   });
 
   it("EdgeGlass's dark tone forces a black base, the dark glass scheme and the dark wash", () => {

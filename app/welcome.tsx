@@ -17,6 +17,7 @@ import { getFirstRunFallbackQuestion } from '../lib/retention/firstRunQuestion';
 import { track } from '../lib/core/analytics';
 import { registerForPush } from '../lib/notifications/push';
 import { useI18n } from '../lib/i18n/i18n';
+import { WARM } from '../lib/ui/fixedColors';
 
 /**
  * First-run value moment.
@@ -184,25 +185,25 @@ function RevealDoors({
 
   const doors: { icon: React.ReactNode; title: string; body: string; dest: string; tint: string }[] = [
     {
-      icon: <UsersThree color="#4E7A8B" size={22} weight="fill" />,
+      icon: <UsersThree color={WARM.steel} size={22} weight="fill" />,
       title: t('welcome.seeAnswers'),
       body: t('welcome.seeAnswersBody'),
       dest: '/daily-question',
-      tint: '#4E7A8B',
+      tint: WARM.steel,
     },
     {
-      icon: <ChatCircleText color="#A04E4E" size={22} weight="fill" />,
+      icon: <ChatCircleText color={WARM.brick} size={22} weight="fill" />,
       title: t('welcome.goDeeper'),
       body: t('welcome.goDeeperBody'),
       dest: '/(tabs)/chat',
-      tint: '#A04E4E',
+      tint: WARM.brick,
     },
     {
-      icon: <Target color="#7A8B4E" size={22} weight="fill" />,
+      icon: <Target color={WARM.olive} size={22} weight="fill" />,
       title: t('welcome.setGoal'),
       body: t('welcome.setGoalBody'),
       dest: '/onboarding',
-      tint: '#7A8B4E',
+      tint: WARM.olive,
     },
   ];
 
@@ -275,8 +276,8 @@ function RevealDoors({
         }}
         scaleValue={0.97}
       >
-        <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>{t('welcome.enterEcho')}</Text>
-        <ArrowRight color="#fff" size={18} weight="bold" />
+        <Text style={{ color: colors.onAccent, fontSize: 16, fontWeight: '800' }}>{t('welcome.enterEcho')}</Text>
+        <ArrowRight color={colors.onAccent} size={18} weight="bold" />
       </AnimatedPressable>
     </Animated.View>
   );

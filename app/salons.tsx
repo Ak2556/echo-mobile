@@ -81,8 +81,8 @@ function SalonsScreenInner() {
             scaleValue={0.94}
             haptic="medium"
           >
-            <Plus color="#fff" size={16} weight="bold" />
-            <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Start a salon")}</Text>
+            <Plus color={colors.onAccent} size={16} weight="bold" />
+            <Text style={{ color: colors.onAccent, fontWeight: '700' }}>{ttx("Start a salon")}</Text>
           </AnimatedPressable>
         </View>
       ) : (
@@ -147,7 +147,7 @@ function SalonCard({ salon, onToggle }: { salon: Salon; onToggle: (join: boolean
           scaleValue={0.92}
           haptic="medium"
         >
-          <Text style={{ color: salon.is_member ? colors.textMuted : '#fff', fontWeight: '700', fontSize: 12 }}>
+          <Text style={{ color: salon.is_member ? colors.textMuted : colors.onAccent, fontWeight: '700', fontSize: 12 }}>
             {salon.is_member ? 'Joined' : 'Join'}
           </Text>
         </AnimatedPressable>

@@ -14,6 +14,7 @@ import { createSalon } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../lib/i18n/i18n';
 import { WARM_AVATAR_COLORS } from '../lib/social/avatarPalette';
+import { ON_MEDIA } from '../lib/ui/fixedColors';
 
 // Salon covers use the same warm identity palette as avatars, so a salon
 // never becomes the loudest thing on a screen. See lib/social/avatarPalette.ts.
@@ -91,11 +92,11 @@ function CreateSalonScreenInner() {
             haptic="medium"
           >
             {submitting ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={colors.onAccent} size="small" />
             ) : (
-              <Check color="#fff" size={15} weight="bold" />
+              <Check color={colors.onAccent} size={15} weight="bold" />
             )}
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>{ttx("Create")}</Text>
+            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small }}>{ttx("Create")}</Text>
           </AnimatedPressable>
         }
       />
@@ -166,7 +167,7 @@ function CreateSalonScreenInner() {
                   scaleValue={0.9}
                   haptic="light"
                 >
-                  {active && <Check color="#fff" size={16} weight="bold" />}
+                  {active && <Check color={ON_MEDIA} size={16} weight="bold" />}
                 </AnimatedPressable>
               );
             })}

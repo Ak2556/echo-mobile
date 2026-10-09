@@ -22,6 +22,7 @@ import { supabase } from '../lib/supabase';
 import { useResponsiveLayout } from '../lib/ui/responsive';
 import { ttx } from '../lib/i18n/i18n';
 import { PhotoEditor } from '../components/feed/PhotoEditor';
+import { ON_MEDIA } from '../lib/ui/fixedColors';
 
 // The picker offers the canonical warm identity palette. It previously held
 // raw Tailwind hues, which meant a freshly-edited profile could set a colour
@@ -244,11 +245,11 @@ export default function EditProfileScreen() {
             haptic="medium"
           >
             {saving ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={colors.onAccent} size="small" />
             ) : (
-              <Check color="#fff" size={16} />
+              <Check color={colors.onAccent} size={16} />
             )}
-            <Text style={{ color: '#fff', fontWeight: '600', fontSize: fontSizes.small }}>{ttx("Save")}</Text>
+            <Text style={{ color: colors.onAccent, fontWeight: '600', fontSize: fontSizes.small }}>{ttx("Save")}</Text>
           </AnimatedPressable>
         }
       />
@@ -296,8 +297,8 @@ export default function EditProfileScreen() {
                   borderWidth: 2, borderColor: colors.bg,
                 }}>
                   {uploadingAvatar
-                    ? <ActivityIndicator size="small" color="#fff" style={{ width: 14, height: 14 }} />
-                    : <Camera size={14} color="#fff" weight="fill" />
+                    ? <ActivityIndicator size="small" color={ON_MEDIA} style={{ width: 14, height: 14 }} />
+                    : <Camera size={14} color={ON_MEDIA} weight="fill" />
                   }
                 </View>
               </AnimatedPressable>
@@ -405,7 +406,7 @@ export default function EditProfileScreen() {
                 fontSize: fontSizes.caption,
                 marginTop: 4,
                 marginLeft: 4,
-                color: usernameValid ? '#10B981' : colors.danger,
+                color: usernameValid ? colors.success : colors.danger,
               }}
             >
               {usernameValid ? `@${newUsername}` : `${USERNAME_MIN}–${USERNAME_MAX} ${ttx('letters, numbers or underscores')}`}

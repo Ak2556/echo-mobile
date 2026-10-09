@@ -11,11 +11,12 @@ import { GlassPanel } from '../components/ui/GlassPanel';
 import { useTheme } from '../lib/ui/theme';
 import { fetchPendingAppeals, resolveAppeal, type PendingAppeal } from '../lib/supabaseEchoApi';
 import { ttx } from '../lib/i18n/i18n';
+import { STATUS } from '../lib/ui/fixedColors';
 
 function slaColor(daysRemaining: number): string {
-  if (daysRemaining <= 2) return '#EF4444';
-  if (daysRemaining <= 5) return '#F59E0B';
-  return '#10B981';
+  if (daysRemaining <= 2) return STATUS.danger;
+  if (daysRemaining <= 5) return STATUS.warning;
+  return STATUS.success;
 }
 
 function timeAgo(iso: string): string {
@@ -137,11 +138,11 @@ function AppealCard({
           scaleValue={0.95}
           style={{
             flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-            paddingVertical: 10, borderRadius: 8, backgroundColor: '#10B98120',
+            paddingVertical: 10, borderRadius: 8, backgroundColor: `${colors.success}20`,
           }}
         >
-          <CheckCircle size={15} color="#10B981" weight="bold" />
-          <Text style={[font.bodySemibold, { color: '#10B981', fontSize: fontSizes.caption }]}>{ttx("Overturn")}</Text>
+          <CheckCircle size={15} color={colors.success} weight="bold" />
+          <Text style={[font.bodySemibold, { color: colors.success, fontSize: fontSizes.caption }]}>{ttx("Overturn")}</Text>
         </AnimatedPressable>
 
         <AnimatedPressable
@@ -150,11 +151,11 @@ function AppealCard({
           scaleValue={0.95}
           style={{
             flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-            paddingVertical: 10, borderRadius: 8, backgroundColor: '#EF444420',
+            paddingVertical: 10, borderRadius: 8, backgroundColor: `${colors.danger}20`,
           }}
         >
-          <XCircle size={15} color="#EF4444" weight="bold" />
-          <Text style={[font.bodySemibold, { color: '#EF4444', fontSize: fontSizes.caption }]}>{ttx("Uphold")}</Text>
+          <XCircle size={15} color={colors.danger} weight="bold" />
+          <Text style={[font.bodySemibold, { color: colors.danger, fontSize: fontSizes.caption }]}>{ttx("Uphold")}</Text>
         </AnimatedPressable>
       </View>
 
@@ -223,9 +224,9 @@ export default function ModAppealsScreen() {
 
       {/* Overdue banner */}
       {overdueCnt > 0 && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, padding: 12, borderRadius: 10, backgroundColor: '#EF444420' }}>
-          <Warning size={16} color="#EF4444" weight="bold" />
-          <Text style={[font.bodySemibold, { color: '#EF4444', fontSize: fontSizes.caption }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, padding: 12, borderRadius: 10, backgroundColor: `${colors.danger}20` }}>
+          <Warning size={16} color={colors.danger} weight="bold" />
+          <Text style={[font.bodySemibold, { color: colors.danger, fontSize: fontSizes.caption }]}>
             {overdueCnt} {ttx("appeal")}{overdueCnt > 1 ? 's' : ''} {ttx("past the 14-day SLA")}
           </Text>
         </View>

@@ -57,6 +57,7 @@ import { useTutorialStore } from '../../store/tutorialStore';
 import { ttx, useI18n, type TranslationKey } from '../../lib/i18n/i18n';
 import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/retention/dailyThoughts';
 import { personName } from '../../lib/social/personName';
+import { BRAND, ON_MEDIA, ON_STATUS } from '../../lib/ui/fixedColors';
 
 
 const NAV_BAR_HEIGHT = 56;
@@ -257,20 +258,20 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
 
   const step = !hasStartedFirstChat
     ? {
-        icon: <ChatCircleText color="#fff" size={22} weight="fill" />,
+        icon: <ChatCircleText color={ON_MEDIA} size={22} weight="fill" />,
         title: t('home.nextStartChat'),
         body: t('home.nextStartChatBody'),
         route: '/(tabs)/chat' as const,
       }
     : publishedCount === 0
       ? {
-          icon: <PencilSimpleLine color="#fff" size={22} weight="fill" />,
+          icon: <PencilSimpleLine color={ON_MEDIA} size={22} weight="fill" />,
           title: t('home.nextShareEcho'),
           body: t('home.nextShareEchoBody'),
           route: '/create-post' as const,
         }
       : {
-          icon: <Waveform color="#fff" size={22} weight="fill" />,
+          icon: <Waveform color={ON_MEDIA} size={22} weight="fill" />,
           title: t('home.nextDaily'),
           body: t('home.nextDailyBody'),
           route: '/daily-question' as const,
@@ -288,7 +289,7 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
         style={{ borderRadius: 18, overflow: 'hidden' }}
       >
         <LinearGradient
-          colors={['#E8834E', '#C94F1D']}
+          colors={[BRAND.emberFrom, BRAND.emberTo]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 16 }}
@@ -297,12 +298,12 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
             {step.icon}
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[font.display, { color: '#fff', fontSize: 17, lineHeight: 22 }]}>{step.title}</Text>
+            <Text style={[font.display, { color: ON_MEDIA, fontSize: 17, lineHeight: 22 }]}>{step.title}</Text>
             <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 2 }}>
               {step.body}
             </Text>
           </View>
-          <ArrowUpRight color="#fff" size={20} weight="bold" />
+          <ArrowUpRight color={ON_MEDIA} size={20} weight="bold" />
         </LinearGradient>
       </AnimatedPressable>
     </View>
@@ -387,7 +388,7 @@ function FeedScopeRail({
                 justifyContent: 'center',
               }}
             >
-              <Text style={[font.bodySemibold, { color: active ? '#fff' : colors.textSecondary, fontSize: fontSizes.small }]}>
+              <Text style={[font.bodySemibold, { color: active ? colors.onAccent : colors.textSecondary, fontSize: fontSizes.small }]}>
                 {label}
               </Text>
             </Pressable>
@@ -655,20 +656,20 @@ export default function DiscoverScreen() {
         <Pressable onPress={() => router.push('/daily-question')} style={{ marginHorizontal: 12, marginTop: 4, marginBottom: 6 }}>
           <View style={{ borderRadius: 20, overflow: 'hidden' }}>
             <LinearGradient
-              colors={['#E8834E', '#C94F1D']}
+              colors={[BRAND.emberFrom, BRAND.emberTo]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={{ paddingHorizontal: 18, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={[font.display, { color: '#fff', fontSize: 18, lineHeight: 24 }]}>
+                <Text style={[font.display, { color: ON_MEDIA, fontSize: 18, lineHeight: 24 }]}>
                   {t('home.todayQuestion')}
                 </Text>
                 <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, ...font.bodyMedium }}>
                   {t('home.tapToAnswer')}
                 </Text>
               </View>
-              <ArrowUpRight color="#fff" size={20} weight="bold" />
+              <ArrowUpRight color={ON_MEDIA} size={20} weight="bold" />
             </LinearGradient>
           </View>
         </Pressable>
@@ -746,7 +747,7 @@ export default function DiscoverScreen() {
                 backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
               }}
             >
-              <Text style={[font.bodyBold, { color: '#fff', fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
+              <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
                 {t('home.newEchoes', { count: realtime.count, noun: realtime.count > 1 ? 'echoes' : 'echo' })}
               </Text>
             </Pressable>
@@ -880,7 +881,7 @@ export default function DiscoverScreen() {
                       borderColor: colors.bg,
                     }}
                   >
-                    <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                    <Text style={{ color: ON_STATUS, fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
                       {unreadNotifs > 99 ? '99+' : unreadNotifs}
                     </Text>
                   </View>

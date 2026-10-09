@@ -8,6 +8,7 @@ import { useTheme } from '../lib/ui/theme';
 import { fetchActiveQuests, type Quest } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../lib/i18n/i18n';
+import { BRAND } from '../lib/ui/fixedColors';
 
 function QuestsScreenInner() {
   const { colors } = useTheme();
@@ -48,7 +49,7 @@ function QuestsScreenInner() {
             <Section title={ttx("Today")} icon={<Lightning color={colors.accent} size={16} weight="fill" />} quests={dailyQuests} />
           )}
           {weeklyQuests.length > 0 && (
-            <Section title={ttx("This Week")} icon={<Trophy color="#EAB308" size={16} weight="fill" />} quests={weeklyQuests} />
+            <Section title={ttx("This Week")} icon={<Trophy color={BRAND.gold} size={16} weight="fill" />} quests={weeklyQuests} />
           )}
           {otherQuests.length > 0 && (
             <Section title={ttx("Other")} icon={<Trophy color={colors.textMuted} size={16} />} quests={otherQuests} />
@@ -115,7 +116,7 @@ function QuestRow({ quest }: { quest: Quest }) {
                 height: 4,
                 borderRadius: 2,
                 width: `${pct}%`,
-                backgroundColor: completed ? colors.accent : '#10B981',
+                backgroundColor: completed ? colors.accent : colors.success,
               }}
             />
           </View>

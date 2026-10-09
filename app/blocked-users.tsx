@@ -14,6 +14,7 @@ import { useTheme } from '../lib/ui/theme';
 import { User } from '../types';
 import { ttx } from '../lib/i18n/i18n';
 import { personName } from '../lib/social/personName';
+import { BRAND } from '../lib/ui/fixedColors';
 
 export default function BlockedUsersScreen() {
   const { blockedIds, toggleBlock, getUser } = useAppStore();
@@ -49,7 +50,7 @@ export default function BlockedUsersScreen() {
 
       {blockedUsers.length === 0 ? (
         <EmptyState
-          icon={<ShieldSlash color="#6366F1" size={32} />}
+          icon={<ShieldSlash color={BRAND.indigo} size={32} />}
           title={ttx("No blocked users")}
           subtitle={ttx("Users you block won't be able to see your content or contact you.")}
         />

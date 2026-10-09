@@ -22,6 +22,7 @@ import { rememberPrimaryTab } from '../../lib/routing/navigationMemory';
 import { useI18n, type TranslationKey } from '../../lib/i18n/i18n';
 import { PushPromptGate } from '../../components/onboarding/PushPromptGate';
 import { DateOfBirthGate } from '../../components/onboarding/DateOfBirthGate';
+import { ON_MEDIA, ON_STATUS } from '../../lib/ui/fixedColors';
 
 // Five tabs, the most a bar can hold at a glance. Alerts is reached from the bell; Reverb from the
 // Reverb chip on Home, and Home stays lit while you are in it. The desktop sidebar has the room
@@ -61,7 +62,7 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
           },
         ]}
       >
-        <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>
+        <Text style={{ color: ON_STATUS, fontSize: 9, fontWeight: '700' }}>
           {count > 99 ? '99+' : count}
         </Text>
       </View>
@@ -146,7 +147,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
             justifyContent: 'center',
           }}
         >
-          <Lightning color="#fff" size={18} weight="fill" />
+          <Lightning color={colors.onAccent} size={18} weight="fill" />
         </View>
         <View>
           <Text style={[font.bodyBold, { color: colors.text, fontSize: 17, lineHeight: lineHeights.body }]}>Echo</Text>
@@ -171,8 +172,8 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
           marginBottom: 18,
         }}
       >
-        <Plus color="#fff" size={18} weight="bold" />
-          <Text style={[font.bodyBold, { color: '#fff', fontSize: 14, lineHeight: lineHeights.small }]}>{t('nav.newEcho')}</Text>
+        <Plus color={colors.onAccent} size={18} weight="bold" />
+          <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 14, lineHeight: lineHeights.small }]}>{t('nav.newEcho')}</Text>
       </Pressable>
 
       <View style={{ gap: 4 }}>
@@ -400,7 +401,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
   // it sits on, instead of a pale slab across the bottom of the picture.
   const onVideoTab = state.routes[state.index].name === 'watch';
   const onWatch = onVideoTab;
-  const activeTint = onVideoTab ? '#FFFFFF' : colors.accent;
+  const activeTint = onVideoTab ? ON_MEDIA : colors.accent;
   const idleTint = onVideoTab ? 'rgba(255,255,255,0.62)' : colors.textMuted;
 
   const longPressMenuRoute = visibleRoutes.find(r => r.name === longPressKey)?.name;

@@ -12,6 +12,7 @@ import { GRADIENTS } from '../lib/ui/accentDesign';
 import { fetchOrComputeYearWrap, type YearWrap } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../lib/i18n/i18n';
+import { ON_MEDIA } from '../lib/ui/fixedColors';
 
 /**
  * Year in Echo — Spotify-Wrapped-style recap of your year.
@@ -67,9 +68,9 @@ function YearInEchoScreenInner() {
               end={{ x: 1, y: 1 }}
               style={{ padding: 24, borderRadius: 24, alignItems: 'center' }}
             >
-              <Confetti color="#fff" size={32} weight="fill" />
-              <Text style={{ color: '#fff', fontSize: 38, fontWeight: '800', marginTop: 8 }}>{wrap.total_echoes}</Text>
-              <Text style={{ color: '#fff', fontSize: 14, opacity: 0.9, marginTop: 4, fontWeight: '600' }}>{ttx("echoes posted in")} {year}</Text>
+              <Confetti color={ON_MEDIA} size={32} weight="fill" />
+              <Text style={{ color: ON_MEDIA, fontSize: 38, fontWeight: '800', marginTop: 8 }}>{wrap.total_echoes}</Text>
+              <Text style={{ color: ON_MEDIA, fontSize: 14, opacity: 0.9, marginTop: 4, fontWeight: '600' }}>{ttx("echoes posted in")} {year}</Text>
             </LinearGradient>
           </Animated.View>
 
@@ -77,21 +78,21 @@ function YearInEchoScreenInner() {
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
             <Animated.View entering={FadeInUp.delay(100).duration(220)} style={{ flex: 1 }}>
               <StatCard
-                icon={<Heart color="#EF4444" size={20} weight="fill" />}
+                icon={<Heart color={colors.danger} size={20} weight="fill" />}
                 value={wrap.total_likes_received}
                 label={ttx("hearts")}
               />
             </Animated.View>
             <Animated.View entering={FadeInUp.delay(150).duration(220)} style={{ flex: 1 }}>
               <StatCard
-                icon={<ChartLineUp color="#10B981" size={20} weight="fill" />}
+                icon={<ChartLineUp color={colors.success} size={20} weight="fill" />}
                 value={wrap.total_reactions}
                 label={ttx("reactions")}
               />
             </Animated.View>
             <Animated.View entering={FadeInUp.delay(200).duration(220)} style={{ flex: 1 }}>
               <StatCard
-                icon={<Flame color="#F59E0B" size={20} weight="fill" />}
+                icon={<Flame color={colors.warning} size={20} weight="fill" />}
                 value={wrap.longest_streak}
                 label={ttx("longest streak")}
               />

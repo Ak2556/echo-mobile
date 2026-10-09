@@ -157,7 +157,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
     {
       key: 'report',
       label: 'Report',
-      icon: <Flag color="#F59E0B" size={20} weight="fill" />,
+      icon: <Flag color={colors.warning} size={20} weight="fill" />,
       destructive: true,
       onPress: onReport,
     },
@@ -274,7 +274,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
                 scaleValue={0.96}
                 haptic="medium"
               >
-                <Text style={{ fontWeight: '700', fontSize: 15, color: following || requested ? colors.text : '#fff' }}>
+                <Text style={{ fontWeight: '700', fontSize: 15, color: following || requested ? colors.text : colors.onAccent }}>
                   {following ? 'Following' : requested ? 'Requested' : 'Follow'}
                 </Text>
               </AnimatedPressable>
