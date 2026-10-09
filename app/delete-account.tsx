@@ -13,6 +13,7 @@ import { useAppStore } from '../store/useAppStore';
 import { showToast } from '../components/ui/Toast';
 import { track } from '../lib/core/analytics';
 import { ttx } from '../lib/i18n/i18n';
+import { ON_STATUS } from '../lib/ui/fixedColors';
 
 /**
  * In-app account deletion — required by Apple App Store guideline 5.1.1(v).
@@ -140,10 +141,10 @@ export default function DeleteAccountScreen() {
             accessibilityLabel={ttx("Delete my account")}
           >
             {deleting
-              ? <ActivityIndicator color="#fff" />
+              ? <ActivityIndicator color={ON_STATUS} />
               : <>
-                <Trash color="#fff" size={16} weight="bold" />
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{ttx("Delete my account")}</Text>
+                <Trash color={ON_STATUS} size={16} weight="bold" />
+                <Text style={{ color: ON_STATUS, fontWeight: '700', fontSize: 15 }}>{ttx("Delete my account")}</Text>
               </>}
           </Pressable>
         </View>

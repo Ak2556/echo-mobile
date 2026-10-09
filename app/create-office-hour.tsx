@@ -97,8 +97,8 @@ function CreateOfficeHourScreenInner() {
             scaleValue={0.93}
             haptic="medium"
           >
-            {submitting ? <ActivityIndicator color="#fff" size="small" /> : <Check color="#fff" size={15} weight="bold" />}
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>{ttx("Create")}</Text>
+            {submitting ? <ActivityIndicator color={colors.onAccent} size="small" /> : <Check color={colors.onAccent} size={15} weight="bold" />}
+            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small }}>{ttx("Create")}</Text>
           </AnimatedPressable>
         }
       />

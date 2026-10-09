@@ -15,6 +15,7 @@ import { PERSPECTIVE_DESCRIPTIONS, PERSPECTIVE_LABELS, PERSPECTIVE_TYPES, isVali
 import type { ChatMessage, PerspectiveType } from '../../types';
 import { ttx } from '../../lib/i18n/i18n';
 import { BackButton } from '../../components/ui/BackButton';
+import { DARK } from '../../lib/ui/fixedColors';
 
 /**
  * Add Perspective entry screen.
@@ -106,7 +107,7 @@ export default function RemixScreen() {
   const parentRemixCount = parent?.remixCount ?? 0;
 
   return (
-    <ResponsiveScreen background="#0A0A0F">
+    <ResponsiveScreen background={DARK.canvas}>
       {/* Header */}
       <View style={styles.header}>
         <BackButton tone="media" />
@@ -120,18 +121,18 @@ export default function RemixScreen() {
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={ACCENT_COLORS.cyan} size="large" />
-          <Text style={{ color: '#A1A1AA', marginTop: 16, fontSize: 14 }}>{ttx("Loading conversation…")}</Text>
+          <Text style={{ color: DARK.soft, marginTop: 16, fontSize: 14 }}>{ttx("Loading conversation…")}</Text>
         </View>
       ) : hasError ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-          <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', textAlign: 'center' }}>
+          <Text style={{ color: DARK.text, fontSize: 18, fontWeight: '700', textAlign: 'center' }}>
             {ttx("Couldn't load this Echo.")}
           </Text>
           <Pressable
             onPress={() => router.back()}
-            style={{ marginTop: 20, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A' }}
+            style={{ marginTop: 20, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999, backgroundColor: DARK.raised, borderWidth: 1, borderColor: DARK.line }}
           >
-            <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Go back")}</Text>
+            <Text style={{ color: DARK.text, fontWeight: '700' }}>{ttx("Go back")}</Text>
           </Pressable>
         </View>
       ) : parent ? (
@@ -147,7 +148,7 @@ export default function RemixScreen() {
               >
                 <View style={styles.heroInner}>
                   <View style={styles.heroIconWrap}>
-                    <Waveform color="#000" size={26} weight="fill" />
+                    <Waveform color={DARK.onLight} size={26} weight="fill" />
                   </View>
                   <Text style={styles.heroEyebrow}>{ttx("WATCH THIS THOUGHT EVOLVE")}</Text>
                   <Text style={styles.heroTitle} numberOfLines={2}>
@@ -158,7 +159,7 @@ export default function RemixScreen() {
                   </Text>
                   {parentRemixCount > 0 && (
                     <View style={styles.heroChip}>
-                      <GitBranch color="#000" size={12} weight="fill" />
+                      <GitBranch color={DARK.onLight} size={12} weight="fill" />
                       <Text style={styles.heroChipText}>
                         {parentRemixCount} {parentRemixCount === 1 ? 'perspective' : 'perspectives'} {ttx("already")}
                       </Text>
@@ -196,7 +197,7 @@ export default function RemixScreen() {
                   value={sourceUrl}
                   onChangeText={setSourceUrl}
                   placeholder={ttx("https://...")}
-                  placeholderTextColor="#71717A"
+                  placeholderTextColor={DARK.muted}
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType="url"
@@ -255,7 +256,7 @@ export default function RemixScreen() {
                     <View style={styles.forkDivider}>
                       <View style={styles.forkLine} />
                       <View style={styles.forkBadge}>
-                        <GitBranch color="#000" size={12} weight="fill" />
+                        <GitBranch color={DARK.onLight} size={12} weight="fill" />
                         <Text style={styles.forkBadgeText}>{ttx("YOUR BRANCH STARTS HERE")}</Text>
                       </View>
                       <View style={styles.forkLine} />
@@ -267,7 +268,7 @@ export default function RemixScreen() {
 
             {snapshot.length === 0 && (
               <View style={styles.emptyState}>
-                <Text style={{ color: '#A1A1AA', lineHeight: 20 }}>
+                <Text style={{ color: DARK.soft, lineHeight: 20 }}>
                   {ttx("This Echo was published before conversation history was saved. You can still ask a fresh follow-up about it.")}
                 </Text>
               </View>
@@ -278,12 +279,12 @@ export default function RemixScreen() {
           <View style={styles.ctaWrap}>
             <Pressable onPress={handleStartRemix} disabled={launching}>
               <LinearGradient
-                colors={launching ? ['#3F3F46', '#3F3F46'] : GRADIENTS.remix}
+                colors={launching ? [DARK.lineStrong, DARK.lineStrong] : GRADIENTS.remix}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.cta, !launching && accentShadow(ACCENT_COLORS.magenta, 'hard')]}
               >
-                <PaperPlaneRight color="#000" size={22} weight="fill" />
+                <PaperPlaneRight color={DARK.onLight} size={22} weight="fill" />
                 <Text style={styles.ctaText}>
                   {launching
                     ? 'Opening…'
@@ -313,7 +314,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#18181B',
+    borderBottomColor: DARK.raised,
   },
   headerCenter: {
     flexDirection: 'row',
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    color: '#fff',
+    color: DARK.text,
     fontWeight: '900',
     fontSize: 18,
     letterSpacing: 3,
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#fff',
+    backgroundColor: DARK.text,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -350,7 +351,7 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     ...DISPLAY_TYPE.display,
-    color: '#000',
+    color: DARK.onLight,
     marginTop: 4,
   },
   heroSub: {
@@ -372,14 +373,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   heroChipText: {
-    color: '#000',
+    color: DARK.onLight,
     fontWeight: '800',
     fontSize: 12,
     letterSpacing: 0.3,
   },
   sectionLabel: {
     ...DISPLAY_TYPE.eyebrow,
-    color: '#71717A',
+    color: DARK.muted,
     marginBottom: 12,
   },
   typeGrid: {
@@ -392,9 +393,9 @@ const styles = StyleSheet.create({
     width: '48%',
     minHeight: 96,
     borderRadius: 18,
-    backgroundColor: '#18181B',
+    backgroundColor: DARK.raised,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: DARK.line,
     padding: 14,
   },
   typeCardActive: {
@@ -402,7 +403,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(127,176,188,0.12)',
   },
   typeTitle: {
-    color: '#E4E4E7',
+    color: DARK.pale,
     fontSize: 14,
     fontWeight: '900',
     marginBottom: 6,
@@ -411,7 +412,7 @@ const styles = StyleSheet.create({
     color: ACCENT_COLORS.cyan,
   },
   typeDescription: {
-    color: '#A1A1AA',
+    color: DARK.soft,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -420,23 +421,23 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sourceLabel: {
-    color: '#A1A1AA',
+    color: DARK.soft,
     fontSize: 12,
     fontWeight: '800',
     marginBottom: 8,
   },
   sourceInput: {
-    color: '#fff',
-    backgroundColor: '#18181B',
+    color: DARK.text,
+    backgroundColor: DARK.raised,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: DARK.line,
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
   },
   forkHint: {
-    color: '#71717A',
+    color: DARK.muted,
     fontSize: 12.5,
     lineHeight: 17,
     marginBottom: 16,
@@ -463,7 +464,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   forkBadgeText: {
-    color: '#000',
+    color: DARK.onLight,
     fontWeight: '900',
     fontSize: 9.5,
     letterSpacing: 0.6,
@@ -475,7 +476,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 6,
   },
   bubbleUserText: {
-    color: '#000',
+    color: DARK.onLight,
     lineHeight: 21,
     fontSize: 15,
     fontWeight: '700',
@@ -485,21 +486,21 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     borderRadius: 22,
     borderBottomLeftRadius: 6,
-    backgroundColor: '#18181B',
+    backgroundColor: DARK.raised,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: DARK.line,
   },
   bubbleAiText: {
-    color: '#E4E4E7',
+    color: DARK.pale,
     lineHeight: 21,
     fontSize: 15,
   },
   emptyState: {
     padding: 16,
     borderRadius: 18,
-    backgroundColor: '#18181B',
+    backgroundColor: DARK.raised,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: DARK.line,
   },
   ctaWrap: {
     position: 'absolute',
@@ -509,9 +510,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 28,
-    backgroundColor: '#0A0A0F',
+    backgroundColor: DARK.canvas,
     borderTopWidth: 1,
-    borderTopColor: '#18181B',
+    borderTopColor: DARK.raised,
   },
   cta: {
     flexDirection: 'row',
@@ -522,13 +523,13 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   ctaText: {
-    color: '#000',
+    color: DARK.onLight,
     fontWeight: '900',
     fontSize: 17,
     letterSpacing: 0.2,
   },
   ctaHint: {
-    color: '#71717A',
+    color: DARK.muted,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',

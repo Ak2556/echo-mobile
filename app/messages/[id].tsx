@@ -82,6 +82,7 @@ import { userUrl } from '../../lib/routing/echoUrl';
 import { ttx } from '../../lib/i18n/i18n';
 import { playbackEnded } from '../../lib/mini-apps/audioPlayback';
 import { BackButton } from '../../components/ui/BackButton';
+import { WARM, BRAND, ON_MEDIA, ON_STATUS, SHADOW } from '../../lib/ui/fixedColors';
 
 /**
  * A failed 1:1 send. "Try again" is wrong when the recipient has no device to
@@ -117,12 +118,12 @@ interface SavedMessage {
 // (works in light + dark, and message bubbles stay readable over it).
 const WALLPAPERS: { id: string; tint: string | null }[] = [
   { id: 'default', tint: null },
-  { id: 'terracotta', tint: '#C65F3F' },
-  { id: 'ochre', tint: '#B08536' },
-  { id: 'sage', tint: '#4E8B7A' },
-  { id: 'dusk', tint: '#5E748B' },
-  { id: 'plum', tint: '#8B5E7D' },
-  { id: 'rose', tint: '#B35D6B' },
+  { id: 'terracotta', tint: WARM.terracotta },
+  { id: 'ochre', tint: WARM.ochre },
+  { id: 'sage', tint: WARM.sage },
+  { id: 'dusk', tint: WARM.dusk },
+  { id: 'plum', tint: WARM.plum },
+  { id: 'rose', tint: WARM.roseClay },
 ];
 
 
@@ -594,9 +595,9 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress, sessionToke
     }
   };
 
-  const fg = isMe ? '#fff' : colors.text;
+  const fg = isMe ? ON_MEDIA : colors.text;
   const track = isMe ? 'rgba(255,255,255,0.3)' : (colors.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.1)');
-  const fill = isMe ? '#fff' : colors.accent;
+  const fill = isMe ? ON_MEDIA : colors.accent;
   const progress = durationSec > 0 ? Math.min(1, position / durationSec) : 0;
 
   return (
@@ -621,7 +622,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress, sessionToke
         >
           {playing
             ? <Pause color={fg} size={15} weight="fill" />
-            : <Play color={isMe ? '#fff' : colors.accent} size={15} weight="fill" />}
+            : <Play color={isMe ? colors.onAccent : colors.accent} size={15} weight="fill" />}
         </Pressable>
         <View style={{ flex: 1, gap: 5 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', height: 22, gap: 2 }}>
@@ -636,7 +637,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress, sessionToke
         </View>
         {playing || speed !== 1 ? (
           <Pressable onPress={cycleSpeed} hitSlop={6} accessibilityLabel={ttx("Playback speed")} style={{ paddingHorizontal: 6, paddingVertical: 3, borderRadius: 9, backgroundColor: isMe ? 'rgba(255,255,255,0.22)' : colors.accent + '22' }}>
-            <Text style={{ color: isMe ? '#fff' : colors.accent, fontSize: 11, fontWeight: '800' }}>{speed}×</Text>
+            <Text style={{ color: isMe ? colors.onAccent : colors.accent, fontSize: 11, fontWeight: '800' }}>{speed}×</Text>
           </Pressable>
         ) : (
           <Microphone color={isMe ? 'rgba(255,255,255,0.7)' : colors.textMuted} size={14} weight="fill" />
@@ -852,8 +853,8 @@ function DMBubble({
     transform: [{ scale: 0.6 + heartPop.value * 0.9 }],
   }));
 
-  const bubbleBg = isMe ? colors.accent : (colors.isDark ? '#2A2A2D' : colors.surfaceHover);
-  const textColor = isMe ? '#fff' : colors.text;
+  const bubbleBg = isMe ? colors.accent : colors.surfaceHover;
+  const textColor = isMe ? ON_STATUS : colors.text;
 
   const renderContent = () => {
     if (isDeleted) {
@@ -1144,7 +1145,7 @@ function DMBubble({
         <Animated.View style={[{ maxWidth: '82%' }, swipeStyle]}>
           <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -6, alignSelf: 'center', zIndex: 5 }, heartPopStyle]}>
             {quickReaction === '❤️'
-              ? <Heart color="#F0506E" size={38} weight="fill" />
+              ? <Heart color={BRAND.like} size={38} weight="fill" />
               : <Text style={{ fontSize: 34 }}>{quickReaction}</Text>}
           </Animated.View>
           {canSwipe && (
@@ -1440,7 +1441,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
                   url={item.isGroup ? undefined : item.otherAvatarUrl}
                   size={40}
                 >
-                  {item.isGroup ? <Users color="#fff" size={17} weight="fill" /> : undefined}
+                  {item.isGroup ? <Users color={ON_MEDIA} size={17} weight="fill" /> : undefined}
                 </Avatar>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
@@ -1674,7 +1675,7 @@ function MessageActionSheet({
           backgroundColor: colors.surface,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
-          shadowColor: '#000',
+          shadowColor: SHADOW,
           shadowOpacity: 0.24,
           shadowRadius: 24,
           shadowOffset: { width: 0, height: -8 },
@@ -2870,7 +2871,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               url={conversation.isGroup ? undefined : conversation.avatarUrl}
               size={78}
             >
-              {conversation.isGroup ? <Users color="#fff" size={30} weight="fill" /> : undefined}
+              {conversation.isGroup ? <Users color={ON_MEDIA} size={30} weight="fill" /> : undefined}
             </Avatar>
             <Text style={{ color: colors.text, ...font.displayBlack, fontSize: 23, textAlign: 'center', letterSpacing: -0.3 }}>
               {conversation.isGroup ? conversation.displayName : `Say hi to ${conversation.displayName}`}
@@ -2991,7 +2992,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               size={40}
               online={online}
             >
-              {conversation.isGroup ? <Users color="#fff" size={17} weight="fill" /> : undefined}
+              {conversation.isGroup ? <Users color={ON_MEDIA} size={17} weight="fill" /> : undefined}
             </Avatar>
           </View>
 
@@ -3129,12 +3130,12 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                 flexDirection: 'row', gap: 6,
                 backgroundColor: colors.accent,
                 alignItems: 'center', justifyContent: 'center',
-                shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+                shadowColor: SHADOW, shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
               }}
             >
-              <ArrowFatLinesUp color="#fff" size={16} weight="fill" style={{ transform: [{ rotate: '180deg' }] }} />
+              <ArrowFatLinesUp color={colors.onAccent} size={16} weight="fill" style={{ transform: [{ rotate: '180deg' }] }} />
               {newAwayCount > 0 && (
-                <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+                <Text style={{ color: colors.onAccent, fontSize: 12.5, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
                   {newAwayCount} {ttx("new")}
                 </Text>
               )}
@@ -3374,7 +3375,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   backgroundColor: colors.accent,
                 }}
               >
-                <PaperPlaneTilt color="#fff" size={18} weight="fill" />
+                <PaperPlaneTilt color={colors.onAccent} size={18} weight="fill" />
               </AnimatedPressable>
             </>
           ) : (
@@ -3392,8 +3393,8 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   }}
                 >
                   {imageUploading
-                    ? <ActivityIndicator size="small" color="#fff" />
-                    : <Plus color="#fff" size={18} weight={attachmentMenuOpen ? 'fill' : 'bold'} />
+                    ? <ActivityIndicator size="small" color={colors.onAccent} />
+                    : <Plus color={colors.onAccent} size={18} weight={attachmentMenuOpen ? 'fill' : 'bold'} />
                   }
                 </Pressable>
               )}
@@ -3403,7 +3404,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                 flex: 1, minHeight: 40,
                 flexDirection: 'row', alignItems: 'center',
                 paddingHorizontal: 16, paddingVertical: 8,
-                backgroundColor: colors.isDark ? '#2A2A2D' : colors.inputBg,
+                backgroundColor: colors.inputBg,
                 borderRadius: 20,
               }}>
                 <RNTextInput
@@ -3454,8 +3455,8 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                     }}
                   >
                     {editingMessage
-                      ? <PencilSimple color="#fff" size={16} weight="fill" />
-                      : <PaperPlaneTilt color="#fff" size={16} weight="fill" />
+                      ? <PencilSimple color={colors.onAccent} size={16} weight="fill" />
+                      : <PaperPlaneTilt color={colors.onAccent} size={16} weight="fill" />
                     }
                   </AnimatedPressable>
                 </Animated.View>
@@ -3496,7 +3497,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
-                <X color="#fff" size={20} weight="bold" />
+                <X color={ON_MEDIA} size={20} weight="bold" />
               </Pressable>
             </View>
             {imagePreviewUrl ? (
@@ -3592,7 +3593,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                     ) : null}
                     {selected && (
                       <View style={{ position: 'absolute', top: 5, right: 5, width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-                        <Check color="#fff" size={11} weight="bold" />
+                        <Check color={colors.onAccent} size={11} weight="bold" />
                       </View>
                     )}
                   </Pressable>
@@ -3691,7 +3692,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
 
       <Modal visible={capsuleModalOpen} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 24, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10 }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 24, shadowColor: SHADOW, shadowOpacity: 0.2, shadowRadius: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
               <Hourglass color={colors.accent} size={24} weight="bold" />
               <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>Time Capsule</Text>
@@ -3716,10 +3717,10 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   onPress={() => setCapsuleDurationDays(days)}
                   style={{
                     paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12,
-                    backgroundColor: capsuleDurationDays === days ? colors.accent : (colors.isDark ? '#333' : '#eee')
+                    backgroundColor: capsuleDurationDays === days ? colors.accent : colors.surfaceHover
                   }}
                 >
-                  <Text style={{ color: capsuleDurationDays === days ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>
+                  <Text style={{ color: capsuleDurationDays === days ? colors.onAccent : colors.text, fontWeight: '700', fontSize: 13 }}>
                     {days === 1 ? '1 day' : days === 7 ? '1 week' : days === 30 ? '1 month' : '1 year'}
                   </Text>
                 </Pressable>
@@ -3727,7 +3728,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             </View>
 
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Pressable style={{ flex: 1, padding: 14, borderRadius: 16, backgroundColor: colors.isDark ? '#333' : '#eee', alignItems: 'center' }} onPress={() => setCapsuleModalOpen(false)}>
+              <Pressable style={{ flex: 1, padding: 14, borderRadius: 16, backgroundColor: colors.surfaceHover, alignItems: 'center' }} onPress={() => setCapsuleModalOpen(false)}>
                 <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Cancel</Text>
               </Pressable>
               <Pressable 
@@ -3753,7 +3754,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   }
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Seal & Send</Text>
+                <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: 15 }}>Seal & Send</Text>
               </Pressable>
             </View>
           </View>

@@ -14,6 +14,7 @@ import { track } from '../../lib/core/analytics';
 import type { PerspectiveType, RemixTreeNode } from '../../types';
 import { ttx } from '../../lib/i18n/i18n';
 import { BackButton } from '../../components/ui/BackButton';
+import { DARK } from '../../lib/ui/fixedColors';
 
 /**
  * Evolution tree viewer — full lineage of a single remix root. Renders the
@@ -52,7 +53,7 @@ export default function EvolutionTreeScreen() {
   }, [rootId]);
 
   return (
-    <ResponsiveScreen background="#0A0A0F">
+    <ResponsiveScreen background={DARK.canvas}>
       <View style={styles.header}>
         <BackButton tone="media" />
         <View style={styles.headerCenter}>
@@ -261,11 +262,11 @@ function RemixNode({ node, onPress }: { node: RemixTreeNode; onPress: () => void
         </Text>
         <View style={styles.nodeStatsRow}>
           <View style={styles.nodeStat}>
-            <Heart color="#71717A" size={13} weight="fill" />
+            <Heart color={DARK.muted} size={13} weight="fill" />
             <Text style={styles.nodeStatText}>{node.likesCount}</Text>
           </View>
           <View style={styles.nodeStat}>
-            <ChatCircle color="#71717A" size={13} weight="fill" />
+            <ChatCircle color={DARK.muted} size={13} weight="fill" />
             <Text style={styles.nodeStatText}>{node.commentCount}</Text>
           </View>
           {node.remixCount > 0 && (
@@ -281,7 +282,7 @@ function RemixNode({ node, onPress }: { node: RemixTreeNode; onPress: () => void
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0A0A0F' },
+  root: { flex: 1, backgroundColor: DARK.canvas },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#18181B',
+    borderBottomColor: DARK.raised,
   },
   headerCenter: {
     flexDirection: 'row',
@@ -297,7 +298,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    color: '#fff',
+    color: DARK.text,
     fontWeight: '900',
     fontSize: 16,
     letterSpacing: 3,
@@ -313,14 +314,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyTitle: {
-    color: '#fff',
+    color: DARK.text,
     fontWeight: '800',
     fontSize: 18,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySub: {
-    color: '#71717A',
+    color: DARK.muted,
     textAlign: 'center',
     fontSize: 14,
     lineHeight: 20,
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
   seedBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: '#000',
+    backgroundColor: DARK.bg,
     borderRadius: 999,
   },
   seedBadgeText: {
@@ -354,7 +355,7 @@ const styles = StyleSheet.create({
   },
   rootTitle: {
     ...DISPLAY_TYPE.title,
-    color: '#000',
+    color: DARK.onLight,
     marginBottom: 10,
   },
   rootResponse: {
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   statValue: {
-    color: '#000',
+    color: DARK.onLight,
     fontWeight: '900',
     fontSize: 22,
     fontVariant: ['tabular-nums'],
@@ -397,8 +398,8 @@ const styles = StyleSheet.create({
     minWidth: '30%',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#27272A',
-    backgroundColor: '#101018',
+    borderColor: DARK.line,
+    backgroundColor: DARK.panel,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
@@ -407,7 +408,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(127,176,188,0.10)',
   },
   summaryCount: {
-    color: '#71717A',
+    color: DARK.muted,
     fontWeight: '900',
     fontSize: 18,
     fontVariant: ['tabular-nums'],
@@ -416,7 +417,7 @@ const styles = StyleSheet.create({
     color: ACCENT_COLORS.cyan,
   },
   summaryLabel: {
-    color: '#A1A1AA',
+    color: DARK.soft,
     fontWeight: '700',
     fontSize: 11,
     marginTop: 2,
@@ -431,21 +432,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: '#101018',
+    backgroundColor: DARK.panel,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: DARK.line,
   },
   sortPillActive: {
     backgroundColor: ACCENT_COLORS.cyan,
     borderColor: ACCENT_COLORS.cyan,
   },
   sortText: {
-    color: '#A1A1AA',
+    color: DARK.soft,
     fontWeight: '800',
     fontSize: 12,
   },
   sortTextActive: {
-    color: '#000',
+    color: DARK.onLight,
   },
   groupWrap: {
     marginBottom: 18,
@@ -458,7 +459,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   groupTitle: {
-    color: '#fff',
+    color: DARK.text,
     fontWeight: '900',
     fontSize: 16,
   },
@@ -470,7 +471,7 @@ const styles = StyleSheet.create({
   },
   nodeCard: {
     borderRadius: 18,
-    backgroundColor: '#101018',
+    backgroundColor: DARK.panel,
     borderWidth: 1,
     borderColor: 'rgba(127,176,188,0.18)',
     padding: 14,
@@ -514,19 +515,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   nodeAuthor: {
-    color: '#A1A1AA',
+    color: DARK.soft,
     fontWeight: '700',
     fontSize: 12,
   },
   nodeTitle: {
-    color: '#fff',
+    color: DARK.text,
     fontWeight: '800',
     fontSize: 15,
     lineHeight: 19,
     marginBottom: 6,
   },
   nodeResponse: {
-    color: '#A1A1AA',
+    color: DARK.soft,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -541,7 +542,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   nodeStatText: {
-    color: '#71717A',
+    color: DARK.muted,
     fontSize: 12,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],

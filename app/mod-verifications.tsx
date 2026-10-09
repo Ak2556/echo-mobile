@@ -15,6 +15,7 @@ import {
   VerificationQueueItem, decideVerification, listVerificationQueue,
 } from '../lib/social/verificationApi';
 import { ttx } from '../lib/i18n/i18n';
+import { ON_STATUS } from '../lib/ui/fixedColors';
 
 function VerificationCard({ item, onDecide }: {
   item: VerificationQueueItem;
@@ -87,17 +88,17 @@ function VerificationCard({ item, onDecide }: {
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <AnimatedPressable
           onPress={() => confirm(false)} disabled={busy} scaleValue={0.96} haptic="light"
-          style={{ flex: 1, borderRadius: 12, borderWidth: 1, borderColor: '#EF444455', paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
+          style={{ flex: 1, borderRadius: 12, borderWidth: 1, borderColor: `${colors.danger}55`, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
         >
-          <XCircle color="#EF4444" size={16} weight="fill" />
-          <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 14 }}>{ttx("Reject")}</Text>
+          <XCircle color={colors.danger} size={16} weight="fill" />
+          <Text style={{ color: colors.danger, fontWeight: '700', fontSize: 14 }}>{ttx("Reject")}</Text>
         </AnimatedPressable>
         <AnimatedPressable
           onPress={() => confirm(true)} disabled={busy} scaleValue={0.96} haptic="medium"
-          style={{ flex: 1, borderRadius: 12, backgroundColor: '#10B981', paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
+          style={{ flex: 1, borderRadius: 12, backgroundColor: colors.success, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
         >
-          <CheckCircle color="#fff" size={16} weight="fill" />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{ttx("Approve")}</Text>
+          <CheckCircle color={ON_STATUS} size={16} weight="fill" />
+          <Text style={{ color: ON_STATUS, fontWeight: '700', fontSize: 14 }}>{ttx("Approve")}</Text>
         </AnimatedPressable>
       </View>
     </GlassPanel>

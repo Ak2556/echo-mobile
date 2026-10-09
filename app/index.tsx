@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../lib/auth';
 import { getRememberedStartRoute } from '../lib/routing/navigationMemory';
+import { BRAND, DARK } from '../lib/ui/fixedColors';
 
 /**
  * Initial route. Reads auth status from the central store and renders the
@@ -24,8 +25,8 @@ export default function Index() {
 
   if (status === 'checking' && !bailed) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#6366F1" size="large" />
+      <View style={{ flex: 1, backgroundColor: DARK.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={BRAND.indigo} size="large" />
       </View>
     );
   }

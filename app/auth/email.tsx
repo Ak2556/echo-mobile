@@ -186,8 +186,8 @@ export default function EmailAuthScreen() {
                   style={{ paddingVertical: 18, alignItems: 'center', justifyContent: 'center' }}
                 >
                   {loading
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={[font.bodyBold, { color: canSend ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>{t('auth.sendCode')}</Text>}
+                    ? <ActivityIndicator color={colors.onAccent} />
+                    : <Text style={[font.bodyBold, { color: canSend ? colors.onAccent : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>{t('auth.sendCode')}</Text>}
                 </Pressable>
               </View>
             </View>
@@ -234,8 +234,8 @@ export default function EmailAuthScreen() {
                   style={{ paddingVertical: 18, alignItems: 'center', justifyContent: 'center' }}
                 >
                   {loading
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={[font.bodyBold, { color: canVerify ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>{t('auth.verify')}</Text>}
+                    ? <ActivityIndicator color={colors.onAccent} />
+                    : <Text style={[font.bodyBold, { color: canVerify ? colors.onAccent : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>{t('auth.verify')}</Text>}
                 </Pressable>
               </View>
 

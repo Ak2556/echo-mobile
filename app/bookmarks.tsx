@@ -17,6 +17,7 @@ import { useFeed } from '../hooks/useFeed';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
 import { ttx } from '../lib/i18n/i18n';
+import { BRAND } from '../lib/ui/fixedColors';
 
 export default function BookmarksScreen() {
   const router = useRouter();
@@ -95,7 +96,7 @@ export default function BookmarksScreen() {
                 borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder,
               }}
             >
-              <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>{label}</Text>
+              <Text style={{ color: active ? colors.onAccent : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>{label}</Text>
             </Pressable>
           );
         })}
@@ -109,7 +110,7 @@ export default function BookmarksScreen() {
         </View>
       ) : bookmarked.length === 0 ? (
         <EmptyState
-          icon={<BookmarkSimple color="#6366F1" size={32} />}
+          icon={<BookmarkSimple color={BRAND.indigo} size={32} />}
           title={ttx("No bookmarks yet")}
           subtitle={ttx("Save echoes you want to revisit later by tapping the bookmark icon.")}
           actionLabel={ttx("Explore")}

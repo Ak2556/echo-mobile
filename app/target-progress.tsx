@@ -14,6 +14,7 @@ import { fetchCrossAppProgress, type CrossAppProgress } from '../lib/retention/t
 import { setPendingPublishContext } from '../lib/feed/publishContext';
 import { IconBadge } from '../components/ui/IconBadge';
 import { ttx } from '../lib/i18n/i18n';
+import { WARM } from '../lib/ui/fixedColors';
 
 export default function TargetProgressScreen() {
   const router = useRouter();
@@ -69,7 +70,7 @@ export default function TargetProgressScreen() {
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <IconBadge color={colors.accent} size={48} radius={16}>
-            <Target color="#fff" size={25} weight="bold" />
+            <Target color={colors.onAccent} size={25} weight="bold" />
           </IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 27, lineHeight: 32 }]}>
@@ -85,10 +86,10 @@ export default function TargetProgressScreen() {
           <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 16 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 12 }]}>{ttx("Across your tools")}</Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <CrossStat icon={<CheckCircle color="#7A8B4E" size={16} weight="fill" />} value={`${cross.habitBestStreak}`} label={ttx("day streak")} />
-              <CrossStat icon={<Barbell color="#4E8B7A" size={16} weight="fill" />} value={`${cross.fitnessWorkoutsWeek}`} label={ttx("workouts · wk")} />
-              <CrossStat icon={<ListChecks color="#4E7A8B" size={16} weight="fill" />} value={`${cross.tasksOpen}`} label={cross.tasksDueToday ? `open · ${cross.tasksDueToday} due` : 'open tasks'} />
-              <CrossStat icon={<Wallet color="#B08536" size={16} weight="fill" />} value={`${cross.expenseCurrency ?? ''}${Math.round(cross.expenseNetMonth)}`} label={ttx("net · mo")} />
+              <CrossStat icon={<CheckCircle color={WARM.olive} size={16} weight="fill" />} value={`${cross.habitBestStreak}`} label={ttx("day streak")} />
+              <CrossStat icon={<Barbell color={WARM.sage} size={16} weight="fill" />} value={`${cross.fitnessWorkoutsWeek}`} label={ttx("workouts · wk")} />
+              <CrossStat icon={<ListChecks color={WARM.steel} size={16} weight="fill" />} value={`${cross.tasksOpen}`} label={cross.tasksDueToday ? `open · ${cross.tasksDueToday} due` : 'open tasks'} />
+              <CrossStat icon={<Wallet color={WARM.ochre} size={16} weight="fill" />} value={`${cross.expenseCurrency ?? ''}${Math.round(cross.expenseNetMonth)}`} label={ttx("net · mo")} />
             </View>
           </View>
         ) : null}
@@ -110,7 +111,7 @@ export default function TargetProgressScreen() {
 
             <View style={{ gap: 10 }}>
               <ActionButton
-                icon={<SquaresFour color="#fff" size={18} weight="bold" />}
+                icon={<SquaresFour color={colors.onAccent} size={18} weight="bold" />}
                 label={ttx("Open target tools")}
                 caption={ttx("Jump straight to the mini apps for this target.")}
                 onPress={() => router.push('/(tabs)/apps' as Href)}
@@ -196,7 +197,7 @@ function ActionButton({
         {icon}
       </IconBadge>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[font.bodyBold, { color: filled ? '#fff' : colors.text, fontSize: 14 }]}>
+        <Text style={[font.bodyBold, { color: filled ? colors.onAccent : colors.text, fontSize: 14 }]}>
           {label}
         </Text>
         <Text style={[font.body, { color: filled ? 'rgba(255,255,255,0.78)' : colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 2 }]}>

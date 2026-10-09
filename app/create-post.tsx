@@ -47,6 +47,7 @@ import { PhotoEditor } from '../components/feed/PhotoEditor';
 import { isAppOnline } from '../lib/core/net';
 import { outbox } from '../store/outbox';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
+import { ON_MEDIA, ON_STATUS, SHADOW, STAGE } from '../lib/ui/fixedColors';
 
 
 const MAX_PHOTOS = 6;
@@ -110,8 +111,8 @@ function ToolChip({ label, Icon, active, onPress }: {
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: active ? colors.accent : colors.border,
       }}>
-        <Icon color={active ? '#fff' : colors.accent} size={16} weight={active ? 'fill' : 'regular'} />
-        <Text style={[font.bodySemibold, { color: active ? '#fff' : colors.text, fontSize: fontSizes.small }]}>{label}</Text>
+        <Icon color={active ? colors.onAccent : colors.accent} size={16} weight={active ? 'fill' : 'regular'} />
+        <Text style={[font.bodySemibold, { color: active ? colors.onAccent : colors.text, fontSize: fontSizes.small }]}>{label}</Text>
       </View>
     </Pressable>
   );
@@ -627,7 +628,7 @@ export default function CreatePostScreen() {
       borderRadius: radius.card,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
-      shadowColor: '#000',
+      shadowColor: SHADOW,
       shadowOpacity: colors.isDark ? 0.12 : 0.04,
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 4 },
@@ -661,9 +662,9 @@ export default function CreatePostScreen() {
         >
           <Animated.View entering={ZoomIn.duration(220)} style={{ alignItems: 'center' }}>
             <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(16,185,129,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-              <CheckCircle color="#10B981" size={38} weight="fill" />
+              <CheckCircle color={colors.success} size={38} weight="fill" />
             </View>
-            <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: 0, marginBottom: 10, textAlign: 'center' }}>
+            <Text style={{ color: ON_STATUS, fontSize: 26, fontWeight: '800', letterSpacing: 0, marginBottom: 10, textAlign: 'center' }}>
               {ttx("Echo sent.")}
             </Text>
             <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 15, textAlign: 'center', lineHeight: 22 }} numberOfLines={2}>
@@ -739,8 +740,8 @@ export default function CreatePostScreen() {
             onPress={() => { void handlePublish(); }} disabled={!canPublish} scaleValue={0.92} haptic="medium"
             style={{ minWidth: 82, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: canPublish ? colors.accent : colors.surfaceHover, opacity: canPublish ? 1 : 0.5 }}
           >
-            <PaperPlaneTilt color="#fff" size={14} />
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{publishing ? 'Posting…' : 'Post'}</Text>
+            <PaperPlaneTilt color={colors.onAccent} size={14} />
+            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{publishing ? 'Posting…' : 'Post'}</Text>
           </AnimatedPressable>
         }
       />
@@ -865,12 +866,12 @@ export default function CreatePostScreen() {
                     <Image source={{ uri: img.uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                     <Pressable onPress={() => removeImage(idx)} hitSlop={6} accessibilityRole="button" accessibilityLabel={ttx("Remove photo")} style={{ position: 'absolute', top: 8, right: 8 }}>
                       <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                        <X color="#fff" size={14} weight="bold" />
+                        <X color={ON_MEDIA} size={14} weight="bold" />
                       </View>
                     </Pressable>
                     <Pressable onPress={() => setEditingIndex(idx)} hitSlop={6} accessibilityRole="button" accessibilityLabel={ttx("Edit photo")} style={{ position: 'absolute', top: 8, left: 8 }}>
                       <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                        <PencilSimple color="#fff" size={14} weight="bold" />
+                        <PencilSimple color={ON_MEDIA} size={14} weight="bold" />
                       </View>
                     </Pressable>
                     <Pressable
@@ -881,7 +882,7 @@ export default function CreatePostScreen() {
                       style={{ position: 'absolute', bottom: 8, left: 8 }}
                     >
                       <View style={{ paddingHorizontal: 9, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: img.alt ? colors.accent : 'rgba(0,0,0,0.6)' }}>
-                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>{img.alt ? ttx('ALT ✓') : ttx('+ ALT')}</Text>
+                        <Text style={{ color: ON_MEDIA, fontSize: 12, fontWeight: '800' }}>{img.alt ? ttx('ALT ✓') : ttx('+ ALT')}</Text>
                       </View>
                     </Pressable>
                     {images.length > 1 && (
@@ -889,7 +890,7 @@ export default function CreatePostScreen() {
                         {([[-1, CaretLeft, ttx("Move photo left"), idx === 0], [1, CaretRight, ttx("Move photo right"), idx === images.length - 1]] as const).map(([dir, Caret, a11y, off]) => (
                           <Pressable key={dir} onPress={() => moveImage(idx, dir)} disabled={off} hitSlop={6} accessibilityRole="button" accessibilityLabel={a11y}>
                             <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', opacity: off ? 0.35 : 1 }}>
-                              <Caret color="#fff" size={14} weight="bold" />
+                              <Caret color={ON_MEDIA} size={14} weight="bold" />
                             </View>
                           </Pressable>
                         ))}
@@ -922,7 +923,7 @@ export default function CreatePostScreen() {
                 onRemove={() => setVideo(null)}
                 removeLabel={ttx("Remove video")}
               />
-              <View onLayout={e => setVideoBoxWidth(e.nativeEvent.layout.width)} style={{ borderRadius: radius.card, overflow: 'hidden', backgroundColor: '#000' }}>
+              <View onLayout={e => setVideoBoxWidth(e.nativeEvent.layout.width)} style={{ borderRadius: radius.card, overflow: 'hidden', backgroundColor: STAGE }}>
                 {videoBoxWidth > 0 && (
                   <VideoPreview
                     uri={video.uri}
@@ -1004,7 +1005,7 @@ export default function CreatePostScreen() {
                     <Pressable key={d.hours} onPress={() => setPollDurationHours(d.hours)} style={{ flex: 1 }} accessibilityRole="button" accessibilityState={{ selected: active }}>
                       {/* Same look as the add-on chips below; layout on the inner View. */}
                       <View style={{ alignItems: 'center', justifyContent: 'center', minHeight: 38, borderRadius: radius.full, backgroundColor: active ? colors.accent : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border }}>
-                        <Text style={[font.bodySemibold, { color: active ? '#fff' : colors.text, fontSize: fontSizes.small }]}>{d.label}</Text>
+                        <Text style={[font.bodySemibold, { color: active ? colors.onAccent : colors.text, fontSize: fontSizes.small }]}>{d.label}</Text>
                       </View>
                     </Pressable>
                   );

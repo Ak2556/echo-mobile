@@ -28,12 +28,13 @@ import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { ttx } from '../../lib/i18n/i18n';
 import { BackButton } from '../../components/ui/BackButton';
+import { BRAND, STATUS, ON_MEDIA } from '../../lib/ui/fixedColors';
 
 const CONDITION_COLOR: Record<string, string> = {
-  'New': '#10B981',
-  'Like new': '#34D399',
-  'Good': '#F59E0B',
-  'Service': '#6366F1',
+  'New': STATUS.success,
+  'Like new': BRAND.mint,
+  'Good': STATUS.warning,
+  'Service': BRAND.indigo,
 };
 
 export default function ListingDetailScreen() {
@@ -164,7 +165,7 @@ export default function ListingDetailScreen() {
             alignItems: 'center', justifyContent: 'center',
           }}
         >
-          <ShareNetwork color="#fff" size={20} />
+          <ShareNetwork color={ON_MEDIA} size={20} />
         </Pressable>
       </View>
 
@@ -198,12 +199,12 @@ export default function ListingDetailScreen() {
               {listing.status === 'sold' && (
                 <View style={{
                   alignSelf: 'flex-start',
-                  backgroundColor: '#EF444420',
+                  backgroundColor: `${colors.danger}20`,
                   borderRadius: 6,
                   paddingHorizontal: 8,
                   paddingVertical: 3,
                 }}>
-                  <Text style={{ color: '#EF4444', fontSize: 12, ...font.bodySemibold }}>{ttx("SOLD")}</Text>
+                  <Text style={{ color: colors.danger, fontSize: 12, ...font.bodySemibold }}>{ttx("SOLD")}</Text>
                 </View>
               )}
             </View>
@@ -310,14 +311,14 @@ export default function ListingDetailScreen() {
                 fadeOnPress
                 style={{
                   flex: 1,
-                  backgroundColor: listing.status === 'sold' ? colors.border : '#10B98120',
+                  backgroundColor: listing.status === 'sold' ? colors.border : `${colors.success}20`,
                   borderRadius: radius.md,
                   paddingVertical: 12,
                   alignItems: 'center',
                 }}
               >
                 <Text style={{
-                  color: listing.status === 'sold' ? colors.textMuted : '#10B981',
+                  color: listing.status === 'sold' ? colors.textMuted : colors.success,
                   ...font.bodySemibold,
                   fontSize: fontSizes.body,
                 }}>
@@ -330,13 +331,13 @@ export default function ListingDetailScreen() {
                 fadeOnPress
                 style={{
                   flex: 1,
-                  backgroundColor: '#EF444420',
+                  backgroundColor: `${colors.danger}20`,
                   borderRadius: radius.md,
                   paddingVertical: 12,
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: '#EF4444', ...font.bodySemibold, fontSize: fontSizes.body }}>
+                <Text style={{ color: colors.danger, ...font.bodySemibold, fontSize: fontSizes.body }}>
                   {ttx("Remove listing")}
                 </Text>
               </AnimatedPressable>
@@ -373,8 +374,8 @@ export default function ListingDetailScreen() {
               gap: 8,
             }}
           >
-            <ChatCircle color="#fff" size={20} weight="fill" />
-            <Text style={{ color: '#fff', ...font.bodyBold, fontSize: fontSizes.body }}>
+            <ChatCircle color={colors.onAccent} size={20} weight="fill" />
+            <Text style={{ color: colors.onAccent, ...font.bodyBold, fontSize: fontSizes.body }}>
               {startConvMut.isPending ? 'Opening chat...' : 'Message seller'}
             </Text>
           </AnimatedPressable>

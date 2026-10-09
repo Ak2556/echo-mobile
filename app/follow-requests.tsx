@@ -93,7 +93,7 @@ export default function FollowRequestsScreen() {
                 scaleValue={0.95}
                 haptic="light"
               >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>{ttx('Approve')}</Text>
+                <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small }}>{ttx('Approve')}</Text>
               </AnimatedPressable>
               <AnimatedPressable
                 onPress={() => answer(item, false)}

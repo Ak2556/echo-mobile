@@ -975,11 +975,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  createButtonText: {
-    color: '#fff',
-    fontSize: 13,
-    lineHeight: 17,
-  },
   aboutArea: {
     paddingHorizontal: 16,
     paddingTop: 12,

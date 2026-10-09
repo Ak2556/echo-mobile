@@ -259,8 +259,8 @@ export default function ShareScreen() {
             disabled={publishing}
             style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: publishing || !canPublish ? colors.surfaceHover : colors.accent, opacity: !canPublish && !publishing ? 0.6 : 1 }}
           >
-            <PaperPlaneTilt color="#fff" size={14} />
-            <Text style={{ color: '#fff', fontWeight: '700', marginLeft: 8 }}>{publishing ? 'Posting…' : 'Post'}</Text>
+            <PaperPlaneTilt color={colors.onAccent} size={14} />
+            <Text style={{ color: colors.onAccent, fontWeight: '700', marginLeft: 8 }}>{publishing ? 'Posting…' : 'Post'}</Text>
           </Pressable>
         }
       />
@@ -298,13 +298,13 @@ export default function ShareScreen() {
             onPress={() => setPreviewMode(false)}
             style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.full, backgroundColor: !previewMode ? colors.accent : colors.surface, borderWidth: 1, borderColor: !previewMode ? colors.accent : colors.border }}
           >
-            <Text style={{ color: !previewMode ? '#fff' : colors.text, fontWeight: '700' }}>{ttx("Edit")}</Text>
+            <Text style={{ color: !previewMode ? colors.onAccent : colors.text, fontWeight: '700' }}>{ttx("Edit")}</Text>
           </Pressable>
           <Pressable
             onPress={() => setPreviewMode(true)}
             style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.full, backgroundColor: previewMode ? colors.accent : colors.surface, borderWidth: 1, borderColor: previewMode ? colors.accent : colors.border }}
           >
-            <Text style={{ color: previewMode ? '#fff' : colors.text, fontWeight: '700' }}>{ttx("Preview")}</Text>
+            <Text style={{ color: previewMode ? colors.onAccent : colors.text, fontWeight: '700' }}>{ttx("Preview")}</Text>
           </Pressable>
         </View>
 
@@ -436,8 +436,8 @@ export default function ShareScreen() {
             disabled={publishing}
             style={{ flex: 1, paddingVertical: 13, borderRadius: radius.card, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: !canPublish && !publishing ? 0.6 : 1 }}
           >
-            <PaperPlaneTilt color="#fff" size={18} />
-            <Text style={{ color: '#fff', fontWeight: '800' }}>{publishing ? 'Publishing…' : 'Publish'}</Text>
+            <PaperPlaneTilt color={colors.onAccent} size={18} />
+            <Text style={{ color: colors.onAccent, fontWeight: '800' }}>{publishing ? 'Publishing…' : 'Publish'}</Text>
           </Pressable>
         </View>
       </ScrollView>

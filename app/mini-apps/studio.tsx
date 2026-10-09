@@ -21,6 +21,7 @@ import { CameraCapture, CameraCaptureType, loadCameraCaptures, saveCameraCapture
 import { uploadMiniAppMedia } from '../../lib/mini-apps/miniAppMedia';
 import { ttx } from '../../lib/i18n/i18n';
 import { PhotoEditor } from '../../components/feed/PhotoEditor';
+import { ON_MEDIA } from '../../lib/ui/fixedColors';
 
 type Mode = CameraCaptureType;
 type CaptureIntent = 'proof' | 'progress' | 'listing' | 'document';
@@ -438,7 +439,7 @@ export default function StudioApp() {
               )}
               <View style={{ position: 'absolute', left: 12, bottom: 12, right: 12, flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1, borderRadius: radius.card, padding: 10, backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>{selected.intent ? selected.intent[0].toUpperCase() + selected.intent.slice(1) : 'Capture'}</Text>
+                  <Text style={{ color: ON_MEDIA, fontSize: 13, fontWeight: '900' }}>{selected.intent ? selected.intent[0].toUpperCase() + selected.intent.slice(1) : 'Capture'}</Text>
                 </View>
               </View>
               <AnimatedPressable
@@ -446,7 +447,7 @@ export default function StudioApp() {
                 scaleValue={0.9} haptic="light"
                 style={{ position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: radius.xl, padding: 8 }}
               >
-                <X color="#fff" size={16} />
+                <X color={ON_MEDIA} size={16} />
               </AnimatedPressable>
             </Animated.View>
           )}
@@ -475,7 +476,7 @@ export default function StudioApp() {
                     scaleValue={0.85} haptic="light"
                     style={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: radius.md, padding: 3 }}
                   >
-                    <Trash color="#ff4444" size={12} weight="fill" />
+                    <Trash color={colors.danger} size={12} weight="fill" />
                   </AnimatedPressable>
                 </Pressable>
               </Animated.View>

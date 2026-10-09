@@ -7,15 +7,16 @@ import { useTheme } from '../lib/ui/theme';
 import { fetchBadges, type Badge } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../lib/i18n/i18n';
+import { WARM, BRAND, TIER } from '../lib/ui/fixedColors';
 
 const TIER_COLOR: Record<Badge['tier'], string> = {
-  bronze: '#B45309',
-  silver: '#71717A',
-  gold: '#EAB308',
+  bronze: TIER.bronze,
+  silver: TIER.silver,
+  gold: BRAND.gold,
   // Was #A855F7. Purple is off-palette and reads as template chrome; the
   // in-family plum from ACCENT_COLORS keeps "special" distinct from gold
   // without leaving Echo's warm editorial range.
-  special: '#8B5E7D',
+  special: WARM.plum,
 };
 
 function BadgesScreenInner() {

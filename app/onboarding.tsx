@@ -23,6 +23,7 @@ import { useTheme } from '../lib/ui/theme';
 import { useAppStore } from '../store/useAppStore';
 import { TextInput } from '../components/ui/TextInput';
 import { ttx } from '../lib/i18n/i18n';
+import { SHADOW } from '../lib/ui/fixedColors';
 
 /**
  * Optional "set a goal" screen.
@@ -154,7 +155,7 @@ export default function SetGoalScreen() {
                     onChangeText={setTargetOutcome}
                     maxLength={140}
                     placeholder={ttx("Example: lose 8 kg, pass an exam, post 3 times a week...")}
-                    style={{ minHeight: 64, fontSize: 16, backgroundColor: colors.isDark ? '#1C1C1E' : '#F2F2F7', borderWidth: 0 }}
+                    style={{ minHeight: 64, fontSize: 16, backgroundColor: colors.inputBg, borderWidth: 0 }}
                   />
                 </Animated.View>
 
@@ -164,7 +165,7 @@ export default function SetGoalScreen() {
                   borderColor: 'rgba(255,255,255,0.05)',
                   backgroundColor: colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                   padding: 20,
-                  shadowColor: '#000',
+                  shadowColor: SHADOW,
                   shadowOpacity: 0.1,
                   shadowRadius: 10,
                   shadowOffset: { width: 0, height: 4 },
@@ -181,7 +182,7 @@ export default function SetGoalScreen() {
                 </Animated.View>
 
                 <Animated.View entering={FadeInDown.delay(250).duration(400).springify().mass(0.7)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 10 }}>
-                  <PrimaryButton label={ttx("Save goal")} icon={<Target color="#fff" size={20} weight="fill" />} onPress={() => {
+                  <PrimaryButton label={ttx("Save goal")} icon={<Target color={colors.onAccent} size={20} weight="fill" />} onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                     saveGoal();
                   }} />
@@ -218,18 +219,18 @@ function TargetChip({ label, active, onPress }: { label: string; active: boolean
           minHeight: 44,
           borderRadius: 22,
           borderWidth: 1,
-          borderColor: active ? colors.accent : colors.isDark ? '#3F3F46' : '#E5E5EA',
-          backgroundColor: active ? colors.accent : colors.isDark ? '#18181B' : '#FFFFFF',
+          borderColor: active ? colors.accent : colors.border,
+          backgroundColor: active ? colors.accent : colors.surface,
           paddingHorizontal: 18,
           alignItems: 'center',
           justifyContent: 'center',
-          shadowColor: active ? colors.accent : '#000',
+          shadowColor: active ? colors.accent : SHADOW,
           shadowOpacity: active ? 0.3 : 0.05,
           shadowRadius: active ? 8 : 4,
           shadowOffset: { width: 0, height: 2 },
         }}
       >
-        <Text style={[font.bodyBold, { color: active ? '#fff' : colors.textSecondary, fontSize: 14 }]}>
+        <Text style={[font.bodyBold, { color: active ? colors.onAccent : colors.textSecondary, fontSize: 14 }]}>
           {label}
         </Text>
       </Pressable>
@@ -279,7 +280,7 @@ function PrimaryButton({
         }}
       >
         {icon}
-        <Text style={[font.bodyBold, { color: '#fff', fontSize: 16 }]}>{label}</Text>
+        <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 16 }]}>{label}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -303,12 +304,12 @@ function SecondaryButton({ label, onPress }: { label: string; onPress: () => voi
           minHeight: 56,
           borderRadius: radius.full,
           borderWidth: 1,
-          borderColor: colors.isDark ? '#3F3F46' : '#E5E5EA',
-          backgroundColor: colors.isDark ? '#18181B' : '#FFFFFF',
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
           paddingHorizontal: 20,
           alignItems: 'center',
           justifyContent: 'center',
-          shadowColor: '#000',
+          shadowColor: SHADOW,
           shadowOpacity: 0.05,
           shadowRadius: 8,
           shadowOffset: { width: 0, height: 4 },

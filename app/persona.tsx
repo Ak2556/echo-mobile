@@ -23,6 +23,7 @@ import { useResponsiveLayout } from '../lib/ui/responsive';
 import { useAppStore } from '../store/useAppStore';
 import { track } from '../lib/core/analytics';
 import { ttx } from '../lib/i18n/i18n';
+import { SWITCH_THUMB } from '../lib/ui/fixedColors';
 
 function stageLabel(stage: PersonaStatus['stage']): string {
   switch (stage) {
@@ -145,7 +146,7 @@ export default function PersonaScreen() {
                 value={personaLearningEnabled && profile.enabled}
                 onValueChange={togglePersona}
                 trackColor={{ false: colors.surfaceHover, true: colors.accent }}
-                thumbColor="#fff"
+                thumbColor={SWITCH_THUMB}
               />
             </View>
 
@@ -226,8 +227,8 @@ export default function PersonaScreen() {
               accessibilityRole="button"
               accessibilityLabel={ttx("Save persona note")}
             >
-              <Check color="#fff" size={18} weight="bold" />
-              <Text style={{ color: '#fff', fontSize: fontSizes.body, fontWeight: '800' }}>{ttx("Save note")}</Text>
+              <Check color={colors.onAccent} size={18} weight="bold" />
+              <Text style={{ color: colors.onAccent, fontSize: fontSizes.body, fontWeight: '800' }}>{ttx("Save note")}</Text>
             </AnimatedPressable>
           </GlassPanel>
         </Animated.View>

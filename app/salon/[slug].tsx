@@ -111,7 +111,7 @@ function SalonDetailScreenInner() {
           scaleValue={0.92}
           haptic="medium"
         >
-          <Text style={{ color: salon.is_member ? colors.textMuted : '#fff', fontWeight: '700', fontSize: 12 }}>
+          <Text style={{ color: salon.is_member ? colors.textMuted : colors.onAccent, fontWeight: '700', fontSize: 12 }}>
             {salon.is_member ? 'Joined' : 'Join'}
           </Text>
         </AnimatedPressable>

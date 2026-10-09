@@ -19,6 +19,7 @@ import type { ThinkingPartnerMode } from '../lib/supabaseEchoApi';
 import type { User } from '../types';
 import { ttx } from '../lib/i18n/i18n';
 import { BackButton } from '../components/ui/BackButton';
+import { DARK } from '../lib/ui/fixedColors';
 
 type Partner = User & { affinity: number };
 
@@ -49,7 +50,7 @@ export default function ThinkingPartnersScreen() {
   };
 
   return (
-    <ResponsiveScreen background="#0A0A0F">
+    <ResponsiveScreen background={DARK.canvas}>
       {/* Header */}
       <View style={styles.header}>
         <BackButton tone="media" />
@@ -65,13 +66,13 @@ export default function ThinkingPartnersScreen() {
         <ModeChip
           active={mode === 'similar'}
           onPress={() => switchMode('similar')}
-          icon={<UsersThree size={16} color={mode === 'similar' ? '#000' : '#A1A1AA'} weight="fill" />}
+          icon={<UsersThree size={16} color={mode === 'similar' ? DARK.onLight : DARK.soft} weight="fill" />}
           label={ttx("Think like you")}
         />
         <ModeChip
           active={mode === 'different'}
           onPress={() => switchMode('different')}
-          icon={<Lightning size={16} color={mode === 'different' ? '#000' : '#A1A1AA'} weight="fill" />}
+          icon={<Lightning size={16} color={mode === 'different' ? DARK.onLight : DARK.soft} weight="fill" />}
           label={ttx("Think differently")}
         />
       </View>
@@ -135,7 +136,7 @@ function ModeChip({
           style={[styles.chip, accentShadow(ACCENT_COLORS.violet, 'med')]}
         >
           {icon}
-          <Text style={[styles.chipText, { color: '#000' }]}>{label}</Text>
+          <Text style={[styles.chipText, { color: DARK.onLight }]}>{label}</Text>
         </LinearGradient>
       </Pressable>
     );
@@ -143,7 +144,7 @@ function ModeChip({
   return (
     <Pressable onPress={onPress} style={[styles.chip, styles.chipIdle, { flex: 1 }]}>
       {icon}
-      <Text style={[styles.chipText, { color: '#A1A1AA' }]}>{label}</Text>
+      <Text style={[styles.chipText, { color: DARK.soft }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -202,7 +203,7 @@ function PartnerRow({
           style={[styles.followBtn, following && styles.followingBtn]}
           hitSlop={8}
         >
-          <Text style={[styles.followText, following && { color: '#A1A1AA' }]}>
+          <Text style={[styles.followText, following && { color: DARK.soft }]}>
             {following ? 'Following' : 'Follow'}
           </Text>
         </Pressable>
@@ -219,10 +220,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#18181B',
+    borderBottomColor: DARK.raised,
   },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle: { color: '#fff', fontWeight: '900', fontSize: 18, letterSpacing: 3 },
+  headerTitle: { color: DARK.text, fontWeight: '900', fontSize: 18, letterSpacing: 3 },
   toggleRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 16 },
   chip: {
     flexDirection: 'row',
@@ -232,10 +233,10 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     borderRadius: 999,
   },
-  chipIdle: { backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A' },
+  chipIdle: { backgroundColor: DARK.raised, borderWidth: 1, borderColor: DARK.line },
   chipText: { fontWeight: '800', fontSize: 13.5, letterSpacing: 0.2 },
   subhead: {
-    color: '#71717A',
+    color: DARK.muted,
     fontSize: 13,
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -243,18 +244,18 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, gap: 10 },
-  muted: { color: '#A1A1AA', fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  errorText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  emptyTitle: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  muted: { color: DARK.soft, fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  errorText: { color: DARK.text, fontSize: 16, fontWeight: '700' },
+  emptyTitle: { color: DARK.text, fontSize: 18, fontWeight: '800' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#141418',
+    borderBottomColor: DARK.divider,
   },
-  name: { color: '#fff', fontSize: 15.5, fontWeight: '800' },
-  handle: { color: '#71717A', fontSize: 13, marginTop: 1 },
+  name: { color: DARK.text, fontSize: 15.5, fontWeight: '800' },
+  handle: { color: DARK.muted, fontSize: 13, marginTop: 1 },
   matchRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 },
   matchDot: { width: 7, height: 7, borderRadius: 4 },
   matchText: { fontSize: 12.5, fontWeight: '800', letterSpacing: 0.2 },
@@ -262,8 +263,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 9,
     borderRadius: 999,
-    backgroundColor: '#fff',
+    backgroundColor: DARK.text,
   },
-  followingBtn: { backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A' },
-  followText: { color: '#000', fontWeight: '800', fontSize: 13 },
+  followingBtn: { backgroundColor: DARK.raised, borderWidth: 1, borderColor: DARK.line },
+  followText: { color: DARK.onLight, fontWeight: '800', fontSize: 13 },
 });

@@ -14,6 +14,7 @@ import { useTheme } from '../lib/ui/theme';
 import { User } from '../types';
 import { ttx } from '../lib/i18n/i18n';
 import { personName } from '../lib/social/personName';
+import { BRAND } from '../lib/ui/fixedColors';
 
 export default function MutedUsersScreen() {
   const { mutedIds, toggleMute, getUser } = useAppStore();
@@ -32,7 +33,7 @@ export default function MutedUsersScreen() {
 
       {mutedUsers.length === 0 ? (
         <EmptyState
-          icon={<SpeakerSlash color="#6366F1" size={32} />}
+          icon={<SpeakerSlash color={BRAND.indigo} size={32} />}
           title={ttx("No muted users")}
           subtitle={ttx("Muting hides their echoes from your feed but doesn't notify them.")}
         />

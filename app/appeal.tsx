@@ -139,7 +139,7 @@ export default function AppealScreen() {
                     marginTop: 8,
                   }}
                 >
-                  <Text style={{ color: '#fff', ...font.bodySemibold, fontSize: fontSizes.body }}>{ttx("Done")}</Text>
+                  <Text style={{ color: colors.onAccent, ...font.bodySemibold, fontSize: fontSizes.body }}>{ttx("Done")}</Text>
                 </AnimatedPressable>
               </Animated.View>
             ) : (
@@ -227,8 +227,8 @@ export default function AppealScreen() {
                   }}
                 >
                   {submitting
-                    ? <ActivityIndicator size="small" color="#fff" />
-                    : <Text style={{ color: '#fff', ...font.bodyBold, fontSize: fontSizes.body }}>{ttx("Submit appeal")}</Text>
+                    ? <ActivityIndicator size="small" color={colors.onAccent} />
+                    : <Text style={{ color: colors.onAccent, ...font.bodyBold, fontSize: fontSizes.body }}>{ttx("Submit appeal")}</Text>
                   }
                 </AnimatedPressable>
 

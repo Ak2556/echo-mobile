@@ -10,6 +10,7 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { VideoTrimmer } from '../../components/mini-apps/VideoTrimmer';
 import { showToast } from '../../components/ui/Toast';
 import { canSaveToGallery, canTrimVideo, mediaErrorMessage, saveToGallery } from '../../lib/media/echoMedia';
+import { WARM, BRAND } from '../../lib/ui/fixedColors';
 
 export default function EditorApp() {
   const { colors, radius, font } = useTheme();
@@ -94,7 +95,7 @@ export default function EditorApp() {
 
         <Pressable onPress={pickAndEditPhoto} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgPure, padding: 20, borderRadius: radius.xl, gap: 16 }}>
           <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(224, 96, 48, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
-            <ImageSquare size={24} color="#E06030" weight="fill" />
+            <ImageSquare size={24} color={BRAND.ember} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: 16, color: colors.text }}>Edit Photo</Text>
@@ -104,7 +105,7 @@ export default function EditorApp() {
 
         <Pressable onPress={pickAndEditVideo} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgPure, padding: 20, borderRadius: radius.xl, gap: 16 }}>
           <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(78, 139, 122, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
-            <VideoCamera size={24} color="#4E8B7A" weight="fill" />
+            <VideoCamera size={24} color={WARM.sage} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: 16, color: colors.text }}>Edit Video</Text>

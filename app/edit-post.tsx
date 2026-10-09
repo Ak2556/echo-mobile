@@ -165,8 +165,8 @@ export default function EditPostScreen() {
         right={
           <AnimatedPressable onPress={handleSave} disabled={!canSave} scaleValue={0.92} haptic="medium"
             style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: canSave ? colors.accent : colors.surfaceHover, opacity: canSave ? 1 : 0.5 }}>
-            <Check color="#fff" size={15} />
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{saving ? 'Saving…' : 'Save'}</Text>
+            <Check color={colors.onAccent} size={15} />
+            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{saving ? 'Saving…' : 'Save'}</Text>
           </AnimatedPressable>
         }
       />
@@ -176,8 +176,8 @@ export default function EditPostScreen() {
           const active = postType === key;
           return (
             <Pressable key={key} onPress={() => setPostType(key)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 8, gap: 4, borderRadius: radius.full, backgroundColor: active ? colors.accent : colors.surface, borderWidth: 1, borderColor: active ? colors.accent : colors.border }}>
-              <Icon color={active ? '#fff' : colors.textMuted} size={13} />
-              <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '600', fontSize: fontSizes.caption }}>{label}</Text>
+              <Icon color={active ? colors.onAccent : colors.textMuted} size={13} />
+              <Text style={{ color: active ? colors.onAccent : colors.textMuted, fontWeight: '600', fontSize: fontSizes.caption }}>{label}</Text>
             </Pressable>
           );
         })}
@@ -302,7 +302,7 @@ export default function EditPostScreen() {
                       const active = pollDurationHours === d.hours;
                       return (
                         <Pressable key={d.hours} onPress={() => setPollDurationHours(d.hours)} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.full, backgroundColor: active ? colors.accent : colors.surface, borderWidth: 1, borderColor: active ? colors.accent : colors.border }}>
-                          <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '600', fontSize: fontSizes.small }}>{d.label}</Text>
+                          <Text style={{ color: active ? colors.onAccent : colors.textMuted, fontWeight: '600', fontSize: fontSizes.small }}>{d.label}</Text>
                         </Pressable>
                       );
                     })}

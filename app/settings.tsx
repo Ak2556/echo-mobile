@@ -48,6 +48,7 @@ import { useAiConsent } from '../lib/privacy/aiConsent';
 import { useHealthConsent } from '../lib/privacy/healthConsent';
 import { deleteRemoteFitness } from '../lib/mini-apps/fitnessRemote';
 import { BackButton } from '../components/ui/BackButton';
+import { WARM, ON_MEDIA, ON_STATUS, SWITCH_THUMB } from '../lib/ui/fixedColors';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@downloadecho.com';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@downloadecho.com';
@@ -85,7 +86,7 @@ function SettingsRow({ icon: Icon, iconColor, label, subtitle, right, onPress, d
         muted={!destructive}
         style={{ marginRight: 12 }}
       >
-        <Icon color={destructive ? '#fff' : resolvedIconColor} size={18} weight={iconColor || destructive ? 'bold' : 'regular'} />
+        <Icon color={destructive ? ON_STATUS : resolvedIconColor} size={18} weight={iconColor || destructive ? 'bold' : 'regular'} />
       </IconBadge>
       <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
         <Text style={[font.bodySemibold, { color: destructive ? colors.danger : colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>{label}</Text>
@@ -128,8 +129,8 @@ function SettingsHero({
   const visibleAvatar = profilePhotoVisible ? avatarUrl : undefined;
   const quickActions = [
     { label: t('settings.editProfile'), subtitle: `@${username}`, icon: PencilSimple, color: colors.accent, onPress: onEditProfile },
-    { label: t('settings.targetTools'), subtitle: 'Progress', icon: Target, color: '#7A8B4E', onPress: onTarget },
-    { label: t('settings.aiMemory'), subtitle: modelLabel.replace('Gemini 2.5 ', ''), icon: Brain, color: '#8B5E7D', onPress: onAiMemory },
+    { label: t('settings.targetTools'), subtitle: 'Progress', icon: Target, color: WARM.olive, onPress: onTarget },
+    { label: t('settings.aiMemory'), subtitle: modelLabel.replace('Gemini 2.5 ', ''), icon: Brain, color: WARM.plum, onPress: onAiMemory },
   ];
 
   return (
@@ -181,7 +182,7 @@ function SettingsHero({
                 haptic="light"
               >
                 <IconBadge color={action.color} size={36} radius={13}>
-                  <Icon color="#fff" size={18} weight="bold" />
+                  <Icon color={ON_MEDIA} size={18} weight="bold" />
                 </IconBadge>
                 <View>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]} numberOfLines={1}>{action.label}</Text>
@@ -247,8 +248,8 @@ function SettingsCategoryRail({
             accessibilityRole="button"
             accessibilityState={{ selected: activeGroup }}
           >
-            <Icon color={activeGroup ? '#fff' : colors.textSecondary} size={16} weight={activeGroup ? 'bold' : 'regular'} />
-            <Text style={[font.bodyBold, { color: activeGroup ? '#fff' : colors.textSecondary, fontSize: 13 }]}>{group.label}</Text>
+            <Icon color={activeGroup ? colors.onAccent : colors.textSecondary} size={16} weight={activeGroup ? 'bold' : 'regular'} />
+            <Text style={[font.bodyBold, { color: activeGroup ? colors.onAccent : colors.textSecondary, fontSize: 13 }]}>{group.label}</Text>
           </AnimatedPressable>
         );
       })}
@@ -344,16 +345,16 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
 
 
 const ACCENT_COLORS = [
-  { color: '#C65F3F', name: 'Terracotta' },
-  { color: '#B08536', name: 'Ochre' },
-  { color: '#7A8B4E', name: 'Olive' },
-  { color: '#4E8B7A', name: 'Sage' },
-  { color: '#4E7A8B', name: 'Steel' },
-  { color: '#5E748B', name: 'Dusk' },
-  { color: '#8B5E7D', name: 'Plum' },
-  { color: '#B35D6B', name: 'Rose' },
-  { color: '#A04E4E', name: 'Brick' },
-  { color: '#8B6F4E', name: 'Caramel' },
+  { color: WARM.terracotta, name: 'Terracotta' },
+  { color: WARM.ochre, name: 'Ochre' },
+  { color: WARM.olive, name: 'Olive' },
+  { color: WARM.sage, name: 'Sage' },
+  { color: WARM.steel, name: 'Steel' },
+  { color: WARM.dusk, name: 'Dusk' },
+  { color: WARM.plum, name: 'Plum' },
+  { color: WARM.roseClay, name: 'Rose' },
+  { color: WARM.brick, name: 'Brick' },
+  { color: WARM.caramel, name: 'Caramel' },
 ];
 
 function AccentColorPicker({ value, onChange, onClose, theme }: {
@@ -414,7 +415,7 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
                     borderColor: colors.text,
                   }}
                 >
-                  {value === c.color && <Check color="#fff" size={20} />}
+                  {value === c.color && <Check color={ON_MEDIA} size={20} />}
                 </View>
                 <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 6 }}>{c.name}</Text>
               </AnimatedPressable>
@@ -905,7 +906,7 @@ export default function SettingsScreen() {
   };
 
   const SwitchEl = (v: boolean, onChange: (val: boolean) => void) => (
-    <Switch value={v} onValueChange={onChange} trackColor={switchTrack} thumbColor="#fff" />
+    <Switch value={v} onValueChange={onChange} trackColor={switchTrack} thumbColor={SWITCH_THUMB} />
   );
 
   const chevronValue = (label: string) => (
@@ -998,10 +999,10 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Bell} label={ttx("Notification Preferences")} subtitle={ttx("Customize which notifications you receive")} onPress={() => router.push('/notification-prefs')} />
             {divider}
-            <SettingsRow theme={theme} icon={Lock} iconColor="#B08536" label={ttx("Private Account")} subtitle={ttx("Only people you approve can see your echoes")} right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
+            <SettingsRow theme={theme} icon={Lock} iconColor={WARM.ochre} label={ttx("Private Account")} subtitle={ttx("Only people you approve can see your echoes")} right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
             {(s.privateAccount || pendingRequests > 0) && divider}
             {(s.privateAccount || pendingRequests > 0) && (
-              <SettingsRow theme={theme} icon={UserPlus} iconColor="#B08536" label={ttx("Follow requests")} subtitle={pendingRequests > 0 ? `${pendingRequests} waiting` : ttx("Approve or decline people who ask to follow you")} onPress={() => router.push('/follow-requests' as never)} />
+              <SettingsRow theme={theme} icon={UserPlus} iconColor={WARM.ochre} label={ttx("Follow requests")} subtitle={pendingRequests > 0 ? `${pendingRequests} waiting` : ttx("Approve or decline people who ask to follow you")} onPress={() => router.push('/follow-requests' as never)} />
             )}
             {divider}
             <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label={ttx("Sensitive Content Filter")} subtitle={ttx("Filter potentially sensitive content")} right={SwitchEl(s.sensitiveContentFilter, handleSensitiveContentFilter)} />
@@ -1079,7 +1080,7 @@ export default function SettingsScreen() {
             <SettingsRow
               theme={theme}
               icon={Moon}
-              iconColor="#8B5E7D"
+              iconColor={WARM.plum}
               label={ttx("Appearance")}
               subtitle={ttx("Match your device, or always light or dark")}
               onPress={() => setShowAppearancePicker(true)}

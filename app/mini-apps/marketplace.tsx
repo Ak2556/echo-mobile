@@ -50,6 +50,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { getTargetCategory } from '../../lib/retention/targetCategories';
 import { clearRecentListings, getRecentListings, recordListingView, type RecentListing } from '../../lib/mini-apps/marketplaceRecents';
 import { ttx } from '../../lib/i18n/i18n';
+import { WARM, BRAND, ON_MEDIA } from '../../lib/ui/fixedColors';
 
 const CARD_GAP = 12;
 const CARD_H_PADDING = 16;
@@ -60,15 +61,15 @@ type ConditionFilter = ListingCondition | 'All';
 
 // Warm editorial palette (lib/social/avatarPalette.ts) mapped by category.
 const CATEGORY_META: Record<string, { color: string; Icon: React.ComponentType<any> }> = {
-  All: { color: '#E06030', Icon: Storefront },
-  'Books & Learning': { color: '#4E7A8B', Icon: BookOpen },
-  'Tech & Gear': { color: '#4E8B7A', Icon: Monitor },
-  Workspace: { color: '#7A8B4E', Icon: Briefcase },
-  Creative: { color: '#B35D6B', Icon: Palette },
-  Services: { color: '#8B5E7D', Icon: Wrench },
-  Clothing: { color: '#C65F3F', Icon: TShirt },
-  Home: { color: '#B08536', Icon: House },
-  Other: { color: '#8B6F4E', Icon: DotsThree },
+  All: { color: BRAND.ember, Icon: Storefront },
+  'Books & Learning': { color: WARM.steel, Icon: BookOpen },
+  'Tech & Gear': { color: WARM.sage, Icon: Monitor },
+  Workspace: { color: WARM.olive, Icon: Briefcase },
+  Creative: { color: WARM.roseClay, Icon: Palette },
+  Services: { color: WARM.plum, Icon: Wrench },
+  Clothing: { color: WARM.terracotta, Icon: TShirt },
+  Home: { color: WARM.ochre, Icon: House },
+  Other: { color: WARM.caramel, Icon: DotsThree },
 };
 
 function timeAgo(iso: string): string {
@@ -117,8 +118,8 @@ function CategoryPill({ label, active, onPress }: { label: string; active: boole
           borderColor: active ? meta.color : colors.border,
         }}
       >
-        <Icon color={active ? '#fff' : meta.color} size={16} weight="bold" />
-        <Text style={[font.bodySemibold, { color: active ? '#fff' : colors.textSecondary, fontSize: 13 }]}>
+        <Icon color={active ? ON_MEDIA : meta.color} size={16} weight="bold" />
+        <Text style={[font.bodySemibold, { color: active ? ON_MEDIA : colors.textSecondary, fontSize: 13 }]}>
           {label}
         </Text>
       </View>
@@ -140,7 +141,7 @@ function FilterChip({ label, active, onPress }: { label: string; active: boolean
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: active ? colors.accent : colors.border,
       }}>
-        <Text style={[font.bodySemibold, { color: active ? '#fff' : colors.textSecondary, fontSize: 12 }]}>
+        <Text style={[font.bodySemibold, { color: active ? colors.onAccent : colors.textSecondary, fontSize: 12 }]}>
           {label}
         </Text>
       </View>
@@ -206,13 +207,13 @@ function ListingCard({ item, width, featured = false }: { item: ListingWithSelle
 
         <View style={{ position: 'absolute', left: 9, right: 9, bottom: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <View style={{ borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4, maxWidth: '72%' }}>
-            <Text style={{ color: '#fff', fontSize: 11, ...font.bodyBold }} numberOfLines={1}>
+            <Text style={{ color: ON_MEDIA, fontSize: 11, ...font.bodyBold }} numberOfLines={1}>
               {item.condition}
             </Text>
           </View>
           {item.photoUrls.length > 1 ? (
             <View style={{ borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 11, ...font.bodyBold }}>
+              <Text style={{ color: ON_MEDIA, fontSize: 11, ...font.bodyBold }}>
                 1/{item.photoUrls.length}
               </Text>
             </View>
@@ -333,7 +334,7 @@ function RecentListingChip({ item }: { item: RecentListing }) {
           </LinearGradient>
         )}
         <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 46 }} pointerEvents="none" />
-        <Text style={{ position: 'absolute', left: 8, bottom: 7, color: '#fff', fontSize: 12.5, ...font.bodyBold }} numberOfLines={1}>
+        <Text style={{ position: 'absolute', left: 8, bottom: 7, color: ON_MEDIA, fontSize: 12.5, ...font.bodyBold }} numberOfLines={1}>
           {formatPrice(item.price, item.currency as CurrencyCode)}
         </Text>
       </View>
@@ -497,7 +498,7 @@ export default function MarketplaceScreen() {
             <SlidersHorizontal color={activeFilterCount > 0 ? colors.accent : colors.textMuted} size={18} weight="bold" />
             {activeFilterCount > 0 && (
               <View style={{ minWidth: 16, height: 16, borderRadius: 8, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>{activeFilterCount}</Text>
+                <Text style={{ color: colors.onAccent, fontSize: 10, fontWeight: '800' }}>{activeFilterCount}</Text>
               </View>
             )}
           </View>
@@ -572,8 +573,8 @@ export default function MarketplaceScreen() {
               borderRadius: 999,
             }}
           >
-            <Plus color="#fff" size={15} weight="bold" />
-            <Text style={[font.bodyBold, { color: '#fff', fontSize: 13 }]}>{ttx("Sell")}</Text>
+            <Plus color={colors.onAccent} size={15} weight="bold" />
+            <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 13 }]}>{ttx("Sell")}</Text>
           </AnimatedPressable>
         </View>
       </View>
@@ -640,8 +641,8 @@ export default function MarketplaceScreen() {
                   shadowOffset: { width: 0, height: 8 },
                 }}
               >
-                <Plus color="#fff" size={16} weight="bold" />
-                <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>{ttx("Post a listing")}</Text>
+                <Plus color={colors.onAccent} size={16} weight="bold" />
+                <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 14 }]}>{ttx("Post a listing")}</Text>
               </Pressable>
             </View>
           }
@@ -697,7 +698,7 @@ export default function MarketplaceScreen() {
               style={{ backgroundColor: colors.accent, borderRadius: 999, minHeight: 50, alignItems: 'center', justifyContent: 'center' }}
               scaleValue={0.97}
             >
-              <Text style={[font.bodyBold, { color: '#fff', fontSize: 15 }]}>
+              <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 15 }]}>
                 {ttx("Show")} {sortedListings.length} {ttx("result")}{sortedListings.length === 1 ? '' : 's'}
               </Text>
             </AnimatedPressable>

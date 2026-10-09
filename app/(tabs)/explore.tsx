@@ -26,6 +26,7 @@ import { track } from '../../lib/core/analytics';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { MINI_APP_CATALOG } from '../../lib/mini-apps/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
+import { WARM, TOPIC, ON_MEDIA } from '../../lib/ui/fixedColors';
 
 type SearchTab = 'all' | 'people' | 'echoes' | 'topics' | 'tools';
 
@@ -39,19 +40,19 @@ const CATEGORY_FALLBACKS = ['AI', 'Design', 'Productivity', 'Startups'];
  * wearing a CPU icon and "Ai" a paintbrush.
  */
 const TOPIC_VISUALS: { match: RegExp; color: string; Icon: React.ComponentType<any> }[] = [
-  { match: /(^|\b)(ai|ml|llm|gpt|machine\s?learning|neural)/i, color: '#4E7A8B', Icon: Cpu },
-  { match: /(video|film|movie|reel|clip|cinema)/i, color: '#C6533F', Icon: VideoCamera },
-  { match: /(design|ux|ui|art|draw|illustrat)/i, color: '#C65F3F', Icon: PaintBrush },
-  { match: /(code|coding|dev|program|software|engineer)/i, color: '#5E7A8B', Icon: Code },
-  { match: /(music|song|audio|beat|sound)/i, color: '#8B5E7D', Icon: MusicNote },
-  { match: /(photo|camera|picture|shot)/i, color: '#7D8B5E', Icon: Camera },
-  { match: /(book|read|writ|story|poem)/i, color: '#8B7A4E', Icon: BookOpen },
-  { match: /(game|gaming|play)/i, color: '#6E5E8B', Icon: GameController },
-  { match: /(startup|founder|business|money|finance)/i, color: '#8B5E7D', Icon: RocketLaunch },
-  { match: /(productiv|habit|focus|growth|goal)/i, color: '#7A8B4E', Icon: ChartLineUp },
+  { match: /(^|\b)(ai|ml|llm|gpt|machine\s?learning|neural)/i, color: WARM.steel, Icon: Cpu },
+  { match: /(video|film|movie|reel|clip|cinema)/i, color: TOPIC.vermilion, Icon: VideoCamera },
+  { match: /(design|ux|ui|art|draw|illustrat)/i, color: WARM.terracotta, Icon: PaintBrush },
+  { match: /(code|coding|dev|program|software|engineer)/i, color: TOPIC.slate, Icon: Code },
+  { match: /(music|song|audio|beat|sound)/i, color: WARM.plum, Icon: MusicNote },
+  { match: /(photo|camera|picture|shot)/i, color: TOPIC.moss, Icon: Camera },
+  { match: /(book|read|writ|story|poem)/i, color: TOPIC.straw, Icon: BookOpen },
+  { match: /(game|gaming|play)/i, color: WARM.heather, Icon: GameController },
+  { match: /(startup|founder|business|money|finance)/i, color: WARM.plum, Icon: RocketLaunch },
+  { match: /(productiv|habit|focus|growth|goal)/i, color: WARM.olive, Icon: ChartLineUp },
 ];
 
-const NEUTRAL_TOPIC_PALETTE = ['#4E7A8B', '#C65F3F', '#7A8B4E', '#8B5E7D', '#6E5E8B'];
+const NEUTRAL_TOPIC_PALETTE = [WARM.steel, WARM.terracotta, WARM.olive, WARM.plum, WARM.heather];
 
 function resolveTopicVisual(topic: string) {
   const hit = TOPIC_VISUALS.find(entry => entry.match.test(topic));
@@ -411,7 +412,7 @@ function SearchResults({
                   justifyContent: 'center',
                 }}
               >
-                <Text style={{ color: selected ? '#fff' : colors.textSecondary, fontSize: 13, ...font.bodySemibold, textTransform: 'capitalize' }}>
+                <Text style={{ color: selected ? colors.onAccent : colors.textSecondary, fontSize: 13, ...font.bodySemibold, textTransform: 'capitalize' }}>
                   {(tab === 'all' ? t('notif.filterAll') : tab === 'people' ? t('explore.people') : tab === 'echoes' ? t('explore.echoes') : tab === 'topics' ? t('explore.topics') : t('explore.tools'))}{tabCount[tab] !== undefined ? ` ${tabCount[tab]}` : ''}
                 </Text>
               </View>
@@ -649,7 +650,7 @@ function ExploreVideoTile({ item, width, height, colors }: { item: any; width: n
             backgroundColor: 'rgba(0,0,0,0.45)',
           }}
         >
-          <Play size={20} color="#fff" weight="fill" />
+          <Play size={20} color={ON_MEDIA} weight="fill" />
         </View>
       </View>
     </View>
@@ -706,7 +707,7 @@ function ExploreGridTile({ item, width, onPress }: { item: any; width: number; o
         <View style={{ position: 'absolute', bottom: 8, left: 8, right: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
             <Avatar name={item.username} url={item.avatarUrl} color={item.avatarColor} size={18} />
-            <Text style={[font.bodySemibold, { color: hasMedia ? '#fff' : colors.text, fontSize: 11 }]} numberOfLines={1}>
+            <Text style={[font.bodySemibold, { color: hasMedia ? ON_MEDIA : colors.text, fontSize: 11 }]} numberOfLines={1}>
               {item.username}
             </Text>
           </View>

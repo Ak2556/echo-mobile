@@ -14,6 +14,7 @@ import { buildDisclosure } from '../lib/e2ee/report';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { useTheme } from '../lib/ui/theme';
 import { ttx } from '../lib/i18n/i18n';
+import { ON_STATUS } from '../lib/ui/fixedColors';
 
 
 export default function ReportScreen() {
@@ -76,7 +77,7 @@ export default function ReportScreen() {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <Animated.View entering={FadeInDown.delay(50).duration(220)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <Warning color="#F59E0B" size={20} />
+          <Warning color={colors.warning} size={20} />
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginLeft: 8 }}>
             {ttx("Report")} {targetType === 'user' ? `@${targetName}` : 'this content'}
           </Text>
@@ -153,7 +154,7 @@ export default function ReportScreen() {
             scaleValue={0.97}
             haptic="heavy"
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>
+            <Text style={{ color: ON_STATUS, fontWeight: '700', fontSize: fontSizes.body }}>
               {submitting ? 'Submitting…' : 'Submit Report'}
             </Text>
           </AnimatedPressable>

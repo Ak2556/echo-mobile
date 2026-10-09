@@ -20,6 +20,7 @@ import { resolveMiniAppId } from '../../lib/mini-apps/miniAppIntegration';
 import { getRecentTools, recordToolOpen } from '../../lib/mini-apps/miniAppRecents';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
+import { WARM, STAT } from '../../lib/ui/fixedColors';
 
 const PAD = 20;
 const GAP = 12;
@@ -392,7 +393,7 @@ export default function AppsScreen() {
                       backgroundColor: active ? colors.accent : colors.surface,
                       borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder,
                     }}>
-                      <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 13.5, fontFamily: active ? 'Inter_600SemiBold' : 'Inter_500Medium' }}>{l.label}</Text>
+                      <Text style={{ color: active ? colors.onAccent : colors.textSecondary, fontSize: 13.5, fontFamily: active ? 'Inter_600SemiBold' : 'Inter_500Medium' }}>{l.label}</Text>
                     </View>
                   </Pressable>
                 );
@@ -420,10 +421,10 @@ export default function AppsScreen() {
               <View>
                 <Eyebrow>{ttx("Today")}</Eyebrow>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: GAP }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
-                  <StatChip color="#4F7DF3" value={`${dashboard.tasks.open}`} label={ttx("Open tasks")} sub={`${dashboard.tasks.dueToday} due today`} onPress={() => router.push('/mini-apps/tasks' as Href)} />
-                  <StatChip color="#7C6CE8" value={`${dashboard.planner.open}`} label={ttx("Plan open")} sub={`${dashboard.planner.done}/${dashboard.planner.total} done`} onPress={() => router.push('/mini-apps/planner' as Href)} />
-                  <StatChip color="#12A878" value={`${dashboard.shopping.remaining}`} label={ttx("Shopping")} sub={`${dashboard.shopping.checked} checked`} onPress={() => router.push('/mini-apps/shopping-list' as Href)} />
-                  <StatChip color="#8B5E7D" value={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(Math.abs(dashboard.expenses.balance))}`} label={ttx("Weekly balance")} sub={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(dashboard.expenses.expense)} spent`} onPress={() => router.push('/mini-apps/expenses' as Href)} />
+                  <StatChip color={STAT.blue} value={`${dashboard.tasks.open}`} label={ttx("Open tasks")} sub={`${dashboard.tasks.dueToday} due today`} onPress={() => router.push('/mini-apps/tasks' as Href)} />
+                  <StatChip color={STAT.violet} value={`${dashboard.planner.open}`} label={ttx("Plan open")} sub={`${dashboard.planner.done}/${dashboard.planner.total} done`} onPress={() => router.push('/mini-apps/planner' as Href)} />
+                  <StatChip color={STAT.green} value={`${dashboard.shopping.remaining}`} label={ttx("Shopping")} sub={`${dashboard.shopping.checked} checked`} onPress={() => router.push('/mini-apps/shopping-list' as Href)} />
+                  <StatChip color={WARM.plum} value={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(Math.abs(dashboard.expenses.balance))}`} label={ttx("Weekly balance")} sub={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(dashboard.expenses.expense)} spent`} onPress={() => router.push('/mini-apps/expenses' as Href)} />
                 </ScrollView>
               </View>
             )}
