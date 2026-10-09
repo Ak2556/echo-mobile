@@ -472,16 +472,28 @@ function RootLayout() {
         <ShareIntentRouter />
         <UniversalLinkRouter />
         <PomodoroRuntimeHost />
-        <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
-          <Stack.Screen name="index" />
+        {/*
+          One rule for moving between screens, so the gesture becomes habit:
+            - going deeper PUSHES: the platform's own push, which on iOS slides in from the
+              right and swipes back from the left edge;
+            - a task you start and then finish (compose, report, share) is a SHEET that slides up;
+            - only the flows you pass through once (sign-in, onboarding, the first route) and the
+              story viewer FADE.
+          The default used to be a fade for every screen, so profile, settings, followers and
+          messages faded in, while the mini-apps stack slid. A custom transition also takes over
+          from the platform's interactive swipe-back on iOS. test/navigationTransitions.test.ts
+          holds the rule.
+        */}
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" options={{ animation: 'fade' }} />
           <Stack.Screen name="auth" options={{ animation: 'fade' }} />
           <Stack.Screen name="welcome" options={{ animation: 'fade' }} />
           <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
           <Stack.Screen name="target-progress" options={{ presentation: 'card' }} />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="thread/[id]" options={{ presentation: 'card', animation: 'fade_from_bottom', animationDuration: 240 }} />
-          <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'fade' }} />
-          <Stack.Screen name="share-intent" options={{ presentation: 'modal', animation: 'fade' }} />
+          <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+          <Stack.Screen name="thread/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="share" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="share-intent" options={{ presentation: 'modal' }} />
           <Stack.Screen name="comments/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="user/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="messages/index" options={{ presentation: 'card' }} />
@@ -492,16 +504,16 @@ function RootLayout() {
           <Stack.Screen name="settings" options={{ presentation: 'card' }} />
           <Stack.Screen name="ai-memory" options={{ presentation: 'card' }} />
           <Stack.Screen name="thinking-partners" options={{ presentation: 'card' }} />
-          <Stack.Screen name="daily-question" options={{ presentation: 'card', animation: 'fade_from_bottom', animationDuration: 240 }} />
+          <Stack.Screen name="daily-question" options={{ presentation: 'card' }} />
           <Stack.Screen name="edit-profile" options={{ presentation: 'card' }} />
-          <Stack.Screen name="report" options={{ presentation: 'modal', animation: 'fade' }} />
+          <Stack.Screen name="report" options={{ presentation: 'modal' }} />
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />
           <Stack.Screen name="notification-prefs" options={{ presentation: 'card' }} />
           <Stack.Screen name="delete-account" options={{ presentation: 'card' }} />
           <Stack.Screen name="story" options={{ presentation: 'transparentModal', animation: 'fade' }} />
-          <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'fade' }} />
-          <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'fade' }} />
-          <Stack.Screen name="edit-post" options={{ presentation: 'modal', animation: 'fade' }} />
+          <Stack.Screen name="create-post" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="create-story" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="edit-post" options={{ presentation: 'modal' }} />
           <Stack.Screen name="mini-apps" options={{ presentation: 'card' }} />
           <Stack.Screen name="salons" options={{ presentation: 'card' }} />
           <Stack.Screen name="salon/[slug]" options={{ presentation: 'card' }} />
@@ -516,8 +528,8 @@ function RootLayout() {
           <Stack.Screen name="muted-users" options={{ presentation: 'card' }} />
           <Stack.Screen name="persona" options={{ presentation: 'card' }} />
           <Stack.Screen name="my-reports" options={{ presentation: 'card' }} />
-          <Stack.Screen name="create-salon" options={{ presentation: 'modal', animation: 'fade' }} />
-          <Stack.Screen name="create-office-hour" options={{ presentation: 'modal', animation: 'fade' }} />
+          <Stack.Screen name="create-salon" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="create-office-hour" options={{ presentation: 'modal' }} />
           <Stack.Screen name="create-listing" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="listing/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="appeal" options={{ presentation: 'card' }} />
