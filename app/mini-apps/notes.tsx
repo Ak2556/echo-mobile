@@ -8,13 +8,14 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import {
   Archive, ArrowUpRight, BookOpenText, CheckSquare, Copy, DotsThree, Flask, FolderOpen,
-  Lightbulb, ListBullets, MagnifyingGlass, NotePencil, Plus, PushPin, ShareNetwork,
+  Lightbulb, ListBullets, MagnifyingGlass, NotePencil, PushPin, ShareNetwork,
   SortAscending, Star, Tag, TextH, Trash, UsersThree, X,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { useI18n } from '../../lib/i18n/i18n';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { ActionSheet, type ActionItem } from '../../components/common/ActionSheet';
 import { showToast } from '../../components/ui/Toast';
@@ -583,17 +584,7 @@ export default function NotesApp() {
     { key: 'delete', label: tt('Delete note'), icon: <Trash color="#EF4444" size={18} />, destructive: true, onPress: () => deleteNote(menuNote.id) },
   ] : [];
 
-  const NewBtn = (
-    <AnimatedPressable
-      onPress={() => openNew()}
-      scaleValue={0.9}
-      haptic="medium"
-      accessibilityLabel={tt('New note')}
-      style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}
-    >
-      <Plus color={colors.bgPure} size={20} weight="bold" />
-    </AnimatedPressable>
-  );
+  const NewBtn = <HeaderAddButton onPress={() => openNew()} label={tt('New note')} />;
 
   const filters: { id: NoteView; label: string; count?: number }[] = [
     { id: 'active', label: 'All notes' },

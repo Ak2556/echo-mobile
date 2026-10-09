@@ -13,13 +13,13 @@ import {
   LinkSimple,
   NotePencil,
   Play,
-  Plus,
   Question,
   Waveform,
   Target,
   Timer,
 } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { Disclosure } from '../../components/learn/Disclosure';
 import { LecturesPanel } from '../../components/learn/LecturesPanel';
@@ -493,11 +493,7 @@ export default function LearnScreen() {
               <GearSix color={colors.textSecondary} size={18} weight="bold" />
             </View>
           </AnimatedPressable>
-          <AnimatedPressable onPress={() => setShowSetup(true)} scaleValue={0.9} haptic="medium" accessibilityRole="button" accessibilityLabel={ttx("Create learning goal")}>
-            <View style={{ width: 38, height: 38, borderRadius: radius.card, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Plus color={colors.bgPure} size={18} weight="bold" />
-            </View>
-          </AnimatedPressable>
+          <HeaderAddButton onPress={() => setShowSetup(true)} label={ttx("Create learning goal")} />
         </View>
       )}
     >

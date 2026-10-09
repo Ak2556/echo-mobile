@@ -9,10 +9,11 @@ import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon, Bell, GearSix } from 'phosphor-react-native';
+import { Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon, Bell, GearSix } from 'phosphor-react-native';
 import { ActionSheet } from '../../components/common/ActionSheet';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -597,6 +598,7 @@ export default function ExpensesApp() {
       <AnimatedPressable onPress={handleExport} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={tt('Export')} style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
         <Export color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
+      <HeaderAddButton onPress={() => setShowAdd(true)} label={tt('Add entry')} />
     </View>
   );
 
@@ -855,9 +857,6 @@ export default function ExpensesApp() {
             })}
           </View>
         </View>
-        <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.9} haptic="medium" style={{ position: 'absolute', right: 0, width: 64, height: 64, borderRadius: radius.full, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', shadowColor: colors.accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
-          <Plus color={colors.bgPure} size={28} weight="bold" />
-        </AnimatedPressable>
       </View>
       </View>
 

@@ -5,6 +5,7 @@ import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash, ListDashes, Magni
 import Animated, { FadeInDown, FadeOutUp, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
 import { tap } from '../../lib/ui/haptics';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniChip, MiniStatCard } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -213,7 +214,7 @@ export default function ShoppingListScreen() {
   };
 
   return (
-    <MiniAppShell title={ttx("Shopping List")} subtitle={ttx("Groceries & errands")}>
+    <MiniAppShell title={ttx("Shopping List")} subtitle={ttx("Groceries & errands")} headerRight={<HeaderAddButton onPress={() => { tap('medium'); setIsAdding(true); }} label={ttx("Add item")} />}>
       
       {/* Header with List Selector */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -302,12 +303,6 @@ export default function ShoppingListScreen() {
         )}
       </View>
 
-      {/* Floating Action Button */}
-      <View style={{ position: 'absolute', bottom: 30, right: 20, zIndex: 10 }}>
-        <AnimatedPressable onPress={() => { tap('medium'); setIsAdding(true); }} style={{ width: 64, height: 64, borderRadius: radius.full, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}>
-          <Plus color={colors.bgPure} size={32} weight="bold" />
-        </AnimatedPressable>
-      </View>
 
       {/* Slide-Up Bottom Sheet for Adding Item */}
       {isAdding && (

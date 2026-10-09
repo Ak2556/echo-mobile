@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, MagnifyingGlass, Moon, Plus, Sun, X } from 'phosphor-react-native';
+import { CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, MagnifyingGlass, Moon, Sun, X } from 'phosphor-react-native';
 import { useFocusEffect } from 'expo-router';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import {
   PRESET_CITIES,
@@ -123,13 +123,7 @@ export default function WorldClockScreen() {
     await saveWorldClockCities(next);
   };
 
-  const AddButton = (
-    <AnimatedPressable onPress={() => setAdding(value => !value)} scaleValue={0.9} haptic="medium" accessibilityLabel={ttx("Add location")}>
-      <View style={{ width: 38, height: 38, borderRadius: radius.md, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
-        {adding ? <X color={colors.bgPure} size={18} weight="bold" /> : <Plus color={colors.bgPure} size={18} weight="bold" />}
-      </View>
-    </AnimatedPressable>
-  );
+  const AddButton = <HeaderAddButton onPress={() => setAdding(value => !value)} open={adding} label={adding ? ttx("Close") : ttx("Add location")} />;
 
   return (
     <MiniAppShell title={ttx("World Clock")} subtitle={ttx("Meet")} headerRight={AddButton}>
