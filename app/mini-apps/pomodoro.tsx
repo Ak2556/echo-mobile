@@ -5,7 +5,7 @@ import * as Notifications from 'expo-notifications';
 import { AppState, View, Text, TextInput, Pressable, StyleSheet, Modal, ScrollView, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
-import { Play, Pause, ArrowCounterClockwise, GearSix, Fire, Minus, Plus, X, Lightning, Flag, Timer, TreeEvergreen, MusicNote, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
+import { Play, Pause, ArrowCounterClockwise, GearSix, Fire, Minus, Plus, X, Lightning, TreeEvergreen, MusicNote, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -21,7 +21,8 @@ import Svg, { Circle } from 'react-native-svg';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
+import { CollapsibleSection } from '../../components/mini-apps/CollapsibleSection';
+import { progressSummary, showFocusPresets, showStageRail } from '../../lib/mini-apps/pomodoroView';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import { useI18n } from '../../lib/i18n/i18n';
@@ -194,126 +195,46 @@ function StageRail({ mode, elapsedRatio, accent }: { mode: Mode; elapsedRatio: n
   );
 }
 
-function TimerInsightStrip({
-  mode,
-  running,
-  label,
-  endAt,
-  nextLabel,
-  todayCount,
-  dailyGoal,
-  accent,
-}: {
-  mode: Mode;
-  running: boolean;
-  label: string;
-  endAt: string;
-  nextLabel: string;
-  todayCount: number;
-  dailyGoal: number;
-  accent: string;
-}) {
-  const { colors, radius } = useTheme();
-  const { tt } = useI18n();
-  const chips = [
-    { key: 'finish', icon: <Flag color={accent} size={14} weight="fill" />, label: running ? `${tt('Ends')} ${endAt}` : tt('Ready') },
-    { key: 'next', icon: <Timer color={accent} size={14} weight="bold" />, label: `${tt('Next')} ${tt(nextLabel)}` },
-    { key: 'goal', icon: <Lightning color={accent} size={14} weight="fill" />, label: `${todayCount}/${dailyGoal} ${tt('today')}` },
-  ];
-  return (
-    <View style={{ marginBottom: 16 }}>
-      <View style={{ flexDirection: 'row', gap: 7, marginBottom: label.trim() ? 9 : 0 }}>
-        {chips.map(chip => (
-          <View
-            key={chip.key}
-            style={{
-              flex: 1,
-              minHeight: 38,
-              borderRadius: radius.card,
-              paddingHorizontal: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 5,
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.035)',
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.glassBorder,
-            }}
-          >
-            {chip.icon}
-            <Text style={{ color: colors.textSecondary, fontSize: 10.8, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>
-              {chip.label}
-            </Text>
-          </View>
-        ))}
-      </View>
-      {label.trim() ? (
-        <View style={{ borderRadius: radius.card, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: `${accent}14`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${accent}44` }}>
-          <Text style={{ color: accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.7, textTransform: 'uppercase', marginBottom: 2 }}>
-            {mode === 'focus' ? tt('Current focus') : tt('Break context')}
-          </Text>
-          <Text style={{ color: colors.text, fontSize: 13.5, lineHeight: 18, fontWeight: '800' }} numberOfLines={2}>
-            {label.trim()}
-          </Text>
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
 function FocusPresetRail({
   activeMinutes,
-  running,
   accent,
   onSelect,
 }: {
   activeMinutes: number;
-  running: boolean;
   accent: string;
   onSelect: (minutes: number) => void;
 }) {
   const { colors, radius } = useTheme();
   const { tt } = useI18n();
   return (
-    <View style={{ marginBottom: 18 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 9 }}>
-        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase', flex: 1 }}>
-          {tt('Start style')}
-        </Text>
-        <Text style={{ color: running ? accent : colors.textMuted, fontSize: 11, fontWeight: '800' }}>
-          {running ? tt('Locked in') : `${activeMinutes}${tt('m selected')}`}
-        </Text>
-      </View>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {FOCUS_PRESETS.map(minutes => {
-          const selected = activeMinutes === minutes;
-          return (
-            <AnimatedPressable
-              key={minutes}
-              onPress={() => onSelect(minutes)}
-              disabled={running}
-              scaleValue={running ? 1 : 0.95}
-              haptic="light"
-              style={{
-                flex: 1,
-                minHeight: 58,
-                borderRadius: radius.card,
-                paddingHorizontal: 10,
-                justifyContent: 'center',
-                backgroundColor: selected ? accent : (colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.035)'),
-                borderWidth: 1,
-                borderColor: selected ? `${accent}AA` : colors.glassBorder,
-                opacity: running && !selected ? 0.45 : 1,
-              }}
-            >
-              <Text style={{ color: selected ? colors.bgPure : colors.text, fontSize: 15, fontWeight: '900', textAlign: 'center' }}>{minutes}m</Text>
-              <Text style={{ color: selected ? 'rgba(255,255,255,0.76)' : colors.textMuted, fontSize: 11, fontWeight: '800', textAlign: 'center', marginTop: 2 }}>
-                {tt(presetName(minutes))}
-              </Text>
-            </AnimatedPressable>
-          );
-        })}
-      </View>
+    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+      {FOCUS_PRESETS.map(minutes => {
+        const selected = activeMinutes === minutes;
+        return (
+          <AnimatedPressable
+            key={minutes}
+            onPress={() => onSelect(minutes)}
+            scaleValue={0.95}
+            haptic="light"
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            style={{
+              flex: 1,
+              minHeight: 40,
+              borderRadius: radius.card,
+              paddingHorizontal: 8,
+              justifyContent: 'center',
+              backgroundColor: selected ? accent : (colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.035)'),
+              borderWidth: 1,
+              borderColor: selected ? `${accent}AA` : colors.glassBorder,
+            }}
+          >
+            <Text numberOfLines={1} style={{ color: selected ? colors.bgPure : colors.text, fontSize: 13, fontWeight: '800', textAlign: 'center' }}>
+              {minutes}m · {tt(presetName(minutes))}
+            </Text>
+          </AnimatedPressable>
+        );
+      })}
     </View>
   );
 }
@@ -632,6 +553,7 @@ export default function PomodoroScreen() {
   const { tt } = useI18n();
   const layout = useResponsiveLayout();
 
+  const [showProgress, setShowProgress] = useState(false);
   const [doc, setDoc] = useState<PomodoroDoc>({ sessions: [], settings: DEFAULT_POMODORO_SETTINGS });
   const [mode, setMode] = useState<Mode>('focus');
   const [seconds, setSeconds] = useState(DEFAULT_POMODORO_SETTINGS.focusMin * 60);
@@ -1020,30 +942,9 @@ export default function PomodoroScreen() {
 
   return (
     <MiniAppShell title={tt('Pomodoro')} subtitle={tt('Flow')} headerRight={HeaderRight}>
-      <MiniCommandDeck
-        accent={accent}
-        title={tt('Focus cockpit')}
-        subtitle={tt('Timer, breaks, streaks.')}
-        metrics={[
-          { label: tt('Today'), value: `${stats.count}/${stats.goal}`, detail: tt('goal') },
-          { label: tt('Timer'), value: `${mins}:${secs}`, detail: tt(phase) },
-          { label: tt('Streak'), value: `${streak}`, detail: tt('days') },
-        ]}
-        chips={[tt('Background timer'), tt('Color progress'), tt('Session proof')]}
-      />
-      <TimerInsightStrip
-        mode={mode}
-        running={running}
-        label={label}
-        endAt={endAtLabel}
-        nextLabel={nextLabel}
-        todayCount={stats.count}
-        dailyGoal={stats.goal}
-        accent={accent}
-      />
-      <StageRail mode={mode} elapsedRatio={elapsedRatio} accent={accent} />
+      {showStageRail(running, pct) && <StageRail mode={mode} elapsedRatio={elapsedRatio} accent={accent} />}
       {/* Mode tabs */}
-      <GlassPanel variant="light" borderRadius={radius.card} style={{ marginBottom: 18 }} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} style={{ marginBottom: 12 }} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }}>
         {(Object.keys(MODE_META) as Mode[]).map(m => (
           <Pressable
             key={m}
@@ -1058,15 +959,12 @@ export default function PomodoroScreen() {
           </Pressable>
         ))}
       </GlassPanel>
-      <FocusPresetRail
-        activeMinutes={mode === 'focus' ? activeFocusMinutes : doc.settings.focusMin}
-        running={running}
-        accent={accent}
-        onSelect={applyFocusPreset}
-      />
+      {showFocusPresets(mode, running) && (
+        <FocusPresetRail activeMinutes={activeFocusMinutes} accent={accent} onSelect={applyFocusPreset} />
+      )}
 
       {/* Task label */}
-      <View style={{ marginBottom: 18 }}>
+      <View style={{ marginBottom: 12 }}>
         <TextInput
           value={label}
           onChangeText={setLabel}
@@ -1093,7 +991,7 @@ export default function PomodoroScreen() {
       </View>
 
       {/* Ring */}
-      <View style={{ width: ring, height: ring, alignItems: 'center', justifyContent: 'center', marginBottom: 26, alignSelf: 'center' }}>
+      <View style={{ width: ring, height: ring, alignItems: 'center', justifyContent: 'center', marginBottom: 10, alignSelf: 'center' }}>
         {[0, 0.25, 0.5, 0.75].map((point, index) => {
           const angle = point * Math.PI * 2 - Math.PI / 2;
           const distance = ring / 2 - 12;
@@ -1173,14 +1071,10 @@ export default function PomodoroScreen() {
         </View>
       </View>
 
-      <FocusMomentumStrip
-        accent={accent}
-        pct={pct}
-        phase={phase}
-        stats={stats}
-        elapsedMinutes={elapsedFocusMinutes}
-        running={running}
-      />
+      {/* When it ends and what follows: the one useful thing the three-chip strip said. */}
+      <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginBottom: 18 }}>
+        {running ? `${tt('Ends')} ${endAtLabel} · ` : ''}{tt('Next')}: {tt(nextLabel)}
+      </Text>
 
       {/* Controls */}
       <View style={{ flexDirection: 'row', gap: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 26 }}>
@@ -1207,14 +1101,6 @@ export default function PomodoroScreen() {
         </View>
       </View>
 
-      <FocusGarden
-        accent={accent}
-        stats={stats}
-        streak={streak}
-        elapsedRatio={elapsedRatio}
-        running={running}
-      />
-
       <FocusBeatsPanel
         accent={accent}
         playingBeat={playingBeat}
@@ -1222,6 +1108,31 @@ export default function PomodoroScreen() {
         onToggle={beat => { void toggleFocusBeat(beat); }}
         onTogglePause={toggleBeatPause}
         onStop={stopFocusBeat}
+      />
+
+      {/* The analytics, folded: the same day count and streak are on the header, the controls and the
+          share panel, so this opens on request and says what it holds while closed. */}
+      <CollapsibleSection
+        title={tt('Progress')}
+        summary={progressSummary(stats.count, stats.goal, streak)}
+        open={showProgress}
+        onToggle={() => setShowProgress(v => !v)}
+      >
+      <FocusMomentumStrip
+        accent={accent}
+        pct={pct}
+        phase={phase}
+        stats={stats}
+        elapsedMinutes={elapsedFocusMinutes}
+        running={running}
+      />
+
+      <FocusGarden
+        accent={accent}
+        stats={stats}
+        streak={streak}
+        elapsedRatio={elapsedRatio}
+        running={running}
       />
 
       <FocusIntelligencePanel
@@ -1253,6 +1164,7 @@ export default function PomodoroScreen() {
         </View>
       </GlassPanel>
 
+      </CollapsibleSection>
       {/* Today's log */}
       {todaySessions.length > 0 && (
         <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ overflow: 'hidden' }} style={{ marginTop: 14 }}>
