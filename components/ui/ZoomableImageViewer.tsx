@@ -7,6 +7,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { saveMediaToDevice } from '../../lib/media/mediaDownload';
 import { showToast } from './Toast';
+import { photoLabel } from '../../lib/media/altText';
 
 interface ZoomableImageViewerProps {
   visible: boolean;
@@ -21,6 +22,8 @@ interface ZoomableImageViewerProps {
    * carry the action. Callers pass the author's allowDownloads.
    */
   canDownload?: boolean;
+  /** What each photo shows, by position. Read aloud by a screen reader; never drawn. */
+  altTexts?: readonly (string | undefined)[];
   onClose: () => void;
 }
 
@@ -30,6 +33,7 @@ export function ZoomableImageViewer({
   initialIndex = 0,
   title,
   canDownload = false,
+  altTexts,
   onClose,
 }: ZoomableImageViewerProps) {
   const insets = useSafeAreaInsets();
@@ -69,7 +73,7 @@ export function ZoomableImageViewer({
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <Pressable onPress={onClose} hitSlop={14} style={controlStyle}>
+          <Pressable onPress={onClose} hitSlop={14} style={controlStyle} accessibilityRole="button" accessibilityLabel="Close photo">
             <X color="#fff" size={20} weight="bold" />
           </Pressable>
           <View style={{ alignItems: 'center', flex: 1, paddingHorizontal: 12 }}>
@@ -98,7 +102,11 @@ export function ZoomableImageViewer({
           )}
         </View>
 
-        <ZoomableImage uri={currentUri} resetKey={currentUri} />
+        <ZoomableImage
+          uri={currentUri}
+          resetKey={currentUri}
+          alt={photoLabel(altTexts?.[Math.min(index, uris.length - 1)], Math.min(index, uris.length - 1), uris.length)}
+        />
 
         {uris.length > 1 ? (
           <>
@@ -106,6 +114,8 @@ export function ZoomableImageViewer({
               <Pressable
                 onPress={() => setIndex(value => Math.max(0, value - 1))}
                 hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="Previous photo"
                 style={[controlStyle, { position: 'absolute', left: 14, top: '50%', zIndex: 15 }]}
               >
                 <CaretLeft color="#fff" size={22} weight="bold" />
@@ -115,6 +125,8 @@ export function ZoomableImageViewer({
               <Pressable
                 onPress={() => setIndex(value => Math.min(uris.length - 1, value + 1))}
                 hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="Next photo"
                 style={[controlStyle, { position: 'absolute', right: 14, top: '50%', zIndex: 15 }]}
               >
                 <CaretRight color="#fff" size={22} weight="bold" />
@@ -122,7 +134,7 @@ export function ZoomableImageViewer({
             ) : null}
             <View style={{ position: 'absolute', bottom: insets.bottom + 28, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 7 }}>
               {uris.map((_, dotIndex) => (
-                <Pressable key={dotIndex} onPress={() => setIndex(dotIndex)} hitSlop={8}>
+                <Pressable key={dotIndex} onPress={() => setIndex(dotIndex)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Go to photo ${dotIndex + 1} of ${uris.length}`}>
                   <View style={{
                     width: dotIndex === index ? 20 : 7,
                     height: 7,
@@ -139,7 +151,7 @@ export function ZoomableImageViewer({
   );
 }
 
-function ZoomableImage({ uri, resetKey }: { uri: string; resetKey: string }) {
+function ZoomableImage({ uri, resetKey, alt }: { uri: string; resetKey: string; alt: string }) {
   const { width, height } = useWindowDimensions();
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
@@ -223,6 +235,9 @@ function ZoomableImage({ uri, resetKey }: { uri: string; resetKey: string }) {
           style={{ width, height: height * 0.82 }}
           contentFit="contain"
           cachePolicy="memory-disk"
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={alt}
         />
       </Animated.View>
     </GestureDetector>
