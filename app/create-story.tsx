@@ -5,7 +5,7 @@ import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import { ArrowLeft, PaperPlaneTilt, Lightning, Broadcast, Clock } from 'phosphor-react-native';
+import { PaperPlaneTilt, Lightning, Broadcast, Clock } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Avatar } from '../components/ui/Avatar';
 import { warmAvatarColor } from '../lib/social/avatarPalette';
@@ -16,6 +16,7 @@ import { Story } from '../types';
 import { playSoundEffect } from '../lib/ui/sound';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { ttx } from '../lib/i18n/i18n';
+import { BackButton } from '../components/ui/BackButton';
 
 const STORY_DURATION_HOURS = 24;
 
@@ -51,9 +52,7 @@ function CreateStoryScreenInner() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
-            <ArrowLeft color={colors.text} size={24} />
-          </AnimatedPressable>
+          <BackButton />
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{ttx("Create Story")}</Text>
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
@@ -116,9 +115,7 @@ function CreateStoryScreenInner() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
+        <BackButton />
         <View className="flex-row items-center gap-2">
           <Broadcast color={colors.accent} size={16} />
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{ttx("New Story")}</Text>

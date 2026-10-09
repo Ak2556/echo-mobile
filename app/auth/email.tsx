@@ -5,12 +5,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, EnvelopeSimple, ArrowClockwise } from 'phosphor-react-native';
+import { EnvelopeSimple, ArrowClockwise } from 'phosphor-react-native';
 import { refreshAuthSession, sendEmailOtp, verifyEmailOtp } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/ui/theme';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { useI18n } from '../../lib/i18n/i18n';
+import { BackButton } from '../../components/ui/BackButton';
 
 const RESEND_COOLDOWN_S = 30;
 
@@ -136,8 +137,7 @@ export default function EmailAuthScreen() {
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={[layout.formStyle, { paddingHorizontal: 12, paddingTop: 8 }]}>
-            <Pressable
-              onPress={() => {
+            <BackButton onPress={() => {
                 if (step === 'enter-code') {
                   setStep('enter-email');
                   setCode('');
@@ -145,14 +145,7 @@ export default function EmailAuthScreen() {
                 } else {
                   router.back();
                 }
-              }}
-              style={{ padding: 10, alignSelf: 'flex-start', borderRadius: 999 }}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.back')}
-              hitSlop={8}
-            >
-              <ArrowLeft color={colors.text} size={22} weight="bold" />
-            </Pressable>
+              }} />
           </View>
 
           {step === 'enter-email' ? (

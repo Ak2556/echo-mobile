@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash, ListDashes, MagnifyingGlass, Tag, Scan, CaretDown, CurrencyDollar, ArrowLeft } from 'phosphor-react-native';
+import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash, ListDashes, MagnifyingGlass, Tag, Scan, CaretDown, CurrencyDollar } from 'phosphor-react-native';
 import Animated, { FadeInDown, FadeOutUp, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
 import { tap } from '../../lib/ui/haptics';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
@@ -21,6 +21,7 @@ import { hasApplied } from '../../lib/minilink/ledger';
 import { shouldEmitPurchase, describePostDrain, describeUndo, purchaseAmount } from '../../lib/minilink/rules';
 import { defaultCurrency, getCurrencySymbol } from '../../lib/mini-apps/currency';
 import { loadExpensesDoc } from '../../lib/mini-apps/expenses';
+import { BackButton } from '../../components/ui/BackButton';
 
 // Money shows in the currency chosen in Expenses, which is where checked-off
 // items are logged; the device region's (INR fallback) until that loads.
@@ -397,9 +398,7 @@ export default function ShoppingListScreen() {
       <Modal visible={showScanner} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: colors.bg }}>
           <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-            <Pressable onPress={() => setShowScanner(false)} style={{ padding: 12, backgroundColor: colors.surface, borderRadius: radius.lg, marginRight: 16 }}>
-              <ArrowLeft color={colors.text} size={24} weight="bold" />
-            </Pressable>
+            <BackButton onPress={() => setShowScanner(false)} label="Close" />
             <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text, flex: 1 }}>Add Items</Text>
           </View>
           

@@ -3,7 +3,7 @@ import { View, Text, Pressable, TextInput, ScrollView, Modal, StyleSheet } from 
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  ArrowLeft, BellSlash, Bell, Images, UserCircle, Prohibit, Flag, EnvelopeSimple, Users, Check, X,
+  BellSlash, Bell, Images, UserCircle, Prohibit, Flag, EnvelopeSimple, Users, Check, X,
 } from 'phosphor-react-native';
 import { Avatar } from '../../components/ui/Avatar';
 import { useTheme } from '../../lib/ui/theme';
@@ -16,6 +16,7 @@ import {
   type ConversationPrefs,
 } from '../../lib/supabaseEchoApi';
 import { ttx } from '../../lib/i18n/i18n';
+import { BackButton } from '../../components/ui/BackButton';
 
 // Reuse the thread's wallpaper palette so a theme choice shows instantly there.
 const THEMES: { id: string; tint: string | null; label: string }[] = [
@@ -121,9 +122,7 @@ export default function ChatDetailsScreen() {
   return (
     <ResponsiveScreen>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Back")} style={{ padding: 4, marginRight: 8 }}>
-          <ArrowLeft color={colors.text} size={24} />
-        </Pressable>
+        <BackButton />
         <Text style={{ color: colors.text, fontSize: 18, ...font.displayBlack }}>{ttx("Details")}</Text>
       </View>
 

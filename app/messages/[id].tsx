@@ -17,7 +17,7 @@ import { safeBack } from '../../lib/routing/safeBack';
 import { clientIdOfFailedDM } from '../../lib/social/dmLocalIds';
 import { speak, isTtsAvailable } from '../../lib/mini-apps/tts';
 import {
-  CaretLeft, PaperPlaneTilt, Quotes, SealCheck, Flag,
+  PaperPlaneTilt, Quotes, SealCheck, Flag,
   Waveform, Copy, Trash, ArrowBendUpLeft, PencilSimple, SpeakerHigh,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
@@ -81,6 +81,7 @@ import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/routing/echoUrl';
 import { ttx } from '../../lib/i18n/i18n';
 import { playbackEnded } from '../../lib/mini-apps/audioPlayback';
+import { BackButton } from '../../components/ui/BackButton';
 
 /**
  * A failed 1:1 send. "Try again" is wrong when the recipient has no device to
@@ -2935,9 +2936,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
       return (
         <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-            <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Back to messages")}>
-              <CaretLeft color={colors.text} size={24} />
-            </AnimatedPressable>
+            <BackButton fallback={'/messages'} />
           </View>
           <FeedCardSkeleton /><FeedCardSkeleton /><FeedCardSkeleton />
         </SafeAreaView>
@@ -2976,9 +2975,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         paddingHorizontal: 16, paddingVertical: 12,
         borderBottomWidth: 1, borderBottomColor: colors.border,
       }}>
-        <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 10 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Back to messages")}>
-          <CaretLeft color={colors.text} size={24} />
-        </AnimatedPressable>
+        <BackButton fallback={'/messages'} />
 
         <Pressable
           onPress={() => router.push(`/chat-details/${id}`)}

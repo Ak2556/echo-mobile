@@ -6,7 +6,7 @@ import { BlurView } from 'expo-blur';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/routing/safeBack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BookmarkSimple, ChatCircle, DotsThreeOutline, Flag, NotePencil, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
+import { BookmarkSimple, ChatCircle, DotsThreeOutline, Flag, NotePencil, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { Avatar } from '../../components/ui/Avatar';
 import { SpeakButton } from '../../components/ui/SpeakButton';
@@ -30,6 +30,7 @@ import { inferTopics } from '../../lib/feed/echoUX';
 import { ttx } from '../../lib/i18n/i18n';
 import { countLabel } from '../../lib/ui/a11yCount';
 import { CommentsSheet } from '../../components/feed/CommentsSheet';
+import { BackButton } from '../../components/ui/BackButton';
 
 export default function ThreadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -149,9 +150,7 @@ export default function ThreadDetailScreen() {
         <BlurView intensity={50} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.72 }]} pointerEvents="none" />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: insets.top + 6, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => safeBack()} style={{ padding: 4 }}>
-          <ArrowLeft color={colors.text} size={24} />
-        </Pressable>
+        <BackButton />
         <Text style={{ color: colors.text, fontSize: 19, ...font.displayBlack, letterSpacing: -0.4 }}>{ttx("Echo Thread")}</Text>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           {/* Bookmark stays only in the action row below the post body.
@@ -225,22 +224,9 @@ export default function ThreadDetailScreen() {
       >
         <View style={{ flex: 1, backgroundColor: '#000' }}>
           <FlowCard item={item} index={0} />
-          <Pressable
-            onPress={closeVideoFullscreen}
-            accessibilityRole="button"
-            accessibilityLabel={ttx('Close full screen')}
-            hitSlop={12}
-            style={{
-              position: 'absolute',
-              top: insets.top + 12,
-              left: 16,
-              padding: 8,
-              borderRadius: 20,
-              backgroundColor: 'rgba(0,0,0,0.55)',
-            }}
-          >
-            <ArrowLeft size={22} color="#fff" weight="bold" />
-          </Pressable>
+          <View style={{ position: 'absolute', top: insets.top + 6, left: 12 }}>
+            <BackButton tone="media" onPress={closeVideoFullscreen} label={ttx('Close full screen')} />
+          </View>
         </View>
       </Modal>
 

@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  ArrowLeft, PencilSimple, Envelope, SealCheck, BellSlash, Archive,
+  PencilSimple, Envelope, SealCheck, BellSlash, Archive,
   CaretDown, CaretRight, Users, X, MagnifyingGlass, Check, PushPin,
   ChatCircleText, Lightning, Camera, LinkSimple, Microphone,
 } from 'phosphor-react-native';
@@ -30,6 +30,7 @@ import { safeBack } from '../../lib/routing/safeBack';
 import { ttx } from '../../lib/i18n/i18n';
 import { MusicPickerModal, Song } from '../../components/ui/MusicPicker';
 import { ChatDetailsSidebar } from '../../components/chat/ChatDetailsSidebar';
+import { BackButton } from '../../components/ui/BackButton';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -857,9 +858,7 @@ export default function MessagesListScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <AnimatedPressable onPress={() => safeBack('/(tabs)/chat')} className="p-1" scaleValue={0.88} haptic="light">
-            <ArrowLeft color={colors.text} size={24} />
-          </AnimatedPressable>
+          <BackButton fallback={'/(tabs)/chat'} />
           <View style={{ flex: 1, alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
               <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
@@ -896,9 +895,7 @@ export default function MessagesListScreen() {
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
       }}>
-        <AnimatedPressable onPress={() => safeBack('/(tabs)/chat')} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={22} />
-        </AnimatedPressable>
+        <BackButton fallback={'/(tabs)/chat'} />
         <View style={{ flex: 1, alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
             <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
