@@ -3,11 +3,14 @@ import {
   View, Pressable, Text, StyleSheet, useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { MagnifyingGlassPlus } from 'phosphor-react-native';
+import { ImageSquare, MagnifyingGlassPlus } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { ZoomableImageViewer } from '../ui/ZoomableImageViewer';
 import { MEDIA_FADE_MS, mediaPlaceholderTint } from './mediaPlaceholder';
 import { isTabletPortrait, singleMediaFrame } from '../../lib/media/mediaFrame';
+import { useDataSaverPhoto } from '../../lib/media/dataSaverImages';
+import { useAppStore } from '../../store/useAppStore';
+import { ttx } from '../../lib/i18n/i18n';
 
 interface MediaGridProps {
   uris: string[];
@@ -29,6 +32,10 @@ interface MediaGridProps {
  * against grey.
  */
 function GridImage({ uri }: { uri: string }) {
+  const dataSaver = useAppStore(s => s.dataSaver);
+  const { held, load } = useDataSaverPhoto(uri, dataSaver);
+  // Data Saver: nothing is downloaded until the person asks for this photo.
+  if (held) return <HeldPhoto uri={uri} onLoad={load} />;
   return (
     <Image
       source={{ uri }}
@@ -41,6 +48,26 @@ function GridImage({ uri }: { uri: string }) {
       recyclingKey={uri}
       transition={MEDIA_FADE_MS}
     />
+  );
+}
+
+/**
+ * The tile a photo shows under Data Saver. A tap loads it in place; a second
+ * tap opens the viewer. It is a Pressable of its own so the first tap is not
+ * taken by the card around it.
+ */
+function HeldPhoto({ uri, onLoad }: { uri: string; onLoad: () => void }) {
+  return (
+    <Pressable
+      onPress={onLoad}
+      accessibilityRole="button"
+      accessibilityLabel={ttx('Load photo')}
+      style={{ width: '100%', height: '100%', backgroundColor: mediaPlaceholderTint(uri), alignItems: 'center', justifyContent: 'center', gap: 6 }}
+    >
+      <ImageSquare color="rgba(255,255,255,0.85)" size={26} weight="duotone" />
+      <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '600' }}>{ttx('Tap to load photo')}</Text>
+      <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>{ttx('Data Saver is on')}</Text>
+    </Pressable>
   );
 }
 

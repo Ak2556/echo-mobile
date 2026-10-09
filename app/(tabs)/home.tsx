@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
+import { useFeedMediaPrefetch } from '../../hooks/useFeedMediaPrefetch';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Animated, {
   FadeIn,
@@ -541,8 +542,18 @@ export default function DiscoverScreen() {
   const popularItemsRef = useRef(popularItems);
   popularItemsRef.current = popularItems;
   const setActiveEchoId = useActiveVideoStore(s => s.setActiveEchoId);
-  const onVoiceViewable = useRef(({ viewableItems }: { viewableItems: { item?: any }[] }) => {
+  const prefetchMedia = useFeedMediaPrefetch();
+  // The rows the list is showing, for the prefetch below. Assigned where they are built.
+  const feedRowsRef = useRef<{ type: string; item?: { id: string; mediaUris?: string[]; videoUri?: string } }[]>([]);
+  const onVoiceViewable = useRef(({ viewableItems }: { viewableItems: { item?: any; index?: number | null }[] }) => {
     const first = viewableItems?.find((v) => v?.item?.id)?.item;
+    const firstIndex = viewableItems?.find((v) => v?.item?.id)?.index;
+    if (typeof firstIndex === 'number') {
+      // The next few cards' photos, and the first frame of the next videos, start
+      // loading now rather than when their card scrolls into the draw distance.
+      const rows = feedRowsRef.current.slice(firstIndex + 1, firstIndex + 6);
+      prefetchMedia(rows.flatMap(r => (r.type === 'post' && r.item ? [r.item] : [])));
+    }
     if (first) {
       currentEchoRef.current = first;
       setActiveEchoId(first.id);
@@ -671,6 +682,7 @@ export default function DiscoverScreen() {
     });
     return arr;
   }, [popularItems, randomAd]);
+  feedRowsRef.current = popularItemsWithAds as typeof feedRowsRef.current;
 
   const renderItem = useCallback(({ item, index }: { item: any, index: number }) => {
     if (item.type === 'ad') {
