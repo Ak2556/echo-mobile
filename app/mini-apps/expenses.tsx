@@ -13,6 +13,7 @@ import { Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, Pe
 import { ActionSheet } from '../../components/common/ActionSheet';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
@@ -592,12 +593,8 @@ export default function ExpensesApp() {
   // carries two buttons, not four.
   const HeaderBtns = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <AnimatedPressable onPress={() => setShowSettings(true)} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={tt('Khata settings')} style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
-        <GearSix color={colors.text} size={18} weight="bold" />
-      </AnimatedPressable>
-      <AnimatedPressable onPress={handleExport} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={tt('Export')} style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
-        <Export color={colors.text} size={18} weight="bold" />
-      </AnimatedPressable>
+      <HeaderActionButton icon={GearSix} label={tt('Khata settings')} onPress={() => setShowSettings(true)} />
+      <HeaderActionButton icon={Export} label={tt('Export')} onPress={handleExport} />
       <HeaderAddButton onPress={() => setShowAdd(true)} label={tt('Add entry')} />
     </View>
   );

@@ -19,6 +19,7 @@ import {
   Timer,
 } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { Disclosure } from '../../components/learn/Disclosure';
@@ -488,11 +489,7 @@ export default function LearnScreen() {
       subtitle={activeGoal ? 'Master' : 'Master'}
       headerRight={(
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <AnimatedPressable onPress={() => setTab('settings')} scaleValue={0.9} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Learning settings")}>
-            <View style={{ width: 38, height: 38, borderRadius: radius.card, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-              <GearSix color={colors.textSecondary} size={18} weight="bold" />
-            </View>
-          </AnimatedPressable>
+          <HeaderActionButton icon={GearSix} label={ttx("Learning settings")} onPress={() => setTab('settings')} />
           <HeaderAddButton onPress={() => setShowSetup(true)} label={ttx("Create learning goal")} />
         </View>
       )}
