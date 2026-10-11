@@ -1159,4 +1159,11 @@ export const HI_BULK: Record<string, string> = {
   'ai, react, tips (comma-separated)': 'ai, react, tips (अल्पविराम से अलग)',
   'connected essentials': 'जुड़ी ज़रूरी चीज़ें',
   'Replaces': 'इनकी जगह:',
+  // Spoken reminders. HI: native review needed.
+  'Set this reminder?': 'यह रिमाइंडर लगाएँ?',
+  'Set reminder': 'रिमाइंडर लगाएँ',
+  'Make it': 'इसे करें',
+  'Reminder set for': 'रिमाइंडर लगा:',
+  'Tomorrow': 'कल',
+  'Today': 'आज',
 };
