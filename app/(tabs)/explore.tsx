@@ -9,6 +9,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { EdgeGlass, EDGE_GLASS_FADE } from '../../components/ui/EdgeGlass';
 import { SearchBar } from '../../components/feed/SearchBar';
+import { TabHeader } from '../../components/ui/TabHeader';
 import { Avatar } from '../../components/ui/Avatar';
 import { UserRow } from '../../components/feed/UserRow';
 import { FeedCard } from '../../components/feed/FeedCard';
@@ -321,9 +322,7 @@ export default function SearchScreen() {
             }}
             style={[layout.wideContentStyle, { paddingTop: headerTopPad, paddingHorizontal: layout.gutter, paddingBottom: HEADER_BOTTOM_PAD }]}
           >
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: headerTitleLine, letterSpacing: -0.5, marginBottom: HEADER_TITLE_GAP }]}>
-              {t('nav.explore')}
-            </Text>
+            <TabHeader title={t('nav.explore')} marginBottom={HEADER_TITLE_GAP} />
             <SearchBar value={query} onChangeText={setQuery} placeholder={t('explore.searchPlaceholder')} />
           </View>
           {/* Was backgroundColor:'transparent' — an invisible divider, so the
