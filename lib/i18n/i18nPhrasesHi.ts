@@ -1159,6 +1159,10 @@ export const HI_BULK: Record<string, string> = {
   'ai, react, tips (comma-separated)': 'ai, react, tips (अल्पविराम से अलग)',
   'connected essentials': 'जुड़ी ज़रूरी चीज़ें',
   'Replaces': 'इनकी जगह:',
+  // The end of the feed. HI: native review needed.
+  "You're all caught up": 'आप सब देख चुके हैं',
+  'That is everything for now. There is nothing hiding below.': 'अभी के लिए बस इतना ही। नीचे और कुछ छिपा नहीं है।',
+  "Today's question": 'आज का सवाल',
   // Spoken reminders. HI: native review needed.
   'Set this reminder?': 'यह रिमाइंडर लगाएँ?',
   'Set reminder': 'रिमाइंडर लगाएँ',

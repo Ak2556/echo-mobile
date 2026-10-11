@@ -15,6 +15,7 @@ import {
 } from '../lib/supabaseEchoApi';
 import { LOCAL_SEED_FEED, coerceFeedItem } from '../lib/feed/localFeedSeed';
 import { computeScore, gravityForScope, rankTrending } from '../lib/feed/feedScoring';
+import { visitCapReached } from '../lib/feed/feedEnd';
 
 const PAGE_SIZE = 20;
 
@@ -181,7 +182,9 @@ export function useInfiniteFeed() {
       : ['feed', 'paginated', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedScope, blockedIds, mutedIds, notInterestedIds, interests],
     initialPageParam: undefined,
     // Cursor carries (score, id) so keyset pagination is stable under new posts.
-    getNextPageParam: (lastPage: FeedItem[]): RankedFeedCursor => {
+    getNextPageParam: (lastPage: FeedItem[], allPages: FeedItem[][]): RankedFeedCursor => {
+      // A visit to Home ends after FEED_VISIT_LIMIT posts; see lib/feed/feedEnd.ts.
+      if (visitCapReached(allPages)) return undefined;
       if (lastPage.length < PAGE_SIZE) return undefined;
       const last = lastPage[lastPage.length - 1];
       // The personal-feed diversity trim can reject rows scoring above

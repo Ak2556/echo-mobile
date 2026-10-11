@@ -60,6 +60,8 @@ import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/re
 import { personName } from '../../lib/social/personName';
 import { BRAND, ON_MEDIA } from '../../lib/ui/fixedColors';
 import { useUserRefresh } from '../../hooks/useUserRefresh';
+import { capFeed, feedHasEnded } from '../../lib/feed/feedEnd';
+import { FeedEnd } from '../../components/feed/FeedEnd';
 
 
 const NAV_BAR_HEIGHT = 56;
@@ -560,7 +562,9 @@ export default function DiscoverScreen() {
     return result;
   }, [feed, feedScope, followingIds, grouped.forYou, grouped.rising, sensitiveContentFilter]);
 
-  const popularItems = scopedAll;
+  // One visit ends after FEED_VISIT_LIMIT posts (lib/feed/feedEnd.ts): the page promises a feed that ends.
+  const popularItems = useMemo(() => capFeed(scopedAll), [scopedAll]);
+  const feedEnded = feedHasEnded(popularItems.length, !!hasNextPage);
   // Publish visible posts so the voice "read the feed to me" command can read them.
   useEffect(() => { setReadableFeed(popularItems); }, [popularItems]);
 
@@ -787,6 +791,7 @@ export default function DiscoverScreen() {
               />
             }
             ListHeaderComponent={ListHeader}
+            ListFooterComponent={feedEnded ? <FeedEnd /> : null}
             ListEmptyComponent={
               feedScope === 'following' ? (
                 <FollowingEmptyState 
