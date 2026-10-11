@@ -55,3 +55,30 @@ describe('secondary header actions', () => {
     }
   });
 });
+
+describe('Home header', () => {
+  const home = read('app/(tabs)/home.tsx');
+  const header = home.slice(home.indexOf('<EdgeGlass'), home.indexOf('</EdgeGlass>'));
+
+  it('Messages and Notifications are the same 40 pt circles as the "+", not bare glyphs', () => {
+    expect(header).toMatch(/<HeaderActionButton[^>]*icon=\{Envelope\}/);
+    expect(header).toMatch(/<HeaderActionButton[\s\S]*?icon=\{Bell\}/);
+    expect(header).not.toMatch(/<Envelope color=/);
+    expect(header).not.toMatch(/<Bell color=/);
+  });
+
+  it('the unread count is drawn by the shared button', () => {
+    expect(header).toMatch(/badge=\{unreadNotifs\}/);
+    expect(read('components/ui/HeaderActionButton.tsx')).toContain('badge');
+  });
+
+  it('the three controls end the row in order: messages, notifications, add', () => {
+    const iEnv = header.indexOf('icon={Envelope}');
+    const iBell = header.indexOf('icon={Bell}');
+    const iAdd = header.indexOf('<HeaderAddButton');
+    expect(iEnv).toBeGreaterThan(-1);
+    expect(iBell).toBeGreaterThan(iEnv);
+    expect(iAdd).toBeGreaterThan(iBell);
+  });
+});
+

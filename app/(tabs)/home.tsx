@@ -40,6 +40,7 @@ import { groupDiscovery } from '../../lib/feed/echoUX';
 import { useRealtimeNewEchoes } from '../../lib/core/realtime';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
+import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { UserRow } from '../../components/feed/UserRow';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
@@ -57,7 +58,7 @@ import { useTutorialStore } from '../../store/tutorialStore';
 import { ttx, useI18n, type TranslationKey } from '../../lib/i18n/i18n';
 import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/retention/dailyThoughts';
 import { personName } from '../../lib/social/personName';
-import { BRAND, ON_MEDIA, ON_STATUS } from '../../lib/ui/fixedColors';
+import { BRAND, ON_MEDIA } from '../../lib/ui/fixedColors';
 import { useUserRefresh } from '../../hooks/useUserRefresh';
 
 
@@ -848,47 +849,13 @@ export default function DiscoverScreen() {
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Pressable
-              onPress={() => router.push('/messages')}
-              style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
-              accessibilityRole="button"
-              accessibilityLabel="Messages"
-            >
-              <Envelope color={colors.text} size={24} />
-            </Pressable>
-
-            <Pressable
+            <HeaderActionButton icon={Envelope} label="Messages" onPress={() => router.push('/messages')} />
+            <HeaderActionButton
+              icon={Bell}
+              label={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
               onPress={() => router.push('/(tabs)/notifications')}
-              style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
-              accessibilityRole="button"
-              accessibilityLabel={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
-            >
-              <View>
-                <Bell color={colors.text} size={24} />
-                {unreadNotifs > 0 && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: -3,
-                      right: -3,
-                      minWidth: 16,
-                      height: 16,
-                      paddingHorizontal: 4,
-                      borderRadius: 8,
-                      backgroundColor: colors.danger,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1.5,
-                      borderColor: colors.bg,
-                    }}
-                  >
-                    <Text style={{ color: ON_STATUS, fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                      {unreadNotifs > 99 ? '99+' : unreadNotifs}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </Pressable>
+              badge={unreadNotifs}
+            />
 
             {/* Making an echo is the one thing the header always offers: top right, same as every add. */}
             <View ref={composeTarget.ref} onLayout={composeTarget.onLayout}>
