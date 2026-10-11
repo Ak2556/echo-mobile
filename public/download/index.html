@@ -2134,10 +2134,14 @@
     <em class="hl">post this</em>, <em class="hl">find that thread</em>,
     <em class="hl">remind me tomorrow</em>. <strong>Done before you look
     up.</strong></p>
-    <!-- VERIFY: voice-post flow confirms before posting; remove claim if not -->
+    <!-- Verified against the app 2026-10-11: a voice post fills the composer and waits for you
+         (lib/voice/dispatch.ts create_post); a spoken reminder shows a card and only a yes sets
+         it (app/mini-apps/tasks.tsx); the chat's Do tools ask first (requiresConfirm). A task or
+         note added by voice is saved at once, which is why this says "goes public" and
+         "reminder" and not "writes". -->
     <p class="body rv d2"><strong>Ask</strong> and it only talks.
-    <strong>Do</strong> and it acts. Anything that writes, posts or spends stops
-    for your confirmation first.</p>
+    <strong>Do</strong> and it acts. Anything that goes public, and every
+    reminder, stops for your confirmation first.</p>
     <div class="taste rv d3">
       <p class="taste-ask">Tap one. <strong>This is the card Echo shows you first.</strong></p>
       <div class="taste-chips" role="group" aria-label="Example commands">
@@ -2178,7 +2182,7 @@
           <div class="panel" data-panel>
             <h3>One question a day, the same for everyone</h3>
             <p class="gal-scene">Your neighbour answered today’s in Punjabi. Someone in Kochi answered it in Malayalam. You read both — after you had answered your own.</p>
-            <p>Answer it and <strong>you unlock everyone else&rsquo;s</strong>. Strangers, in their own languages, on the one thing you were all asked today. Then it closes until tomorrow.</p>
+            <p>Answer it and <strong>you unlock everyone else&rsquo;s</strong>. Strangers, in their own languages, on the one thing you were all asked today.</p>
           </div>
           <div class="panel" data-panel>
             <h3>The part you were going to skip</h3>
@@ -2280,8 +2284,8 @@
         <p class="body rv d2">You changed this page at the top. That was the easy
         half &mdash; a website is words. Here is the app doing it.</p>
         <p class="body rv d2">Not just the posts &mdash; <strong>the whole
-        app</strong>. Greeting, tabs, buttons, prompts, even the direction it
-        runs. Switch it and everything moves. <strong>Not an English app that
+        app</strong>. Greeting, tabs, buttons, prompts. Switch it and
+        everything moves. <strong>Not an English app that
         translates. An app that speaks your language.</strong></p>
         <div class="langs" id="langs">
           <div class="lang on"><b>English</b><span>Left to right</span></div>
@@ -2344,7 +2348,8 @@
         sign back in &mdash; your account and posts are kept on our side.</p>
         <p><b>It takes about a minute on a normal connection</b> and asks for
         nothing while it installs. Echo asks for the microphone the first time you
-        hold the button, and for nothing else until you use the part that needs it.</p>
+        hold the button. Once you have had a look around it offers to send you
+        notifications, and you can say no.</p>
         <p><b>It uninstalls like anything else.</b> Hold the icon, remove, gone
         &mdash; and if you delete your account first, what you wrote goes with it.</p>
       </div>
