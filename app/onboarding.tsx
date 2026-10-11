@@ -24,6 +24,7 @@ import { useAppStore } from '../store/useAppStore';
 import { TextInput } from '../components/ui/TextInput';
 import { ttx } from '../lib/i18n/i18n';
 import { SHADOW } from '../lib/ui/fixedColors';
+import { Button } from '../components/ui/Button';
 
 /**
  * Optional "set a goal" screen.
@@ -182,11 +183,11 @@ export default function SetGoalScreen() {
                 </Animated.View>
 
                 <Animated.View entering={FadeInDown.delay(250).duration(400).springify().mass(0.7)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 10 }}>
-                  <PrimaryButton label={ttx("Save goal")} icon={<Target color={colors.onAccent} size={20} weight="fill" />} onPress={() => {
+                  <Button label={ttx("Save goal")} leftIcon={Target} size="large" fullWidth style={{ flex: 1, minWidth: 140 }} onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                     saveGoal();
                   }} />
-                  <SecondaryButton label={ttx("Maybe later")} onPress={() => {
+                  <Button label={ttx("Maybe later")} variant="secondary" size="large" fullWidth style={{ flex: 1, minWidth: 140 }} onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     skip();
                   }} />
@@ -238,85 +239,3 @@ function TargetChip({ label, active, onPress }: { label: string; active: boolean
   );
 }
 
-function PrimaryButton({
-  label,
-  icon,
-  onPress,
-  disabled = false,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  const { colors, radius, font } = useTheme();
-  const scale = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  return (
-    <Animated.View style={[animatedStyle, { flex: 1, minWidth: 140 }]}>
-      <Pressable
-        onPress={onPress}
-        onPressIn={() => { scale.value = withTiming(0.96, { duration: 100 }); }}
-        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
-        disabled={disabled}
-        accessibilityRole="button"
-        style={{
-          minHeight: 56,
-          borderRadius: radius.full,
-          backgroundColor: colors.accent,
-          opacity: disabled ? 0.55 : 1,
-          paddingHorizontal: 20,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 10,
-          shadowColor: colors.accent,
-          shadowOpacity: 0.4,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: 8 },
-        }}
-      >
-        {icon}
-        <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 16 }]}>{label}</Text>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-function SecondaryButton({ label, onPress }: { label: string; onPress: () => void }) {
-  const { colors, radius, font } = useTheme();
-  const scale = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  return (
-    <Animated.View style={[animatedStyle, { flex: 1, minWidth: 140 }]}>
-      <Pressable
-        onPress={onPress}
-        onPressIn={() => { scale.value = withTiming(0.96, { duration: 100 }); }}
-        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
-        accessibilityRole="button"
-        style={{
-          minHeight: 56,
-          borderRadius: radius.full,
-          borderWidth: 1,
-          borderColor: colors.border,
-          backgroundColor: colors.surface,
-          paddingHorizontal: 20,
-          alignItems: 'center',
-          justifyContent: 'center',
-          shadowColor: SHADOW,
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
-          shadowOffset: { width: 0, height: 4 },
-        }}
-      >
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{label}</Text>
-      </Pressable>
-    </Animated.View>
-  );
-}

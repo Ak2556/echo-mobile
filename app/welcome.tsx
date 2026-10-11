@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { ChatCircleText, UsersThree, Target, ArrowRight, Waveform, Flame } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { DailyQuestionComposer } from '../components/daily/DailyQuestionComposer';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/ui/theme';
@@ -261,24 +262,7 @@ function RevealDoors({
         </Animated.View>
       ))}
 
-      <AnimatedPressable
-        onPress={onEnter}
-        haptic="medium"
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          backgroundColor: colors.accent,
-          borderRadius: 99,
-          paddingVertical: 15,
-          marginTop: 8,
-        }}
-        scaleValue={0.97}
-      >
-        <Text style={{ color: colors.onAccent, fontSize: 16, fontWeight: '800' }}>{t('welcome.enterEcho')}</Text>
-        <ArrowRight color={colors.onAccent} size={18} weight="bold" />
-      </AnimatedPressable>
+      <Button label={t('welcome.enterEcho')} onPress={onEnter} size="large" fullWidth rightIcon={ArrowRight} style={{ marginTop: 8 }} />
     </Animated.View>
   );
 }

@@ -7,6 +7,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/ui/theme';
 import { useAuth } from '../lib/auth';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { showToast } from '../components/ui/Toast';
 import {
   VerificationState, getVerificationState, randomPose, submitVerification,
@@ -123,9 +124,7 @@ export default function GetVerifiedScreen() {
           <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' }}>
             {rejectReason ?? 'The selfie couldn’t be confirmed.'}
           </Text>
-          <AnimatedPressable onPress={retry} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingHorizontal: 24, paddingVertical: 14, marginTop: 8 }}>
-            <Text style={{ color: colors.onAccent, fontWeight: '800', fontSize: 15 }}>{ttx("Try again")}</Text>
-          </AnimatedPressable>
+          <Button label={ttx("Try again")} onPress={retry} style={{ marginTop: 8, alignSelf: 'center' }} />
         </Center>
       )}
 
@@ -136,12 +135,8 @@ export default function GetVerifiedScreen() {
             {ttx("Pose:")} {pose.toLowerCase()}
           </Text>
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <AnimatedPressable onPress={takeSelfie} scaleValue={0.96} haptic="light" style={{ borderRadius: 16, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 22, paddingVertical: 14 }}>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{ttx("Retake")}</Text>
-            </AnimatedPressable>
-            <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingHorizontal: 26, paddingVertical: 14 }}>
-              <Text style={{ color: colors.onAccent, fontWeight: '800', fontSize: 15 }}>{ttx("Submit")}</Text>
-            </AnimatedPressable>
+            <Button label={ttx("Retake")} onPress={takeSelfie} variant="secondary" />
+            <Button label={ttx("Submit")} onPress={submit} />
           </View>
         </ScrollView>
       )}

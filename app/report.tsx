@@ -7,6 +7,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Warning } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { showToast } from '../components/ui/Toast';
 import { REPORT_REASONS as REASONS, URGENT_REPORT_REASONS } from '../lib/feed/reportReasons';
 import { submitRemoteReport } from '../lib/supabaseEchoApi';
@@ -14,7 +15,6 @@ import { buildDisclosure } from '../lib/e2ee/report';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { useTheme } from '../lib/ui/theme';
 import { ttx } from '../lib/i18n/i18n';
-import { ON_STATUS } from '../lib/ui/fixedColors';
 
 
 export default function ReportScreen() {
@@ -141,23 +141,7 @@ export default function ReportScreen() {
         )}
 
         <Animated.View entering={FadeInDown.delay(400).duration(220)}>
-          <AnimatedPressable
-            onPress={() => { void handleSubmit(); }}
-            disabled={submitting}
-            style={{
-              marginTop: 24,
-              paddingVertical: 16,
-              borderRadius: radius.lg,
-              alignItems: 'center',
-              backgroundColor: selectedReason && !submitting ? colors.danger : colors.surfaceHover,
-            }}
-            scaleValue={0.97}
-            haptic="heavy"
-          >
-            <Text style={{ color: ON_STATUS, fontWeight: '700', fontSize: fontSizes.body }}>
-              {submitting ? 'Submitting…' : 'Submit Report'}
-            </Text>
-          </AnimatedPressable>
+          <Button label={submitting ? 'Submitting…' : 'Submit Report'} onPress={() => { void handleSubmit(); }} variant={selectedReason ? 'danger' : 'secondary'} size="large" fullWidth loading={submitting} style={{ marginTop: 24 }} />
         </Animated.View>
       </ScrollView>
     </ResponsiveScreen>
