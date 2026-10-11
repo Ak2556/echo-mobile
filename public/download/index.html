@@ -1813,6 +1813,82 @@
   color: var(--ink-faint);
 }
 
+/* ---- The Unsent -------------------------------------------------------------
+   One card that walks the visitor through a message they have been meaning to
+   send: who, what, the preview Echo shows first. Everything is real DOM and
+   real buttons; nothing is stored or sent. */
+.unsent-card {
+  margin-top: 1.4rem; padding: clamp(1.1rem, 4vw, 1.9rem);
+  border: 1px solid var(--line); border-radius: 22px;
+  background: color-mix(in srgb, var(--accent-wash) 40%, transparent);
+}
+.unsent-h {
+  font-family: Fraunces, Georgia, serif; font-weight: 600;
+  font-size: clamp(1.45rem, 2.9vw, 2.15rem); line-height: 1.22;
+  letter-spacing: -.01em; color: var(--ink); margin: 0 0 .5rem; text-wrap: balance;
+}
+.unsent-h:focus { outline: none; }
+/* display:flex on the groups below would otherwise beat the hidden attribute. */
+.unsent-card [hidden] { display: none !important; }
+.unsent-sub { color: var(--ink-soft); margin: 0 0 1.2rem; font-size: var(--step--1); }
+.unsent-who, .unsent-msgs { display: flex; flex-wrap: wrap; gap: .55rem; }
+.unsent-who button, .unsent-msgs button {
+  font: inherit; font-size: var(--step-0); color: var(--ink); text-align: start;
+  background: var(--glass-tint); border: 1px solid var(--glass-edge);
+  border-radius: 999px; padding: .7rem 1.1rem; min-height: 44px; cursor: pointer;
+  transition: color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease), transform .2s var(--ease);
+}
+.unsent-msgs { flex-direction: column; }
+.unsent-msgs button { border-radius: 16px; width: 100%; }
+.unsent-who button:hover, .unsent-msgs button:hover { border-color: var(--accent); background: var(--accent-wash); }
+.unsent-who button:active, .unsent-msgs button:active { transform: scale(.985); }
+.unsent-card button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.unsent-say { margin-top: 1.1rem; display: flex; flex-direction: column; align-items: flex-start; gap: .6rem; }
+.unsent-or { color: var(--ink-soft); font-size: var(--step--1); margin: 0; }
+.unsent-mic {
+  display: inline-flex; align-items: center; gap: .6rem; font: inherit; font-weight: 600;
+  color: var(--on-accent); background: var(--accent); border: 0; border-radius: 999px;
+  padding: .8rem 1.4rem; min-height: 48px; cursor: pointer; touch-action: none; user-select: none;
+}
+.unsent-mic svg { width: 1.2em; height: 1.2em; }
+.unsent-mic[data-live="on"] { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 30%, transparent); }
+.unsent-heard { color: var(--ink-soft); font-size: var(--step--1); margin: 0; min-height: 1.3em; }
+.unsent-link {
+  font: inherit; font-size: var(--step--1); color: var(--ink-soft); background: none; border: 0;
+  padding: .6rem 0; min-height: 44px; cursor: pointer; text-decoration: underline; text-underline-offset: .22em;
+}
+.unsent-link:hover { color: var(--ink); }
+.unsent-what > .unsent-link { margin-top: .6rem; }
+.unsent-phone {
+  max-width: 24rem; padding: 1rem 1.1rem 1.2rem; border-radius: 22px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent); border: 1px solid var(--line);
+}
+.unsent-to {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--step--2);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 .8rem;
+}
+.unsent-bubble {
+  display: inline-block; max-width: 100%; margin: 0; padding: .75rem 1rem; border-radius: 18px 18px 4px 18px;
+  background: var(--accent); color: var(--on-accent); font-size: var(--step-0); line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.unsent-note { color: var(--ink-soft); font-size: var(--step--1); margin: .9rem 0 0; max-width: 34rem; }
+.unsent-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1.2rem; margin-top: .6rem; }
+.unsent-yes {
+  font: inherit; font-weight: 600; color: var(--on-accent); background: var(--accent); border: 0;
+  border-radius: 999px; padding: .75rem 1.4rem; min-height: 48px; cursor: pointer;
+}
+.unsent-type-intro { color: var(--ink-soft); margin: 0 0 1rem; max-width: 34rem; }
+.origin-end { margin-top: clamp(2.2rem, 6vw, 3.4rem); }
+.unsent-card[data-step="who"] ~ .origin-end,
+.unsent-card[data-step="what"] ~ .origin-end,
+.unsent-card[data-step="preview"] ~ .origin-end { display: none; }
+/* Without script the card never gets a data-step, so the story shows as it always did. */
+@media (prefers-reduced-motion: reduce) {
+  .unsent-who button, .unsent-msgs button { transition: none; }
+  .unsent-who button:active, .unsent-msgs button:active { transform: none; }
+}
+
 .try-round {
   color: var(--ink-faint); letter-spacing: .14em; margin-right: .55rem;
 }
@@ -1948,22 +2024,67 @@
 </header>
 
 
-<section class="stage dark origin" id="origin">
+<section class="stage dark origin unsent" id="origin" aria-labelledby="unsentH">
   <div class="wrap">
     <figure class="origin-fig">
-      <p class="eyebrow rv">Why this exists</p>
-      <blockquote class="origin-quote rv d1">
-        <p>I watched my mother start a message, stop, and delete it. Not because
-        she had nothing to say &mdash; because saying it meant fighting a keyboard
-        built for a language that isn&rsquo;t hers.</p>
-        <p>She had plenty to say. She said it out loud, to me, in the next
-        breath.</p>
-      </blockquote>
-      <p class="origin-punch rv d2">That is the whole product.</p>
-      <figcaption class="origin-by rv d3">
-        <span class="origin-name">Akash Thakur</span>
-        <span class="origin-role">built Echo &middot; Hoshiarpur, Punjab</span>
-      </figcaption>
+      <p class="eyebrow rv" id="unsentEyebrow">Why this exists</p>
+
+      <!-- The Unsent. The story used to be read; now the visitor does the thing it is
+           about, and the founder's line is the ending. Nothing here is stored or sent:
+           the page says so, and the code has no network call. -->
+      <!-- HI: native review needed (all Hindi in unsent.js) -->
+      <div class="unsent-card rv d1" id="unsent" data-step="who">
+        <h2 class="unsent-h" id="unsentH" tabindex="-1">Is there something you have been meaning to say?</h2>
+        <p class="unsent-sub" id="unsentSub">Pick who it is for. Nothing here is saved or sent.</p>
+
+        <div class="unsent-who" id="unsentWho" role="group" aria-label="Who is it for"></div>
+        <button type="button" class="unsent-link" id="unsentSkip">Skip this</button>
+
+        <div class="unsent-what" id="unsentWhat" hidden>
+          <div class="unsent-msgs" id="unsentMsgs" role="group"></div>
+          <div class="unsent-say" id="unsentSay" hidden>
+            <p class="unsent-or" id="unsentOr"></p>
+            <button type="button" class="unsent-mic" id="unsentMic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+              <span id="unsentMicLabel">Hold to speak</span>
+            </button>
+            <p class="unsent-heard" id="unsentHeard" aria-live="polite"></p>
+          </div>
+          <button type="button" class="unsent-link" id="unsentBack">Pick someone else</button>
+        </div>
+
+        <div class="unsent-preview" id="unsentPreview" hidden>
+          <div class="unsent-phone" aria-hidden="false">
+            <p class="unsent-to" id="unsentTo"></p>
+            <p class="unsent-bubble" id="unsentBubble"></p>
+          </div>
+          <p class="unsent-note" id="unsentNote"></p>
+          <div class="unsent-actions">
+            <button type="button" class="unsent-yes" id="unsentYes"></button>
+            <button type="button" class="unsent-link" id="unsentAgain"></button>
+          </div>
+        </div>
+
+        <div class="unsent-after" id="unsentAfter" hidden>
+          <p class="unsent-type-intro" id="unsentTypeIntro"></p>
+          <button type="button" class="unsent-yes" id="unsentType"></button>
+        </div>
+      </div>
+
+      <div class="origin-end" id="originEnd">
+        <blockquote class="origin-quote rv d1">
+          <p>I watched my mother start a message, stop, and delete it. Not because
+          she had nothing to say &mdash; because saying it meant fighting a keyboard
+          built for a language that isn&rsquo;t hers.</p>
+          <p>She had plenty to say. She said it out loud, to me, in the next
+          breath.</p>
+        </blockquote>
+        <p class="origin-punch rv d2">That is the whole product.</p>
+        <figcaption class="origin-by rv d3">
+          <span class="origin-name">Akash Thakur</span>
+          <span class="origin-role">built Echo &middot; Hoshiarpur, Punjab</span>
+        </figcaption>
+      </div>
     </figure>
   </div>
 </section>
@@ -3138,9 +3259,193 @@
   }
 
   skipEl.addEventListener('click', () => endRound(true));
+
+  // The Unsent hands over the sentence the visitor just previewed. Only if every
+  // character is one the race can press: a target with a key that does not exist
+  // would strand them, so anything else leaves the default sentence alone.
+  document.addEventListener('echo:unsent', (ev) => {
+    const d = (ev && ev.detail) || {};
+    const has = (text, rows) => text && [...text].every(ch => ch === ' ' || rows.some(row => row.includes(ch)));
+    if (!has(d.en, QWERTY) || !has(d.hi, DEVANAGARI)) return;
+    ROUNDS[0].target = d.en;
+    ROUNDS[1].target = d.hi;
+    ROUNDS[1].gloss = '\u201c' + d.en + '\u201d \u2014 the same sentence';
+    r = 0; finished = false; times.length = 0;
+    clearInterval(tick); tick = null;
+    skipEl.hidden = false; doneEl.hidden = true; bridgeEl.hidden = true;
+    loadRound(0);
+  });
+
   loadRound(0);
 })();
 </script>
+<script type="module">
+/* The Unsent: the "Why this exists" experience.
+ *
+ * Steps: who -> what -> preview -> after. The visitor picks someone, picks a ready
+ * sentence or holds the button and says their own, sees it as the preview Echo shows
+ * before anything is sent, and is then handed the keyboard race below with that same
+ * sentence. No network, no storage: the sentence never leaves this page.
+ *
+ * Copy, sentences and the pure helpers live in /download/unsent.js, which has tests.
+ */
+import { PEOPLE, STRINGS, messagesFor, personLabel, raceTarget, formatSeconds, uiLang } from '/download/unsent.js';
+
+const root = document.getElementById('unsent');
+if (root) {
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    eyebrow: $('unsentEyebrow'), h: $('unsentH'), sub: $('unsentSub'), who: $('unsentWho'), skip: $('unsentSkip'),
+    what: $('unsentWhat'), msgs: $('unsentMsgs'), say: $('unsentSay'), or: $('unsentOr'),
+    mic: $('unsentMic'), micLabel: $('unsentMicLabel'), heard: $('unsentHeard'), back: $('unsentBack'),
+    preview: $('unsentPreview'), to: $('unsentTo'), bubble: $('unsentBubble'), note: $('unsentNote'),
+    yes: $('unsentYes'), again: $('unsentAgain'),
+    after: $('unsentAfter'), typeIntro: $('unsentTypeIntro'), typeBtn: $('unsentType'),
+  };
+  const hero = document.querySelector('.hero-in');
+  const reduced = () => document.body.classList.contains('reduced');
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  const state = { step: 'who', person: null, message: null, spokenMs: null, spokenText: '' };
+  const L = () => uiLang(hero ? hero.lang : 'en');
+  const T = () => STRINGS[L()];
+
+  function show(step) {
+    state.step = step;
+    root.dataset.step = step;
+    el.who.hidden = step !== 'who';
+    el.what.hidden = step !== 'what';
+    el.preview.hidden = step !== 'preview';
+    el.after.hidden = step !== 'after';
+    render();
+  }
+
+  function focusHeading() {
+    el.h.focus({ preventScroll: true });
+    if (!reduced()) el.h.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function render() {
+    const t = T(), lang = L();
+    root.lang = lang;
+    el.eyebrow.textContent = t.eyebrow;
+    el.h.textContent = state.step === 'who' ? t.whoH
+      : state.step === 'what' ? t.whatH(personLabel(state.person, lang))
+      : state.step === 'preview' ? t.previewH
+      : (state.spokenMs != null ? t.tookSpoken(formatSeconds(state.spokenMs)) : t.tookTapped);
+    el.sub.hidden = state.step !== 'who';
+    el.sub.textContent = t.whoSub;
+    el.skip.hidden = state.step !== 'who';
+    el.skip.textContent = t.skip;
+
+    if (state.step === 'who') {
+      el.who.textContent = '';
+      for (const p of PEOPLE) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = p[lang];
+        b.addEventListener('click', () => { state.person = p.id; state.spokenMs = null; state.spokenText = ''; show('what'); focusHeading(); });
+        el.who.appendChild(b);
+      }
+    }
+
+    if (state.step === 'what') {
+      el.msgs.textContent = '';
+      for (const m of messagesFor(state.person)) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = m[lang]; b.lang = lang;
+        b.addEventListener('click', () => { state.message = m; state.spokenMs = null; state.spokenText = ''; show('preview'); focusHeading(); });
+        el.msgs.appendChild(b);
+      }
+      el.say.hidden = !SR;
+      el.or.textContent = t.orSay;
+      el.micLabel.textContent = t.hold;
+      el.back.textContent = t.back;
+    }
+
+    if (state.step === 'preview') {
+      el.to.textContent = t.toLabel(personLabel(state.person, lang));
+      el.bubble.textContent = state.spokenText || (state.message ? state.message[lang] : '');
+      el.bubble.lang = lang;
+      el.note.textContent = t.previewNote;
+      el.yes.textContent = t.yes;
+      el.again.textContent = t.again;
+    }
+
+    if (state.step === 'after') {
+      el.typeIntro.textContent = t.typeIntro;
+      el.typeBtn.textContent = t.typeBtn;
+    }
+  }
+
+  // The preview, then the ending. "That is what I meant" hands the same sentence to the
+  // keyboard race below, so the cost of typing it is the cost of *their* sentence.
+  el.yes.addEventListener('click', () => {
+    if (state.message) {
+      document.dispatchEvent(new CustomEvent('echo:unsent', { detail: {
+        en: raceTarget(state.message.en, 'en'), hi: raceTarget(state.message.hi, 'hi'),
+      } }));
+    }
+    show('after');
+    focusHeading();
+  });
+  el.skip.addEventListener('click', () => { state.person = null; state.message = null; show('after'); focusHeading(); });
+  el.again.addEventListener('click', () => { show('what'); focusHeading(); });
+  el.back.addEventListener('click', () => { state.person = null; show('who'); focusHeading(); });
+  el.typeBtn.addEventListener('click', () => {
+    const target = document.getElementById('problem');
+    if (target) target.scrollIntoView({ block: 'start', behavior: reduced() ? 'auto' : 'smooth' });
+  });
+
+  // ---- say your own: hold the button. The browser's own speech engine; nothing is uploaded by us.
+  let rec = null, t0 = 0, heardText = '', live = false;
+  function endHold() {
+    if (!rec || !live) return;
+    live = false;
+    el.mic.dataset.live = 'off';
+    try { rec.stop(); } catch (e) { /* already stopped */ }
+    state.spokenMs = performance.now() - t0;
+    el.micLabel.textContent = T().hold;
+  }
+  function beginHold(ev) {
+    if (!SR || live) return;
+    ev && ev.preventDefault && ev.preventDefault();
+    heardText = ''; el.heard.textContent = '';
+    rec = new SR();
+    rec.lang = L() === 'hi' ? 'hi-IN' : 'en-IN';
+    rec.interimResults = false; rec.maxAlternatives = 1;
+    rec.onresult = (e) => { heardText = (e.results[0] && e.results[0][0] && e.results[0][0].transcript || '').trim(); };
+    rec.onerror = (e) => {
+      live = false; el.mic.dataset.live = 'off'; el.micLabel.textContent = T().hold;
+      el.heard.textContent = (e.error === 'not-allowed' || e.error === 'service-not-allowed') ? T().denied : T().nothing;
+    };
+    rec.onend = () => {
+      live = false; el.mic.dataset.live = 'off'; el.micLabel.textContent = T().hold;
+      if (heardText) {
+        state.spokenText = heardText; state.message = null;
+        el.heard.textContent = T().heard + ' ' + heardText;
+        show('preview'); focusHeading();
+      } else if (!el.heard.textContent) {
+        el.heard.textContent = T().nothing;
+      }
+    };
+    try {
+      t0 = performance.now(); live = true;
+      el.mic.dataset.live = 'on'; el.micLabel.textContent = T().listening;
+      rec.start();
+    } catch (e) { live = false; el.mic.dataset.live = 'off'; el.heard.textContent = T().nothing; }
+  }
+  el.mic.addEventListener('pointerdown', beginHold);
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => el.mic.addEventListener(n, endHold));
+  el.mic.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); beginHold(); } });
+  el.mic.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') endHold(); });
+
+  // The hero chooses the page's language; follow it without losing the visitor's place.
+  if (hero) new MutationObserver(render).observe(hero, { attributes: true, attributeFilter: ['lang'] });
+
+  show('who');
+}
+</script>
+
 <script>
 /* Language switch for the build section.
  *
