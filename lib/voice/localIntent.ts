@@ -1,5 +1,6 @@
 import type { VoiceResult } from './types';
 import { DESTINATIONS } from './destinations';
+import { matchReminder } from './reminderIntent';
 
 /**
  * Matching a spoken command on the device, without asking a server.
@@ -167,6 +168,13 @@ export function matchLocalIntent(transcript: string, locale = ''): VoiceResult |
   const dictated = matchDictation(transcript);
   if (dictated) {
     return { transcript, locale, intent: 'dictate', args: { text: dictated.text }, reply: 'Ready to send' };
+  }
+
+  // A reminder is long by nature and has an explicit prefix, like dictation. The whole
+  // sentence goes to Tasks, which reads the day and time out of it and asks first.
+  const reminder = matchReminder(transcript);
+  if (reminder) {
+    return { transcript, locale, intent: 'open_mini_app', args: { app: 'tasks', action: 'add', value: reminder.text }, reply: 'Reminder' };
   }
 
   const text = normalise(transcript);

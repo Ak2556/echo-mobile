@@ -264,6 +264,20 @@ function writeIntentModule() {
   }
   const prefixes = src.slice(src.indexOf('[', pStart), pEnd + 1);
 
+  // The reminder patterns, taken from the app's own module so the page matches them exactly.
+  const reminderSrc = readFileSync(join(repoRoot, 'lib', 'voice', 'reminderIntent.ts'), 'utf8');
+  const reminderRegex = (name) => {
+    const m = new RegExp('const ' + name + ' = (/.*/[a-z]*);').exec(reminderSrc);
+    if (!m) {
+      console.error('prepare-web-assets: could not find ' + name + ' in lib/voice/reminderIntent.ts');
+      process.exit(1);
+    }
+    return m[1];
+  };
+  const reminderPrefix = reminderRegex('PREFIX');
+  const reminderRoman = reminderRegex('ROMAN_SUFFIX');
+  const reminderDeva = reminderRegex('DEVANAGARI_SUFFIX');
+
   const maxWords = /const MAX_WORDS = (\d+);/.exec(src)?.[1];
   if (!maxWords) {
     console.error('prepare-web-assets: could not find MAX_WORDS in lib/voice/localIntent.ts');
@@ -300,6 +314,20 @@ function matchDictation(transcript) {
   return null;
 }
 
+const REMINDER_PREFIX = ${reminderPrefix};
+const REMINDER_ROMAN_SUFFIX = ${reminderRoman};
+const REMINDER_DEVANAGARI_SUFFIX = ${reminderDeva};
+
+/** "Remind me to ...", matched by an explicit prefix or suffix, before the length gate. */
+function matchReminder(transcript) {
+  const raw = transcript.trim().replace(/[.!?\u0964]+$/, '');
+  for (const re of [REMINDER_PREFIX, REMINDER_ROMAN_SUFFIX, REMINDER_DEVANAGARI_SUFFIX]) {
+    const m = raw.match(re);
+    if (m && m[1].trim().length > 1) return { text: raw };
+  }
+  return null;
+}
+
 /** Strip punctuation and collapse whitespace, preserving Devanagari. */
 export function normalise(input) {
   return input
@@ -321,6 +349,11 @@ export function matchLocalIntent(transcript, locale = '') {
   const dictated = matchDictation(transcript);
   if (dictated) {
     return { transcript, locale, intent: 'dictate', args: { text: dictated.text }, reply: 'Ready to send' };
+  }
+
+  const reminder = matchReminder(transcript);
+  if (reminder) {
+    return { transcript, locale, intent: 'open_mini_app', args: { app: 'tasks', action: 'add', value: reminder.text }, reply: 'Reminder' };
   }
 
   const text = normalise(transcript);

@@ -15,6 +15,8 @@ import {
   todayTaskDate, tomorrowTaskDate,
 } from '../../lib/mini-apps/tasks';
 import { scheduleTaskReminder, cancelTaskReminder } from '../../lib/mini-apps/taskReminders';
+import { parseVoiceTask, type AlarmTime, type VoiceTask } from '../../lib/mini-apps/voiceTask';
+import { ActionSheet } from '../../components/common/ActionSheet';
 import { tap } from '../../lib/ui/haptics';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
 import { DateTimePicker } from '../../components/ui/DateTimePicker';
@@ -55,6 +57,8 @@ export default function TasksScreen() {
   const [filter, setFilter] = useState<Filter>('today');
   const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
   const didVoiceRef = React.useRef(false);
+  // A spoken reminder waits here for a yes: it is shown, then set, never set silently.
+  const [pendingVoice, setPendingVoice] = useState<VoiceTask | null>(null);
   
   // Detail Modal State
   const [detailTask, setDetailTask] = useState<TaskItem | null>(null);
@@ -71,11 +75,18 @@ export default function TasksScreen() {
       const text = typeof vValue === 'string' ? vValue.trim() : '';
       if (!didVoiceRef.current && a === 'add' && text) {
         didVoiceRef.current = true;
-        const now = new Date().toISOString();
-        const base: TaskItem = { id: `${Date.now()}`, title: text, done: false, priority: 'normal', due: todayTaskDate(), createdAt: now, updatedAt: now };
-        const next = [base, ...loaded];
-        setTasks(next);
-        void saveTasks(next);
+        const parsed = parseVoiceTask(text);
+        if (parsed.alarmTime) {
+          // "...at seven tomorrow" is a reminder: show it first.
+          setTasks(loaded);
+          setPendingVoice(parsed);
+        } else {
+          const now = new Date().toISOString();
+          const base: TaskItem = { id: `${Date.now()}`, title: parsed.title, done: false, priority: 'normal', due: parsed.due, createdAt: now, updatedAt: now };
+          const next = [base, ...loaded];
+          setTasks(next);
+          void saveTasks(next);
+        }
       } else {
         setTasks(loaded);
       }
@@ -96,6 +107,21 @@ export default function TasksScreen() {
   const update = (next: TaskItem[]) => {
     setTasks(next);
     void saveTasks(next);
+  };
+
+  const dayLabel = (due: string) =>
+    due === todayTaskDate() ? tt('Today') : due === tomorrowTaskDate() ? tt('Tomorrow') : due;
+
+  const commitVoiceReminder = async (spoken: VoiceTask, alarm: AlarmTime) => {
+    setPendingVoice(null);
+    const now = new Date().toISOString();
+    const base: TaskItem = {
+      id: `${Date.now()}`, title: spoken.title, done: false, priority: 'normal',
+      due: spoken.due, alarmTime: alarm, createdAt: now, updatedAt: now,
+    };
+    const reminderId = (await scheduleTaskReminder(base)) ?? undefined;
+    update([{ ...base, reminderId }, ...tasks]);
+    showToast(`${tt('Reminder set for')} ${dayLabel(spoken.due)}, ${formatAlarmTime(alarm)}`, '');
   };
 
   const add = async () => {
@@ -597,7 +623,28 @@ export default function TasksScreen() {
           </KeyboardAvoidingView>
         </View>
       )}
+
+      {/* A spoken reminder is shown here first. An unsaid am or pm is offered both ways. */}
+      <ActionSheet
+        visible={!!pendingVoice}
+        onClose={() => setPendingVoice(null)}
+        title={tt('Set this reminder?')}
+        subtitle={pendingVoice && pendingVoice.alarmTime
+          ? `${pendingVoice.title} · ${dayLabel(pendingVoice.due)}, ${formatAlarmTime(pendingVoice.alarmTime)}`
+          : undefined}
+        actions={pendingVoice && pendingVoice.alarmTime ? [
+          {
+            key: 'set',
+            label: `${tt('Set reminder')} · ${formatAlarmTime(pendingVoice.alarmTime)}`,
+            onPress: () => { void commitVoiceReminder(pendingVoice, pendingVoice.alarmTime as AlarmTime); },
+          },
+          ...(pendingVoice.alternative ? [{
+            key: 'other',
+            label: `${tt('Make it')} ${formatAlarmTime(pendingVoice.alternative)}`,
+            onPress: () => { void commitVoiceReminder(pendingVoice, pendingVoice.alternative as AlarmTime); },
+          }] : []),
+        ] : []}
+      />
     </View>
   );
 }
-

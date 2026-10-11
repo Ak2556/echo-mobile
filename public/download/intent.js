@@ -168,6 +168,20 @@ function matchDictation(transcript) {
   return null;
 }
 
+const REMINDER_PREFIX = /^(?:please\s+)?(?:remind me|set (?:a )?reminder)(?:\s+(?:to|that|for|about))?\s+(.+)$/i;
+const REMINDER_ROMAN_SUFFIX = /^(?:mujhe\s+)?(.+?)\s+yaad\s+dila(?:na|o|do|dena)$/i;
+const REMINDER_DEVANAGARI_SUFFIX = /^(?:मुझे\s+)?(.+?)\s+याद\s+दिला(?:ना|ओ|दो|देना)$/;
+
+/** "Remind me to ...", matched by an explicit prefix or suffix, before the length gate. */
+function matchReminder(transcript) {
+  const raw = transcript.trim().replace(/[.!?।]+$/, '');
+  for (const re of [REMINDER_PREFIX, REMINDER_ROMAN_SUFFIX, REMINDER_DEVANAGARI_SUFFIX]) {
+    const m = raw.match(re);
+    if (m && m[1].trim().length > 1) return { text: raw };
+  }
+  return null;
+}
+
 /** Strip punctuation and collapse whitespace, preserving Devanagari. */
 export function normalise(input) {
   return input
@@ -189,6 +203,11 @@ export function matchLocalIntent(transcript, locale = '') {
   const dictated = matchDictation(transcript);
   if (dictated) {
     return { transcript, locale, intent: 'dictate', args: { text: dictated.text }, reply: 'Ready to send' };
+  }
+
+  const reminder = matchReminder(transcript);
+  if (reminder) {
+    return { transcript, locale, intent: 'open_mini_app', args: { app: 'tasks', action: 'add', value: reminder.text }, reply: 'Reminder' };
   }
 
   const text = normalise(transcript);

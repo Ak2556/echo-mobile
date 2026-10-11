@@ -1163,4 +1163,11 @@ export const HI_BULK: Record<string, string> = {
   "You're all caught up": 'आप सब देख चुके हैं',
   'That is everything for now. There is nothing hiding below.': 'अभी के लिए बस इतना ही। नीचे और कुछ छिपा नहीं है।',
   "Today's question": 'आज का सवाल',
+  // Spoken reminders. HI: native review needed.
+  'Set this reminder?': 'यह रिमाइंडर लगाएँ?',
+  'Set reminder': 'रिमाइंडर लगाएँ',
+  'Make it': 'इसे करें',
+  'Reminder set for': 'रिमाइंडर लगा:',
+  'Tomorrow': 'कल',
+  'Today': 'आज',
 };
