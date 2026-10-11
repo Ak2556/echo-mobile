@@ -7,12 +7,14 @@ import Animated, { Extrapolation, FadeIn, FadeInDown, interpolate, useAnimatedPr
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Pulse, Target, MagnifyingGlass, CaretRight, X } from 'phosphor-react-native';
+import { Pulse, Target, MagnifyingGlass, CaretRight } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { getTodayProductivity, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/core/localSearch';
 import { formatMoney } from '../../lib/mini-apps/expenses';
 import { MOTION } from '../../lib/ui/motion';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
+import { TabHeader } from '../../components/ui/TabHeader';
+import { SearchBar } from '../../components/feed/SearchBar';
 import { TARGET_CATEGORIES, getTargetCategory } from '../../lib/retention/targetCategories';
 import { useAppStore } from '../../store/useAppStore';
 import { MINI_APP_CATALOG, FLAGSHIP_MINI_APPS, isFlagshipMiniApp, type MiniAppCatalogItem } from '../../lib/mini-apps/miniAppCatalog';
@@ -22,7 +24,6 @@ import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { WARM, STAT } from '../../lib/ui/fixedColors';
 
-const PAD = 20;
 const GAP = 12;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -207,6 +208,7 @@ export default function AppsScreen() {
   // 14pt subtitle near 19, and 8 of bottom padding. The desktop title is 40pt,
   // so it needs correspondingly more.
   const HEADER_HEIGHT = insets.top + (layout.isPhone ? 88 : 98);
+  const PAD = layout.gutter;
   const contentMaxWidth = Math.min(windowWidth, layout.isDesktop ? 980 : layout.wideMaxWidth);
   const columns = layout.isDesktop ? 6 : layout.isTablet ? 4 : 2;
   const cardWidth = Math.floor((contentMaxWidth - PAD * 2 - GAP * (columns - 1)) / columns);
@@ -321,26 +323,8 @@ export default function AppsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Unified search — tools + your content in one box */}
-        <View style={{
-          flexDirection: 'row', alignItems: 'center', gap: 10,
-          borderRadius: 16, paddingHorizontal: 14,
-          backgroundColor: colors.surfaceHover,
-          borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
-        }}>
-          <MagnifyingGlass color={colors.textMuted} size={18} />
-          <TextInput
-            value={query}
-            onChangeText={runSearch}
-            placeholder={ttx("Search tools, notes, habits…")}
-            placeholderTextColor={colors.textMuted}
-            style={{ flex: 1, color: colors.text, fontSize: 15, paddingVertical: 13 }}
-            returnKeyType="search"
-          />
-          {searching ? (
-            <Pressable onPress={() => runSearch('')} hitSlop={8}><X color={colors.textMuted} size={16} /></Pressable>
-          ) : null}
-        </View>
+        {/* Unified search: tools and your content in one box, the same field Explore uses. */}
+        <SearchBar value={query} onChangeText={runSearch} placeholder={ttx("Search tools, notes, habits…")} />
 
         {searching ? (
           /* ── Search results ── */
@@ -479,8 +463,7 @@ export default function AppsScreen() {
         {useBlur && <AnimatedBlurView animatedProps={blurAnimatedProps} tint={tint} style={StyleSheet.absoluteFill} />}
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }, headerBgStyle]} />
         <View style={{ width: '100%', maxWidth: contentMaxWidth, alignSelf: 'center', paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
-          <Text style={{ color: colors.text, fontSize: layout.isPhone ? 34 : 40, ...font.displayBlack, letterSpacing: -0.5 }}>{ttx("Echo Tools")}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 2 }}>{APPS.length} {ttx("connected essentials")}</Text>
+          <TabHeader title={ttx("Tools")} subtitle={`${APPS.length} ${ttx("connected essentials")}`} />
         </View>
         <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: 'transparent' }, headerBorderStyle]} />
       </View>
