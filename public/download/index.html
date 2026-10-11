@@ -95,6 +95,7 @@
   var scope = document.getElementById('heroScope');
   var label = document.getElementById('micLabel');
   var hint = document.getElementById('micHint');
+  var betaCta = document.getElementById('heroBeta');
   if (!hero || !h1) return;
 
   // Urdu is an Indian language that runs right to left. Treating RTL as an
@@ -103,70 +104,24 @@
   var RTL = new Set(['ur', 'ar']);
 
   var S = {
-    en: { h1: ["Say it.", "It’s posted."],
-          tag: "In the language you actually think in.",
-          scope: "26 languages. The whole app, not just the posts.",
+    en: { h1: ["Say it.", "Done."],
+          tag: "A voice-first social app. Speak in Hindi, English or Hinglish. See it before it posts.",
+          scope: "Hindi and English, fully. More languages in beta.",
+          beta: "Help us test Echo for 14 days.",
           label: "Hold to speak", hint: "Hold, say one sentence, let go." },
-    hi: { h1: ["बोलिए।", "पोस्ट हो गया।"],
-          tag: "उसी भाषा में, जिसमें आप सोचते हैं।",
-          scope: "26 भाषाएँ। पूरा ऐप, सिर्फ़ पोस्ट नहीं।",
+    /* HI: native review needed */
+    hi: { h1: ["बोलिए।", "हो गया।"],
+          tag: "हिंदी, English या Hinglish में बोलिए। पोस्ट होने से पहले आपको दिखेगा।",
+          scope: "हिंदी और English, पूरी तरह। और भाषाएँ बीटा में।",
+          beta: "14 दिन Echo टेस्ट करने में मदद कीजिए।",
           label: "बोलने के लिए दबाए रखें", hint: "दबाए रखें, एक वाक्य बोलें, छोड़ दें।" },
-    bn: { h1: ["বলুন।", "পোস্ট হয়ে গেছে।"],
-          tag: "যে ভাষায় আপনি সত্যিই ভাবেন, সেই ভাষায়।",
-          scope: "২৬টি ভাষা। শুধু পোস্ট নয়, পুরো অ্যাপ।",
-          label: "বলতে চেপে ধরুন", hint: "চেপে ধরুন, একটি বাক্য বলুন, ছেড়ে দিন।" },
-    te: { h1: ["చెప్పండి.", "పోస్ట్ అయ్యింది."],
-          tag: "మీరు నిజంగా ఆలోచించే భాషలో.",
-          scope: "26 భాషలు. పోస్ట్‌లే కాదు, యాప్ మొత్తం.",
-          label: "మాట్లాడటానికి నొక్కి పట్టుకోండి", hint: "నొక్కి పట్టుకోండి, ఒక వాక్యం చెప్పండి, వదిలేయండి." },
-    mr: { h1: ["बोला.", "पोस्ट झाले."],
-          tag: "तुम्ही खरोखर ज्या भाषेत विचार करता, त्या भाषेत.",
-          scope: "26 भाषा. फक्त पोस्ट नाही, संपूर्ण ॲप.",
-          label: "बोलण्यासाठी दाबून धरा", hint: "दाबून धरा, एक वाक्य बोला, सोडा." },
-    ta: { h1: ["சொல்லுங்கள்.", "பதிவாகிவிட்டது."],
-          tag: "நீங்கள் உண்மையில் சிந்திக்கும் மொழியில்.",
-          scope: "26 மொழிகள். பதிவுகள் மட்டுமல்ல, முழு செயலியும்.",
-          label: "பேச அழுத்திப் பிடிக்கவும்", hint: "அழுத்திப் பிடித்து, ஒரு வாக்கியம் சொல்லி, விடுங்கள்." },
-    ur: { h1: ["کہیے۔", "پوسٹ ہو گیا۔"],
-          tag: "اُسی زبان میں جس میں آپ واقعی سوچتے ہیں۔",
-          scope: "۲۶ زبانیں۔ صرف پوسٹس نہیں، پوری ایپ۔",
-          label: "بولنے کے لیے دبائے رکھیں", hint: "دبائے رکھیں، ایک جملہ بولیں، چھوڑ دیں۔" },
-    gu: { h1: ["બોલો.", "પોસ્ટ થઈ ગયું."],
-          tag: "તમે ખરેખર જે ભાષામાં વિચારો છો, એ જ ભાષામાં.",
-          scope: "26 ભાષાઓ. ફક્ત પોસ્ટ નહીં, આખી ઍપ.",
-          label: "બોલવા માટે દબાવી રાખો", hint: "દબાવી રાખો, એક વાક્ય બોલો, છોડી દો." },
-    kn: { h1: ["ಹೇಳಿ.", "ಪೋಸ್ಟ್ ಆಗಿದೆ."],
-          tag: "ನೀವು ನಿಜವಾಗಿ ಯೋಚಿಸುವ ಭಾಷೆಯಲ್ಲಿ.",
-          scope: "26 ಭಾಷೆಗಳು. ಪೋಸ್ಟ್‌ಗಳಷ್ಟೇ ಅಲ್ಲ, ಇಡೀ ಆ್ಯಪ್.",
-          label: "ಮಾತನಾಡಲು ಒತ್ತಿ ಹಿಡಿಯಿರಿ", hint: "ಒತ್ತಿ ಹಿಡಿಯಿರಿ, ಒಂದು ವಾಕ್ಯ ಹೇಳಿ, ಬಿಡಿ." },
-    ml: { h1: ["പറയൂ.", "പോസ്റ്റ് ആയി."],
-          tag: "നിങ്ങൾ ശരിക്കും ചിന്തിക്കുന്ന ഭാഷയിൽ.",
-          scope: "26 ഭാഷകൾ. പോസ്റ്റുകൾ മാത്രമല്ല, ആപ്പ് മുഴുവൻ.",
-          label: "സംസാരിക്കാൻ അമർത്തിപ്പിടിക്കുക", hint: "അമർത്തിപ്പിടിക്കുക, ഒരു വാക്യം പറയുക, വിടുക." },
-    pa: { h1: ["ਬੋਲੋ।", "ਪੋਸਟ ਹੋ ਗਿਆ।"],
-          tag: "ਉਸੇ ਬੋਲੀ ਵਿੱਚ, ਜਿਸ ਵਿੱਚ ਤੁਸੀਂ ਸੋਚਦੇ ਹੋ।",
-          scope: "26 ਬੋਲੀਆਂ। ਪੂਰੀ ਐਪ, ਸਿਰਫ਼ ਪੋਸਟਾਂ ਨਹੀਂ।",
-          label: "ਬੋਲਣ ਲਈ ਦਬਾਈ ਰੱਖੋ", hint: "ਦਬਾਈ ਰੱਖੋ, ਇੱਕ ਵਾਕ ਬੋਲੋ, ਛੱਡ ਦਿਓ।" },
-    or: { h1: ["କୁହନ୍ତୁ।", "ପୋଷ୍ଟ ହୋଇଗଲା।"],
-          tag: "ଆପଣ ପ୍ରକୃତରେ ଯେଉଁ ଭାଷାରେ ଚିନ୍ତା କରନ୍ତି, ସେହି ଭାଷାରେ।",
-          scope: "26 ଭାଷା। କେବଳ ପୋଷ୍ଟ ନୁହେଁ, ସମ୍ପୂର୍ଣ୍ଣ ଆପ୍।",
-          label: "କହିବା ପାଇଁ ଦବାଇ ରଖନ୍ତୁ", hint: "ଦବାଇ ରଖନ୍ତୁ, ଗୋଟିଏ ବାକ୍ୟ କୁହନ୍ତୁ, ଛାଡ଼ିଦିଅନ୍ତୁ।" },
-    as: { h1: ["কওক।", "পোষ্ট হ’ল।"],
-          tag: "আপুনি সঁচাকৈ যি ভাষাত ভাবে, সেই ভাষাতে।",
-          scope: "২৬টা ভাষা। কেৱল পোষ্ট নহয়, গোটেই এপ্‌টো।",
-          label: "ক’বলৈ টিপি ধৰক", hint: "টিপি ধৰক, এটা বাক্য কওক, এৰি দিয়ক।" },
-    ne: { h1: ["भन्नुहोस्।", "पोस्ट भयो।"],
-          tag: "तपाईं वास्तवमा जुन भाषामा सोच्नुहुन्छ, त्यही भाषामा।",
-          scope: "26 भाषा। पोस्ट मात्र होइन, सिङ्गो एप।",
-          label: "बोल्न थिचिराख्नुहोस्", hint: "थिचिराख्नुहोस्, एउटा वाक्य भन्नुहोस्, छोड्नुहोस्।" },
-    ar: { h1: ["قُلها.", "تمّ النشر."],
-          tag: "باللغة التي تفكر بها فعلاً.",
-          scope: "٢٦ لغة. التطبيق بأكمله، لا المنشورات فقط.",
-          label: "اضغط مع الاستمرار للتحدث", hint: "اضغط، قل جملة واحدة، ثم اترك." },
+    // Every other language is in beta. Their hero copy used to make the old
+    // language-count and "posted" claims; with no reviewed strings they fall back to English below.
   };
 
   function apply(code) {
-    var set = S[code] || S.en;
+    var known = S[code];
+    var set = known || S.en;
     // Two text nodes and a <br>, not innerHTML: these strings are authored
     // here, but a translation table is exactly the kind of thing that later
     // gets loaded from somewhere else.
@@ -178,8 +133,9 @@
     if (scope) scope.textContent = set.scope;
     if (label) label.textContent = set.label;
     if (hint) hint.textContent = set.hint;
-    hero.lang = code;
-    hero.dir = RTL.has(code) ? 'rtl' : 'ltr';
+    if (betaCta) betaCta.textContent = set.beta;
+    hero.lang = known ? code : 'en';
+    hero.dir = known && RTL.has(code) ? 'rtl' : 'ltr';
   }
 
   document.querySelector('.mic-langs').addEventListener('click', function (ev) {
@@ -564,6 +520,8 @@
   }
   .mic-langs button:hover { color: var(--ink); border-color: var(--ink-faint); }
   .mic-langs button.on { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+  /* Only English and हिन्दी are fully supported; the rest are in beta and say so. */
+  .mic-langs button[data-beta]::after { content: " beta"; font-size: .72em; opacity: .65; letter-spacing: .02em; }
   .mic-langs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
   .mic-btn {
@@ -665,6 +623,9 @@
 
   .hero-cta { margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
   .hero-cta .chip { margin-top: 0; }
+  .beta-link { font-size: var(--step--1); color: var(--ink-soft); text-decoration: underline; text-underline-offset: .22em; }
+  .beta-link:hover { color: var(--ink); }
+  .beta-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
 
   /* ---------- the two scrollers ----------
      One box that never ends and one that does, side by side, because the
@@ -1907,8 +1868,9 @@
 <header class="hero dark" id="top">
   <div class="hero-in">
     <img src="/download/media/65b05dc0.webp" class="mark" width="256" height="256" alt="Echo" loading="eager" decoding="async">
-    <h1 id="heroH1">Say it.<br>It&rsquo;s posted.</h1>
-    <p class="tag" id="heroTag">In the language you actually think in.</p>
+    <h1 id="heroH1">Say it.<br>Done.</h1>
+    <!-- HI: native review needed -->
+    <p class="tag" id="heroTag">A voice-first social app. Speak in Hindi, English or Hinglish. See it before it posts.</p>
 
     <!-- The page performs the promise instead of describing it. Hold the
          button, speak, watch the words land in a post. Everything here runs
@@ -1918,23 +1880,23 @@
       <div class="mic-langs" role="group" aria-label="Language to speak in">
         <button type="button" class="on" data-sr="en-IN">English</button>
         <button type="button" data-sr="hi-IN" lang="hi">हिन्दी</button>
-        <button type="button" data-sr="bn-IN" lang="bn">বাংলা</button>
-        <button type="button" data-sr="te-IN" lang="te">తెలుగు</button>
-        <button type="button" data-sr="mr-IN" lang="mr">मराठी</button>
-        <button type="button" data-sr="ta-IN" lang="ta">தமிழ்</button>
-        <button type="button" data-sr="ur-IN" lang="ur">اردو</button>
-        <button type="button" data-sr="gu-IN" lang="gu">ગુજરાતી</button>
-        <button type="button" data-sr="kn-IN" lang="kn">ಕನ್ನಡ</button>
-        <button type="button" data-sr="ml-IN" lang="ml">മലയാളം</button>
-        <button type="button" data-sr="pa-IN" lang="pa">ਪੰਜਾਬੀ</button>
-        <button type="button" data-sr="or-IN" lang="or">ଓଡ଼ିଆ</button>
-        <button type="button" data-sr="as-IN" lang="as">অসমীয়া</button>
-        <button type="button" data-sr="ne-NP" lang="ne">नेपाली</button>
-        <button type="button" data-sr="ar-SA" lang="ar">العربية</button>
+        <button type="button" data-sr="bn-IN" data-beta lang="bn">বাংলা</button>
+        <button type="button" data-sr="te-IN" data-beta lang="te">తెలుగు</button>
+        <button type="button" data-sr="mr-IN" data-beta lang="mr">मराठी</button>
+        <button type="button" data-sr="ta-IN" data-beta lang="ta">தமிழ்</button>
+        <button type="button" data-sr="ur-IN" data-beta lang="ur">اردو</button>
+        <button type="button" data-sr="gu-IN" data-beta lang="gu">ગુજરાતી</button>
+        <button type="button" data-sr="kn-IN" data-beta lang="kn">ಕನ್ನಡ</button>
+        <button type="button" data-sr="ml-IN" data-beta lang="ml">മലയാളം</button>
+        <button type="button" data-sr="pa-IN" data-beta lang="pa">ਪੰਜਾਬੀ</button>
+        <button type="button" data-sr="or-IN" data-beta lang="or">ଓଡ଼ିଆ</button>
+        <button type="button" data-sr="as-IN" data-beta lang="as">অসমীয়া</button>
+        <button type="button" data-sr="ne-NP" data-beta lang="ne">नेपाली</button>
+        <button type="button" data-sr="ar-SA" data-beta lang="ar">العربية</button>
       </div>
       <!-- Not a caption: it changes with the rest of the hero, so the sentence
            makes its own case in whatever language you picked. -->
-      <p class="hero-scope" id="heroScope">26 languages. The whole app, not just the posts.</p>
+      <p class="hero-scope" id="heroScope">Hindi and English, fully. More languages in beta.</p>
 
       <button type="button" class="mic-btn" id="micBtn" aria-describedby="micHint">
         <span class="mic-ring" aria-hidden="true"></span>
@@ -1976,6 +1938,10 @@
     <div class="hero-cta">
       <a class="dl-btn ghost" href="https://echo-mobile.at3236129.workers.dev/media/echo-media/downloads/echo-latest.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>Download for Android</a>
       <p class="chip">Private beta &middot; Android &middot; free</p>
+      <!-- TODO: swap this mailto for the Google Play closed-test opt-in link once it exists.
+           The only form on this page is the iOS waitlist; using it here would put beta testers on the iOS list. -->
+      <!-- HI: native review needed -->
+      <a class="beta-link" id="heroBeta" href="mailto:support@downloadecho.com?subject=Echo%20beta%20tester">Help us test Echo for 14 days.</a>
     </div>
   </div>
   <div class="cue" aria-hidden="true"><span>Scroll</span><i></i></div>
@@ -2047,6 +2013,7 @@
     <em class="hl">post this</em>, <em class="hl">find that thread</em>,
     <em class="hl">remind me tomorrow</em>. <strong>Done before you look
     up.</strong></p>
+    <!-- VERIFY: voice-post flow confirms before posting; remove claim if not -->
     <p class="body rv d2"><strong>Ask</strong> and it only talks.
     <strong>Do</strong> and it acts. Anything that writes, posts or spends stops
     for your confirmation first.</p>
@@ -2061,7 +2028,7 @@
     </div>
 
     <div class="steps">
-      <div class="step rv d2"><em>1 &middot; Speak</em><p>Hold one button and talk, in any of 26 languages.</p></div>
+      <div class="step rv d2"><em>1 &middot; Speak</em><p>Speak in Hindi, English or Hinglish.</p></div>
       <div class="step rv d3"><em>2 &middot; It understands</em><p>Not just the words &mdash; what you wanted done with them.</p></div>
       <div class="step rv d4"><em>3 &middot; It&rsquo;s done</em><p>Posted, found, opened, scheduled. Answered back out loud if you want.</p></div>
     </div>
@@ -2152,7 +2119,8 @@
       <figcaption>Today&rsquo;s question, live. Everyone on Echo was asked this.</figcaption>
     </figure>
 
-    <p class="punch rv d4">Nothing here is for sale. You included.</p>
+    <!-- HI: native review needed: एक फ़ीड जो ख़त्म होती है। अंतहीन स्क्रॉल नहीं। -->
+    <p class="punch rv d4">A feed that ends. No infinite scroll.</p>
   </div>
 </section>
 
@@ -2181,11 +2149,10 @@
         <div class="ui-switch" role="group" aria-label="Preview language">
           <button type="button" class="on" data-lang="en">English</button>
           <button type="button" data-lang="hi" lang="hi">हिन्दी</button>
-          <button type="button" data-lang="ar" lang="ar">العربية</button>
         </div>
       </div>
       <div>
-        <h2 class="rv d1">Your language, all the way down.</h2>
+        <h2 class="rv d1">Hindi and English, all the way down. More languages in beta.</h2>
         <!-- The hero already switched this page. Repeating the pitch here read
              as the page forgetting what the visitor had just done, so this
              names it and moves to the half the hero cannot show: the app. -->
@@ -2194,15 +2161,10 @@
         <p class="body rv d2">Not just the posts &mdash; <strong>the whole
         app</strong>. Greeting, tabs, buttons, prompts, even the direction it
         runs. Switch it and everything moves. <strong>Not an English app that
-        translates. An app that is yours.</strong></p>
+        translates. An app that speaks your language.</strong></p>
         <div class="langs" id="langs">
           <div class="lang on"><b>English</b><span>Left to right</span></div>
           <div class="lang"><b>हिन्दी</b><span>Left to right · Devanagari</span></div>
-          <div class="lang"><b>العربية</b><span>Right to left · mirrored layout</span></div>
-        </div>
-        <div class="stats" style="margin-top:1.8rem;grid-template-columns:repeat(2,1fr)">
-          <div class="stat"><b data-count="26">0</b><span>languages</span></div>
-          <div class="stat"><b data-count="13">0</b><span>of them Indian</span></div>
         </div>
       </div>
     </div>
@@ -2273,7 +2235,7 @@
   <div class="colo-grid">
     <div class="colo-brand">
       <p class="colo-mark"><img class="brand-mark" src="/download/media/65b05dc0.webp" width="256" height="256" alt="" aria-hidden="true" decoding="async">Echo</p>
-      <p class="colo-line">A voice-first social network, in 26 languages.</p>
+      <p class="colo-line">A voice-first social network. Hindi and English, with more languages in beta.</p>
       <p class="colo-addr">
         Akash Thakur · Sole proprietor<br>
         Shankar Nagar, Hoshiarpur<br>
@@ -2309,7 +2271,7 @@
 
   <div class="colo-base">
     <p>© 2026 Akash Thakur · Echo is an independent product</p>
-    <p class="colo-age">16+</p>
+    <p class="colo-age">18+</p>
   </div>
 </div>
 
@@ -2473,15 +2435,13 @@
     },
     beta: {
       title: 'Beta coverage',
-      copy: 'The private beta is small by design, so this view shows breadth: testers, age brackets, Indian languages and platforms.',
+      copy: 'The private beta is small by design, so this view shows breadth: testers, age brackets and platforms.',
       type: 'line',
-      max: 26,
+      max: 20,
       data: [
         { label: 'Platforms', value: 4 },
         { label: 'Ages', value: 10 },
-        { label: 'Indian', value: 13 },
-        { label: 'Testers', value: 20 },
-        { label: 'Langs', value: 26 }
+        { label: 'Testers', value: 20 }
       ]
     },
     risk: {
@@ -3202,10 +3162,6 @@
           quote:'सबसे शांत विचार अक्सर सबसे सच्चे होते हैं।',
           spark:'आज का सवाल', t1:'आपके लिए', t2:'ट्रेंडिंग', t3:'फ़ॉलोइंग', t4:'नवीनतम',
           n1:'होम', n2:'खोजें', n3:'चैट', n4:'टूल्स', n5:'आप' },
-    ar: { greet:'مرحبًا بعودتك، آكاش', kicker:'فكرة اليوم',
-          quote:'أهدأ الأفكار هي عادةً أصدقها.',
-          spark:'سؤال اليوم', t1:'لك', t2:'رائج', t3:'المتابَعون', t4:'الأحدث',
-          n1:'الرئيسية', n2:'استكشاف', n3:'محادثة', n4:'أدوات', n5:'أنت' },
   };
   const buttons = [...document.querySelectorAll('.ui-switch button')];
   function apply(lang) {
@@ -3215,9 +3171,8 @@
       if (v) el.textContent = v;
     }
     ui.lang = lang;
-    // The whole point: Arabic mirrors the layout, it is not just translated.
-    ui.dir = lang === 'ar' ? 'rtl' : 'ltr';
-    ui.querySelector('.ui-arrow').textContent = lang === 'ar' ? '↖' : '↗';
+    ui.dir = 'ltr';
+    ui.querySelector('.ui-arrow').textContent = '↗';
     buttons.forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
   }
   buttons.forEach(b => b.addEventListener('click', () => apply(b.dataset.lang)));
