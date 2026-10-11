@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Scales, CheckCircle, Clock, X } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/ui/theme';
@@ -128,19 +128,7 @@ export default function AppealScreen() {
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, ...font.body, textAlign: 'center', lineHeight: 22 }}>
                   {"We'll review your appeal and notify you of the outcome within 14 days, as required by the Digital Services Act."}
                 </Text>
-                <AnimatedPressable
-                  onPress={() => safeBack()}
-                  fadeOnPress
-                  style={{
-                    backgroundColor: colors.accent,
-                    borderRadius: radius.full,
-                    paddingHorizontal: 24,
-                    paddingVertical: 12,
-                    marginTop: 8,
-                  }}
-                >
-                  <Text style={{ color: colors.onAccent, ...font.bodySemibold, fontSize: fontSizes.body }}>{ttx("Done")}</Text>
-                </AnimatedPressable>
+                <Button label={ttx("Done")} onPress={() => safeBack()} style={{ marginTop: 8, alignSelf: 'center' }} />
               </Animated.View>
             ) : (
               <>
@@ -214,23 +202,7 @@ export default function AppealScreen() {
                 </View>
 
                 {/* Submit */}
-                <AnimatedPressable
-                  onPress={handleSubmit}
-                  disabled={!canSubmit}
-                  depth="medium"
-                  style={{
-                    backgroundColor: canSubmit ? colors.accent : colors.border,
-                    borderRadius: radius.full,
-                    paddingVertical: 14,
-                    alignItems: 'center',
-                    marginTop: 4,
-                  }}
-                >
-                  {submitting
-                    ? <ActivityIndicator size="small" color={colors.onAccent} />
-                    : <Text style={{ color: colors.onAccent, ...font.bodyBold, fontSize: fontSizes.body }}>{ttx("Submit appeal")}</Text>
-                  }
-                </AnimatedPressable>
+                <Button label={ttx("Submit appeal")} onPress={handleSubmit} disabled={!canSubmit} loading={submitting} size="large" fullWidth style={{ marginTop: 4 }} />
 
                 <Text style={{
                   color: colors.textMuted, fontSize: 11, ...font.body,

@@ -10,6 +10,7 @@ import { Check, Camera, TextAlignLeft, UserCircle } from 'phosphor-react-native'
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
@@ -232,25 +233,7 @@ export default function EditProfileScreen() {
       <ScreenHeader
         title={ttx("Edit Profile")}
         right={
-          <AnimatedPressable
-            onPress={() => { void handleSave(); }}
-            disabled={saving}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 6,
-              paddingHorizontal: 14, paddingVertical: 7, marginRight: 6,
-              borderRadius: radius.lg,
-              backgroundColor: saving ? colors.surfaceHover : colors.accent,
-            }}
-            scaleValue={0.93}
-            haptic="medium"
-          >
-            {saving ? (
-              <ActivityIndicator color={colors.onAccent} size="small" />
-            ) : (
-              <Check color={colors.onAccent} size={16} />
-            )}
-            <Text style={{ color: colors.onAccent, fontWeight: '600', fontSize: fontSizes.small }}>{ttx("Save")}</Text>
-          </AnimatedPressable>
+          <Button label={ttx("Save")} onPress={() => { void handleSave(); }} size="compact" loading={saving} leftIcon={Check} style={{ marginRight: 6 }} />
         }
       />
 

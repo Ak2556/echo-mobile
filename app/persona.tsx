@@ -7,6 +7,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Brain, ChatTeardropDots, Check, Clock, ShieldCheck, Trash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
 import {
@@ -221,15 +222,7 @@ export default function PersonaScreen() {
                 },
               ]}
             />
-            <AnimatedPressable
-              onPress={saveNote}
-              style={[styles.primaryButton, { backgroundColor: colors.accent, borderRadius: radius.md }]}
-              accessibilityRole="button"
-              accessibilityLabel={ttx("Save persona note")}
-            >
-              <Check color={colors.onAccent} size={18} weight="bold" />
-              <Text style={{ color: colors.onAccent, fontSize: fontSizes.body, fontWeight: '800' }}>{ttx("Save note")}</Text>
-            </AnimatedPressable>
+            <Button label={ttx("Save note")} onPress={saveNote} accessibilityLabel={ttx("Save persona note")} fullWidth leftIcon={Check} />
           </GlassPanel>
         </Animated.View>
 
