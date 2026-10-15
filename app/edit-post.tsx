@@ -13,7 +13,7 @@ import {
   Check, Lightning, Hash, Image as ImageIcon,
   VideoCamera, ChartBar, X, Plus, Clock, Link,
 } from 'phosphor-react-native';
-import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
 import { showToast } from '../components/ui/Toast';
@@ -163,11 +163,7 @@ export default function EditPostScreen() {
       <ScreenHeader
         title={ttx("Edit Echo")}
         right={
-          <AnimatedPressable onPress={handleSave} disabled={!canSave} scaleValue={0.92} haptic="medium"
-            style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: canSave ? colors.accent : colors.surfaceHover, opacity: canSave ? 1 : 0.5 }}>
-            <Check color={colors.onAccent} size={15} />
-            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{saving ? 'Saving…' : 'Save'}</Text>
-          </AnimatedPressable>
+          <Button label={ttx("Save")} onPress={handleSave} size="compact" disabled={!canSave} loading={saving} leftIcon={Check} style={{ marginRight: 6 }} />
         }
       />
 

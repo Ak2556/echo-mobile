@@ -31,6 +31,7 @@ import { rewriteEditorial, EditorialAction } from '../lib/feed/editorial';
 import { getPerspectiveLabel } from '../lib/ai/perspectives';
 import { track } from '../lib/core/analytics';
 import { ttx } from '../lib/i18n/i18n';
+import { Button } from '../components/ui/Button';
 
 const SHARE_DRAFT_KEY = 'echo/share-draft';
 
@@ -254,14 +255,7 @@ export default function ShareScreen() {
       <ScreenHeader
         title={ttx("Share Echo")}
         right={
-          <Pressable
-            onPress={() => { void handlePublish(); }}
-            disabled={publishing}
-            style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: publishing || !canPublish ? colors.surfaceHover : colors.accent, opacity: !canPublish && !publishing ? 0.6 : 1 }}
-          >
-            <PaperPlaneTilt color={colors.onAccent} size={14} />
-            <Text style={{ color: colors.onAccent, fontWeight: '700', marginLeft: 8 }}>{publishing ? 'Posting…' : 'Post'}</Text>
-          </Pressable>
+          <Button label={ttx("Post")} onPress={() => { void handlePublish(); }} size="compact" loading={publishing} leftIcon={PaperPlaneTilt} style={{ marginRight: 6 }} />
         }
       />
 
@@ -424,21 +418,8 @@ export default function ShareScreen() {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Pressable
-            onPress={() => { void handleDraftSave(); }}
-            style={{ flex: 1, paddingVertical: 13, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-          >
-            <FloppyDisk color={colors.textSecondary} size={18} />
-            <Text style={{ color: colors.text, fontWeight: '700' }}>{ttx("Save draft")}</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => { void handlePublish(); }}
-            disabled={publishing}
-            style={{ flex: 1, paddingVertical: 13, borderRadius: radius.card, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: !canPublish && !publishing ? 0.6 : 1 }}
-          >
-            <PaperPlaneTilt color={colors.onAccent} size={18} />
-            <Text style={{ color: colors.onAccent, fontWeight: '800' }}>{publishing ? 'Publishing…' : 'Publish'}</Text>
-          </Pressable>
+          <Button label={ttx("Save draft")} onPress={() => { void handleDraftSave(); }} variant="secondary" fullWidth leftIcon={FloppyDisk} style={{ flex: 1 }} />
+          <Button label={ttx("Publish")} onPress={() => { void handlePublish(); }} fullWidth loading={publishing} leftIcon={PaperPlaneTilt} style={{ flex: 1 }} />
         </View>
       </ScrollView>
     </ResponsiveScreen>

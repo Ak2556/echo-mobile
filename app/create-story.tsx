@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { PaperPlaneTilt, Lightning, Broadcast, Clock } from 'phosphor-react-native';
-import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
 import { warmAvatarColor } from '../lib/social/avatarPalette';
 import { showToast } from '../components/ui/Toast';
@@ -61,20 +61,8 @@ function CreateStoryScreenInner() {
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 21 }}>
             {ttx("Share your thoughts as an Echo instead. Echoes stay available in your feed.")}
           </Text>
-          <AnimatedPressable
-            onPress={() => router.replace('/create-post')}
-            style={{ marginTop: 24, backgroundColor: colors.accent, borderRadius: radius.full, paddingHorizontal: 24, paddingVertical: 12 }}
-            haptic="medium"
-          >
-            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: 14 }}>{ttx("Share an Echo instead")}</Text>
-          </AnimatedPressable>
-          <AnimatedPressable
-            onPress={() => router.back()}
-            style={{ marginTop: 12, borderRadius: radius.full, paddingHorizontal: 24, paddingVertical: 12 }}
-            haptic="light"
-          >
-            <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 14 }}>{ttx("Go back")}</Text>
-          </AnimatedPressable>
+          <Button label={ttx("Share an Echo instead")} onPress={() => router.replace('/create-post')} style={{ marginTop: 24, alignSelf: 'center' }} />
+          <Button label={ttx("Go back")} onPress={() => router.back()} variant="ghost" style={{ marginTop: 12, alignSelf: 'center' }} />
         </View>
       </SafeAreaView>
     );
@@ -120,23 +108,7 @@ function CreateStoryScreenInner() {
           <Broadcast color={colors.accent} size={16} />
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{ttx("New Story")}</Text>
         </View>
-        <AnimatedPressable
-          onPress={handlePublish}
-          disabled={!canPublish}
-          scaleValue={0.92}
-          haptic="medium"
-          className="flex-row items-center px-3.5 py-2"
-          style={{
-            borderRadius: radius.full,
-            backgroundColor: canPublish ? colors.accent : colors.surfaceHover,
-            opacity: canPublish ? 1 : 0.6,
-          }}
-        >
-          <PaperPlaneTilt color={colors.onAccent} size={14} />
-          <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>
-            {publishing ? 'Sharing...' : 'Share'}
-          </Text>
-        </AnimatedPressable>
+        <Button label={ttx("Share")} onPress={handlePublish} size="compact" disabled={!canPublish} loading={publishing} leftIcon={PaperPlaneTilt} />
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

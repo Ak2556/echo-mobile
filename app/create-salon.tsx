@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
-import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -8,6 +8,7 @@ import { Check } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/ui/theme';
 import { createSalon } from '../lib/supabaseEchoApi';
@@ -24,7 +25,7 @@ const DESC_MAX = 240;
 
 function CreateSalonScreenInner() {
   const router = useRouter();
-  const { colors, radius, fontSizes, animation } = useTheme();
+  const { colors, fontSizes, animation } = useTheme();
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -79,25 +80,7 @@ function CreateSalonScreenInner() {
       <ScreenHeader
         title={ttx("New Salon")}
         right={
-          <AnimatedPressable
-            onPress={() => void handleSubmit()}
-            disabled={!canSubmit}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 5,
-              paddingHorizontal: 14, paddingVertical: 7, marginRight: 6,
-              borderRadius: radius.lg,
-              backgroundColor: canSubmit ? colors.accent : colors.surfaceHover,
-            }}
-            scaleValue={0.93}
-            haptic="medium"
-          >
-            {submitting ? (
-              <ActivityIndicator color={colors.onAccent} size="small" />
-            ) : (
-              <Check color={colors.onAccent} size={15} weight="bold" />
-            )}
-            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small }}>{ttx("Create")}</Text>
-          </AnimatedPressable>
+          <Button label={ttx("Create")} onPress={() => void handleSubmit()} size="compact" disabled={!canSubmit} loading={submitting} leftIcon={Check} style={{ marginRight: 6 }} />
         }
       />
 
