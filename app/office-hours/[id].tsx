@@ -6,6 +6,7 @@ import { useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Microphone, ArrowUp, Clock, UsersThree, PaperPlaneTilt } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { Button } from '../../components/ui/Button';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { TextInput } from '../../components/ui/TextInput';
 import { showToast } from '../../components/ui/Toast';
@@ -162,7 +163,8 @@ function OfficeHourDetailScreenInner() {
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{oh.rsvp_count}</Text>
               </View>
             </View>
-            <AnimatedPressable
+            <Button
+              label={oh.has_rsvp ? ttx('RSVP confirmed') : ttx('RSVP')}
               onPress={async () => {
                 const going = !oh.has_rsvp;
                 setOh({ ...oh, has_rsvp: going, rsvp_count: going ? oh.rsvp_count + 1 : Math.max(0, oh.rsvp_count - 1) });
@@ -172,23 +174,10 @@ function OfficeHourDetailScreenInner() {
                   setOh({ ...oh, has_rsvp: !going, rsvp_count: going ? Math.max(0, oh.rsvp_count - 1) : oh.rsvp_count + 1 });
                 }
               }}
-              style={{
-                marginTop: 12,
-                paddingHorizontal: 16,
-                paddingVertical: 10,
-                borderRadius: 99,
-                backgroundColor: oh.has_rsvp ? 'transparent' : colors.accent,
-                borderWidth: oh.has_rsvp ? 1 : 0,
-                borderColor: colors.border,
-                alignItems: 'center',
-              }}
-              scaleValue={0.96}
-              haptic="medium"
-            >
-              <Text style={{ color: oh.has_rsvp ? colors.text : colors.onAccent, fontWeight: '700' }}>
-                {oh.has_rsvp ? 'RSVP confirmed' : 'RSVP'}
-              </Text>
-            </AnimatedPressable>
+              variant={oh.has_rsvp ? 'secondary' : 'primary'}
+              fullWidth
+              style={{ marginTop: 12 }}
+            />
           </Animated.View>
 
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 8, marginLeft: 4 }}>

@@ -6,7 +6,7 @@ import { UserPlus } from 'phosphor-react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
-import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { UserRowSkeleton } from '../components/ui/Skeleton';
 import { showToast } from '../components/ui/Toast';
 import { EmptyState } from '../components/common/EmptyState';
@@ -25,7 +25,7 @@ import { ttx } from '../lib/i18n/i18n';
  */
 export default function FollowRequestsScreen() {
   const router = useRouter();
-  const { colors, fontSizes, radius } = useTheme();
+  const { colors, fontSizes } = useTheme();
   const requests = useIncomingFollowRequests();
   const respond = useRespondFollowRequest();
   const visitStartedAt = useRef(Date.now()).current;
@@ -85,26 +85,8 @@ export default function FollowRequestsScreen() {
                   <Text numberOfLines={1} style={{ color: colors.textMuted, fontSize: fontSizes.small }}>@{item.username}</Text>
                 </View>
               </Pressable>
-              <AnimatedPressable
-                onPress={() => answer(item, true)}
-                accessibilityRole="button"
-                accessibilityLabel={`Approve ${item.username}`}
-                style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.accent }}
-                scaleValue={0.95}
-                haptic="light"
-              >
-                <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small }}>{ttx('Approve')}</Text>
-              </AnimatedPressable>
-              <AnimatedPressable
-                onPress={() => answer(item, false)}
-                accessibilityRole="button"
-                accessibilityLabel={`Decline ${item.username}`}
-                style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }}
-                scaleValue={0.95}
-                haptic="light"
-              >
-                <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{ttx('Decline')}</Text>
-              </AnimatedPressable>
+              <Button label={ttx('Approve')} onPress={() => answer(item, true)} size="compact" accessibilityLabel={`Approve ${item.username}`} />
+              <Button label={ttx('Decline')} onPress={() => answer(item, false)} size="compact" variant="secondary" accessibilityLabel={`Decline ${item.username}`} />
             </View>
           )}
         />

@@ -16,11 +16,15 @@ const MIGRATED = [
   // batch 2: the forms that publish something
   'app/create-post.tsx', 'app/edit-post.tsx', 'app/share.tsx', 'app/create-story.tsx',
   'app/create-listing.tsx', 'app/create-salon.tsx', 'app/create-office-hour.tsx',
+  // batch 3: messages, office hours, salons, requests, marketplace, listings, profiles, the daily question
+  'app/messages/index.tsx', 'app/office-hours.tsx', 'app/office-hours/[id].tsx', 'app/salons.tsx',
+  'app/follow-requests.tsx', 'app/mini-apps/marketplace.tsx', 'app/listing/[id].tsx', 'app/user/[id].tsx',
+  'components/daily/DailyQuestionComposer.tsx',
 ];
 
 describe('Button', () => {
   it.each(MIGRATED)('%s uses the shared Button', (file) => {
-    expect(read(file)).toContain("components/ui/Button'");
+    expect(read(file)).toContain("ui/Button'");
     expect(read(file)).toContain('<Button');
   });
 

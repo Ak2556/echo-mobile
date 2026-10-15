@@ -16,6 +16,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { DMView } from './[id]';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
@@ -407,22 +408,8 @@ function InboxHero({
             stay bare — NativeWind's cssInterop otherwise drops the box/layout
             off a touchable's own style and the buttons collapse. */}
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <Pressable onPress={onFindPeople} accessibilityRole="button" accessibilityLabel={ttx("New chat")} style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}>
-              <View style={{ minHeight: 46, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-                <PencilSimple color={colors.onAccent} size={17} weight="bold" />
-                <Text style={{ color: colors.onAccent, fontSize: 14, fontWeight: '900' }}>{ttx("New chat")}</Text>
-              </View>
-            </Pressable>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Pressable onPress={onNewGroup} accessibilityRole="button" accessibilityLabel={ttx("New group")} style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}>
-              <View style={{ minHeight: 46, borderRadius: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-                <Users color={colors.text} size={17} weight="bold" />
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>{ttx("New group")}</Text>
-              </View>
-            </Pressable>
-          </View>
+          <Button label={ttx("New chat")} onPress={onFindPeople} leftIcon={PencilSimple} fullWidth style={{ flex: 1 }} />
+          <Button label={ttx("New group")} onPress={onNewGroup} variant="secondary" leftIcon={Users} fullWidth style={{ flex: 1 }} />
         </View>
       </View>
     </View>

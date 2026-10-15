@@ -32,6 +32,7 @@ import {
   Wrench,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { Button } from '../../components/ui/Button';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { ListingCardSkeleton } from '../../components/ui/Skeleton';
@@ -676,16 +677,7 @@ export default function MarketplaceScreen() {
               ))}
             </View>
 
-            <AnimatedPressable
-              onPress={() => setFiltersOpen(false)}
-              haptic="medium"
-              style={{ backgroundColor: colors.accent, borderRadius: 999, minHeight: 50, alignItems: 'center', justifyContent: 'center' }}
-              scaleValue={0.97}
-            >
-              <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 15 }]}>
-                {ttx("Show")} {sortedListings.length} {ttx("result")}{sortedListings.length === 1 ? '' : 's'}
-              </Text>
-            </AnimatedPressable>
+            <Button label={`${ttx("Show")} ${sortedListings.length} ${ttx("result")}${sortedListings.length === 1 ? '' : 's'}`} onPress={() => setFiltersOpen(false)} size="large" fullWidth />
           </Pressable>
         </Pressable>
       </Modal>

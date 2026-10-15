@@ -9,6 +9,7 @@ import { Plus, UsersThree, Hash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { HeaderAddButton } from '../components/ui/HeaderAddButton';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { useTheme } from '../lib/ui/theme';
 import { fetchSalons, setSalonMembership, type Salon } from '../lib/supabaseEchoApi';
 import { showToast } from '../components/ui/Toast';
@@ -66,24 +67,7 @@ function SalonsScreenInner() {
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
             {ttx("Start the first one. A circle of people thinking about a shared topic.")}
           </Text>
-          <AnimatedPressable
-            onPress={() => router.push('/create-salon')}
-            style={{
-              marginTop: 20,
-              paddingHorizontal: 18,
-              paddingVertical: 10,
-              borderRadius: 99,
-              backgroundColor: colors.accent,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-            scaleValue={0.94}
-            haptic="medium"
-          >
-            <Plus color={colors.onAccent} size={16} weight="bold" />
-            <Text style={{ color: colors.onAccent, fontWeight: '700' }}>{ttx("Start a salon")}</Text>
-          </AnimatedPressable>
+          <Button label={ttx("Start a salon")} onPress={() => router.push('/create-salon')} leftIcon={Plus} style={{ marginTop: 20, alignSelf: 'center' }} />
         </View>
       ) : (
         <ScrollView
@@ -134,23 +118,7 @@ function SalonCard({ salon, onToggle }: { salon: Salon; onToggle: (join: boolean
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{salon.name}</Text>
-        <AnimatedPressable
-          onPress={(e) => { e?.stopPropagation?.(); onToggle(!salon.is_member); }}
-          style={{
-            paddingHorizontal: 12,
-            paddingVertical: 5,
-            borderRadius: 99,
-            backgroundColor: salon.is_member ? 'transparent' : colors.accent,
-            borderWidth: salon.is_member ? 1 : 0,
-            borderColor: colors.border,
-          }}
-          scaleValue={0.92}
-          haptic="medium"
-        >
-          <Text style={{ color: salon.is_member ? colors.textMuted : colors.onAccent, fontWeight: '700', fontSize: 12 }}>
-            {salon.is_member ? 'Joined' : 'Join'}
-          </Text>
-        </AnimatedPressable>
+        <Button label={salon.is_member ? ttx('Joined') : ttx('Join')} onPress={() => onToggle(!salon.is_member)} size="compact" variant={salon.is_member ? 'secondary' : 'primary'} />
       </View>
       {salon.description ? (
         <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginBottom: 8 }} numberOfLines={2}>

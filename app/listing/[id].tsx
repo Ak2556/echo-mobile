@@ -16,6 +16,7 @@ import {
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { Button } from '../../components/ui/Button';
 import { SpeakButton } from '../../components/ui/SpeakButton';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { PhotoGallery } from '../../components/marketplace/PhotoGallery';
@@ -349,26 +350,7 @@ export default function ListingDetailScreen() {
           borderTopWidth: 1,
           borderTopColor: colors.border,
         }}>
-          <AnimatedPressable
-            onPress={handleMessage}
-            disabled={startConvMut.isPending}
-            depth="medium"
-            style={{
-              backgroundColor: colors.accent,
-              opacity: startConvMut.isPending ? 0.65 : 1,
-              borderRadius: radius.full,
-              paddingVertical: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-            }}
-          >
-            <ChatCircle color={colors.onAccent} size={20} weight="fill" />
-            <Text style={{ color: colors.onAccent, ...font.bodyBold, fontSize: fontSizes.body }}>
-              {startConvMut.isPending ? 'Opening chat...' : 'Message seller'}
-            </Text>
-          </AnimatedPressable>
+          <Button label={ttx('Message seller')} onPress={handleMessage} size="large" fullWidth leftIcon={ChatCircle} loading={startConvMut.isPending} />
         </View>
       )}
     </View>
