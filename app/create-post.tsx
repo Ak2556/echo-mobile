@@ -736,7 +736,7 @@ export default function CreatePostScreen() {
       <ScreenHeader
         title={t('nav.newEcho')}
         right={
-          <Button label={ttx("Post")} onPress={() => { void handlePublish(); }} size="compact" disabled={!canPublish} loading={publishing} leftIcon={PaperPlaneTilt} />
+          <Button label={ttx("Post")} onPress={() => { void handlePublish(); }} size="compact" disabled={!canPublish} loading={publishing} leftIcon={PaperPlaneTilt} style={{ marginRight: 6 }} />
         }
       />
 

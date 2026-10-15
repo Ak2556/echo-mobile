@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Check, Flame } from 'phosphor-react-native';
 import { TextInput } from '../ui/TextInput';
-import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { Button } from '../ui/Button';
 import { showToast } from '../ui/Toast';
 import { useTheme } from '../../lib/ui/theme';
 import { useI18n } from '../../lib/i18n/i18n';
@@ -146,30 +146,14 @@ export function DailyQuestionComposer({
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
             {draft.length}/{MAX_ANSWER_LENGTH}
           </Text>
-          <AnimatedPressable
+          <Button
+            label={answered ? (submitUpdateLabel ?? t('daily.update')) : (submitFirstLabel ?? t('daily.submit'))}
             onPress={() => void handleSubmit()}
+            size="compact"
             disabled={!canSubmit}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              borderRadius: 99,
-              backgroundColor: canSubmit ? colors.accent : colors.surfaceHover,
-            }}
-            scaleValue={0.94}
-            haptic="medium"
-          >
-            {submitting ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Check color="#fff" size={14} weight="bold" />
-            )}
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-              {answered ? (submitUpdateLabel ?? t('daily.update')) : (submitFirstLabel ?? t('daily.submit'))}
-            </Text>
-          </AnimatedPressable>
+            loading={submitting}
+            leftIcon={Check}
+          />
         </View>
       </Animated.View>
     </>

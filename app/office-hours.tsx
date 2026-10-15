@@ -9,6 +9,7 @@ import { Microphone, Plus, UsersThree, Clock } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { HeaderAddButton } from '../components/ui/HeaderAddButton';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/ui/theme';
@@ -77,15 +78,7 @@ function OfficeHoursScreenInner() {
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
             {"Schedule a session. Invite Q's on a topic you know cold."}
           </Text>
-          <AnimatedPressable
-            onPress={() => router.push('/create-office-hour')}
-            style={{ marginTop: 20, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 99, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}
-            scaleValue={0.94}
-            haptic="medium"
-          >
-            <Plus color={colors.onAccent} size={16} weight="bold" />
-            <Text style={{ color: colors.onAccent, fontWeight: '700' }}>{ttx("Schedule")}</Text>
-          </AnimatedPressable>
+          <Button label={ttx("Schedule")} onPress={() => router.push('/create-office-hour')} leftIcon={Plus} style={{ marginTop: 20, alignSelf: 'center' }} />
         </View>
       ) : (
         <ScrollView
@@ -145,23 +138,7 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
             {liveNow ? 'LIVE' : relativeStart(oh.starts_at).toUpperCase()}
           </Text>
         </View>
-        <AnimatedPressable
-          onPress={(e) => { e?.stopPropagation?.(); onRSVP(!oh.has_rsvp); }}
-          style={{
-            paddingHorizontal: 12,
-            paddingVertical: 5,
-            borderRadius: 99,
-            backgroundColor: oh.has_rsvp ? 'transparent' : colors.accent,
-            borderWidth: oh.has_rsvp ? 1 : 0,
-            borderColor: colors.border,
-          }}
-          scaleValue={0.92}
-          haptic="medium"
-        >
-          <Text style={{ color: oh.has_rsvp ? colors.textMuted : colors.onAccent, fontWeight: '700', fontSize: 12 }}>
-            {oh.has_rsvp ? 'Going' : 'RSVP'}
-          </Text>
-        </AnimatedPressable>
+        <Button label={oh.has_rsvp ? ttx('Going') : ttx('RSVP')} onPress={() => onRSVP(!oh.has_rsvp)} size="compact" variant={oh.has_rsvp ? 'secondary' : 'primary'} />
       </View>
       <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 4 }}>{oh.topic}</Text>
       {oh.description ? (

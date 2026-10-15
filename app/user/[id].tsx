@@ -18,6 +18,7 @@ import { PostsGrid } from '../../components/profile/PostsGrid';
 import { ThinkingFingerprintCard } from '../../components/feed/ThinkingFingerprintCard';
 import { ProfileHeaderSkeleton, FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { Button } from '../../components/ui/Button';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { ProfilePhotoPreview } from '../../components/ui/ProfilePhotoPreview';
 import { showToast } from '../../components/ui/Toast';
@@ -260,24 +261,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
         {!isSelf && (
           <View style={{ flexDirection: 'row', gap: 10, alignSelf: 'stretch', paddingHorizontal: 16 }}>
             <Animated.View style={[followAnim, { flex: 1 }]}>
-              <AnimatedPressable
-                onPress={handleFollow}
-                style={{
-                  paddingVertical: 11,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: radius.lg,
-                  backgroundColor: following || requested ? colors.surfaceHover : colors.accent,
-                  borderWidth: following || requested ? 1 : 0,
-                  borderColor: colors.border,
-                }}
-                scaleValue={0.96}
-                haptic="medium"
-              >
-                <Text style={{ fontWeight: '700', fontSize: 15, color: following || requested ? colors.text : colors.onAccent }}>
-                  {following ? 'Following' : requested ? 'Requested' : 'Follow'}
-                </Text>
-              </AnimatedPressable>
+              <Button label={following ? ttx('Following') : requested ? ttx('Requested') : ttx('Follow')} onPress={handleFollow} variant={following || requested ? 'secondary' : 'primary'} fullWidth />
             </Animated.View>
             <AnimatedPressable
               onPress={onMessage}
