@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { PaperPlaneRight, Image as ImageIcon, Smiley } from 'phosphor-react-native';
 
@@ -23,7 +24,7 @@ export function ChatInput({ onSend, colors }: Props) {
   return (
     <View style={[styles.container, { borderTopColor: colors.border, backgroundColor: colors.bg }]}>
       <TouchableOpacity style={styles.iconButton}>
-        <ImageIcon size={24} color={colors.textMuted} />
+        <ImageIcon size={ICON_SIZE.lg} color={colors.textMuted} />
       </TouchableOpacity>
       
       <View style={[styles.inputContainer, { backgroundColor: colors.bgSecondary }]}>
@@ -37,7 +38,7 @@ export function ChatInput({ onSend, colors }: Props) {
           returnKeyType="send"
         />
         <TouchableOpacity style={styles.smileyButton}>
-          <Smiley size={24} color={colors.textMuted} />
+          <Smiley size={ICON_SIZE.lg} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
 

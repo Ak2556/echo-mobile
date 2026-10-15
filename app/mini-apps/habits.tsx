@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   View, Text, TextInput, Pressable, Modal, StyleSheet, Image, ScrollView,
 } from 'react-native';
@@ -181,7 +182,7 @@ function WeekRow({ habit, colors, onDayPress }: { habit: Habit; colors: any; onD
                 {DAYS[new Date(dateStr + 'T12:00:00').getDay()]}
               </Text>
               <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: done ? habit.color : 'transparent', borderWidth: 1.5, borderColor: done ? habit.color : isToday ? habit.color + '55' : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
-                {done && <CheckCircle color={colors.bgPure} size={14} weight="fill" />}
+                {done && <CheckCircle color={colors.bgPure} size={ICON_SIZE.xs} weight="fill" />}
               </View>
               <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: hasProof ? habit.color : 'transparent' }} />
             </View>
@@ -268,7 +269,7 @@ function ProofModal({ habit, date, onSaved, onClose }: {
         <ScrollView contentContainerStyle={{ padding: 20, gap: 22 }} keyboardShouldPersistTaps="handled">
           {entry?.at ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Clock color={habit.color} size={16} weight="fill" />
+              <Clock color={habit.color} size={ICON_SIZE.sm} weight="fill" />
               <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label }}>
                 {tt('Checked off at')} <Text style={{ color: colors.text, fontWeight: '700' }}>{formatCheckInTime(entry.at)}</Text>
               </Text>
@@ -296,7 +297,7 @@ function ProofModal({ habit, date, onSaved, onClose }: {
                   resizeMode="cover"
                 />
                 <AnimatedPressable onPress={() => setPhotoUri('')} scaleValue={0.9} haptic="light" style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: radius.card, padding: 7 }}>
-                  <X color={colors.bgPure} size={15} weight="bold" />
+                  <X color={colors.bgPure} size={ICON_SIZE.sm} weight="bold" />
                 </AnimatedPressable>
               </View>
             ) : (
@@ -385,7 +386,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
           <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', flex: 1 }}>{initial ? tt('Edit Habit') : tt('New Habit')}</Text>
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light" style={{ width: 36, height: 36, borderRadius: radius.card, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center' }}>
-            <X color={colors.textMuted} size={20} weight="bold" />
+            <X color={colors.textMuted} size={ICON_SIZE.md} weight="bold" />
           </AnimatedPressable>
         </View>
         <ScrollView contentContainerStyle={{ padding: 24, gap: 28, paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled">
@@ -434,14 +435,14 @@ function AddHabitModal({ initial, onSave, onClose }: {
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('TIMES PER DAY')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <AnimatedPressable onPress={() => setTarget(t => Math.max(1, t - 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md, padding: 11 }}>
-                <Minus color={colors.text} size={15} weight="bold" />
+                <Minus color={colors.text} size={ICON_SIZE.sm} weight="bold" />
               </AnimatedPressable>
               <View style={{ minWidth: 70, alignItems: 'center' }}>
                 <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{target}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{target === 1 ? tt('simple check') : tt('taps to complete')}</Text>
               </View>
               <AnimatedPressable onPress={() => setTarget(t => Math.min(20, t + 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: color, borderRadius: radius.md, padding: 11 }}>
-                <Plus color={colors.bgPure} size={15} weight="bold" />
+                <Plus color={colors.bgPure} size={ICON_SIZE.sm} weight="bold" />
               </AnimatedPressable>
             </View>
           </View>
@@ -483,7 +484,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {reminder && (
                     <Pressable onPress={() => { setReminder(null); setShowReminderPicker(false); }} style={{ padding: 6, backgroundColor: colors.surface, borderRadius: 8 }}>
-                      <X color={colors.textMuted} size={16} />
+                      <X color={colors.textMuted} size={ICON_SIZE.sm} />
                     </Pressable>
                   )}
                   <Pressable onPress={() => {
@@ -515,7 +516,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {alarmTime && (
                     <Pressable onPress={() => { setAlarmTime(null); setShowAlarmPicker(false); }} style={{ padding: 6, backgroundColor: colors.surface, borderRadius: 8 }}>
-                      <X color={colors.textMuted} size={16} />
+                      <X color={colors.textMuted} size={ICON_SIZE.sm} />
                     </Pressable>
                   )}
                   <Pressable onPress={() => {
@@ -725,10 +726,10 @@ export default function HabitsApp() {
                 <Pressable onPress={() => setDetailId(habit.id)} style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '800' }} numberOfLines={1}>{habit.name}</Text>
-                    {habit.reminder ? <Bell color={colors.textMuted} size={12} weight="fill" /> : null}
+                    {habit.reminder ? <Bell color={colors.textMuted} size={ICON_SIZE.xs} weight="fill" /> : null}
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                    <Fire color={streak > 0 ? colors.warning : colors.textMuted} size={13} weight={streak > 0 ? 'fill' : 'regular'} />
+                    <Fire color={streak > 0 ? colors.warning : colors.textMuted} size={ICON_SIZE.xs} weight={streak > 0 ? 'fill' : 'regular'} />
                     <Text style={{ color: streak > 0 ? colors.warning : colors.textMuted, fontSize: fontSizes.meta, fontWeight: '600' }}>{streak} {tt('day streak')}</Text>
                     {restDay ? (
                       <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '600' }}>· {tt('rest day')}</Text>
@@ -758,7 +759,7 @@ export default function HabitsApp() {
                   ) : done ? (
                     <CheckCircle color={habit.color} size={36} weight="fill" />
                   ) : (
-                    <CircleDashed color={colors.glassBorder} size={36} weight="regular" />
+                    <CircleDashed color={colors.glassBorder} size={36} weight="bold" />
                   )}
                 </AnimatedPressable>
               </View>
@@ -767,7 +768,7 @@ export default function HabitsApp() {
               {done && (
                 <Pressable onPress={() => setProof({ habitId: habit.id, date: today })}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 9, borderRadius: radius.md, justifyContent: 'center', backgroundColor: habit.color + '12', borderWidth: StyleSheet.hairlineWidth, borderColor: habit.color + '33' }}>
-                    <NotePencil color={habit.color} size={14} weight="fill" />
+                    <NotePencil color={habit.color} size={ICON_SIZE.xs} weight="fill" />
                     <Text style={{ color: habit.color, fontSize: 12.5, fontWeight: '700' }}>
                       {todayEntry?.note || todayEntry?.photoUri ? tt('View note & proof') : tt('Add note or photo proof')}
                     </Text>

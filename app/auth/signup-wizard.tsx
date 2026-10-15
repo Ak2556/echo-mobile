@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { syncInterests } from '../../lib/supabaseEchoApi';
 import { cleanUsername } from '../../lib/social/username';
@@ -107,7 +108,7 @@ function SwatchItem({ color, selected, onPress }: {
         borderWidth: selected ? 3 : 0,
         borderColor: 'rgba(255,255,255,0.9)',
       }, animStyle]}>
-        {selected && <Check color={DARK.text} size={20} weight="bold" />}
+        {selected && <Check color={DARK.text} size={ICON_SIZE.md} weight="bold" />}
       </Animated.View>
     </AnimatedPressable>
   );
@@ -196,7 +197,7 @@ function SuggestedFollowRow({ user, selected, onToggle }: {
         backgroundColor: selected ? ACCENT : 'transparent',
         borderWidth: selected ? 0 : 1.5, borderColor: DARK.lineStrong,
       }}>
-        {selected ? <Check color={DARK.text} size={17} weight="bold" /> : <Plus color={DARK.soft} size={17} weight="bold" />}
+        {selected ? <Check color={DARK.text} size={ICON_SIZE.sm} weight="bold" /> : <Plus color={DARK.soft} size={ICON_SIZE.sm} weight="bold" />}
       </View>
     </AnimatedPressable>
   );
@@ -1042,7 +1043,7 @@ export default function SignupWizard() {
                       backgroundColor: DARK.raised, borderWidth: 2, borderColor: DARK.bg,
                       alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Camera color={DARK.text} size={17} weight="fill" />
+                      <Camera color={DARK.text} size={ICON_SIZE.sm} weight="fill" />
                     </View>
                   </AnimatedPressable>
                   <AnimatedPressable

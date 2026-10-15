@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, RefreshControl } from 'react-native';
@@ -132,7 +133,7 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Clock color={liveNow ? colors.danger : colors.accent} size={13} weight={liveNow ? 'fill' : 'regular'} />
+          <Clock color={liveNow ? colors.danger : colors.accent} size={ICON_SIZE.xs} weight={liveNow ? 'fill' : 'regular'} />
           <Text style={{ color: liveNow ? colors.danger : colors.accent, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.4 }}>
             {liveNow ? 'LIVE' : relativeStart(oh.starts_at).toUpperCase()}
           </Text>
@@ -160,7 +161,7 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
         )}
         <View style={{ flex: 1 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <UsersThree color={colors.textMuted} size={13} />
+          <UsersThree color={colors.textMuted} size={ICON_SIZE.xs} />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{oh.rsvp_count}</Text>
         </View>
       </View>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Bell, Image as ImageIcon, WarningCircle } from 'phosphor-react-native';
@@ -27,11 +28,11 @@ export function ChatDetailsSidebar({ recipient, colors }: Props) {
 
       <View style={[styles.actionsSection, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.bgSecondary }]}>
-          <Bell size={20} color={colors.textMuted} />
+          <Bell size={ICON_SIZE.md} color={colors.textMuted} />
           <Text style={[styles.actionText, { color: colors.text }]}>Mute Notifications</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.bgSecondary }]}>
-          <ImageIcon size={20} color={colors.textMuted} />
+          <ImageIcon size={ICON_SIZE.md} color={colors.textMuted} />
           <Text style={[styles.actionText, { color: colors.text }]}>Shared Media</Text>
         </TouchableOpacity>
       </View>

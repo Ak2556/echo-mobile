@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { StyleSheet, View, Text, Alert, Pressable, Modal, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -162,7 +163,7 @@ function CreateGroupModal({
           </View>
 
           <View style={{ padding: 12, borderRadius: radius.card, backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.inputBorder, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <MagnifyingGlass color={colors.textMuted} size={16} />
+            <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.sm} />
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -186,7 +187,7 @@ function CreateGroupModal({
                   <Text style={{ color: colors.accent, fontSize: fontSizes.meta, fontWeight: '800' }}>
                     {user.display_name || user.username}
                   </Text>
-                  <X color={colors.accent} size={12} weight="bold" />
+                  <X color={colors.accent} size={ICON_SIZE.xs} weight="bold" />
                 </Pressable>
               ))}
             </ScrollView>
@@ -231,7 +232,7 @@ function CreateGroupModal({
                   borderWidth: StyleSheet.hairlineWidth,
                   borderColor: active ? colors.accent : colors.border,
                 }}>
-                  {active ? <Check color={colors.onAccent} size={15} weight="bold" /> : null}
+                  {active ? <Check color={colors.onAccent} size={ICON_SIZE.sm} weight="bold" /> : null}
                 </View>
               </Pressable>
             );
@@ -283,7 +284,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
               online={online}
               squircle
             >
-              {conversation.isGroup ? <Users color={ON_MEDIA} size={19} weight="fill" /> : undefined}
+              {conversation.isGroup ? <Users color={ON_MEDIA} size={ICON_SIZE.md} weight="fill" /> : undefined}
             </Avatar>
           </View>
         )}
@@ -298,10 +299,10 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
             }} numberOfLines={1}>
               {conversation.displayName}
             </Text>
-            {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
-            {conversation.muted && <BellSlash color={colors.textMuted} size={13} weight="fill" />}
-            {conversation.isGroup && <Users color={colors.textMuted} size={13} weight="fill" />}
-            {pinned && <PushPin color={colors.accent} size={13} weight="fill" />}
+            {conversation.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
+            {conversation.muted && <BellSlash color={colors.textMuted} size={ICON_SIZE.xs} weight="fill" />}
+            {conversation.isGroup && <Users color={colors.textMuted} size={ICON_SIZE.xs} weight="fill" />}
+            {pinned && <PushPin color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
           </View>
           <Text
             style={{
@@ -320,11 +321,11 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
               gap: 4,
             }}>
               {conversation.lastMessage.toLowerCase().includes('photo')
-                ? <Camera color={colors.textMuted} size={14} weight="bold" />
+                ? <Camera color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
                 : conversation.lastMessage.toLowerCase().includes('voice')
-                  ? <Microphone color={colors.textMuted} size={14} weight="bold" />
+                  ? <Microphone color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
                   : conversation.lastMessage.toLowerCase().includes('link')
-                    ? <LinkSimple color={colors.textMuted} size={14} weight="bold" />
+                    ? <LinkSimple color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
                     : null
               }
             </View>
@@ -379,7 +380,7 @@ function InboxHero({
       <View style={{ padding: 18, gap: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
           <View style={{ width: 52, height: 52, borderRadius: 19, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-            <ChatCircleText color={colors.onAccent} size={27} weight="fill" />
+            <ChatCircleText color={colors.onAccent} size={ICON_SIZE.xl} weight="fill" />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={{ color: colors.text, fontSize: 26, lineHeight: 31, ...font.displayBlack, letterSpacing: -0.4 }}>
@@ -459,7 +460,7 @@ function InboxToolbar({
         />
         {query.trim() ? (
           <Pressable onPress={() => onQueryChange('')} hitSlop={8}>
-            <X color={colors.textMuted} size={16} />
+            <X color={colors.textMuted} size={ICON_SIZE.sm} />
           </Pressable>
         ) : null}
       </View>
@@ -806,14 +807,14 @@ export default function MessagesListScreen() {
       renderRightActions={() => (
         <View style={{ flexDirection: 'row' }}>
           <SwipeAction
-            icon={<PushPin color={colors.onAccent} size={19} weight={isPinned(item.id) ? 'fill' : 'regular'} />}
+            icon={<PushPin color={colors.onAccent} size={ICON_SIZE.md} weight={isPinned(item.id) ? 'fill' : 'regular'} />}
             label={isPinned(item.id) ? 'Unpin' : 'Pin'}
             bg={colors.accent}
             onPress={() => togglePin(item.id)}
           />
           {remote && (
             <SwipeAction
-              icon={<BellSlash color={colors.onAccent} size={19} weight={item.muted ? 'fill' : 'regular'} />}
+              icon={<BellSlash color={colors.onAccent} size={ICON_SIZE.md} weight={item.muted ? 'fill' : 'regular'} />}
               label={item.muted ? 'Unmute' : 'Mute'}
               bg={colors.textMuted}
               onPress={() => setPref.mutate({ conversationId: item.id, patch: { muted: !item.muted } })}
@@ -821,7 +822,7 @@ export default function MessagesListScreen() {
           )}
           {remote && (
             <SwipeAction
-              icon={<Archive color={ON_STATUS} size={19} weight={item.archived ? 'fill' : 'regular'} />}
+              icon={<Archive color={ON_STATUS} size={ICON_SIZE.md} weight={item.archived ? 'fill' : 'regular'} />}
               label={item.archived ? 'Restore' : 'Archive'}
               bg={colors.danger}
               onPress={() => setPref.mutate({ conversationId: item.id, patch: { archived: !item.archived } })}
@@ -896,10 +897,10 @@ export default function MessagesListScreen() {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
           <AnimatedPressable onPress={() => setGroupModalOpen(true)} style={{ width: 40, height: 40, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }} scaleValue={0.88} haptic="light">
-            <Users color={colors.accent} size={20} weight="bold" />
+            <Users color={colors.accent} size={ICON_SIZE.md} weight="bold" />
           </AnimatedPressable>
           <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} style={{ width: 40, height: 40, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }} scaleValue={0.88} haptic="light">
-            <PencilSimple color={colors.onAccent} size={20} weight="bold" />
+            <PencilSimple color={colors.onAccent} size={ICON_SIZE.md} weight="bold" />
           </AnimatedPressable>
         </View>
       </View>
@@ -956,13 +957,13 @@ export default function MessagesListScreen() {
                   paddingHorizontal: 16, paddingVertical: 14,
                   borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
                 }}>
-                  <Archive color={colors.textMuted} size={17} />
+                  <Archive color={colors.textMuted} size={ICON_SIZE.sm} />
                   <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '600', flex: 1 }}>
                     {ttx("Archived ·")} {archived.length}
                   </Text>
                   {showArchived
-                    ? <CaretDown color={colors.textMuted} size={14} />
-                    : <CaretRight color={colors.textMuted} size={14} />}
+                    ? <CaretDown color={colors.textMuted} size={ICON_SIZE.xs} />
+                    : <CaretRight color={colors.textMuted} size={ICON_SIZE.xs} />}
                 </View>
               </Pressable>
               {showArchived && archived.map((item, i) => (

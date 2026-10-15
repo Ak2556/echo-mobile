@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert, ActivityIndicator, Switch } from 'react-native';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
@@ -198,7 +199,7 @@ export default function GroupInfoScreen() {
                 scaleValue={0.96} haptic="light"
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: radius.full, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '66', paddingHorizontal: 14, paddingVertical: 8, opacity: suggesting ? 0.6 : 1 }}
               >
-                {suggesting ? <ActivityIndicator size="small" color={colors.accent} /> : <Waveform color={colors.accent} size={15} weight="fill" />}
+                {suggesting ? <ActivityIndicator size="small" color={colors.accent} /> : <Waveform color={colors.accent} size={ICON_SIZE.sm} weight="fill" />}
                 <Text style={{ color: colors.accent, fontSize: fontSizes.small, ...font.bodySemibold }}>{ttx("Ask Echo to name it")}</Text>
               </AnimatedPressable>
             )}
@@ -224,7 +225,7 @@ export default function GroupInfoScreen() {
             {isAdmin && (
               <Pressable onPress={() => setAdding(a => !a)} hitSlop={8}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                  <UserPlus color={colors.accent} size={15} weight="bold" />
+                  <UserPlus color={colors.accent} size={ICON_SIZE.sm} weight="bold" />
                   <Text style={{ color: colors.accent, fontSize: fontSizes.small, ...font.bodySemibold }}>{ttx("Add")}</Text>
                 </View>
               </Pressable>
@@ -235,9 +236,9 @@ export default function GroupInfoScreen() {
           {adding && isAdmin && (
             <View style={{ marginBottom: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 12 }}>
-                <MagnifyingGlass color={colors.textMuted} size={16} />
+                <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.sm} />
                 <TextInput value={query} onChangeText={runSearch} placeholder={ttx("Search people to add")} placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ flex: 1, color: colors.text, fontSize: 14.5, paddingVertical: 11 }} />
-                {query ? <Pressable onPress={() => runSearch('')} hitSlop={8}><X color={colors.textMuted} size={15} /></Pressable> : null}
+                {query ? <Pressable onPress={() => runSearch('')} hitSlop={8}><X color={colors.textMuted} size={ICON_SIZE.sm} /></Pressable> : null}
               </View>
               {hits.map(u => (
                 <Pressable key={u.id} onPress={() => addMember(u)}>
@@ -284,7 +285,7 @@ export default function GroupInfoScreen() {
 
           {/* Settings */}
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, marginTop: 8, gap: 12 }}>
-            <BellSlash color={colors.textSecondary} size={19} />
+            <BellSlash color={colors.textSecondary} size={ICON_SIZE.md} />
             <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>{ttx("Mute notifications")}</Text>
             <Switch value={muted} onValueChange={toggleMute} />
           </View>
@@ -294,7 +295,7 @@ export default function GroupInfoScreen() {
             scaleValue={0.98} haptic="medium"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: radius.lg, borderWidth: 1, borderColor: `${colors.danger}55`, paddingVertical: 14, marginTop: 8 }}
           >
-            <SignOut color={colors.danger} size={17} weight="bold" />
+            <SignOut color={colors.danger} size={ICON_SIZE.sm} weight="bold" />
             <Text style={{ color: colors.danger, fontWeight: '700', fontSize: 15 }}>{ttx("Leave group")}</Text>
           </AnimatedPressable>
         </ScrollView>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, Alert, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -281,7 +282,7 @@ export default function EditProfileScreen() {
                 }}>
                   {uploadingAvatar
                     ? <ActivityIndicator size="small" color={ON_MEDIA} style={{ width: 14, height: 14 }} />
-                    : <Camera size={14} color={ON_MEDIA} weight="fill" />
+                    : <Camera size={ICON_SIZE.xs} color={ON_MEDIA} weight="fill" />
                   }
                 </View>
               </AnimatedPressable>
@@ -339,7 +340,7 @@ export default function EditProfileScreen() {
 
         <Animated.View entering={animation(FadeInDown.delay(180).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <UserCircle color={colors.accent} size={20} weight="bold" />
+            <UserCircle color={colors.accent} size={ICON_SIZE.md} weight="bold" />
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("Identity")}</Text>
           </View>
 
@@ -444,7 +445,7 @@ export default function EditProfileScreen() {
 
         <Animated.View entering={animation(FadeInDown.delay(240).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <TextAlignLeft color={colors.accent} size={20} weight="bold" />
+            <TextAlignLeft color={colors.accent} size={ICON_SIZE.md} weight="bold" />
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("Story")}</Text>
           </View>
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { View, Text, ScrollView, Switch, Alert, Modal, Platform, StyleSheet, Linking } from 'react-native';
 import { contactCardEnabled, contactCardSupported, enableContactCard } from '../lib/social/contactCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -331,7 +332,7 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
                         </Text>
                       )}
                     </View>
-                    {active && <Check color={colors.accent} size={20} />}
+                    {active && <Check color={colors.accent} size={ICON_SIZE.md} />}
                   </AnimatedPressable>
                 );
               })}
@@ -416,7 +417,7 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
                     borderColor: colors.text,
                   }}
                 >
-                  {value === c.color && <Check color={ON_MEDIA} size={20} />}
+                  {value === c.color && <Check color={ON_MEDIA} size={ICON_SIZE.md} />}
                 </View>
                 <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 6 }}>{c.name}</Text>
               </AnimatedPressable>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, TextInput, ScrollView, Modal, StyleSheet } from 'react-native';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -159,7 +160,7 @@ export default function ChatDetailsScreen() {
                 returnKeyType="done"
               />
               <Pressable onPress={saveNickname} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Save nickname")}>
-                <Check color={colors.accent} size={20} weight="bold" />
+                <Check color={colors.accent} size={ICON_SIZE.md} weight="bold" />
               </Pressable>
             </View>
           </View>
@@ -194,27 +195,27 @@ export default function ChatDetailsScreen() {
 
         {/* Notifications */}
         <SectionLabel colors={colors}>{ttx("Notifications")}</SectionLabel>
-        <Row colors={colors} radius={radius} icon={mutedNow ? <BellSlash color={colors.accent} size={20} weight="fill" /> : <Bell color={colors.text} size={20} />}
+        <Row colors={colors} radius={radius} icon={mutedNow ? <BellSlash color={colors.accent} size={ICON_SIZE.md} weight="fill" /> : <Bell color={colors.text} size={ICON_SIZE.md} />}
           label={mutedNow ? 'Muted' : 'Mute notifications'}
           sub={mutedNow ? (prefs.mutedUntil ? `Until ${new Date(prefs.mutedUntil).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : 'Until you turn it back on') : 'Silence this conversation'}
           onPress={() => (mutedNow ? unmute() : setMuteOpen(true))} />
 
         {/* Media */}
         <SectionLabel colors={colors}>{ttx("Media & links")}</SectionLabel>
-        <Row colors={colors} radius={radius} icon={<Images color={colors.text} size={20} />} label={ttx("Shared media")} sub="Photos and links in this chat" onPress={() => router.push(`/chat-media/${id}`)} />
+        <Row colors={colors} radius={radius} icon={<Images color={colors.text} size={ICON_SIZE.md} />} label={ttx("Shared media")} sub="Photos and links in this chat" onPress={() => router.push(`/chat-media/${id}`)} />
 
         {/* Privacy & safety */}
         <SectionLabel colors={colors}>{ttx("Privacy & safety")}</SectionLabel>
-        <Row colors={colors} radius={radius} icon={<EnvelopeSimple color={colors.text} size={20} />} label={ttx("Mark as unread")} onPress={markUnread} />
+        <Row colors={colors} radius={radius} icon={<EnvelopeSimple color={colors.text} size={ICON_SIZE.md} />} label={ttx("Mark as unread")} onPress={markUnread} />
         {isGroup ? (
-          <Row colors={colors} radius={radius} icon={<Users color={colors.text} size={20} />} label={ttx("Members & group settings")} onPress={() => router.push(`/group/${id}`)} />
+          <Row colors={colors} radius={radius} icon={<Users color={colors.text} size={ICON_SIZE.md} />} label={ttx("Members & group settings")} onPress={() => router.push(`/group/${id}`)} />
         ) : otherId ? (
-          <Row colors={colors} radius={radius} icon={<UserCircle color={colors.text} size={20} />} label={ttx("View profile")} onPress={() => router.push(`/user/${otherId}`)} />
+          <Row colors={colors} radius={radius} icon={<UserCircle color={colors.text} size={ICON_SIZE.md} />} label={ttx("View profile")} onPress={() => router.push(`/user/${otherId}`)} />
         ) : null}
         {!isGroup && otherId && (
-          <Row colors={colors} radius={radius} danger icon={<Prohibit color={colors.danger} size={20} />} label={blocked ? 'Unblock' : 'Block'} onPress={doBlock} />
+          <Row colors={colors} radius={radius} danger icon={<Prohibit color={colors.danger} size={ICON_SIZE.md} />} label={blocked ? 'Unblock' : 'Block'} onPress={doBlock} />
         )}
-        <Row colors={colors} radius={radius} danger icon={<Flag color={colors.danger} size={20} />} label={ttx("Report")} onPress={() => router.push({ pathname: '/report', params: { targetType: isGroup ? 'group' : 'user', targetId: otherId ?? id, targetName: name } })} />
+        <Row colors={colors} radius={radius} danger icon={<Flag color={colors.danger} size={ICON_SIZE.md} />} label={ttx("Report")} onPress={() => router.push({ pathname: '/report', params: { targetType: isGroup ? 'group' : 'user', targetId: otherId ?? id, targetName: name } })} />
       </ScrollView>
 
       {/* Mute duration picker */}
@@ -223,7 +224,7 @@ export default function ChatDetailsScreen() {
           <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 18, paddingBottom: 34 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <Text style={{ color: colors.text, fontSize: 18, ...font.displayBlack }}>{ttx("Mute for…")}</Text>
-              <Pressable onPress={() => setMuteOpen(false)} hitSlop={8}><X color={colors.textMuted} size={20} /></Pressable>
+              <Pressable onPress={() => setMuteOpen(false)} hitSlop={8}><X color={colors.textMuted} size={ICON_SIZE.md} /></Pressable>
             </View>
             {MUTE_OPTIONS.map(o => (
               <Pressable key={o.label} onPress={() => chooseMute(o.ms)} accessibilityRole="button" style={{ paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>

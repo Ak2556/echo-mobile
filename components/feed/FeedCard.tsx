@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ShareSheet } from '../common/ShareSheet';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
@@ -137,7 +138,7 @@ function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollVie
         );
       })}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <ChartBar color={colors.textMuted} size={14} />
+        <ChartBar color={colors.textMuted} size={ICON_SIZE.xs} />
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
           {poll.totalVotes} vote{poll.totalVotes !== 1 ? 's' : ''}
           {getTimeLeft() ? ` · ${getTimeLeft()}` : ''}
@@ -310,7 +311,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
     ...(item.userId === currentUserId ? [{
       key: 'delete',
       label: ttx('Delete'),
-      icon: <Trash color={colors.danger} size={20} />,
+      icon: <Trash color={colors.danger} size={ICON_SIZE.md} />,
       destructive: true,
       onPress: () => {
         void confirmAction({
@@ -331,13 +332,13 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
     {
       key: 'profile',
       label: t('feed.viewProfile'),
-      icon: <UserCircle color={colors.textSecondary} size={20} />,
+      icon: <UserCircle color={colors.textSecondary} size={ICON_SIZE.md} />,
       onPress: () => router.push(`/user/${item.userId}`),
     },
     {
       key: 'less',
       label: t('feed.showLess'),
-      icon: <Question color={colors.textSecondary} size={20} />,
+      icon: <Question color={colors.textSecondary} size={ICON_SIZE.md} />,
       onPress: () => {
         setFeedFeedback({ ...feedFeedback, [item.id]: 'less' });
         tap('success');
@@ -347,7 +348,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
     {
       key: 'notinterested',
       label: t('feed.notInterested'),
-      icon: <Flag color={colors.textSecondary} size={20} />,
+      icon: <Flag color={colors.textSecondary} size={ICON_SIZE.md} />,
       onPress: () => {
         setNotInterestedIds([...notInterestedIds, item.id]);
         void markNotInterested({ echoId: item.id });
@@ -358,7 +359,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
     {
       key: 'notinterestedauthor',
       label: t('feed.notInterestedAuthor', { username: item.username }),
-      icon: <Flag color={colors.textSecondary} size={20} />,
+      icon: <Flag color={colors.textSecondary} size={ICON_SIZE.md} />,
       onPress: () => {
         setNotInterestedIds([...notInterestedIds, item.id]);
         void markNotInterested({ authorId: item.userId });
@@ -369,7 +370,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
     {
       key: 'mute',
       label: isMuted(item.userId) ? t('feed.unmute', { username: item.username }) : t('feed.mute', { username: item.username }),
-      icon: <UserMinus color={colors.textSecondary} size={20} />,
+      icon: <UserMinus color={colors.textSecondary} size={ICON_SIZE.md} />,
       onPress: () => {
         const wasMuted = isMuted(item.userId);
         toggleMute(item.userId);
@@ -383,7 +384,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
     {
       key: 'report',
       label: t('feed.report'),
-      icon: <Flag color="#F59E0B" size={20} weight="fill" />,
+      icon: <Flag color="#F59E0B" size={ICON_SIZE.md} weight="fill" />,
       destructive: true,
       onPress: handleReport,
     },
@@ -499,7 +500,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
       >
         <ActionButton
           label="Like"
-          icon={<HeartStraight color={liked ? '#EF4444' : colors.textMuted} size={20} weight={liked ? 'fill' : 'regular'} />}
+          icon={<HeartStraight color={liked ? '#EF4444' : colors.textMuted} size={ICON_SIZE.md} weight={liked ? 'fill' : 'regular'} />}
           count={likeCount}
           active={liked}
           color="#EF4444"
@@ -508,14 +509,14 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         />
         <ActionButton
           label="Reply"
-          icon={<ChatCircle color={colors.textMuted} size={20} />}
+          icon={<ChatCircle color={colors.textMuted} size={ICON_SIZE.md} />}
           count={item.commentCount || undefined}
           onPress={(e) => { e.stopPropagation?.(); router.push(`/comments/${item.id}`); }}
           accessibilityLabel={`${ttx('Comment')}, ${countLabel(item.commentCount, ttx('comment'), ttx('comments'))}`}
         />
         <ActionButton
           label="Repost"
-          icon={<ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={20} weight={reposted ? 'bold' : 'regular'} />}
+          icon={<ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={ICON_SIZE.md} weight={reposted ? 'bold' : 'regular'} />}
           count={displayRepostCount || undefined}
           active={reposted}
           color={colors.success}
@@ -525,7 +526,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         />
         <ActionButton
           label="Save"
-          icon={<BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={20} weight={bookmarked ? 'fill' : 'regular'} />}
+          icon={<BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={ICON_SIZE.md} weight={bookmarked ? 'fill' : 'regular'} />}
           active={bookmarked}
           color={colors.accent}
           onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }}
@@ -533,7 +534,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         />
         <ActionButton
           label="Remix"
-          icon={<GitBranch color={colors.textMuted} size={20} weight="bold" />}
+          icon={<GitBranch color={colors.textMuted} size={ICON_SIZE.md} weight="bold" />}
           onPress={(e) => {
             e.stopPropagation?.();
             router.push({
@@ -549,7 +550,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         />
         <ActionButton
           label="Share"
-          icon={<ShareNetwork color={colors.textMuted} size={20} />}
+          icon={<ShareNetwork color={colors.textMuted} size={ICON_SIZE.md} />}
           onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }}
           accessibilityLabel="Share"
         />
@@ -618,7 +619,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <Text style={[font.bodySemibold, { fontSize: 14, color: '#fff' }]} numberOfLines={1}>{item.displayName || item.username}</Text>
-                    {item.isVerified && <SealCheck color="#fff" size={13} weight="fill" />}
+                    {item.isVerified && <SealCheck color="#fff" size={ICON_SIZE.xs} weight="fill" />}
                     <RankMark userId={item.userId} />
                   </View>
                   <Text style={{ color: item.isPending ? '#60A5FA' : 'rgba(255,255,255,0.72)', fontSize: 11, fontWeight: item.isPending ? '600' : '500', letterSpacing: -0.2 }}>{item.isPending ? 'Pending' : getTimeAgo(item.createdAt)}</Text>
@@ -740,7 +741,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
       >
         {item.repostedByUsername && (
           <View className="flex-row items-center mb-2 ml-1 gap-1.5">
-            <ArrowsClockwise color={colors.textMuted} size={14} />
+            <ArrowsClockwise color={colors.textMuted} size={ICON_SIZE.xs} />
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.repostedByUsername} re-echoed</Text>
           </View>
         )}
@@ -811,7 +812,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
           >
             <View className="flex-row items-center gap-1" style={{ minWidth: 0 }}>
               <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: -0.3, flexShrink: 1 }]} numberOfLines={1}>{item.displayName || item.username}</Text>
-              {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+              {item.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
               <RankMark userId={item.userId} size={14} />
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
@@ -820,7 +821,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
           <Text style={{ color: item.isPending ? colors.accent : colors.textSecondary, fontSize: fontSizes.caption, marginLeft: 8, marginRight: 8, fontWeight: item.isPending ? '600' : '500', letterSpacing: -0.2 }}>
             {item.isPending ? 'Pending' : getTimeAgo(item.createdAt)}
           </Text>
-          {pinned && <PushPin color={colors.textMuted} size={13} weight="fill" style={{ marginRight: 6 }} />}
+          {pinned && <PushPin color={colors.textMuted} size={ICON_SIZE.xs} weight="fill" style={{ marginRight: 6 }} />}
           {showFollowCta && (
             <AnimatedPressable
               onPress={(e) => { e.stopPropagation?.(); toggleFollowUser(item.userId); }}
@@ -851,7 +852,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
 
         {item.musicTitle && (
           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginBottom: 10, alignSelf: 'flex-start' }}>
-            <MusicNote color={colors.textSecondary} size={13} weight="fill" style={{ marginRight: 6 }} />
+            <MusicNote color={colors.textSecondary} size={ICON_SIZE.xs} weight="fill" style={{ marginRight: 6 }} />
               <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', flexShrink: 1 }} numberOfLines={1}>{item.musicTitle} · {item.musicArtist}</Text>
           </View>
         )}
@@ -949,7 +950,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         {item.postType === 'poll' && item.poll && (
           <View style={{ marginBottom: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
-              <ChartBar color={colors.textMuted} size={12} weight="bold" />
+              <ChartBar color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '500' }}>
                 Poll
               </Text>

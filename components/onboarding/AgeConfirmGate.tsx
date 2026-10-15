@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Cake } from 'phosphor-react-native';
@@ -105,7 +106,7 @@ export function AgeConfirmGate() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 24, gap: 16 }}>
           <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentMuted }}>
-            <Cake color={colors.accent} size={28} weight="fill" />
+            <Cake color={colors.accent} size={ICON_SIZE.xl} weight="fill" />
           </View>
           <Text style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 34 }]}>{ttx('Confirm your birthday')}</Text>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, lineHeight: 22 }}>

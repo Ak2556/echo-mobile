@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, Alert, Pressable, StyleSheet, RefreshControl } from 'react-native';
@@ -78,7 +79,7 @@ export default function BookmarksScreen() {
         title={ttx("Bookmarks")}
         right={
           <Pressable onPress={handleNewCollection} hitSlop={10} style={{ marginRight: 10 }} accessibilityRole="button" accessibilityLabel={ttx("New collection")}>
-            <Plus color={colors.textSecondary} size={20} />
+            <Plus color={colors.textSecondary} size={ICON_SIZE.md} />
           </Pressable>
         }
       />

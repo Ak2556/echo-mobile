@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash, ListDashes, MagnifyingGlass, Tag, Scan, CaretDown, CurrencyDollar } from 'phosphor-react-native';
@@ -225,7 +226,7 @@ export default function ShoppingListScreen() {
           <Text style={{ fontSize: fontSizes.heading, fontWeight: '900', color: colors.text }}>
             {currentList?.name || 'My List'}
           </Text>
-          <CaretDown color={colors.textMuted} size={24} weight="bold" />
+          <CaretDown color={colors.textMuted} size={ICON_SIZE.lg} weight="bold" />
         </AnimatedPressable>
         <AnimatedPressable onPress={() => { tap('selection'); setShowScanner(true); }} style={{ width: 44, height: 44, borderRadius: radius.full, backgroundColor: `${accent}15`, alignItems: 'center', justifyContent: 'center' }}>
           <Scan color={accent} size={22} weight="duotone" />
@@ -248,7 +249,7 @@ export default function ShoppingListScreen() {
           <MiniStatCard value={`${stats.checked}`} label={ttx("Checked")} accent={colors.success} />
           <AnimatedPressable onPress={clearChecked} scaleValue={0.95} haptic="medium" style={{ flex: 1 }}>
             <View style={{ flex: 1, borderRadius: radius.lg, paddingVertical: 12, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              <Trash color={colors.textMuted} size={20} />
+              <Trash color={colors.textMuted} size={ICON_SIZE.md} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '800' }}>{ttx("Clear")}</Text>
             </View>
           </AnimatedPressable>
@@ -271,14 +272,14 @@ export default function ShoppingListScreen() {
             <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                 <Pressable onPress={() => toggle(item)} hitSlop={12}>
-                  {item.checked ? <CheckCircle color={colors.success} size={28} weight="fill" /> : <CircleDashed color={colors.textMuted} size={28} />}
+                  {item.checked ? <CheckCircle color={colors.success} size={ICON_SIZE.xl} weight="fill" /> : <CircleDashed color={colors.textMuted} size={ICON_SIZE.xl} />}
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: item.checked ? colors.textMuted : colors.text, fontSize: 17, fontWeight: '800', textDecorationLine: item.checked ? 'line-through' : 'none' }}>
                     {item.name}
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                    <Tag color={colors.textMuted} size={12} weight="fill" />
+                    <Tag color={colors.textMuted} size={ICON_SIZE.xs} weight="fill" />
                     <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>{item.category}</Text>
                     <Text style={{ color: colors.glassBorder, fontSize: fontSizes.small }}>•</Text>
                     <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>Qty: {item.quantity}</Text>
@@ -291,7 +292,7 @@ export default function ShoppingListScreen() {
                     </Text>
                   )}
                   <Pressable onPress={() => remove(item)} hitSlop={12} style={{ padding: 4, backgroundColor: colors.inputBg, borderRadius: radius.md }}>
-                    <Trash color={colors.textMuted} size={16} />
+                    <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
                   </Pressable>
                 </View>
               </View>
@@ -324,7 +325,7 @@ export default function ShoppingListScreen() {
           <TextInput value={quantity} onChangeText={setQuantity} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="numbers-and-punctuation" />
         </View>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-          <CurrencyDollar color={colors.textMuted} size={20} />
+          <CurrencyDollar color={colors.textMuted} size={ICON_SIZE.md} />
           <TextInput value={price} onChangeText={setPrice} placeholder="0.00" placeholderTextColor={colors.textMuted} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="decimal-pad" />
         </View>
       </View>
@@ -365,11 +366,11 @@ export default function ShoppingListScreen() {
                 borderWidth: 2, borderColor: isActive ? accent : 'transparent'
               }}
             >
-              <ListDashes color={isActive ? accent : colors.textMuted} size={24} weight="duotone" />
+              <ListDashes color={isActive ? accent : colors.textMuted} size={ICON_SIZE.lg} weight="duotone" />
               <Text style={{ flex: 1, marginLeft: 16, fontSize: 18, fontWeight: '800', color: isActive ? accent : colors.text }}>
                 {list.name}
               </Text>
-              {isActive && <CheckCircle color={accent} size={24} weight="fill" />}
+              {isActive && <CheckCircle color={accent} size={ICON_SIZE.lg} weight="fill" />}
             </AnimatedPressable>
           );
         })}

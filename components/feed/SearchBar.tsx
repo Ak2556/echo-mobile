@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { TextInput, Pressable } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { MagnifyingGlass, X } from 'phosphor-react-native';
@@ -32,8 +33,8 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...
     >
       <MagnifyingGlass
         color={colors.textMuted}
-        size={20}
-        weight="regular"
+        size={ICON_SIZE.md}
+        weight="bold"
       />
       <TextInput
         style={{
@@ -67,7 +68,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...
             justifyContent: 'center',
           }}
         >
-          <X color={colors.surface} size={12} weight="bold" />
+          <X color={colors.surface} size={ICON_SIZE.xs} weight="bold" />
         </Pressable>
       )}
     </Animated.View>

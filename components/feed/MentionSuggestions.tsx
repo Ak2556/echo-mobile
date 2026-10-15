@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SealCheck } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
@@ -137,7 +138,7 @@ export function MentionSuggestions({ text, caret, onPick, bottom = 64 }: Mention
                 <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }} numberOfLines={1}>
                   {u.display_name || u.username}
                 </Text>
-                {u.is_verified && <SealCheck color={colors.accent} size={12} weight="fill" />}
+                {u.is_verified && <SealCheck color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
               </View>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{u.username}</Text>
             </View>

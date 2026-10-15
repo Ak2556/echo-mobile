@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { CaretDown, CaretRight } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
@@ -62,8 +63,8 @@ export function Disclosure({
           }}
         >
           {open
-            ? <CaretDown size={16} weight="bold" color={colors.textMuted} />
-            : <CaretRight size={16} weight="bold" color={colors.textMuted} />}
+            ? <CaretDown size={ICON_SIZE.sm} weight="bold" color={colors.textMuted} />
+            : <CaretRight size={ICON_SIZE.sm} weight="bold" color={colors.textMuted} />}
           <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, flex: 1 }]}>{title}</Text>
           {!!meta && (
             <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>{meta}</Text>

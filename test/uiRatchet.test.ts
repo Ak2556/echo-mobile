@@ -28,6 +28,8 @@ const CEILINGS = {
   rawRadius: 224,
   rawFontSize: 502,
   alertAlert: 91,
+  rawIconSize: 396,
+  regularWeightIcons: 5,
 };
 
 describe('UI drift ratchets', () => {
@@ -36,6 +38,12 @@ describe('UI drift ratchets', () => {
   });
   it('raw fontSize numbers in app/', () => {
     expect(count(/fontSize: [\d.]+/g)).toBeLessThanOrEqual(CEILINGS.rawFontSize);
+  });
+  it('raw numeric size={N} on icons in app/ and components/ (use ICON_SIZE)', () => {
+    expect(count(/\bsize=\{\d+\}/g, ['app', 'components'])).toBeLessThanOrEqual(CEILINGS.rawIconSize);
+  });
+  it('regular-weight icons in app/ and components/ (only the tab bar keeps one)', () => {
+    expect(count(/weight="regular"/g, ['app', 'components'])).toBeLessThanOrEqual(CEILINGS.regularWeightIcons);
   });
   it('Alert.alert calls in app/ and components/', () => {
     expect(count(/Alert\.alert\(/g, ['app', 'components'])).toBeLessThanOrEqual(CEILINGS.alertAlert);

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Pressable, Text, View } from 'react-native';
 import { CaretDown, CaretUp, Medal } from 'phosphor-react-native';
 import { RANK_RULES, isActiveThisWeek, rankProgress } from '../../lib/retention/ranks';
@@ -25,7 +26,7 @@ export function RankCard() {
     <View style={{ alignSelf: 'stretch', marginHorizontal: 16, marginTop: 4, marginBottom: 4, padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: `${current.color}22` }}>
-          <Medal color={current.color} size={20} weight="fill" />
+          <Medal color={current.color} size={ICON_SIZE.md} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.body }]}>{ttx(current.name)}</Text>
@@ -45,7 +46,7 @@ export function RankCard() {
       <Pressable onPress={() => setOpen(o => !o)} accessibilityRole="button" accessibilityState={{ expanded: open }} hitSlop={6}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10 }}>
           <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption }]}>{ttx('How to earn points')}</Text>
-          {open ? <CaretUp color={colors.accent} size={12} weight="bold" /> : <CaretDown color={colors.accent} size={12} weight="bold" />}
+          {open ? <CaretUp color={colors.accent} size={ICON_SIZE.xs} weight="bold" /> : <CaretDown color={colors.accent} size={ICON_SIZE.xs} weight="bold" />}
         </View>
       </Pressable>
       {open && (

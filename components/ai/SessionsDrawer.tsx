@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Modal, View, Text, Pressable, StyleSheet, TextInput, Platform } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { GlassPanel } from '../ui/GlassPanel';
@@ -75,7 +76,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
                 borderColor: colors.glassBorder,
               }}
             >
-              <MagnifyingGlass color={colors.textMuted} size={16} />
+              <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.sm} />
               <TextInput
                 value={query}
                 onChangeText={setQuery}
@@ -150,7 +151,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
                   accessibilityRole="button"
                   accessibilityLabel={ttx("Delete conversation")}
                 >
-                  <Trash color={colors.textMuted} size={16} />
+                  <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
                 </Pressable>
               </View>
             )}

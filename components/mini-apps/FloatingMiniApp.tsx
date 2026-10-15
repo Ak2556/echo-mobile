@@ -1,4 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, useWindowDimensions, Pressable, ScrollView, Keyboard, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -176,8 +177,8 @@ function Bubble({ pathname }: { pathname: string }) {
         accessibilityHint={t('voice.holdToTalk')}
       >
         {listening
-          ? <Microphone color={colors.bgPure} size={20} weight="fill" />
-          : meta ? <MiniAppGlyph id={meta.id} color={colors.bgPure} size={20} /> : <Waveform color={colors.bgPure} size={20} weight="fill" />}
+          ? <Microphone color={colors.bgPure} size={ICON_SIZE.md} weight="fill" />
+          : meta ? <MiniAppGlyph id={meta.id} color={colors.bgPure} size={20} /> : <Waveform color={colors.bgPure} size={ICON_SIZE.md} weight="fill" />}
       </Animated.View>
     </GestureDetector>
   );
@@ -236,7 +237,7 @@ function Panel() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
             {meta
               ? <MiniAppIcon id={meta.id} color={brand} size={28} />
-              : <Waveform color={colors.accent} size={20} weight="fill" />}
+              : <Waveform color={colors.accent} size={ICON_SIZE.md} weight="fill" />}
             <Text style={{ flex: 1, color: colors.text, fontSize: 18, ...font.displayBlack, letterSpacing: -0.3 }} numberOfLines={1}>
               {meta ? meta.name : t('mini.pickerTitle')}
             </Text>

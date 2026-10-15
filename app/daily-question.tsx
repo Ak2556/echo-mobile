@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
@@ -218,7 +219,7 @@ function DailyQuestionScreenInner() {
                 alignItems: 'center',
               }}
             >
-              <LockSimple color={colors.textMuted} size={28} />
+              <LockSimple color={colors.textMuted} size={ICON_SIZE.xl} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
                 {t('daily.lockGate')}
               </Text>
@@ -244,7 +245,7 @@ function DailyQuestionScreenInner() {
                 <ViewChip
                   active={view === 'recent'}
                   onPress={() => setView('recent')}
-                  icon={<Clock size={14} weight="fill" color={view === 'recent' ? colors.onAccent : colors.textMuted} />}
+                  icon={<Clock size={ICON_SIZE.xs} weight="fill" color={view === 'recent' ? colors.onAccent : colors.textMuted} />}
                   label={t('daily.recent')}
                 />
                 <ViewChip
@@ -253,7 +254,7 @@ function DailyQuestionScreenInner() {
                     if (view !== 'following') track('daily_following_viewed', { question_id: question.id, answer_count: following.length });
                     setView('following');
                   }}
-                  icon={<Users size={14} weight="fill" color={view === 'following' ? colors.onAccent : colors.textMuted} />}
+                  icon={<Users size={ICON_SIZE.xs} weight="fill" color={view === 'following' ? colors.onAccent : colors.textMuted} />}
                   label={t('daily.following')}
                 />
                 <ViewChip
@@ -262,7 +263,7 @@ function DailyQuestionScreenInner() {
                     if (view !== 'divergent') track('daily_divergence_viewed', { question_id: question.id, answer_count: divergent.length });
                     setView('divergent');
                   }}
-                  icon={<Lightning size={14} weight="fill" color={view === 'divergent' ? colors.onAccent : colors.textMuted} />}
+                  icon={<Lightning size={ICON_SIZE.xs} weight="fill" color={view === 'divergent' ? colors.onAccent : colors.textMuted} />}
                   label={t('daily.divergent')}
                 />
               </View>
@@ -285,7 +286,7 @@ function DailyQuestionScreenInner() {
                     borderColor: colors.border,
                     alignItems: 'center',
                   }}>
-                    <Lightning color={colors.accent} size={24} weight="fill" />
+                    <Lightning color={colors.accent} size={ICON_SIZE.lg} weight="fill" />
                     <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
                       {t('daily.divergentEmpty')}
                     </Text>
@@ -305,7 +306,7 @@ function DailyQuestionScreenInner() {
                     borderColor: colors.border,
                     alignItems: 'center',
                   }}>
-                    <Users color={colors.accent} size={24} weight="fill" />
+                    <Users color={colors.accent} size={ICON_SIZE.lg} weight="fill" />
                     <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
                       {t('daily.followingEmpty')}
                     </Text>
@@ -324,7 +325,7 @@ function DailyQuestionScreenInner() {
                   borderColor: colors.border,
                   alignItems: 'center',
                 }}>
-                  <ChatCircleDots color={colors.accent} size={24} weight="fill" />
+                  <ChatCircleDots color={colors.accent} size={ICON_SIZE.lg} weight="fill" />
                   <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
                     {t('daily.recentEmpty')}
                   </Text>

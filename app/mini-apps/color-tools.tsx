@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, StyleSheet , Clipboard } from 'react-native';
 import { parseHexInput } from '../../lib/mini-apps/hexInput';
 import { Check, Copy, FloppyDisk, Shuffle } from 'phosphor-react-native';
@@ -109,11 +110,11 @@ export default function ColorToolsScreen() {
         />
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Pressable onPress={randomize} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.25)' }}>
-            <Shuffle color={textColor} size={15} weight="bold" />
+            <Shuffle color={textColor} size={ICON_SIZE.sm} weight="bold" />
             <Text style={{ color: textColor, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Random")}</Text>
           </Pressable>
           <Pressable onPress={save} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.25)' }}>
-            <FloppyDisk color={textColor} size={15} weight="bold" />
+            <FloppyDisk color={textColor} size={ICON_SIZE.sm} weight="bold" />
             <Text style={{ color: textColor, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Save")}</Text>
           </Pressable>
         </View>
@@ -136,7 +137,7 @@ export default function ColorToolsScreen() {
             >
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700', width: 52 }}>{row.label}</Text>
               <Text style={{ color: colors.text, fontSize: fontSizes.label, fontFamily: 'monospace', flex: 1 }}>{row.value}</Text>
-              {copied === row.value ? <Check color={colors.success} size={16} weight="bold" /> : <Copy color={colors.textMuted} size={16} />}
+              {copied === row.value ? <Check color={colors.success} size={ICON_SIZE.sm} weight="bold" /> : <Copy color={colors.textMuted} size={ICON_SIZE.sm} />}
             </Pressable>
           ))}
           <View style={{ height: 4 }} />

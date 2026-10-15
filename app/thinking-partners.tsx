@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
@@ -66,13 +67,13 @@ export default function ThinkingPartnersScreen() {
         <ModeChip
           active={mode === 'similar'}
           onPress={() => switchMode('similar')}
-          icon={<UsersThree size={16} color={mode === 'similar' ? DARK.onLight : DARK.soft} weight="fill" />}
+          icon={<UsersThree size={ICON_SIZE.sm} color={mode === 'similar' ? DARK.onLight : DARK.soft} weight="fill" />}
           label={ttx("Think like you")}
         />
         <ModeChip
           active={mode === 'different'}
           onPress={() => switchMode('different')}
-          icon={<Lightning size={16} color={mode === 'different' ? DARK.onLight : DARK.soft} weight="fill" />}
+          icon={<Lightning size={ICON_SIZE.sm} color={mode === 'different' ? DARK.onLight : DARK.soft} weight="fill" />}
           label={ttx("Think differently")}
         />
       </View>

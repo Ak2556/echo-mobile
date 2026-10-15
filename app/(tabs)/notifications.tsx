@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { View, Text, StyleSheet, RefreshControl, Pressable, ActivityIndicator } from 'react-native';
@@ -225,7 +226,7 @@ export default function NotificationsScreen() {
               onPress={() => handleDismiss(item.data)}
               style={{ width: 88, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.border }}
             >
-              <Trash color={colors.textSecondary} size={19} />
+              <Trash color={colors.textSecondary} size={ICON_SIZE.md} />
               <Text style={{ ...font.bodySemibold, fontSize: fontSizes.caption, color: colors.textSecondary, marginTop: 4 }}>
                 {t('notif.dismiss')}
               </Text>
@@ -376,7 +377,7 @@ export default function NotificationsScreen() {
                     borderColor: colors.border,
                   }}
                 >
-                  <Checks color={colors.textSecondary} size={14} />
+                  <Checks color={colors.textSecondary} size={ICON_SIZE.xs} />
                   <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.meta }]}>{t('notif.readAll')}</Text>
                 </AnimatedPressable>
               )}

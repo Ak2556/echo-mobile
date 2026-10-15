@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { View, Text, StatusBar } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -122,7 +123,7 @@ function StoryScreenInner() {
           </View>
         </View>
         <AnimatedPressable onPress={() => safeBack()} className="p-2" scaleValue={0.85} haptic="light">
-          <X color={colors.text} size={24} />
+          <X color={colors.text} size={ICON_SIZE.lg} />
         </AnimatedPressable>
       </View>
 
@@ -163,7 +164,7 @@ function StoryScreenInner() {
           </Animated.View>
 
           <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} className="flex-row items-center justify-center mt-6 gap-1.5">
-            <Eye color={colors.textMuted} size={14} />
+            <Eye color={colors.textMuted} size={ICON_SIZE.xs} />
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{story.viewCount} {ttx("views")}</Text>
           </Animated.View>
         </View>

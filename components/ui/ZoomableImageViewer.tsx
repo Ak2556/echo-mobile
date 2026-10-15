@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Modal, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -74,7 +75,7 @@ export function ZoomableImageViewer({
           justifyContent: 'space-between',
         }}>
           <Pressable onPress={onClose} hitSlop={14} style={controlStyle} accessibilityRole="button" accessibilityLabel="Close photo">
-            <X color="#fff" size={20} weight="bold" />
+            <X color="#fff" size={ICON_SIZE.md} weight="bold" />
           </Pressable>
           <View style={{ alignItems: 'center', flex: 1, paddingHorizontal: 12 }}>
             {title ? (
@@ -95,7 +96,7 @@ export function ZoomableImageViewer({
               accessibilityLabel={saving ? 'Saving photo' : 'Save photo to your device'}
               style={[controlStyle, { opacity: saving ? 0.5 : 1 }]}
             >
-              <DownloadSimple color="#fff" size={20} weight="bold" />
+              <DownloadSimple color="#fff" size={ICON_SIZE.md} weight="bold" />
             </Pressable>
           ) : (
             <View style={{ width: 40 }} />

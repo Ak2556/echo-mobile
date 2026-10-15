@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, UsersThree, Waveform, X, type Icon } from 'phosphor-react-native';
@@ -123,11 +124,11 @@ export function EdgeFeaturePanel({
           paddingVertical: 13,
           backgroundColor: accent,
         }}>
-          <ChatCircleText color={colors.bgPure} size={17} weight="fill" />
+          <ChatCircleText color={colors.bgPure} size={ICON_SIZE.sm} weight="fill" />
           <Text style={[font.bodyBold, { color: colors.bgPure, fontSize: 14.5, flex: 1 }]} numberOfLines={1}>
             {loading ? `Reading your ${appName.toLowerCase()}…` : `Ask Echo about ${appName}`}
           </Text>
-          {loading ? <ActivityIndicator color={colors.bgPure} size="small" /> : <ArrowUpRight color={colors.bgPure} size={15} weight="bold" />}
+          {loading ? <ActivityIndicator color={colors.bgPure} size="small" /> : <ArrowUpRight color={colors.bgPure} size={ICON_SIZE.sm} weight="bold" />}
         </View>
       </AnimatedPressable>
 
@@ -171,12 +172,12 @@ export function EdgeFeaturePanel({
                 <Waveform color={accent} size={18} weight="fill" />
               </View>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>{ttx("Echo on your")} {appName.toLowerCase()}</Text>
-              <Pressable onPress={() => setCoaching(null)} hitSlop={10}><X color={colors.textMuted} size={20} weight="bold" /></Pressable>
+              <Pressable onPress={() => setCoaching(null)} hitSlop={10}><X color={colors.textMuted} size={ICON_SIZE.md} weight="bold" /></Pressable>
             </View>
             <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, lineHeight: 22 }]}>{coaching}</Text>
             <AnimatedPressable onPress={() => { setCoaching(null); openEcho(); }} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Continue in chat")}>
               <View style={{ marginTop: 18, borderRadius: radius.lg, paddingVertical: 13, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: accent }}>
-                <ChatCircleText color={colors.bgPure} size={16} weight="fill" />
+                <ChatCircleText color={colors.bgPure} size={ICON_SIZE.sm} weight="fill" />
                 <Text style={[font.bodyBold, { color: colors.bgPure, fontSize: 14 }]}>{ttx("Continue in chat")}</Text>
               </View>
             </AnimatedPressable>

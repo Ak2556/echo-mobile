@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { tap } from '../../lib/ui/haptics';
 import { type AudioPlayer } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
@@ -103,13 +104,13 @@ function Stepper({ label, value, unit, min, max, step = 1, onChange, accent }: {
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
       <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600', flex: 1 }}>{tt(label)}</Text>
       <AnimatedPressable onPress={() => onChange(Math.max(min, value - step))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md, padding: 8 }}>
-        <Minus color={colors.text} size={13} weight="bold" />
+        <Minus color={colors.text} size={ICON_SIZE.xs} weight="bold" />
       </AnimatedPressable>
       <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', minWidth: 64, textAlign: 'center', fontVariant: ['tabular-nums'] }}>
         {value} {tt(unit)}
       </Text>
       <AnimatedPressable onPress={() => onChange(Math.min(max, value + step))} scaleValue={0.85} haptic="light" style={{ backgroundColor: accent, borderRadius: radius.md, padding: 8 }}>
-        <Plus color={colors.bgPure} size={13} weight="bold" />
+        <Plus color={colors.bgPure} size={ICON_SIZE.xs} weight="bold" />
       </AnimatedPressable>
     </View>
   );
@@ -267,7 +268,7 @@ function FocusIntelligencePanel({
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 42, height: 42, borderRadius: radius.card, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
-          <Lightning color={accent} size={20} weight="fill" />
+          <Lightning color={accent} size={ICON_SIZE.md} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{tt('Focus intelligence')}</Text>
@@ -437,7 +438,7 @@ function FocusBeatsPanel({
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 40, height: 40, borderRadius: radius.card, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
-          {playingBeat && !paused ? <SpeakerHigh color={accent} size={19} weight="fill" /> : playingBeat ? <SpeakerSlash color={accent} size={19} weight="fill" /> : <MusicNote color={accent} size={19} weight="bold" />}
+          {playingBeat && !paused ? <SpeakerHigh color={accent} size={ICON_SIZE.md} weight="fill" /> : playingBeat ? <SpeakerSlash color={accent} size={ICON_SIZE.md} weight="fill" /> : <MusicNote color={accent} size={ICON_SIZE.md} weight="bold" />}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{tt('Focus beats')}</Text>

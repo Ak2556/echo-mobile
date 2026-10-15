@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, StyleSheet, Share } from 'react-native';
 import { Minus, Plus, Users, ShareNetwork, X } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -172,12 +173,12 @@ export default function BillSplitterScreen() {
       {/* People + mode */}
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
-          <Users color={colors.textMuted} size={15} weight="fill" />
+          <Users color={colors.textMuted} size={ICON_SIZE.sm} weight="fill" />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, flex: 1, marginLeft: 6 }}>
             {ttx("PEOPLE ·")} {people.length}
           </Text>
           <AnimatedPressable onPress={addPerson} scaleValue={0.88} haptic="light" style={{ backgroundColor: accent, borderRadius: radius.md, padding: 7 }}>
-            <Plus color={colors.bgPure} size={14} weight="bold" />
+            <Plus color={colors.bgPure} size={ICON_SIZE.xs} weight="bold" />
           </AnimatedPressable>
         </View>
 
@@ -213,11 +214,11 @@ export default function BillSplitterScreen() {
             {mode === 'shares' && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <AnimatedPressable onPress={() => setPerson(p.id, { shares: Math.max(1, p.shares - 1) })} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.inputBg, borderRadius: radius.sm, padding: 7 }}>
-                  <Minus color={colors.text} size={13} weight="bold" />
+                  <Minus color={colors.text} size={ICON_SIZE.xs} weight="bold" />
                 </AnimatedPressable>
                 <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', width: 20, textAlign: 'center', fontVariant: ['tabular-nums'] }}>{p.shares}</Text>
                 <AnimatedPressable onPress={() => setPerson(p.id, { shares: p.shares + 1 })} scaleValue={0.85} haptic="light" style={{ backgroundColor: accent, borderRadius: radius.sm, padding: 7 }}>
-                  <Plus color={colors.bgPure} size={13} weight="bold" />
+                  <Plus color={colors.bgPure} size={ICON_SIZE.xs} weight="bold" />
                 </AnimatedPressable>
               </View>
             )}
@@ -242,7 +243,7 @@ export default function BillSplitterScreen() {
             )}
             {people.length > 1 && (
               <AnimatedPressable onPress={() => removePerson(p.id)} scaleValue={0.85} haptic="light">
-                <X color={colors.textMuted} size={16} />
+                <X color={colors.textMuted} size={ICON_SIZE.sm} />
               </AnimatedPressable>
             )}
           </View>
@@ -298,7 +299,7 @@ export default function BillSplitterScreen() {
       </GlassPanel>
 
       <AnimatedPressable onPress={shareSummary} scaleValue={0.96} haptic="medium" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: accent + '66', paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
-        <ShareNetwork color={accent} size={17} weight="bold" />
+        <ShareNetwork color={accent} size={ICON_SIZE.sm} weight="bold" />
         <Text style={{ color: accent, fontWeight: '800', fontSize: 15 }}>{ttx("Share the split")}</Text>
       </AnimatedPressable>
 

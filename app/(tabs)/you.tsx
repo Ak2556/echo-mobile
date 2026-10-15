@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
@@ -82,7 +83,7 @@ function ProfileCompletionBanner({
       </Text>
       <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta }]}>{pct}%</Text>
       <Pressable onPress={onDismiss} hitSlop={12}>
-        <X color={colors.textMuted} size={14} />
+        <X color={colors.textMuted} size={ICON_SIZE.xs} />
       </Pressable>
     </Pressable>
   );
@@ -291,7 +292,7 @@ export default function ProfileScreen() {
                 style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', flexDirection: 'row', alignItems: 'center', gap: 6 }}
                 scaleValue={0.96}
               >
-                <PencilSimple color={colors.textSecondary} size={16} />
+                <PencilSimple color={colors.textSecondary} size={ICON_SIZE.sm} />
                 <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, fontWeight: '700' }}>Edit Profile</Text>
               </AnimatedPressable>
               
@@ -300,7 +301,7 @@ export default function ProfileScreen() {
                 style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', flexDirection: 'row', alignItems: 'center', gap: 6 }}
                 scaleValue={0.96}
               >
-                <Gear color={colors.textSecondary} size={16} />
+                <Gear color={colors.textSecondary} size={ICON_SIZE.sm} />
                 <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, fontWeight: '700' }}>Settings</Text>
               </AnimatedPressable>
             </View>
@@ -314,7 +315,7 @@ export default function ProfileScreen() {
               <ArrowsLeftRight color={activeTab === 'reechoes' ? colors.text : colors.textMuted} size={26} weight={activeTab === 'reechoes' ? 'bold' : 'regular'} />
             </Pressable>
             <Pressable style={{ flex: 1, alignItems: 'center', paddingVertical: 12 }} onPress={() => router.push('/bookmarks')}>
-              <BookmarkSimple color={colors.textMuted} size={26} weight="regular" />
+              <BookmarkSimple color={colors.textMuted} size={26} weight="bold" />
             </Pressable>
             {/*
               Year in Echo was finished, registered in the Stack, and backed by
@@ -333,7 +334,7 @@ export default function ProfileScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Your year in Echo"
               >
-                <CalendarBlank color={colors.textMuted} size={26} weight="regular" />
+                <CalendarBlank color={colors.textMuted} size={26} weight="bold" />
               </Pressable>
             ) : null}
           </View>
@@ -369,7 +370,7 @@ export default function ProfileScreen() {
             ) : (
             <View style={[{ marginHorizontal: 16, marginTop: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 24, padding: 32, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }]}>
               <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <ArrowsLeftRight color={colors.accent} size={24} weight="bold" />
+                <ArrowsLeftRight color={colors.accent} size={ICON_SIZE.lg} weight="bold" />
               </View>
               <Text
                 style={[font.displayBlack, { color: colors.text, fontSize: 24, textAlign: 'center', marginBottom: 8 }]}
@@ -549,7 +550,7 @@ function ProfileEmptyPosts({
   return (
     <View style={[{ marginHorizontal: 16, marginTop: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 24, padding: 32, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }]}>
       <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-        <Waveform color={colors.accent} size={24} weight="fill" />
+        <Waveform color={colors.accent} size={ICON_SIZE.lg} weight="fill" />
       </View>
       <Text
         style={[font.displayBlack, { color: colors.text, fontSize: 24, textAlign: 'center', marginBottom: 8 }]}
@@ -570,7 +571,7 @@ function ProfileEmptyPosts({
         accessibilityLabel="Create Echo"
       >
         <View style={{ borderRadius: 999, backgroundColor: colors.text, paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <PencilSimple color={colors.bg} size={16} weight="bold" />
+          <PencilSimple color={colors.bg} size={ICON_SIZE.sm} weight="bold" />
           <Text
             style={[font.bodySemibold, { color: colors.bg, fontSize: 15 }]}
             numberOfLines={1}
@@ -616,7 +617,7 @@ function AboutPanel({
             accessibilityLabel="Add a profile bio"
             style={styles.aboutEmpty}
           >
-            <PencilSimple color={colors.accent} size={17} />
+            <PencilSimple color={colors.accent} size={ICON_SIZE.sm} />
             <Text
               style={[font.bodySemibold, styles.aboutEmptyText, { color: colors.accent }]}
               numberOfLines={1}

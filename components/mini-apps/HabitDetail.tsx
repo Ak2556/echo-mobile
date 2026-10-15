@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Archive, CaretLeft, CaretRight, PencilSimple, Trash, X, Clock } from 'phosphor-react-native';
@@ -89,7 +90,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
             </Text>
           </View>
           <AnimatedPressable onPress={onEdit} scaleValue={0.9} haptic="light" style={{ padding: 6 }} accessibilityLabel={ttx("Edit habit")}>
-            <PencilSimple color={colors.textSecondary} size={19} />
+            <PencilSimple color={colors.textSecondary} size={ICON_SIZE.md} />
           </AnimatedPressable>
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light" style={{ padding: 6 }}>
             <X color={colors.textMuted} size={21} />
@@ -114,7 +115,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
                 onPress={() => setView(v => (v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 }))}
                 scaleValue={0.85} haptic="light" style={{ padding: 6 }}
               >
-                <CaretLeft color={colors.text} size={16} weight="bold" />
+                <CaretLeft color={colors.text} size={ICON_SIZE.sm} weight="bold" />
               </AnimatedPressable>
               <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: 15, ...font.displayBlack }}>
                 {monthLabel}
@@ -125,7 +126,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
                 style={{ padding: 6, opacity: atCurrentMonth ? 0.25 : 1 }}
                 disabled={atCurrentMonth}
               >
-                <CaretRight color={colors.text} size={16} weight="bold" />
+                <CaretRight color={colors.text} size={ICON_SIZE.sm} weight="bold" />
               </AnimatedPressable>
             </View>
 
@@ -182,7 +183,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
                       <Image source={{ uri: entry.photoUri }} style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.surface }} />
                     ) : (
                       <View style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: habit.color + '14', alignItems: 'center', justifyContent: 'center' }}>
-                        <Clock color={habit.color} size={17} weight="fill" />
+                        <Clock color={habit.color} size={ICON_SIZE.sm} weight="fill" />
                       </View>
                     )}
                     <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -207,7 +208,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
               scaleValue={0.96} haptic="light"
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, paddingVertical: 13 }}
             >
-              <Archive color={colors.textSecondary} size={16} />
+              <Archive color={colors.textSecondary} size={ICON_SIZE.sm} />
               <Text style={{ color: colors.textSecondary, fontWeight: '700', fontSize: 14 }}>
                 {habit.archived ? 'Unarchive' : 'Archive'}
               </Text>
@@ -217,7 +218,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
               scaleValue={0.96} haptic="light"
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: radius.lg, borderWidth: 1, borderColor: `${colors.danger}55`, paddingVertical: 13 }}
             >
-              <Trash color={colors.danger} size={16} />
+              <Trash color={colors.danger} size={ICON_SIZE.sm} />
               <Text style={{ color: colors.danger, fontWeight: '700', fontSize: 14 }}>{ttx("Delete")}</Text>
             </AnimatedPressable>
           </View>

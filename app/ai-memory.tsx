@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
@@ -121,7 +122,7 @@ export default function AIMemoryScreen() {
               accessibilityLabel="Add memory"
               style={[styles.iconButton, { backgroundColor: colors.accentMuted, borderRadius: radius.md, marginRight: 6 }]}
             >
-              <Plus color={colors.accent} size={20} />
+              <Plus color={colors.accent} size={ICON_SIZE.md} />
             </AnimatedPressable>
             <AnimatedPressable
               onPress={removeAll}
@@ -131,7 +132,7 @@ export default function AIMemoryScreen() {
                 { backgroundColor: items.length ? colors.dangerMuted : colors.surfaceHover, borderRadius: radius.md, opacity: items.length ? 1 : 0.45, marginRight: 6 },
               ]}
             >
-              <Trash color={items.length ? colors.danger : colors.textMuted} size={20} />
+              <Trash color={items.length ? colors.danger : colors.textMuted} size={ICON_SIZE.md} />
             </AnimatedPressable>
             </View>
           }

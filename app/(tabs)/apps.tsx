@@ -1,4 +1,5 @@
 import { getCurrencySymbol } from '../../lib/mini-apps/currency';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Platform, Pressable, TextInput, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -428,7 +429,7 @@ export default function AppsScreen() {
                     <Text style={{ color: colors.text, ...font.bodySemibold, fontSize: 15 }} numberOfLines={1}>{selectedTarget.label}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 1 }} numberOfLines={1}>{targetOutcome.trim() || selectedTarget.outcome}</Text>
                   </View>
-                  <CaretRight color={colors.textMuted} size={16} />
+                  <CaretRight color={colors.textMuted} size={ICON_SIZE.sm} />
                 </View>
               </Pressable>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   View, Text, ScrollView, Image, Pressable,
   ActivityIndicator, Alert, StyleSheet
@@ -386,7 +387,7 @@ export default function StudioApp() {
             shadowColor: ACCENT, shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 },
           }}
         >
-          <Camera color={colors.bg} size={28} weight="fill" />
+          <Camera color={colors.bg} size={ICON_SIZE.xl} weight="fill" />
           <Text style={{ color: colors.bg, fontWeight: '900', fontSize: 18, letterSpacing: -0.5 }}>
             Photo
           </Text>
@@ -405,7 +406,7 @@ export default function StudioApp() {
             shadowColor: colors.danger, shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 },
           }}
         >
-          <VideoCamera color={colors.bg} size={28} weight="fill" />
+          <VideoCamera color={colors.bg} size={ICON_SIZE.xl} weight="fill" />
           <Text style={{ color: colors.bg, fontWeight: '900', fontSize: 18, letterSpacing: -0.5 }}>
             Video
           </Text>
@@ -445,7 +446,7 @@ export default function StudioApp() {
                 scaleValue={0.9} haptic="light"
                 style={{ position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: radius.xl, padding: 8 }}
               >
-                <X color={ON_MEDIA} size={16} />
+                <X color={ON_MEDIA} size={ICON_SIZE.sm} />
               </AnimatedPressable>
             </Animated.View>
           )}
@@ -464,7 +465,7 @@ export default function StudioApp() {
                 >
                   {item.type === 'video' ? (
                     <View style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                      <Play color={colors.textMuted} size={24} weight="fill" />
+                      <Play color={colors.textMuted} size={ICON_SIZE.lg} weight="fill" />
                     </View>
                   ) : (
                     <Image source={{ uri: item.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
@@ -474,7 +475,7 @@ export default function StudioApp() {
                     scaleValue={0.85} haptic="light"
                     style={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: radius.md, padding: 3 }}
                   >
-                    <Trash color={colors.danger} size={12} weight="fill" />
+                    <Trash color={colors.danger} size={ICON_SIZE.xs} weight="fill" />
                   </AnimatedPressable>
                 </Pressable>
               </Animated.View>

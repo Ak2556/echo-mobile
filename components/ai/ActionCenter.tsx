@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { X } from 'phosphor-react-native';
 import Animated, {
@@ -154,7 +155,7 @@ export function ActionCenter({ visible, onClose, onSelectExample }: Props) {
                   <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{ttx("Runs on this device. Local writes ask before changing data.")}</Text>
                 </View>
                 <AnimatedPressable onPress={handleClose} scaleValue={0.9} haptic="light" style={{ padding: 6 }}>
-                  <X color={colors.textMuted} size={20} />
+                  <X color={colors.textMuted} size={ICON_SIZE.md} />
                 </AnimatedPressable>
               </View>
 

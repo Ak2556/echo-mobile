@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, ActivityIndicator, ScrollView, Alert, StyleSheet, TextInput } from 'react-native';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -159,7 +160,7 @@ export default function RemixScreen() {
                   </Text>
                   {parentRemixCount > 0 && (
                     <View style={styles.heroChip}>
-                      <GitBranch color={DARK.onLight} size={12} weight="fill" />
+                      <GitBranch color={DARK.onLight} size={ICON_SIZE.xs} weight="fill" />
                       <Text style={styles.heroChipText}>
                         {parentRemixCount} {parentRemixCount === 1 ? 'perspective' : 'perspectives'} {ttx("already")}
                       </Text>
@@ -256,7 +257,7 @@ export default function RemixScreen() {
                     <View style={styles.forkDivider}>
                       <View style={styles.forkLine} />
                       <View style={styles.forkBadge}>
-                        <GitBranch color={DARK.onLight} size={12} weight="fill" />
+                        <GitBranch color={DARK.onLight} size={ICON_SIZE.xs} weight="fill" />
                         <Text style={styles.forkBadgeText}>{ttx("YOUR BRANCH STARTS HERE")}</Text>
                       </View>
                       <View style={styles.forkLine} />

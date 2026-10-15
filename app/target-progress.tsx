@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
@@ -86,10 +87,10 @@ export default function TargetProgressScreen() {
           <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 16 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 12 }]}>{ttx("Across your tools")}</Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <CrossStat icon={<CheckCircle color={WARM.olive} size={16} weight="fill" />} value={`${cross.habitBestStreak}`} label={ttx("day streak")} />
-              <CrossStat icon={<Barbell color={WARM.sage} size={16} weight="fill" />} value={`${cross.fitnessWorkoutsWeek}`} label={ttx("workouts · wk")} />
-              <CrossStat icon={<ListChecks color={WARM.steel} size={16} weight="fill" />} value={`${cross.tasksOpen}`} label={cross.tasksDueToday ? `open · ${cross.tasksDueToday} due` : 'open tasks'} />
-              <CrossStat icon={<Wallet color={WARM.ochre} size={16} weight="fill" />} value={`${cross.expenseCurrency ?? ''}${Math.round(cross.expenseNetMonth)}`} label={ttx("net · mo")} />
+              <CrossStat icon={<CheckCircle color={WARM.olive} size={ICON_SIZE.sm} weight="fill" />} value={`${cross.habitBestStreak}`} label={ttx("day streak")} />
+              <CrossStat icon={<Barbell color={WARM.sage} size={ICON_SIZE.sm} weight="fill" />} value={`${cross.fitnessWorkoutsWeek}`} label={ttx("workouts · wk")} />
+              <CrossStat icon={<ListChecks color={WARM.steel} size={ICON_SIZE.sm} weight="fill" />} value={`${cross.tasksOpen}`} label={cross.tasksDueToday ? `open · ${cross.tasksDueToday} due` : 'open tasks'} />
+              <CrossStat icon={<Wallet color={WARM.ochre} size={ICON_SIZE.sm} weight="fill" />} value={`${cross.expenseCurrency ?? ''}${Math.round(cross.expenseNetMonth)}`} label={ttx("net · mo")} />
             </View>
           </View>
         ) : null}

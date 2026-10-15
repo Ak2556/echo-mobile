@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -133,7 +134,7 @@ function OfficeHourDetailScreenInner() {
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              <Clock color={liveNow ? colors.danger : colors.accent} size={13} weight={liveNow ? 'fill' : 'regular'} />
+              <Clock color={liveNow ? colors.danger : colors.accent} size={ICON_SIZE.xs} weight={liveNow ? 'fill' : 'regular'} />
               <Text style={{ color: liveNow ? colors.danger : colors.accent, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.5 }}>
                 {liveNow ? 'LIVE NOW' : new Date(oh.starts_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }).toUpperCase()}
               </Text>
@@ -158,7 +159,7 @@ function OfficeHourDetailScreenInner() {
                 )}
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <UsersThree color={colors.textMuted} size={13} />
+                <UsersThree color={colors.textMuted} size={ICON_SIZE.xs} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{oh.rsvp_count}</Text>
               </View>
             </View>
@@ -185,7 +186,7 @@ function OfficeHourDetailScreenInner() {
 
           {questions.length === 0 ? (
             <View style={{ padding: 20, alignItems: 'center' }}>
-              <Microphone color={colors.textMuted} size={28} />
+              <Microphone color={colors.textMuted} size={ICON_SIZE.xl} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginTop: 8, textAlign: 'center' }}>
                 {ttx("No questions yet. Be first. Top-voted Qs get answered first.")}
               </Text>
@@ -220,7 +221,7 @@ function OfficeHourDetailScreenInner() {
                   scaleValue={0.9}
                   haptic="light"
                 >
-                  <ArrowUp size={16} color={q.has_upvoted ? colors.accent : colors.textMuted} weight={q.has_upvoted ? 'bold' : 'regular'} />
+                  <ArrowUp size={ICON_SIZE.sm} color={q.has_upvoted ? colors.accent : colors.textMuted} weight={q.has_upvoted ? 'bold' : 'regular'} />
                   <Text style={{ color: q.has_upvoted ? colors.accent : colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700' }}>{q.upvote_count}</Text>
                 </AnimatedPressable>
                 <View style={{ flex: 1 }}>

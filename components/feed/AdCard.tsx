@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, StyleSheet, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '../../lib/ui/theme';
@@ -71,7 +72,7 @@ export function AdCard({ ad }: { ad: AdItem }) {
 
       <View style={{ backgroundColor: colors.accent, paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.full, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
         <Text style={[font.bodyBold, { color: '#000', fontSize: 15, marginRight: 6 }]}>{ad.call_to_action}</Text>
-        <ArrowUpRight size={16} color="#000" weight="bold" />
+        <ArrowUpRight size={ICON_SIZE.sm} color="#000" weight="bold" />
       </View>
     </AnimatedPressable>
   );

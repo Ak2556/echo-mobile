@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Modal, View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -97,7 +98,7 @@ export function CommentsSheet({ visible, echoId, onClose }: Props) {
               accessibilityRole="button"
               accessibilityLabel={ttx("Close comments")}
             >
-              <X color={colors.textSecondary} size={16} weight="bold" />
+              <X color={colors.textSecondary} size={ICON_SIZE.sm} weight="bold" />
             </Pressable>
           </View>
 

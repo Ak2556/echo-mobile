@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -262,16 +263,16 @@ function RemixNode({ node, onPress }: { node: RemixTreeNode; onPress: () => void
         </Text>
         <View style={styles.nodeStatsRow}>
           <View style={styles.nodeStat}>
-            <Heart color={DARK.muted} size={13} weight="fill" />
+            <Heart color={DARK.muted} size={ICON_SIZE.xs} weight="fill" />
             <Text style={styles.nodeStatText}>{node.likesCount}</Text>
           </View>
           <View style={styles.nodeStat}>
-            <ChatCircle color={DARK.muted} size={13} weight="fill" />
+            <ChatCircle color={DARK.muted} size={ICON_SIZE.xs} weight="fill" />
             <Text style={styles.nodeStatText}>{node.commentCount}</Text>
           </View>
           {node.remixCount > 0 && (
             <View style={styles.nodeStat}>
-              <GitBranch color={ACCENT_COLORS.magenta} size={13} weight="fill" />
+              <GitBranch color={ACCENT_COLORS.magenta} size={ICON_SIZE.xs} weight="fill" />
               <Text style={[styles.nodeStatText, { color: ACCENT_COLORS.magenta }]}>{node.remixCount}</Text>
             </View>
           )}

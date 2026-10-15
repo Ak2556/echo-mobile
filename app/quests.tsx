@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { View, Text, ScrollView } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -45,13 +46,13 @@ function QuestsScreenInner() {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
           {dailyQuests.length > 0 && (
-            <Section title={ttx("Today")} icon={<Lightning color={colors.accent} size={16} weight="fill" />} quests={dailyQuests} />
+            <Section title={ttx("Today")} icon={<Lightning color={colors.accent} size={ICON_SIZE.sm} weight="fill" />} quests={dailyQuests} />
           )}
           {weeklyQuests.length > 0 && (
-            <Section title={ttx("This Week")} icon={<Trophy color={BRAND.gold} size={16} weight="fill" />} quests={weeklyQuests} />
+            <Section title={ttx("This Week")} icon={<Trophy color={BRAND.gold} size={ICON_SIZE.sm} weight="fill" />} quests={weeklyQuests} />
           )}
           {otherQuests.length > 0 && (
-            <Section title={ttx("Other")} icon={<Trophy color={colors.textMuted} size={16} />} quests={otherQuests} />
+            <Section title={ttx("Other")} icon={<Trophy color={colors.textMuted} size={ICON_SIZE.sm} />} quests={otherQuests} />
           )}
         </ScrollView>
       )}
@@ -96,7 +97,7 @@ function QuestRow({ quest }: { quest: Quest }) {
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
         <View style={{ marginTop: 2 }}>
           {completed
-            ? <CheckCircle color={colors.accent} size={20} weight="fill" />
+            ? <CheckCircle color={colors.accent} size={ICON_SIZE.md} weight="fill" />
             : <View style={{ width: 20, height: 20, borderRadius: radius.full, borderWidth: 2, borderColor: colors.border }} />
           }
         </View>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Alert } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -106,7 +107,7 @@ export function DailyQuestionComposer({
               <SpeakButton text={tt(question.question)} id={`dq:${question.id}`} color="rgba(255,255,255,0.92)" size={18} />
               {streak > 0 && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.18)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
-                  <Flame color="#fff" size={13} weight="fill" />
+                  <Flame color="#fff" size={ICON_SIZE.xs} weight="fill" />
                   <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>
                     {t(streak === 1 ? 'daily.dayOne' : 'daily.dayMany', { count: streak })}
                   </Text>

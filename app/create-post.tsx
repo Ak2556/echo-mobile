@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
@@ -81,7 +82,7 @@ function SectionHeader({ icon, label, onRemove, removeLabel }: {
       {onRemove && (
         <Pressable onPress={onRemove} hitSlop={10} accessibilityRole="button" accessibilityLabel={removeLabel ?? `${ttx('Remove')} ${label}`}>
           <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}>
-            <X color={colors.textSecondary} size={13} weight="bold" />
+            <X color={colors.textSecondary} size={ICON_SIZE.xs} weight="bold" />
           </View>
         </Pressable>
       )}
@@ -684,11 +685,11 @@ export default function CreatePostScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: 18 }]}>{ttx("Add a co-author")}</Text>
               <Pressable onPress={() => setCoAuthorPickerOpen(false)} hitSlop={10} accessibilityRole="button" accessibilityLabel={ttx("Close")}>
-                <X color={colors.textSecondary} size={20} />
+                <X color={colors.textSecondary} size={ICON_SIZE.md} />
               </Pressable>
             </View>
             <View style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 4, marginBottom: 12, gap: 8 }]}>
-              <MagnifyingGlass color={colors.textMuted} size={16} />
+              <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.sm} />
               <TextInput
                 value={coAuthorQuery}
                 onChangeText={setCoAuthorQuery}
@@ -774,7 +775,7 @@ export default function CreatePostScreen() {
               {showPrompt && (
                 <>
                   <SectionHeader
-                    icon={<Question color={colors.accent} size={14} weight="bold" />}
+                    icon={<Question color={colors.accent} size={ICON_SIZE.xs} weight="bold" />}
                     label={ttx("Prompt (optional)")}
                     onRemove={() => { setShowPrompt(false); setPrompt(''); }}
                   />
@@ -806,7 +807,7 @@ export default function CreatePostScreen() {
               {coAuthor && (
                 <View style={{ marginBottom: 14 }}>
                   <SectionHeader
-                    icon={<Users color={colors.accent} size={14} weight="bold" />}
+                    icon={<Users color={colors.accent} size={ICON_SIZE.xs} weight="bold" />}
                     label={ttx("Co-author")}
                     onRemove={() => { setCoAuthor(null); setCoAuthorResponse(''); }}
                   />
@@ -841,7 +842,7 @@ export default function CreatePostScreen() {
           {imageUris.length > 0 && (
             <Animated.View entering={animation(FadeIn.duration(80))} style={{ marginBottom: 14 }}>
               <SectionHeader
-                icon={<Images color={colors.accent} size={14} weight="bold" />}
+                icon={<Images color={colors.accent} size={ICON_SIZE.xs} weight="bold" />}
                 label={`${ttx("Photos")} · ${imageUris.length}/${MAX_PHOTOS}`}
                 onRemove={() => setImages([])}
                 removeLabel={ttx("Remove all photos")}
@@ -860,12 +861,12 @@ export default function CreatePostScreen() {
                     <Image source={{ uri: img.uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                     <Pressable onPress={() => removeImage(idx)} hitSlop={6} accessibilityRole="button" accessibilityLabel={ttx("Remove photo")} style={{ position: 'absolute', top: 8, right: 8 }}>
                       <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                        <X color={ON_MEDIA} size={14} weight="bold" />
+                        <X color={ON_MEDIA} size={ICON_SIZE.xs} weight="bold" />
                       </View>
                     </Pressable>
                     <Pressable onPress={() => setEditingIndex(idx)} hitSlop={6} accessibilityRole="button" accessibilityLabel={ttx("Edit photo")} style={{ position: 'absolute', top: 8, left: 8 }}>
                       <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                        <PencilSimple color={ON_MEDIA} size={14} weight="bold" />
+                        <PencilSimple color={ON_MEDIA} size={ICON_SIZE.xs} weight="bold" />
                       </View>
                     </Pressable>
                     <Pressable
@@ -912,7 +913,7 @@ export default function CreatePostScreen() {
           {video && (
             <Animated.View entering={animation(FadeIn.duration(80))} style={{ marginBottom: 14 }}>
               <SectionHeader
-                icon={<VideoCamera color={colors.accent} size={14} weight="bold" />}
+                icon={<VideoCamera color={colors.accent} size={ICON_SIZE.xs} weight="bold" />}
                 label={[ttx("Video"), formatClipDuration(video.duration)].filter(Boolean).join(' · ')}
                 onRemove={() => setVideo(null)}
                 removeLabel={ttx("Remove video")}
@@ -936,7 +937,7 @@ export default function CreatePostScreen() {
           {selectedMusic && (
             <Animated.View entering={animation(FadeIn.duration(80))} style={{ marginBottom: 14 }}>
               <SectionHeader
-                icon={<MusicNotes color={colors.accent} size={14} weight="bold" />}
+                icon={<MusicNotes color={colors.accent} size={ICON_SIZE.xs} weight="bold" />}
                 label={ttx("Music")}
                 onRemove={() => setSelectedMusic(null)}
                 removeLabel={ttx("Remove music")}
@@ -946,7 +947,7 @@ export default function CreatePostScreen() {
                   <View style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
                     {selectedMusic.coverArt
                       ? <Image source={{ uri: selectedMusic.coverArt }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                      : <MusicNotes color={colors.accent} size={20} weight="fill" />}
+                      : <MusicNotes color={colors.accent} size={ICON_SIZE.md} weight="fill" />}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>{selectedMusic.title}</Text>
@@ -962,7 +963,7 @@ export default function CreatePostScreen() {
           {pollActive && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               <SectionHeader
-                icon={<ChartBar color={colors.accent} size={14} weight="bold" />}
+                icon={<ChartBar color={colors.accent} size={ICON_SIZE.xs} weight="bold" />}
                 label={ttx("Poll question")}
                 onRemove={() => setPollActive(false)}
                 removeLabel={ttx("Remove poll")}
@@ -970,14 +971,14 @@ export default function CreatePostScreen() {
               <View style={[s.surface, { padding: 14, marginBottom: 16 }]}>
                 <TextInput value={pollQuestion} onChangeText={setPollQuestion} placeholder={ttx("Ask your community something…")} placeholderTextColor={colors.textMuted} maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }} />
               </View>
-              <SectionHeader icon={<ChartBar color={colors.accent} size={14} />} label={ttx("Options")} />
+              <SectionHeader icon={<ChartBar color={colors.accent} size={ICON_SIZE.xs} />} label={ttx("Options")} />
               {pollOptions.map((opt, idx) => (
                 <View key={idx} style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 2, marginBottom: 8 }]}>
                   <TextInput value={opt} onChangeText={t => updatePollOption(idx, t)} placeholder={`Option ${idx + 1}`} placeholderTextColor={colors.textMuted} maxLength={80} style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 12 }} />
                   {pollOptions.length > 2 && (
                     <Pressable onPress={() => removePollOption(idx)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${ttx('Remove option')} ${idx + 1}`}>
                       <View style={{ padding: 4 }}>
-                        <X color={colors.textMuted} size={16} />
+                        <X color={colors.textMuted} size={ICON_SIZE.sm} />
                       </View>
                     </Pressable>
                   )}
@@ -986,12 +987,12 @@ export default function CreatePostScreen() {
               {pollOptions.length < 4 && (
                 <Pressable onPress={addPollOption} accessibilityRole="button" accessibilityLabel={ttx("Add option")}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 46, marginBottom: 16, gap: 6, borderRadius: radius.card, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border }}>
-                    <Plus color={colors.accent} size={16} weight="bold" />
+                    <Plus color={colors.accent} size={ICON_SIZE.sm} weight="bold" />
                     <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.small }]}>{ttx("Add option")}</Text>
                   </View>
                 </Pressable>
               )}
-              <SectionHeader icon={<Clock color={colors.accent} size={14} />} label={ttx("Runs for")} />
+              <SectionHeader icon={<Clock color={colors.accent} size={ICON_SIZE.xs} />} label={ttx("Runs for")} />
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
                 {POLL_DURATIONS.map(d => {
                   const active = pollDurationHours === d.hours;
@@ -1012,7 +1013,7 @@ export default function CreatePostScreen() {
           {showTags && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               <SectionHeader
-                icon={<Hash color={colors.accent} size={14} weight="bold" />}
+                icon={<Hash color={colors.accent} size={ICON_SIZE.xs} weight="bold" />}
                 label={ttx("Tags")}
                 onRemove={() => { setShowTags(false); setTagsRaw(''); }}
               />

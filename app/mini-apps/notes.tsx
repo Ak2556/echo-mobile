@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform, Modal, StyleSheet, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -167,12 +168,12 @@ function applyTemplate(template: NoteTemplate): Note {
 }
 
 const TEMPLATE_ICONS: Record<string, (color: string) => React.ReactNode> = {
-  'blank': c => <NotePencil color={c} size={16} weight="bold" />,
-  'task-plan': c => <CheckSquare color={c} size={16} weight="bold" />,
-  'meeting': c => <UsersThree color={c} size={16} weight="bold" />,
-  'idea': c => <Lightbulb color={c} size={16} weight="bold" />,
-  'journal': c => <BookOpenText color={c} size={16} weight="bold" />,
-  'research': c => <Flask color={c} size={16} weight="bold" />,
+  'blank': c => <NotePencil color={c} size={ICON_SIZE.sm} weight="bold" />,
+  'task-plan': c => <CheckSquare color={c} size={ICON_SIZE.sm} weight="bold" />,
+  'meeting': c => <UsersThree color={c} size={ICON_SIZE.sm} weight="bold" />,
+  'idea': c => <Lightbulb color={c} size={ICON_SIZE.sm} weight="bold" />,
+  'journal': c => <BookOpenText color={c} size={ICON_SIZE.sm} weight="bold" />,
+  'research': c => <Flask color={c} size={ICON_SIZE.sm} weight="bold" />,
 };
 
 function NoteEditor({
@@ -244,9 +245,9 @@ function NoteEditor({
   };
 
   const tools = [
-    { key: 'checkbox', label: tt('Add checkbox'), icon: <CheckSquare color={colors.textSecondary} size={20} />, insert: '- [ ] ' },
-    { key: 'heading', label: tt('Heading'), icon: <TextH color={colors.textSecondary} size={20} />, insert: '## ' },
-    { key: 'bullet', label: tt('Bullet'), icon: <ListBullets color={colors.textSecondary} size={20} />, insert: '- ' },
+    { key: 'checkbox', label: tt('Add checkbox'), icon: <CheckSquare color={colors.textSecondary} size={ICON_SIZE.md} />, insert: '- [ ] ' },
+    { key: 'heading', label: tt('Heading'), icon: <TextH color={colors.textSecondary} size={ICON_SIZE.md} />, insert: '## ' },
+    { key: 'bullet', label: tt('Bullet'), icon: <ListBullets color={colors.textSecondary} size={ICON_SIZE.md} />, insert: '- ' },
   ];
 
   return (
@@ -316,7 +317,7 @@ function NoteEditor({
 
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
               <View style={pill}>
-                <FolderOpen color={colors.textMuted} size={15} />
+                <FolderOpen color={colors.textMuted} size={ICON_SIZE.sm} />
                 <TextInput
                   value={folder}
                   onChangeText={setFolder}
@@ -327,7 +328,7 @@ function NoteEditor({
                 />
               </View>
               <View style={[pill, { flex: 1 }]}>
-                <Tag color={colors.textMuted} size={15} />
+                <Tag color={colors.textMuted} size={ICON_SIZE.sm} />
                 <TextInput
                   value={tags}
                   onChangeText={setTags}
@@ -406,12 +407,12 @@ function NoteCard({ note, onOpen, onMore }: { note: Note; onOpen: () => void; on
         <View style={{ flex: 1, minWidth: 0, paddingVertical: 14, paddingLeft: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 16.5, flexShrink: 1 }]} numberOfLines={1}>{note.title}</Text>
-            {note.pinned ? <PushPin color={note.color} size={13} weight="fill" /> : null}
-            {note.favorite ? <Star color={colors.warning} size={13} weight="fill" /> : null}
+            {note.pinned ? <PushPin color={note.color} size={ICON_SIZE.xs} weight="fill" /> : null}
+            {note.favorite ? <Star color={colors.warning} size={ICON_SIZE.xs} weight="fill" /> : null}
             <View style={{ flex: 1 }} />
             <Pressable onPress={onMore} hitSlop={12} accessibilityRole="button" accessibilityLabel={tt('Note actions')}>
               <View style={{ paddingHorizontal: 12, paddingVertical: 2 }}>
-                <DotsThree color={colors.textMuted} size={20} weight="bold" />
+                <DotsThree color={colors.textMuted} size={ICON_SIZE.md} weight="bold" />
               </View>
             </Pressable>
           </View>
@@ -643,7 +644,7 @@ export default function NotesApp() {
         />
         {search.length > 0 ? (
           <Pressable onPress={() => setSearch('')} hitSlop={10} accessibilityRole="button" accessibilityLabel={tt('Clear search')}>
-            <X color={colors.textMuted} size={16} />
+            <X color={colors.textMuted} size={ICON_SIZE.sm} />
           </Pressable>
         ) : null}
         <Pressable
@@ -653,7 +654,7 @@ export default function NotesApp() {
           accessibilityLabel={`${tt('Sort')}: ${tt(SORT_LABELS[sortMode])}`}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 10, borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.glassBorder }}>
-            <SortAscending color={colors.textSecondary} size={16} />
+            <SortAscending color={colors.textSecondary} size={ICON_SIZE.sm} />
             <Text style={[font.bodyBold, { color: colors.textSecondary, fontSize: 12.5 }]}>{tt(SORT_LABELS[sortMode])}</Text>
           </View>
         </Pressable>
@@ -680,7 +681,7 @@ export default function NotesApp() {
               return (
                 <Pressable key={folder} onPress={() => setFolderFilter(folder)} accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={`${tt('Folder')} ${tt(folder)}`}>
                   <View style={{ height: 34, paddingHorizontal: 12, borderRadius: radius.full, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: active ? `${colors.accent}33` : 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.glassBorder }}>
-                    <FolderOpen color={active ? colors.accent : colors.textMuted} size={13} />
+                    <FolderOpen color={active ? colors.accent : colors.textMuted} size={ICON_SIZE.xs} />
                     <Text style={[font.bodyBold, { color: active ? colors.accent : colors.textMuted, fontSize: 12.5 }]}>{tt(folder)}</Text>
                   </View>
                 </Pressable>
@@ -693,7 +694,7 @@ export default function NotesApp() {
       {filtered.length === 0 ? (
         <MiniEmptyState
           accent={colors.accent}
-          icon={<NotePencil color={colors.textMuted} size={44} weight="duotone" />}
+          icon={<NotePencil color={colors.textMuted} size={ICON_SIZE.hero} weight="duotone" />}
           title={search ? tt('No matching notes') : view === 'archive' ? tt('Archive is empty') : tt('No notes yet')}
           subtitle={search ? tt('Try another word, folder, or tag.') : tt('Start with a template or capture a blank note.')}
           actionLabel={search ? undefined : tt('Create note')}

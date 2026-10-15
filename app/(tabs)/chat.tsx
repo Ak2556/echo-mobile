@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
@@ -150,21 +151,21 @@ function ChatEmptyLaunchpad({
       key: 'target',
       title: t('chat.moveTarget'),
       subtitle: targetLabel,
-      icon: <Target color={colors.accent} size={19} weight="bold" />,
+      icon: <Target color={colors.accent} size={ICON_SIZE.md} weight="bold" />,
       onPress: () => onPrompt(t('chat.promptTarget')),
     },
     {
       key: 'draft',
       title: t('chat.draftEcho'),
       subtitle: t('chat.turnIdea'),
-      icon: <NotePencil color={colors.accent} size={19} weight="bold" />,
+      icon: <NotePencil color={colors.accent} size={ICON_SIZE.md} weight="bold" />,
       onPress: () => onPrompt(t('chat.promptDraft')),
     },
     {
       key: 'tools',
       title: t('chat.openTools'),
       subtitle: toolApps.map(app => app?.name).filter(Boolean).join(' · ') || t('chat.miniApps'),
-      icon: firstTool ? <MiniAppIcon id={firstTool.id} color={firstTool.color} size={30} /> : <SquaresFour color={colors.accent} size={19} weight="bold" />,
+      icon: firstTool ? <MiniAppIcon id={firstTool.id} color={firstTool.color} size={30} /> : <SquaresFour color={colors.accent} size={ICON_SIZE.md} weight="bold" />,
       onPress: () => router.push('/(tabs)/apps' as Href),
     },
   ];
@@ -182,7 +183,7 @@ function ChatEmptyLaunchpad({
         <View style={{ paddingTop: 12, gap: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 13 }}>
             <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: `${colors.accent}15`, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-              <Waveform color={colors.accent} size={28} weight="fill" />
+              <Waveform color={colors.accent} size={ICON_SIZE.xl} weight="fill" />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               {opener ? (
@@ -262,7 +263,7 @@ function ChatEmptyLaunchpad({
               <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]} numberOfLines={1}>{action.title}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
             </View>
-            {action.key === 'target' ? <ChartLineUp color={colors.textMuted} size={17} weight="bold" /> : <ArrowUpRight color={colors.textMuted} size={17} weight="bold" />}
+            {action.key === 'target' ? <ChartLineUp color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" /> : <ArrowUpRight color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />}
           </Pressable>
         ))}
       </View>

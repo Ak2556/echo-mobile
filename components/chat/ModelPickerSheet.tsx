@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -167,7 +168,7 @@ export function ModelPickerSheet({ visible, onClose, selected, onSelect }: Model
                       backgroundColor: colors.accent,
                       alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Check color="#fff" size={14} weight="bold" />
+                      <Check color="#fff" size={ICON_SIZE.xs} weight="bold" />
                     </View>
                   )}
                   </View>

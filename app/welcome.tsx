@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -214,7 +215,7 @@ function RevealDoors({
           flexDirection: 'row', alignItems: 'center', gap: 6,
           backgroundColor: colors.accent + '1A', paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.full,
         }}>
-          <Flame color={colors.accent} size={15} weight="fill" />
+          <Flame color={colors.accent} size={ICON_SIZE.sm} weight="fill" />
           <Text style={{ color: colors.accent, fontSize: fontSizes.small, fontWeight: '800' }}>
             {streak > 0 ? t('welcome.streakStarted', { count: streak }) : t('welcome.takeIn')}
           </Text>

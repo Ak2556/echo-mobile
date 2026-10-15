@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -49,12 +50,12 @@ export function VideoTile({ uri, borderRadius, viewCount, onPress }: VideoTilePr
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 }}
       >
         <View style={{ width: 62, height: 62, borderRadius: 31, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)' }}>
-          <Play color="#fff" size={28} weight="fill" />
+          <Play color="#fff" size={ICON_SIZE.xl} weight="fill" />
         </View>
         <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 1 } }}>{ttx('Watch')} · {place}</Text>
         {viewCount ? (
           <View style={{ position: 'absolute', left: 12, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Eye color="rgba(255,255,255,0.85)" size={13} />
+            <Eye color="rgba(255,255,255,0.85)" size={ICON_SIZE.xs} />
             <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '600' }}>{viewCount}</Text>
           </View>
         ) : null}
