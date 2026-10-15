@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ttx } from '../../lib/i18n/i18n';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, ActivityIndicator, Modal, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -154,7 +155,7 @@ export function LecturesPanel() {
             borderRadius: radius.card, backgroundColor: colors.surface,
           }}>
             <LinkSimple size={ICON_SIZE.sm} weight="bold" color={colors.text} />
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>Add link</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx('Add link')}</Text>
           </View>
         </Pressable>
       </View>
@@ -167,7 +168,7 @@ export function LecturesPanel() {
         <ActivityIndicator color={colors.accent} style={{ marginTop: 20 }} />
       ) : lectures.length === 0 ? (
         <Text style={[font.body, { color: colors.textMuted, fontSize: 13, marginTop: 12 }]}>
-          No lectures yet. Upload a recording or paste a link, and it will be here to watch and annotate.
+          {ttx('No lectures yet. Upload a recording or paste a link, and it will be here to watch and annotate.')}
         </Text>
       ) : (
         lectures.map(lecture => (
@@ -202,7 +203,7 @@ export function LecturesPanel() {
       <Modal visible={linkOpen} animationType="slide" transparent onRequestClose={() => setLinkOpen(false)}>
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
           <View style={{ backgroundColor: colors.bg, padding: 20, gap: 12, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>Add a lecture link</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{ttx('Add a lecture link')}</Text>
             <TextInput
               value={linkTitle}
               onChangeText={setLinkTitle}
@@ -222,12 +223,12 @@ export function LecturesPanel() {
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Pressable onPress={() => setLinkOpen(false)} accessibilityRole="button" style={{ flex: 1 }}>
                 <View style={{ paddingVertical: 14, borderRadius: radius.card, backgroundColor: colors.surface, alignItems: 'center' }}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>Cancel</Text>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx('Cancel')}</Text>
                 </View>
               </Pressable>
               <Pressable onPress={saveLink} accessibilityRole="button" style={{ flex: 1 }}>
                 <View style={{ paddingVertical: 14, borderRadius: radius.card, backgroundColor: colors.accent, alignItems: 'center' }}>
-                  <Text style={[font.bodyBold, { color: colors.bg, fontSize: 14 }]}>Add</Text>
+                  <Text style={[font.bodyBold, { color: colors.bg, fontSize: 14 }]}>{ttx('Add')}</Text>
                 </View>
               </Pressable>
             </View>
@@ -318,7 +319,7 @@ function LectureViewer({ lecture, onClose }: { lecture: Lecture; onClose: () => 
               paddingHorizontal: 16, paddingVertical: 12,
               borderRadius: radius.card, backgroundColor: colors.accent,
             }}>
-              <Text style={[font.bodyBold, { color: colors.bg, fontSize: 14 }]}>Save</Text>
+              <Text style={[font.bodyBold, { color: colors.bg, fontSize: 14 }]}>{ttx('Save')}</Text>
             </View>
           </Pressable>
         </View>

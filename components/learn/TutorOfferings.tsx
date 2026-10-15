@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ttx } from '../../lib/i18n/i18n';
 import { View, Text, Pressable, TextInput } from 'react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../ui/Toast';
@@ -172,7 +173,7 @@ export function TutorOfferings({ tutorId }: { tutorId: string }) {
           </View>
           <Pressable onPress={createPackage} accessibilityRole="button">
             <View style={{ alignItems: 'center', paddingVertical: 11, borderRadius: radius.card, backgroundColor: colors.accent }}>
-              <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Add package</Text>
+              <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>{ttx('Add package')}</Text>
             </View>
           </Pressable>
         </View>
@@ -218,7 +219,7 @@ export function TutorOfferings({ tutorId }: { tutorId: string }) {
           </View>
           <Pressable onPress={createSlot} accessibilityRole="button">
             <View style={{ alignItems: 'center', paddingVertical: 11, borderRadius: radius.card, backgroundColor: colors.accent }}>
-              <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Add time</Text>
+              <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>{ttx('Add time')}</Text>
             </View>
           </Pressable>
         </View>

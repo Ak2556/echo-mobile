@@ -636,7 +636,7 @@ export function AurasRow() {
       <Modal visible={modalOpen} animationType="fade" transparent onRequestClose={() => setModalOpen(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: colors.surface, borderRadius: radius.card, padding: 20, borderWidth: 1, borderColor: colors.border }}>
-            <Text style={{ color: colors.text, fontSize: fontSizes.title, ...font.displayBlack, marginBottom: 16 }}>Set your Aura</Text>
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, ...font.displayBlack, marginBottom: 16 }}>{ttx('Set your Aura')}</Text>
             <TextInput
               value={auraText}
               onChangeText={setAuraText}
@@ -651,11 +651,11 @@ export function AurasRow() {
               </View>
             ) : (
               <Pressable onPress={() => setMusicPickerOpen(true)} style={{ alignSelf: 'flex-start', marginBottom: 16 }}>
-                <Text style={{ color: colors.accent, fontWeight: '600' }}>+ Add Music</Text>
+                <Text style={{ color: colors.accent, fontWeight: '600' }}>{ttx('+ Add Music')}</Text>
               </Pressable>
             )}
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 12 }}>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>Expires in:</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx('Expires in:')}</Text>
               {[8, 12, 24].map(hrs => (
                 <Pressable key={hrs} onPress={() => setExpiresInHours(hrs)} style={{ backgroundColor: expiresInHours === hrs ? colors.accent : colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
                   <Text style={{ color: expiresInHours === hrs ? colors.onAccent : colors.text, fontSize: fontSizes.small, fontWeight: '600' }}>{hrs}h</Text>
@@ -664,10 +664,10 @@ export function AurasRow() {
             </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.surfaceHover }} onPress={() => setModalOpen(false)}>
-                <Text style={{ color: colors.text, fontWeight: '700' }}>Cancel</Text>
+                <Text style={{ color: colors.text, fontWeight: '700' }}>{ttx('Cancel')}</Text>
               </Pressable>
               <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.accent }} onPress={handlePublish}>
-                <Text style={{ color: colors.onAccent, fontWeight: '700' }}>Publish</Text>
+                <Text style={{ color: colors.onAccent, fontWeight: '700' }}>{ttx('Publish')}</Text>
               </Pressable>
             </View>
           </View>
@@ -854,7 +854,7 @@ export default function MessagesListScreen() {
                 <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700' }}>Echo</Text>
               </Pressable>
               <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                <Text style={{ color: colors.onAccent, fontSize: fontSizes.small, fontWeight: '700' }}>Messages</Text>
+                <Text style={{ color: colors.onAccent, fontSize: fontSizes.small, fontWeight: '700' }}>{ttx('Messages')}</Text>
               </View>
             </View>
           </View>
@@ -891,7 +891,7 @@ export default function MessagesListScreen() {
               <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700' }}>Echo</Text>
             </Pressable>
             <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-              <Text style={{ color: colors.onAccent, fontSize: fontSizes.small, fontWeight: '700' }}>Messages</Text>
+              <Text style={{ color: colors.onAccent, fontSize: fontSizes.small, fontWeight: '700' }}>{ttx('Messages')}</Text>
             </View>
           </View>
         </View>

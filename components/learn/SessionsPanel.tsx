@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ttx } from '../../lib/i18n/i18n';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, ActivityIndicator, Linking, TextInput, Share } from 'react-native';
 import { CalendarBlank, ShareNetwork, VideoCamera } from 'phosphor-react-native';
@@ -159,7 +160,7 @@ export function SessionsPanel() {
     <View style={{ gap: 10 }}>
       {bookings.length === 0 ? (
         <Text style={[font.body, { color: colors.textMuted, fontSize: 13 }]}>
-          No sessions yet. Request one below, or publish your own tutoring profile so others can book you.
+          {ttx('No sessions yet. Request one below, or publish your own tutoring profile so others can book you.')}
         </Text>
       ) : (
         bookings.map(booking => {
@@ -199,7 +200,7 @@ export function SessionsPanel() {
                     >
                       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: radius.card, backgroundColor: colors.accent }}>
                         <VideoCamera size={ICON_SIZE.sm} weight="fill" color={colors.bg} />
-                        <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Join</Text>
+                        <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>{ttx('Join')}</Text>
                       </View>
                     </Pressable>
                   )}
@@ -210,7 +211,7 @@ export function SessionsPanel() {
                       style={{ flex: 1 }}
                     >
                       <View style={{ alignItems: 'center', paddingVertical: 12, borderRadius: radius.card, backgroundColor: colors.bg }}>
-                        <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>Add meeting link</Text>
+                        <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{ttx('Add meeting link')}</Text>
                       </View>
                     </Pressable>
                   )}
@@ -242,7 +243,7 @@ export function SessionsPanel() {
                   />
                   <Pressable onPress={() => saveMeetingLink(booking)} accessibilityRole="button">
                     <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.card, backgroundColor: colors.accent }}>
-                      <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Save</Text>
+                      <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>{ttx('Save')}</Text>
                     </View>
                   </Pressable>
                 </View>
@@ -280,7 +281,7 @@ export function SessionsPanel() {
             />
             <Pressable onPress={saveProfile} accessibilityRole="button">
               <View style={{ alignItems: 'center', paddingVertical: 12, borderRadius: radius.card, backgroundColor: colors.accent }}>
-                <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Save</Text>
+                <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>{ttx('Save')}</Text>
               </View>
             </Pressable>
           </>
@@ -313,7 +314,7 @@ export function SessionsPanel() {
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable onPress={() => setEditing(true)} accessibilityRole="button" style={{ flex: 1 }}>
                 <View style={{ alignItems: 'center', paddingVertical: 12, borderRadius: radius.card, backgroundColor: colors.bg }}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>Edit</Text>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{ttx('Edit')}</Text>
                 </View>
               </Pressable>
               <Pressable onPress={togglePublished} accessibilityRole="button" style={{ flex: 1 }}>
@@ -332,7 +333,7 @@ export function SessionsPanel() {
 
       {tutors.length > 0 && (
         <>
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, marginTop: 8 }]}>Tutors you can book</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, marginTop: 8 }]}>{ttx('Tutors you can book')}</Text>
           {tutors.map(tutor => (
             <View key={tutor.userId} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: radius.card, backgroundColor: colors.surface }}>
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -347,7 +348,7 @@ export function SessionsPanel() {
               </View>
               <Pressable onPress={() => request(tutor)} accessibilityRole="button">
                 <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.card, backgroundColor: colors.accent }}>
-                  <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Request</Text>
+                  <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>{ttx('Request')}</Text>
                 </View>
               </Pressable>
             </View>

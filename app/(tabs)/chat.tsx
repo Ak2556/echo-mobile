@@ -1020,7 +1020,7 @@ export default function ChatScreen() {
             zIndex: 20,
           }}
         >
-          <Text style={{ color: ON_MEDIA, fontSize: fontSizes.small, fontWeight: '600' }}>Tip · long-press the Chat tab to open quick actions</Text>
+          <Text style={{ color: ON_MEDIA, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx('Tip · long-press the Chat tab to open quick actions')}</Text>
         </Animated.View>
       )}
 

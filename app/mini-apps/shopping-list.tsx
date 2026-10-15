@@ -236,11 +236,11 @@ export default function ShoppingListScreen() {
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 24 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Est. Total</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>{ttx('Est. Total')}</Text>
             <Text style={{ color: colors.text, fontSize: 36, fontWeight: '900', marginTop: 4 }}>{cur}{stats.cost.toFixed(2)}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Remaining</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>{ttx('Remaining')}</Text>
             <Text style={{ color: accent, fontSize: 36, fontWeight: '900', marginTop: 4 }}>{stats.remaining}</Text>
           </View>
         </View>
@@ -257,7 +257,7 @@ export default function ShoppingListScreen() {
       </GlassPanel>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Text style={{ fontSize: fontSizes.title, fontWeight: '800', color: colors.text }}>Items</Text>
+        <Text style={{ fontSize: fontSizes.title, fontWeight: '800', color: colors.text }}>{ttx('Items')}</Text>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16, marginBottom: 8 }}>
@@ -321,7 +321,7 @@ export default function ShoppingListScreen() {
       />
       <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontWeight: '600' }}>Qty: </Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontWeight: '600' }}>{ttx('Qty:')} </Text>
           <TextInput value={quantity} onChangeText={setQuantity} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="numbers-and-punctuation" />
         </View>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
@@ -330,7 +330,7 @@ export default function ShoppingListScreen() {
         </View>
       </View>
       
-      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text, marginBottom: 8 }}>Category</Text>
+      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text, marginBottom: 8 }}>{ttx('Category')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8, marginBottom: 16 }}>
         {SHOPPING_CATEGORIES.map(item => (
           <MiniChip key={item} accent={accent} label={item} active={category === item} onPress={() => { tap('selection'); setCategory(item); }} />
@@ -343,9 +343,9 @@ export default function ShoppingListScreen() {
       {/* List Selector */}
       <BottomSheet visible={showListSelector} onClose={() => setShowListSelector(false)}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text }}>Your Lists</Text>
+        <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text }}>{ttx('Your Lists')}</Text>
         <Pressable onPress={() => setShowListSelector(false)} style={{ padding: 8, backgroundColor: colors.surface, borderRadius: radius.lg }}>
-          <Text style={{ color: colors.text, fontWeight: '800' }}>Done</Text>
+          <Text style={{ color: colors.text, fontWeight: '800' }}>{ttx('Done')}</Text>
         </Pressable>
       </View>
       
@@ -384,21 +384,21 @@ export default function ShoppingListScreen() {
         <View style={{ flex: 1, backgroundColor: colors.bg }}>
           <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
             <BackButton onPress={() => setShowScanner(false)} label="Close" />
-            <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text, flex: 1 }}>Add Items</Text>
+            <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text, flex: 1 }}>{ttx('Add Items')}</Text>
           </View>
           
           <ScrollView contentContainerStyle={{ padding: 20, gap: 24 }}>
             <View>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 12 }}>Barcode Scanner</Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 12 }}>{ttx('Barcode Scanner')}</Text>
               <View style={{ height: 160, borderRadius: radius.card, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 <Scan color={colors.textMuted} size={80} />
                 <View style={{ position: 'absolute', width: '100%', height: 2, backgroundColor: colors.success, opacity: 0.8 }} />
-                <Text style={{ color: colors.textMuted, position: 'absolute', bottom: 16, fontWeight: '600' }}>Point at a barcode</Text>
+                <Text style={{ color: colors.textMuted, position: 'absolute', bottom: 16, fontWeight: '600' }}>{ttx('Point at a barcode')}</Text>
               </View>
             </View>
             
             <View>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 12 }}>Frequent Items</Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 12 }}>{ttx('Frequent Items')}</Text>
               <View style={{ gap: 12 }}>
                 {FREQUENT_ITEMS.map((item, idx) => (
                   <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface }}>
@@ -407,7 +407,7 @@ export default function ShoppingListScreen() {
                       <Text style={{ fontSize: fontSizes.label, fontWeight: '600', color: colors.textMuted, marginTop: 4 }}>{item.category} • ${item.price.toFixed(2)}</Text>
                     </View>
                     <AnimatedPressable onPress={() => addFrequent(item)} style={{ paddingVertical: 10, paddingHorizontal: 16, backgroundColor: accent, borderRadius: radius.lg }}>
-                      <Text style={{ color: colors.bgPure, fontWeight: '800' }}>Add</Text>
+                      <Text style={{ color: colors.bgPure, fontWeight: '800' }}>{ttx('Add')}</Text>
                     </AnimatedPressable>
                   </View>
                 ))}

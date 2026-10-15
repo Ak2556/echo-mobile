@@ -19,7 +19,7 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
-import { useI18n } from '../../lib/i18n/i18n';
+import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { showToast } from '../../components/ui/Toast';
 import {
   HABIT_COLORS, HABIT_MARKERS, Habit, HabitCheckIn, checkInFor, formatCheckInTime,
@@ -479,7 +479,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Bell color={reminder ? color : colors.textMuted} size={18} weight={reminder ? "fill" : "regular"} />
-                  <Text style={{ fontSize: fontSizes.body, fontWeight: '600', color: colors.text }}>Daily Reminder Time</Text>
+                  <Text style={{ fontSize: fontSizes.body, fontWeight: '600', color: colors.text }}>{ttx('Daily Reminder Time')}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {reminder && (
@@ -511,7 +511,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Bell color={alarmTime ? color : colors.textMuted} size={18} weight={alarmTime ? "fill" : "regular"} />
-                  <Text style={{ fontSize: fontSizes.body, fontWeight: '600', color: colors.text }}>Apple Alarm Style Picker</Text>
+                  <Text style={{ fontSize: fontSizes.body, fontWeight: '600', color: colors.text }}>{ttx('Apple Alarm Style Picker')}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {alarmTime && (

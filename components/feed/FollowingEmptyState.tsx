@@ -1,4 +1,5 @@
 import React from 'react';
+import { ttx } from '../../lib/i18n/i18n';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { UsersThree, Plus, Compass } from 'phosphor-react-native';
 import { useRouter } from 'expo-router';
@@ -24,10 +25,10 @@ export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
           <UsersThree color={colors.accent} size={40} weight="duotone" />
         </View>
         <Text style={[font.displayBlack, { color: colors.text, fontSize: 26, textAlign: 'center', marginBottom: 12, letterSpacing: -0.5 }]}>
-          Your feed is quiet
+          {ttx('Your feed is quiet')}
         </Text>
         <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 16, textAlign: 'center', lineHeight: 24, maxWidth: 300 }]}>
-          When you follow people, their latest echoes will show up here. Let&apos;s find some voices.
+          {ttx("When you follow people, their latest echoes will show up here. Let's find some voices.")}
         </Text>
       </View>
 
@@ -35,7 +36,7 @@ export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
         <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 8 }}>
             <Compass color={colors.accent} size={18} weight="fill" />
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>Suggested Creators</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx('Suggested Creators')}</Text>
           </View>
           
           <View style={{ gap: 12 }}>
@@ -54,7 +55,7 @@ export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
                   onPress={(e) => { e.stopPropagation(); onFollow(user.id); }}
                   style={{ backgroundColor: colors.accent, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 }}
                 >
-                  <Text style={[font.bodyBold, { color: '#fff', fontSize: 13 }]}>Follow</Text>
+                  <Text style={[font.bodyBold, { color: '#fff', fontSize: 13 }]}>{ttx('Follow')}</Text>
                 </Pressable>
               </Pressable>
             ))}
@@ -64,7 +65,7 @@ export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
             onPress={() => router.push('/(tabs)/explore')}
             style={{ marginTop: 20, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, alignItems: 'center' }}
           >
-            <Text style={[font.bodyBold, { color: colors.accent, fontSize: 15 }]}>Discover more people</Text>
+            <Text style={[font.bodyBold, { color: colors.accent, fontSize: 15 }]}>{ttx('Discover more people')}</Text>
           </Pressable>
         </View>
       )}

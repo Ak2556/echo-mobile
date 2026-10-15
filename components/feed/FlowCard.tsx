@@ -1,4 +1,5 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ttx } from '../../lib/i18n/i18n';
 import { ICON_SIZE } from '../../lib/ui/icons';
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -180,7 +181,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
   if (item.postType !== 'video' || !item.videoUri) {
     return (
       <View style={{ height, width: '100%', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: colors.textMuted }}>Unsupported media type</Text>
+        <Text style={{ color: colors.textMuted }}>{ttx('Unsupported media type')}</Text>
       </View>
     );
   }
@@ -299,7 +300,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
             {/* Tiny Follow Pill */}
             {!item.isLiked && ( // Just an aesthetic mockup for the pill
               <View style={{ marginLeft: 10, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' }}>
-                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>Follow</Text>
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>{ttx('Follow')}</Text>
               </View>
             )}
           </Pressable>
