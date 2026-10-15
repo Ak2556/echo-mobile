@@ -97,7 +97,7 @@ function QuestRow({ quest }: { quest: Quest }) {
         <View style={{ marginTop: 2 }}>
           {completed
             ? <CheckCircle color={colors.accent} size={20} weight="fill" />
-            : <View style={{ width: 20, height: 20, borderRadius: 99, borderWidth: 2, borderColor: colors.border }} />
+            : <View style={{ width: 20, height: 20, borderRadius: radius.full, borderWidth: 2, borderColor: colors.border }} />
           }
         </View>
         <View style={{ flex: 1 }}>

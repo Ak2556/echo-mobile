@@ -212,7 +212,7 @@ function RevealDoors({
       <View style={{ alignItems: 'center', marginBottom: 8 }}>
         <View style={{
           flexDirection: 'row', alignItems: 'center', gap: 6,
-          backgroundColor: colors.accent + '1A', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99,
+          backgroundColor: colors.accent + '1A', paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.full,
         }}>
           <Flame color={colors.accent} size={15} weight="fill" />
           <Text style={{ color: colors.accent, fontSize: fontSizes.small, fontWeight: '800' }}>
@@ -246,7 +246,7 @@ function RevealDoors({
             }}
           >
             <View style={{
-              width: 44, height: 44, borderRadius: 14,
+              width: 44, height: 44, borderRadius: radius.lg,
               alignItems: 'center', justifyContent: 'center',
               backgroundColor: d.tint + '22',
             }}>

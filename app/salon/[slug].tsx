@@ -102,7 +102,7 @@ function SalonDetailScreenInner() {
           style={{
             paddingHorizontal: 14,
             paddingVertical: 6,
-            borderRadius: 99,
+            borderRadius: radius.full,
             backgroundColor: salon.is_member ? 'transparent' : colors.accent,
             borderWidth: salon.is_member ? 1 : 0,
             borderColor: colors.border,
@@ -155,7 +155,7 @@ function SalonDetailScreenInner() {
           {salon.topic_tags && salon.topic_tags.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {salon.topic_tags.map(tag => (
-                <View key={tag} style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, backgroundColor: salon.cover_color + '22' }}>
+                <View key={tag} style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.full, backgroundColor: salon.cover_color + '22' }}>
                   <Text style={{ color: salon.cover_color, fontSize: 11, fontWeight: '600' }}>#{tag}</Text>
                 </View>
               ))}

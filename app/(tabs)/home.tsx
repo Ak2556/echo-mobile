@@ -257,7 +257,7 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }) {
   const router = useRouter();
-  const { font, fontSizes, lineHeights } = useTheme();
+  const { font, fontSizes, lineHeights, radius } = useTheme();
   const layout = useResponsiveLayout();
   const target = useTutorialTarget('home-nextstep');
 
@@ -291,7 +291,7 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
       <AnimatedPressable
         onPress={() => router.push(step.route)}
         haptic="medium"
-        style={{ borderRadius: 18, overflow: 'hidden' }}
+        style={{ borderRadius: radius.xl, overflow: 'hidden' }}
       >
         <LinearGradient
           colors={[BRAND.emberFrom, BRAND.emberTo]}
@@ -299,7 +299,7 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
           end={{ x: 1, y: 1 }}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 16 }}
         >
-          <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)' }}>
+          <View style={{ width: 44, height: 44, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)' }}>
             {step.icon}
           </View>
           <View style={{ flex: 1 }}>
@@ -321,7 +321,7 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
 // on its own when Edit Profile saves a real handle.
 function ChooseHandleCard({ username }: { username: string }) {
   const router = useRouter();
-  const { colors, font, fontSizes, lineHeights } = useTheme();
+  const { colors, font, fontSizes, lineHeights, radius } = useTheme();
   const layout = useResponsiveLayout();
   return (
     <View style={{ marginHorizontal: layout.gutter, marginTop: 6, marginBottom: 12 }}>
@@ -331,7 +331,7 @@ function ChooseHandleCard({ username }: { username: string }) {
         accessibilityRole="button"
         accessibilityLabel={`${ttx('Choose your username')}. @${username}`}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.xl, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
           <View style={{ width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}1F` }}>
             <At color={colors.accent} size={20} weight="bold" />
           </View>
@@ -366,7 +366,7 @@ function FeedScopeRail({
   setFeedScope: (scope: 'semantic' | 'forYou' | 'following' | 'latest') => void;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }) {
-  const { colors, font, fontSizes } = useTheme();
+  const { colors, font, fontSizes, radius } = useTheme();
   const layout = useResponsiveLayout();
   const router = useRouter();
   return (
@@ -384,7 +384,7 @@ function FeedScopeRail({
               accessibilityState={{ selected: active }}
               style={{
                 minHeight: 36,
-                borderRadius: 999,
+                borderRadius: radius.full,
                 backgroundColor: active ? colors.accent : colors.surface,
                 borderWidth: StyleSheet.hairlineWidth,
                 borderColor: active ? colors.accent : colors.border,
@@ -407,7 +407,7 @@ function FeedScopeRail({
           accessibilityLabel={t('nav.watch')}
           style={{
             minHeight: 36,
-            borderRadius: 999,
+            borderRadius: radius.full,
             backgroundColor: colors.surface,
             borderWidth: StyleSheet.hairlineWidth,
             borderColor: colors.border,
@@ -463,7 +463,7 @@ export default function DiscoverScreen() {
   const follow = useFollow();
   const listRef = useRef<any>(null);
   const currentEchoRef = useRef<any>(null);
-  const { colors, animation, font, fontSizes, lineHeights } = useTheme();
+  const { colors, animation, font, fontSizes, lineHeights, radius } = useTheme();
   const { data: randomAd } = useRandomAd();
 
   const { t } = useI18n();
@@ -752,7 +752,7 @@ export default function DiscoverScreen() {
               onPress={() => { realtime.reset(); refetch(); }}
               style={{
                 position: 'absolute', top: headerHeight + 6, alignSelf: 'center', zIndex: 30,
-                backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+                backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full,
               }}
             >
               <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>

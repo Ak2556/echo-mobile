@@ -25,7 +25,7 @@ function count(re: RegExp, dirs: string[] = ['app']): number {
 }
 
 const CEILINGS = {
-  rawRadius: 347,
+  rawRadius: 224,
   rawFontSize: 1258,
   alertAlert: 91,
 };

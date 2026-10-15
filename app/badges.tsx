@@ -98,7 +98,7 @@ function BadgeCard({ badge, locked }: { badge: Badge; locked?: boolean }) {
     >
       <View
         style={{
-          width: 48, height: 48, borderRadius: 99,
+          width: 48, height: 48, borderRadius: radius.full,
           backgroundColor: locked ? colors.surfaceHover : tint + '22',
           alignItems: 'center', justifyContent: 'center',
         }}
@@ -108,7 +108,7 @@ function BadgeCard({ badge, locked }: { badge: Badge; locked?: boolean }) {
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
           <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{badge.name}</Text>
-          <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 99, backgroundColor: tint + '22' }}>
+          <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.full, backgroundColor: tint + '22' }}>
             <Text style={{ color: tint, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 }}>{badge.tier.toUpperCase()}</Text>
           </View>
         </View>

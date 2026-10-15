@@ -90,7 +90,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
 
 /** Compact tool chip for the "Jump back in" recents row. */
 function RecentChip({ app, onOpen }: { app: MiniApp; onOpen: (app: MiniApp) => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <Pressable
       onPress={() => onOpen(app)}
@@ -101,7 +101,7 @@ function RecentChip({ app, onOpen }: { app: MiniApp; onOpen: (app: MiniApp) => v
       <View style={{
         flexDirection: 'row', alignItems: 'center', gap: 9,
         paddingLeft: 7, paddingRight: 14,
-        height: 46, borderRadius: 999,
+        height: 46, borderRadius: radius.full,
         backgroundColor: colors.surface,
         borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
       }}>
@@ -137,7 +137,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
   targetLabel: string;
   onOpen: (app: MiniApp) => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const accent = primary?.color ?? colors.accent;
 
   return (
@@ -170,7 +170,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {targetApps.slice(0, 4).map(app => (
               <Pressable key={app.id} onPress={() => onOpen(app)} accessibilityRole="button" accessibilityLabel={`Open ${app.name}`}>
-                <View style={{ height: 38, borderRadius: 999, paddingLeft: 6, paddingRight: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                <View style={{ height: 38, borderRadius: radius.full, paddingLeft: 6, paddingRight: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                   <MiniAppIcon id={app.id} color={app.color} size={28} />
                   <Text style={{ color: colors.text, fontSize: 12.5, ...font.bodySemibold }}>{app.name}</Text>
                 </View>
@@ -184,7 +184,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
 }
 
 export default function AppsScreen() {
-  const { colors, reduceAnimations, font } = useTheme();
+  const { colors, reduceAnimations, font, radius } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const layout = useResponsiveLayout();
@@ -375,7 +375,7 @@ export default function AppsScreen() {
                 return (
                   <Pressable key={l.id} onPress={() => { void Haptics.selectionAsync(); setLane(l.id); }} accessibilityRole="button" accessibilityState={{ selected: active }}>
                     <View style={{
-                      height: 36, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center',
+                      height: 36, borderRadius: radius.full, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center',
                       backgroundColor: active ? colors.accent : colors.surface,
                       borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder,
                     }}>
@@ -421,7 +421,7 @@ export default function AppsScreen() {
               <Pressable onPress={() => router.push('/target-progress' as Href)} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
                 <View style={{ borderRadius: 20, overflow: 'hidden', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 13 }}>
                   <LinearGradient colors={[`${colors.accent}1F`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
-                  <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}15` }}>
+                  <View style={{ width: 44, height: 44, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}15` }}>
                     <Target color={colors.accent} size={22} weight="bold" />
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -436,7 +436,7 @@ export default function AppsScreen() {
                   const active = category.id === selectedTarget.id;
                   return (
                     <Pressable key={category.id} onPress={() => setTargetCategory(category.id)} accessibilityRole="button" accessibilityState={{ selected: active }}>
-                      <View style={{ height: 32, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border, backgroundColor: active ? `${colors.accent}18` : colors.surface, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ height: 32, borderRadius: radius.full, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border, backgroundColor: active ? `${colors.accent}18` : colors.surface, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center' }}>
                         <Text style={{ color: active ? colors.accent : colors.textSecondary, ...font.bodyMedium, fontSize: 12.5 }}>{category.label}</Text>
                       </View>
                     </Pressable>
@@ -448,7 +448,7 @@ export default function AppsScreen() {
                 onChangeText={setTargetOutcome}
                 placeholder={ttx("Name the output you want…")}
                 placeholderTextColor={colors.textMuted}
-                style={{ color: colors.text, borderRadius: 14, paddingHorizontal: 15, paddingVertical: 12, backgroundColor: colors.surfaceHover, fontSize: 14.5, marginTop: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}
+                style={{ color: colors.text, borderRadius: radius.lg, paddingHorizontal: 15, paddingVertical: 12, backgroundColor: colors.surfaceHover, fontSize: 14.5, marginTop: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}
               />
             </View>
 

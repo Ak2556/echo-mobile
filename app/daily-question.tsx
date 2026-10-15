@@ -374,7 +374,7 @@ function ViewChip({
   icon: React.ReactNode;
   label: string;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -384,7 +384,7 @@ function ViewChip({
         gap: 6,
         paddingHorizontal: 14,
         paddingVertical: 8,
-        borderRadius: 99,
+        borderRadius: radius.full,
         backgroundColor: active ? colors.accent : colors.surface,
         borderWidth: 1,
         borderColor: active ? colors.accent : colors.border,
@@ -448,7 +448,7 @@ function AnswerCard({
               gap: 4,
               paddingHorizontal: 8,
               paddingVertical: 4,
-              borderRadius: 99,
+              borderRadius: radius.full,
               backgroundColor: colors.accent + '1F',
             }}>
               <Lightning size={11} weight="fill" color={colors.accent} />
@@ -481,7 +481,7 @@ function AnswerCard({
                 gap: 4,
                 paddingHorizontal: 9,
                 paddingVertical: 5,
-                borderRadius: 99,
+                borderRadius: radius.full,
                 backgroundColor: mine ? colors.accent + '22' : colors.surfaceHover,
                 borderWidth: 1,
                 borderColor: mine ? colors.accent + '66' : 'transparent',

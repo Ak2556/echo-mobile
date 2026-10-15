@@ -25,7 +25,7 @@ const DESC_MAX = 240;
 
 function CreateSalonScreenInner() {
   const router = useRouter();
-  const { colors, fontSizes, animation } = useTheme();
+  const { colors, fontSizes, animation, radius } = useTheme();
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -141,7 +141,7 @@ function CreateSalonScreenInner() {
                   key={c}
                   onPress={() => setCoverColor(c)}
                   style={{
-                    width: 40, height: 40, borderRadius: 99,
+                    width: 40, height: 40, borderRadius: radius.full,
                     backgroundColor: c,
                     borderWidth: active ? 3 : 0,
                     borderColor: colors.text,

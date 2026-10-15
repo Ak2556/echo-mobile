@@ -47,7 +47,7 @@ function computeStartAt(option: typeof START_OFFSETS[number]): Date {
 
 function CreateOfficeHourScreenInner() {
   const router = useRouter();
-  const { colors, fontSizes, animation } = useTheme();
+  const { colors, fontSizes, animation, radius } = useTheme();
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
 
@@ -116,7 +116,7 @@ function CreateOfficeHourScreenInner() {
                   key={opt.label}
                   onPress={() => setStartOffset(opt)}
                   style={{
-                    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 99,
+                    paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full,
                     borderWidth: 1,
                     borderColor: active ? colors.accent : colors.border,
                     backgroundColor: active ? colors.accent + '22' : 'transparent',
@@ -144,7 +144,7 @@ function CreateOfficeHourScreenInner() {
                   key={d.value}
                   onPress={() => setDuration(d.value)}
                   style={{
-                    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 99,
+                    paddingHorizontal: 16, paddingVertical: 7, borderRadius: radius.full,
                     borderWidth: 1,
                     borderColor: active ? colors.accent : colors.border,
                     backgroundColor: active ? colors.accent + '22' : 'transparent',

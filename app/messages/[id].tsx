@@ -405,7 +405,7 @@ function ReactionBar({
   isMe: boolean;
   onToggle: (reactionValue: string, hasReacted: boolean) => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   if (!reactions.length) return null;
 
   const grouped: Record<string, { count: number; hasReacted: boolean }> = {};
@@ -423,7 +423,7 @@ function ReactionBar({
             onPress={() => onToggle(val, hasReacted)}
             style={{
               flexDirection: 'row', alignItems: 'center', gap: 3,
-              paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
+              paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.full,
               backgroundColor: hasReacted ? colors.accentMuted : colors.surface,
               borderWidth: 1, borderColor: hasReacted ? colors.accent : colors.border,
             }}
@@ -896,7 +896,7 @@ function DMBubble({
                   isMe={isMe}
                 />
               )}
-              <View style={{ width: 46, height: 46, borderRadius: 18, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+              <View style={{ width: 46, height: 46, borderRadius: radius.xl, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
                 <Images color={colors.textMuted} size={23} weight="bold" />
               </View>
               <Text style={{ color: isMe ? colors.accent : colors.text, fontSize: 14, fontWeight: '900', textAlign: 'center' }}>
@@ -1168,7 +1168,7 @@ function DMBubble({
             <Animated.View
               entering={FadeIn.duration(160)}
               style={{
-                marginTop: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14,
+                marginTop: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg,
                 backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.accent}40`,
               }}
             >
@@ -1234,7 +1234,7 @@ function DMBubble({
 // ─── UnreadDivider ───────────────────────────────────────────────────────────
 
 function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?: boolean; onCatchUp?: () => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <View style={{ paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', gap: 9 }}>
       <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("NEW MESSAGES")}</Text>
@@ -1249,7 +1249,7 @@ function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?
             accessibilityLabel={ttx("Catch me up on unread messages")}
             style={{
               flexDirection: 'row', alignItems: 'center', gap: 6,
-              paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+              paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full,
               backgroundColor: colors.accentMuted,
               borderWidth: 1, borderColor: `${colors.accent}55`,
             }}
@@ -1488,7 +1488,7 @@ function MessageActionSheet({
   onSmartReply: () => void;
   onReport: () => void;
 }) {
-  const { colors, reduceAnimations } = useTheme();
+  const { colors, reduceAnimations, radius } = useTheme();
   const insets = useSafeAreaInsets();
   if (!message) return null;
 
@@ -1532,7 +1532,7 @@ function MessageActionSheet({
       style={({ pressed }) => ({
         width: '31.8%',
         minHeight: 72,
-        borderRadius: 18,
+        borderRadius: radius.xl,
         paddingHorizontal: 8,
         paddingVertical: 10,
         alignItems: 'center',
@@ -1551,7 +1551,7 @@ function MessageActionSheet({
       <View style={{
         width: 34,
         height: 34,
-        borderRadius: 14,
+        borderRadius: radius.lg,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: accent
@@ -1786,7 +1786,7 @@ function MessageActionSheet({
                     style={({ pressed }) => ({
                       flex: 1,
                       minHeight: 54,
-                      borderRadius: 18,
+                      borderRadius: radius.xl,
                       paddingHorizontal: 12,
                       flexDirection: 'row',
                       alignItems: 'center',
@@ -1811,7 +1811,7 @@ function MessageActionSheet({
                   style={({ pressed }) => ({
                     flex: 1,
                     minHeight: 54,
-                    borderRadius: 18,
+                    borderRadius: radius.xl,
                     paddingHorizontal: 12,
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -3014,7 +3014,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                 </Pressable>
               )}
               {streak >= 2 && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 1, backgroundColor: colors.accentMuted, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 1, backgroundColor: colors.accentMuted, borderRadius: radius.full, paddingHorizontal: 7, paddingVertical: 2 }}>
                   <Flame color={colors.accent} size={11} weight="fill" />
                   <Text style={{ color: colors.accent, fontSize: 11.5, fontWeight: '800' }}>{streak}</Text>
                 </View>
@@ -3306,7 +3306,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   style={({ pressed }) => ({
                     width: '31%',
                     minHeight: 68,
-                    borderRadius: 18,
+                    borderRadius: radius.xl,
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 7,
@@ -3316,7 +3316,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                     opacity: pressed ? 0.65 : 1,
                   })}
                 >
-                  <View style={{ width: 34, height: 34, borderRadius: 14, backgroundColor: colors.accentMuted, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 34, height: 34, borderRadius: radius.lg, backgroundColor: colors.accentMuted, alignItems: 'center', justifyContent: 'center' }}>
                     {action.icon}
                   </View>
                   <Text style={{ color: colors.textSecondary, fontSize: 11.5, lineHeight: 14, fontWeight: '900', textAlign: 'center' }} numberOfLines={1}>

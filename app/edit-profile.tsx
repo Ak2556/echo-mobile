@@ -301,12 +301,12 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={{ gap: 8 }}>
-              <View style={{ height: 6, borderRadius: 999, backgroundColor: colors.surfaceHover, overflow: 'hidden' }}>
-                <View style={{ width: `${completion * 100}%`, height: '100%', borderRadius: 999, backgroundColor: colors.accent }} />
+              <View style={{ height: 6, borderRadius: radius.full, backgroundColor: colors.surfaceHover, overflow: 'hidden' }}>
+                <View style={{ width: `${completion * 100}%`, height: '100%', borderRadius: radius.full, backgroundColor: colors.accent }} />
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
                 {completionItems.map(item => (
-                  <View key={item.label} style={{ borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: item.done ? `${colors.success}1E` : colors.surfaceHover }}>
+                  <View key={item.label} style={{ borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: item.done ? `${colors.success}1E` : colors.surfaceHover }}>
                     <Text style={[font.bodySemibold, { color: item.done ? colors.success : colors.textMuted, fontSize: 11 }]}>{item.label}</Text>
                   </View>
                 ))}
@@ -426,7 +426,7 @@ export default function EditProfileScreen() {
                   style={{
                     paddingHorizontal: 10,
                     paddingVertical: 5,
-                    borderRadius: 99,
+                    borderRadius: radius.full,
                     borderWidth: StyleSheet.hairlineWidth,
                     borderColor: active ? colors.accent : colors.border,
                     backgroundColor: active ? `${colors.accent}22` : colors.surfaceHover,

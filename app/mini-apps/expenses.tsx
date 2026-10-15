@@ -816,7 +816,7 @@ export default function ExpensesApp() {
                         ) : null}
                       </View>
                       <View style={{ width: 100 }}>
-                        <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }}>
+                        <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.sm, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }}>
                           <Text style={{ color: colors.text, fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>{tx.type}</Text>
                         </View>
                       </View>

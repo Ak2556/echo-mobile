@@ -267,7 +267,7 @@ function OfficeHourDetailScreenInner() {
             onPress={() => void submitQ()}
             disabled={draft.trim().length < 5 || submitting}
             style={{
-              width: 44, height: 44, borderRadius: 99,
+              width: 44, height: 44, borderRadius: radius.full,
               backgroundColor: draft.trim().length >= 5 ? colors.accent : colors.surfaceHover,
               alignItems: 'center', justifyContent: 'center',
             }}
