@@ -4087,7 +4087,7 @@ export async function addMessageReaction(messageId: string, reactionValue: strin
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase
     .from('message_reactions')
-    .upsert({ message_id: messageId, user_id: uid, emoji: reactionValue }, { onConflict: 'message_id,user_id,emoji' });
+    .upsert({ message_id: messageId, user_id: uid, emoji: reactionValue }, { onConflict: 'message_id,user_id,emoji', ignoreDuplicates: true });
   if (error) throw error;
 }
 
@@ -4403,7 +4403,7 @@ export async function setRemoteBlock(targetUserId: string, block: boolean): Prom
   if (block) {
     const { error } = await supabase
       .from('user_blocks')
-      .upsert({ blocker_id: uid, blocked_id: targetUserId }, { onConflict: 'blocker_id,blocked_id' });
+      .upsert({ blocker_id: uid, blocked_id: targetUserId }, { onConflict: 'blocker_id,blocked_id', ignoreDuplicates: true });
     if (error) throw error;
   } else {
     const { error } = await supabase
@@ -4459,7 +4459,7 @@ export async function setRemoteMute(targetUserId: string, mute: boolean): Promis
   if (mute) {
     const { error } = await supabase
       .from('user_mutes')
-      .upsert({ muter_id: uid, muted_id: targetUserId }, { onConflict: 'muter_id,muted_id' });
+      .upsert({ muter_id: uid, muted_id: targetUserId }, { onConflict: 'muter_id,muted_id', ignoreDuplicates: true });
     if (error) throw error;
   } else {
     const { error } = await supabase
