@@ -33,7 +33,8 @@
     "legal:sbom": "node scripts/generate-sbom.mjs",
     "web:prepare": "node scripts/prepare-web-assets.mjs",
     "web:build": "npm run web:prepare && expo export -p web",
-    "check:page": "node scripts/check-page-budget.mjs"
+    "check:page": "node scripts/check-page-budget.mjs",
+    "probe:flows": "node scripts/probe-flows.mjs"
   },
   "dependencies": {
     "@babel/plugin-proposal-decorators": "^7.29.7",
