@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Platform, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomSheet } from '../common/BottomSheet';
+import { Button } from '../ui/Button';
 import { useTheme } from '../../lib/ui/theme';
 import { tap } from '../../lib/ui/haptics';
 import { ttx } from '../../lib/i18n/i18n';
@@ -28,8 +28,7 @@ export function EditMessageModal({
   submitLabel = 'Resend',
   maxLength = 4000,
 }: EditMessageModalProps) {
-  const { colors, reduceAnimations } = useTheme();
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const [text, setText] = useState(initialValue);
   const inputRef = useRef<TextInput>(null);
 
@@ -50,103 +49,56 @@ export function EditMessageModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onCancel}>
-      <Animated.View
-        entering={reduceAnimations ? undefined : FadeIn.duration(160)}
-        exiting={reduceAnimations ? undefined : FadeOut.duration(120)}
-        style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
+    <BottomSheet visible={visible} onClose={onCancel} variant="floating">
+      <View
+        style={{
+          borderRadius: 22,
+          overflow: 'hidden',
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.glassBorder,
+          backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.surface,
+        }}
       >
-        <Pressable style={{ flex: 1 }} onPress={onCancel} />
-      </Animated.View>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
-      >
-        <Animated.View
-          entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
-          exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
-          style={{ paddingHorizontal: 12, paddingBottom: insets.bottom + 12 }}
-        >
-          <View
+        {Platform.OS === 'ios' && (
+          <BlurView intensity={80} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
+        )}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
+        <View style={{ padding: 16 }}>
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{title}</Text>
+          {subtitle && (
+            <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{subtitle}</Text>
+          )}
+          <TextInput
+            ref={inputRef}
+            value={text}
+            onChangeText={setText}
+            multiline
+            maxLength={maxLength}
+            placeholder={ttx("Type your message…")}
+            placeholderTextColor={colors.textMuted}
             style={{
-              borderRadius: 22,
-              overflow: 'hidden',
+              marginTop: 12,
+              minHeight: 100,
+              maxHeight: 220,
+              padding: 12,
+              borderRadius: 14,
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: colors.glassBorder,
-              backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.surface,
+              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              color: colors.text,
+              fontSize: 15,
+              textAlignVertical: 'top',
             }}
-          >
-            {Platform.OS === 'ios' && (
-              <BlurView intensity={80} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
-            )}
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
-            <View style={{ padding: 16 }}>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{title}</Text>
-              {subtitle && (
-                <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{subtitle}</Text>
-              )}
-              <TextInput
-                ref={inputRef}
-                value={text}
-                onChangeText={setText}
-                multiline
-                maxLength={maxLength}
-                placeholder={ttx("Type your message…")}
-                placeholderTextColor={colors.textMuted}
-                style={{
-                  marginTop: 12,
-                  minHeight: 100,
-                  maxHeight: 220,
-                  padding: 12,
-                  borderRadius: 14,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.glassBorder,
-                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                  color: colors.text,
-                  fontSize: 15,
-                  textAlignVertical: 'top',
-                }}
-              />
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 11, flex: 1 }}>
-                  {text.length}/{maxLength}
-                </Text>
-                <Pressable
-                  onPress={onCancel}
-                  style={({ pressed }) => ({
-                    paddingHorizontal: 14,
-                    paddingVertical: 9,
-                    borderRadius: 999,
-                    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                    opacity: pressed ? 0.6 : 1,
-                  })}
-                >
-                  <Text style={{ color: colors.text, fontWeight: '600' }}>{ttx("Cancel")}</Text>
-                </Pressable>
-                <Pressable
-                  onPress={handleSubmit}
-                  disabled={!text.trim()}
-                  style={{ borderRadius: 999 }}
-                >
-                  {({ pressed }) => (
-                    // Child View owns the fill so cssInterop can't drop it and
-                    // leave the white label invisible on a light background.
-                    <View style={{
-                      paddingHorizontal: 16,
-                      paddingVertical: 9,
-                      borderRadius: 999,
-                      backgroundColor: text.trim() ? colors.accent : colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                      opacity: pressed ? 0.7 : 1,
-                    }}>
-                      <Text style={{ color: text.trim() ? '#fff' : colors.textMuted, fontWeight: '700' }}>{submitLabel}</Text>
-                    </View>
-                  )}
-                </Pressable>
-              </View>
-            </View>
+          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 11, flex: 1 }}>
+              {text.length}/{maxLength}
+            </Text>
+            <Button label={ttx("Cancel")} onPress={onCancel} variant="secondary" size="compact" />
+            <Button label={submitLabel} onPress={handleSubmit} size="compact" disabled={!text.trim()} />
           </View>
-        </Animated.View>
-      </KeyboardAvoidingView>
-    </Modal>
+        </View>
+      </View>
+    </BottomSheet>
   );
 }
