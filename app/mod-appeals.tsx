@@ -12,6 +12,7 @@ import { useTheme } from '../lib/ui/theme';
 import { fetchPendingAppeals, resolveAppeal, type PendingAppeal } from '../lib/supabaseEchoApi';
 import { ttx } from '../lib/i18n/i18n';
 import { STATUS } from '../lib/ui/fixedColors';
+import { LoadingState } from '../components/common/LoadingState';
 
 function slaColor(daysRemaining: number): string {
   if (daysRemaining <= 2) return STATUS.danger;
@@ -233,9 +234,7 @@ export default function ModAppealsScreen() {
       )}
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
+        <LoadingState />
       ) : error ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Text style={[font.body, { color: colors.textMuted, textAlign: 'center' }]}>{error}</Text>

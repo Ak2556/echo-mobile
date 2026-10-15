@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
@@ -19,6 +19,7 @@ import { track } from '../lib/core/analytics';
 import { registerForPush } from '../lib/notifications/push';
 import { useI18n } from '../lib/i18n/i18n';
 import { WARM } from '../lib/ui/fixedColors';
+import { LoadingState } from '../components/common/LoadingState';
 
 /**
  * First-run value moment.
@@ -114,9 +115,7 @@ export default function WelcomeScreen() {
 
   if (loading || !question) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} />
-      </SafeAreaView>
+      <LoadingState screen />
     );
   }
 

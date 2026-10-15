@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -13,6 +13,7 @@ import { fetchOrComputeYearWrap, type YearWrap } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../lib/i18n/i18n';
 import { ON_MEDIA } from '../lib/ui/fixedColors';
+import { LoadingState } from '../components/common/LoadingState';
 
 /**
  * Year in Echo — Spotify-Wrapped-style recap of your year.
@@ -44,10 +45,7 @@ function YearInEchoScreenInner() {
       <ScreenHeader title={`Year in Echo ${year}`} />
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator color={colors.accent} />
-          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 12 }}>{ttx("Computing your year…")}</Text>
-        </View>
+        <LoadingState message={ttx("Computing your year…")} />
       ) : !wrap || wrap.total_echoes === 0 ? (
         <View style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center' }}>
           <Confetti color={colors.textMuted} size={48} />

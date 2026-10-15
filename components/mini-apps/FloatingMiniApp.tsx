@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { View, Text, useWindowDimensions, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { View, Text, useWindowDimensions, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -21,6 +21,7 @@ import { MiniAppIcon, MiniAppGlyph } from './MiniAppIcon';
 import { MINI_APP_CATALOG } from '../../lib/mini-apps/miniAppCatalog';
 import { IconButton } from '../ui/IconButton';
 import { useI18n } from '../../lib/i18n/i18n';
+import { LoadingState } from '../common/LoadingState';
 
 // Per-app branding (colour + display name) from the shared catalog, so the
 // floating picker reads exactly like the Tools tab. Falls back to the
@@ -231,7 +232,7 @@ function Panel() {
       <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         {meta ? (
           <MiniAppEmbedContext.Provider value={true}>
-            <Suspense fallback={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={colors.accent} /></View>}>
+            <Suspense fallback={<LoadingState />}>
               <meta.Component />
             </Suspense>
           </MiniAppEmbedContext.Provider>

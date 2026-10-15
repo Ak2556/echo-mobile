@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  Share,
-  Text,
-  View,
-} from 'react-native';
+import { ScrollView, Share, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '../../lib/routing/safeBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +24,7 @@ import { ttx } from '../../lib/i18n/i18n';
 import { BackButton } from '../../components/ui/BackButton';
 import { BRAND, STATUS } from '../../lib/ui/fixedColors';
 import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
+import { LoadingState } from '../../components/common/LoadingState';
 
 const CONDITION_COLOR: Record<string, string> = {
   'New': STATUS.success,
@@ -123,9 +118,7 @@ export default function ListingDetailScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
+      <LoadingState screen />
     );
   }
 

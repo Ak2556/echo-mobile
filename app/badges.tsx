@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -8,6 +8,7 @@ import { fetchBadges, type Badge } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../lib/i18n/i18n';
 import { WARM, BRAND, TIER } from '../lib/ui/fixedColors';
+import { LoadingState } from '../components/common/LoadingState';
 
 const TIER_COLOR: Record<Badge['tier'], string> = {
   bronze: TIER.bronze,
@@ -46,9 +47,7 @@ function BadgesScreenInner() {
       />
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
+        <LoadingState />
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
           {earned.length > 0 && (

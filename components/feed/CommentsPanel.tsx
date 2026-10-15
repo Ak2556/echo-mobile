@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { View, Text, Pressable, Alert, RefreshControl } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-native';
 import { TextInput } from '../ui/TextInput';
@@ -14,6 +14,7 @@ import { useEchoComments, useAddRemoteComment } from '../../hooks/queries/useEch
 import { useTheme } from '../../lib/ui/theme';
 import { ttx } from '../../lib/i18n/i18n';
 import { useUserRefresh } from '../../hooks/useUserRefresh';
+import { LoadingState } from '../common/LoadingState';
 
 /**
  * The comment list and composer, with no opinion about how it is presented.
@@ -120,9 +121,7 @@ export function CommentsPanel({ echoId, bottomInset = 0, onCountChange }: Props)
   return (
     <View style={{ flex: 1 }}>
       {loadingRemote ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 }}>
-          <ActivityIndicator color={colors.accent} size="large" />
-        </View>
+        <LoadingState size="large" />
       ) : threadedRows.length === 0 ? (
         <EmptyState
           icon={<ChatCircle color="#6366F1" size={32} />}

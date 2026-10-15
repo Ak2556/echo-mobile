@@ -33,6 +33,7 @@ import { captureException } from '../lib/core/monitoring';
 import { recordAppOpen } from '../lib/ai/personalNudges';
 import { BackButton } from '../components/ui/BackButton';
 import { useUserRefresh } from '../hooks/useUserRefresh';
+import { LoadingState } from '../components/common/LoadingState';
 
 /**
  * Daily Question — Echo's twist on BeReal's daily ritual.
@@ -159,9 +160,7 @@ function DailyQuestionScreenInner() {
 
   if (loading) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} />
-      </SafeAreaView>
+      <LoadingState screen />
     );
   }
 

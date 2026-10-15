@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
-import { View, Text, ScrollView, ActivityIndicator, Alert, Image, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Alert, Image, RefreshControl } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useFocusEffect } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -16,6 +16,7 @@ import {
 } from '../lib/social/verificationApi';
 import { ttx } from '../lib/i18n/i18n';
 import { ON_STATUS } from '../lib/ui/fixedColors';
+import { LoadingState } from '../components/common/LoadingState';
 
 function VerificationCard({ item, onDecide }: {
   item: VerificationQueueItem;
@@ -145,9 +146,7 @@ export default function ModVerificationsScreen() {
       />
 
       {items === null ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
+        <LoadingState />
       ) : (
         <ScrollView
           ref={voiceList.ref as never}

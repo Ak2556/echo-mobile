@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { Microphone, Plus, UsersThree, Clock } from 'phosphor-react-native';
+import { Microphone, UsersThree, Clock } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
+import { EmptyState } from '../components/common/EmptyState';
 import { HeaderAddButton } from '../components/ui/HeaderAddButton';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Button } from '../components/ui/Button';
@@ -16,6 +17,7 @@ import { useTheme } from '../lib/ui/theme';
 import { fetchUpcomingOfficeHours, setOfficeHourRSVP, type OfficeHour } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../lib/i18n/i18n';
+import { LoadingState } from '../components/common/LoadingState';
 
 /**
  * Office Hours — scheduled AMA sessions on a creator's profile.
@@ -66,19 +68,16 @@ function OfficeHoursScreenInner() {
       />
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
+        <LoadingState />
       ) : list.length === 0 ? (
-        <View style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center' }}>
-          <Microphone color={colors.textMuted} size={48} />
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '600', marginTop: 16, textAlign: 'center' }}>
-            {ttx("No upcoming Office Hours")}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
-            {"Schedule a session. Invite Q's on a topic you know cold."}
-          </Text>
-          <Button label={ttx("Schedule")} onPress={() => router.push('/create-office-hour')} leftIcon={Plus} style={{ marginTop: 20, alignSelf: 'center' }} />
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <EmptyState
+            icon={<Microphone color={colors.textMuted} size={40} />}
+            title={ttx("No upcoming Office Hours")}
+            subtitle={"Schedule a session. Invite Q's on a topic you know cold."}
+            actionLabel={ttx("Schedule")}
+            onAction={() => router.push('/create-office-hour')}
+          />
         </View>
       ) : (
         <ScrollView

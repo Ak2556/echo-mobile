@@ -1,14 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -22,6 +14,7 @@ import { fetchMyAppeals, submitAppeal, submitDecisionAppeal, fetchModerationDeci
 import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { safeBack } from '../lib/routing/safeBack';
 import { ttx } from '../lib/i18n/i18n';
+import { LoadingState } from '../components/common/LoadingState';
 
 // `tone` resolves to a theme token at render so status color adapts per theme.
 const STATUS_CONFIG: Record<MyAppeal['status'], { label: string; tone: 'warning' | 'danger' | 'success'; Icon: React.ComponentType<any> }> = {
@@ -219,9 +212,7 @@ export default function AppealScreen() {
       {/* Appeals list (history view) */}
       {!isNew && (
         loading ? (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color={colors.accent} />
-          </View>
+          <LoadingState />
         ) : loadError ? (
           <ErrorState kind={classifyError(loadError)} onRetry={loadAppeals} />
         ) : (
