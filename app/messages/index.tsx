@@ -181,7 +181,7 @@ function CreateGroupModal({
                 <Pressable
                   key={user.id}
                   onPress={() => toggle(user)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: colors.accentMuted }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted }}
                 >
                   <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '800' }}>
                     {user.display_name || user.username}
@@ -429,7 +429,7 @@ function InboxToolbar({
   onFilterChange: (value: InboxFilter) => void;
   counts: Record<InboxFilter, number>;
 }) {
-  const { colors, fontSizes } = useTheme();
+  const { colors, fontSizes, radius } = useTheme();
   const filters: { key: InboxFilter; label: string }[] = [
     { key: 'all', label: 'All' },
     { key: 'people', label: 'Personal' },
@@ -477,7 +477,7 @@ function InboxToolbar({
               style={({ pressed }) => ({
                 paddingHorizontal: 16,
                 paddingVertical: 8,
-                borderRadius: 18,
+                borderRadius: radius.xl,
                 backgroundColor: active ? colors.accent : 'transparent',
                 borderWidth: active ? 0 : 1,
                 borderColor: active ? 'transparent' : colors.textMuted,
@@ -502,7 +502,7 @@ function InboxToolbar({
 }
 
 export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <Pressable onPress={onPress} style={{ alignItems: 'center', marginHorizontal: 8, marginTop: 16, position: 'relative' }}>
       {aura ? (
@@ -517,7 +517,7 @@ export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
         </Animated.View>
       ) : null}
       <View style={{
-        padding: 3, borderRadius: 999,
+        padding: 3, borderRadius: radius.full,
         borderWidth: 2, borderColor: aura ? colors.accent : 'transparent',
       }}>
         <Avatar name={name} color={color} url={url} size={64} />
@@ -681,7 +681,7 @@ export default function MessagesListScreen() {
   usePresenceTracking(useAppStore(s => s.userId) ?? undefined);
   const router = useRouter();
   const { conversations: localConversations } = useAppStore();
-  const { colors, fontSizes } = useTheme();
+  const { colors, fontSizes, radius } = useTheme();
   const remote = isSupabaseRemote();
   const { data: remoteConvs = [], isLoading: remoteLoading } = useRemoteConversations();
   const setPref = useSetDMPref();
@@ -848,11 +848,11 @@ export default function MessagesListScreen() {
         <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
           <BackButton fallback={'/(tabs)/chat'} />
           <View style={{ flex: 1, alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
-              <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: radius.full }}>
+              <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full }}>
                 <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Echo</Text>
               </Pressable>
-              <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
+              <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
                 <Text style={{ color: colors.onAccent, fontSize: 13, fontWeight: '700' }}>Messages</Text>
               </View>
             </View>
@@ -885,20 +885,20 @@ export default function MessagesListScreen() {
       }}>
         <BackButton fallback={'/(tabs)/chat'} />
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
-            <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: radius.full }}>
+            <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full }}>
               <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Echo</Text>
             </Pressable>
-            <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
+            <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
               <Text style={{ color: colors.onAccent, fontSize: 13, fontWeight: '700' }}>Messages</Text>
             </View>
           </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
-          <AnimatedPressable onPress={() => setGroupModalOpen(true)} style={{ width: 40, height: 40, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }} scaleValue={0.88} haptic="light">
+          <AnimatedPressable onPress={() => setGroupModalOpen(true)} style={{ width: 40, height: 40, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }} scaleValue={0.88} haptic="light">
             <Users color={colors.accent} size={20} weight="bold" />
           </AnimatedPressable>
-          <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} style={{ width: 40, height: 40, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }} scaleValue={0.88} haptic="light">
+          <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} style={{ width: 40, height: 40, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }} scaleValue={0.88} haptic="light">
             <PencilSimple color={colors.onAccent} size={20} weight="bold" />
           </AnimatedPressable>
         </View>

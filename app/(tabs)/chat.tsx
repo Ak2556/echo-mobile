@@ -72,7 +72,7 @@ function modelLabel(model: string): string {
  * already means something else (Echo vs Messages).
  */
 function AskDoSwitch({ mode, onChange }: { mode: AiMode; onChange: (next: AiMode) => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
 
   return (
     <View
@@ -97,7 +97,7 @@ function AskDoSwitch({ mode, onChange }: { mode: AiMode; onChange: (next: AiMode
             style={{
               paddingHorizontal: 14,
               paddingVertical: 5,
-              borderRadius: 999,
+              borderRadius: radius.full,
               backgroundColor: active ? colors.accent : 'transparent',
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: active ? colors.accent : colors.glassBorder,
@@ -139,7 +139,7 @@ function ChatEmptyLaunchpad({
   onSend?: (value: string) => void;
   showPrivacy: boolean;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
   const router = useRouter();
@@ -217,7 +217,7 @@ function ChatEmptyLaunchpad({
                   style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}
                 >
                   <View style={{
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.72)',
                     borderWidth: StyleSheet.hairlineWidth,
                     borderColor: colors.glassBorder,
@@ -244,7 +244,7 @@ function ChatEmptyLaunchpad({
             accessibilityRole="button"
             style={{
               minHeight: 56,
-              borderRadius: 18,
+              borderRadius: radius.xl,
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: colors.border,
               backgroundColor: colors.surface,
@@ -280,7 +280,7 @@ export default function ChatScreen() {
   const voiceParams = useLocalSearchParams<{ prompt?: string }>();
   const sentVoicePromptRef = useRef<string | null>(null);
   const pathname = usePathname();
-  const { colors, animation, reduceAnimations, font } = useTheme();
+  const { colors, animation, reduceAnimations, font, radius } = useTheme();
   const { t } = useI18n();
   const showTyping = useAppStore(s => s.showTypingIndicator);
   const aiModel = useAppStore(s => s.aiModel);
@@ -925,7 +925,7 @@ export default function ChatScreen() {
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 10,
-                  borderRadius: 14,
+                  borderRadius: radius.lg,
                   backgroundColor: colors.accent,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
@@ -975,12 +975,12 @@ export default function ChatScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
-                  <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: radius.full }}>
+                  <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
                     <Text style={{ color: ON_MEDIA, fontSize: 13, fontWeight: '700' }}>Echo</Text>
                   </View>
                   <Pressable onPress={() => router.push('/messages' as Href)} accessibilityRole="button">
-                    <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
+                    <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full }}>
                       <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>{ttx('Messages')}</Text>
                     </View>
                   </Pressable>
@@ -1012,7 +1012,7 @@ export default function ChatScreen() {
             alignSelf: 'center',
             paddingHorizontal: 14,
             paddingVertical: 10,
-            borderRadius: 14,
+            borderRadius: radius.lg,
             backgroundColor: colors.isDark ? 'rgba(0,0,0,0.85)' : 'rgba(20,20,30,0.92)',
             borderWidth: StyleSheet.hairlineWidth,
             borderColor: colors.glassBorder,

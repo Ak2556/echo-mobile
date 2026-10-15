@@ -34,7 +34,7 @@ export default function BookmarksScreen() {
     scroll: voiceList.scroll,
     refresh: () => { void remoteQ.refetch(); },
   });
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const [activeCol, setActiveCol] = useState<string | 'all'>('all');
 
   const bookmarked = useMemo(() => {
@@ -93,7 +93,7 @@ export default function BookmarksScreen() {
               key={key}
               onPress={() => setActiveCol(key)}
               style={{
-                paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
+                paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.full,
                 backgroundColor: active ? colors.accent : colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                 borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder,
               }}

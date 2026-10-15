@@ -53,7 +53,7 @@ export default function MyReportsScreen() {
             onPress={() => router.push('/appeal')}
             fadeOnPress
             hitSlop={12}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, borderRadius: 999, backgroundColor: colors.accentMuted }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, borderRadius: radius.full, backgroundColor: colors.accentMuted }}
           >
             <Scales color={colors.accent} size={14} weight="bold" />
             <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>{ttx("My appeals")}</Text>

@@ -13,7 +13,7 @@ import { ON_MEDIA } from '../../lib/ui/fixedColors';
 
 export default function ChatMediaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const { width } = useWindowDimensions();
   // DM photos are served by the worker's /dm-media route, which checks the
   // caller's session and conversation membership. Without the header every
@@ -47,7 +47,7 @@ export default function ChatMediaScreen() {
       <View style={{ flexDirection: 'row', gap: 8, padding: 12 }}>
         {(['photos', 'links'] as const).map(t => (
           <Pressable key={t} onPress={() => setTab(t)} accessibilityRole="button"
-            style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: tab === t ? colors.accent : colors.surfaceHover }}>
+            style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: tab === t ? colors.accent : colors.surfaceHover }}>
             <Text style={{ color: tab === t ? ON_MEDIA : colors.textSecondary, fontSize: 13, fontWeight: '800' }}>
               {t === 'photos' ? `Photos${media.images.length ? ` · ${media.images.length}` : ''}` : `Links${media.links.length ? ` · ${media.links.length}` : ''}`}
             </Text>
@@ -72,7 +72,7 @@ export default function ChatMediaScreen() {
           <ScrollView contentContainerStyle={{ padding: 12, gap: 8 }}>
             {media.links.map(l => (
               <Pressable key={l.id} onPress={() => void Linking.openURL(l.url)} accessibilityRole="button"
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 12 }}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 12 }}>
                 <LinkSimple color={colors.accent} size={18} />
                 <Text style={{ flex: 1, color: colors.text, fontSize: 13 }} numberOfLines={1}>{l.url}</Text>
               </Pressable>

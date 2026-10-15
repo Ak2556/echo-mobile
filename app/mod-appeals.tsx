@@ -167,7 +167,7 @@ function AppealCard({
 
 export default function ModAppealsScreen() {
   const router = useRouter();
-  const { colors, font, fontSizes } = useTheme();
+  const { colors, font, fontSizes, radius } = useTheme();
   const [appeals, setAppeals] = useState<PendingAppeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -211,7 +211,7 @@ export default function ModAppealsScreen() {
             {!loading && (
               <View style={{
                 paddingHorizontal: 10, paddingVertical: 4,
-                borderRadius: 999,
+                borderRadius: radius.full,
                 backgroundColor: appeals.length > 0 ? colors.accentMuted : colors.surfaceHover,
               }}>
                 <Text style={[font.bodySemibold, { color: appeals.length > 0 ? colors.accent : colors.textMuted, fontSize: fontSizes.caption }]}>
@@ -225,7 +225,7 @@ export default function ModAppealsScreen() {
 
       {/* Overdue banner */}
       {overdueCnt > 0 && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, padding: 12, borderRadius: 10, backgroundColor: `${colors.danger}20` }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, padding: 12, borderRadius: radius.md, backgroundColor: `${colors.danger}20` }}>
           <Warning size={16} color={colors.danger} weight="bold" />
           <Text style={[font.bodySemibold, { color: colors.danger, fontSize: fontSizes.caption }]}>
             {overdueCnt} {ttx("appeal")}{overdueCnt > 1 ? 's' : ''} {ttx("past the 14-day SLA")}

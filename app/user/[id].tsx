@@ -236,7 +236,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
                 accessibilityLabel={`Explore ${topic}`}
                 scaleValue={0.94}
                 haptic="light"
-                style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: colors.accentMuted }}
+                style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted }}
               >
                 <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
               </AnimatedPressable>

@@ -102,7 +102,7 @@ function matchesTarget(listing: ListingWithSeller, terms: string[]): boolean {
 }
 
 function CategoryPill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const meta = categoryMeta(label);
   const Icon = meta.Icon;
   return (
@@ -114,7 +114,7 @@ function CategoryPill({ label, active, onPress }: { label: string; active: boole
           alignItems: 'center',
           gap: 8,
           paddingHorizontal: 13,
-          borderRadius: 999,
+          borderRadius: radius.full,
           backgroundColor: active ? meta.color : colors.surface,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: active ? meta.color : colors.border,
@@ -130,13 +130,13 @@ function CategoryPill({ label, active, onPress }: { label: string; active: boole
 }
 
 function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: active }}>
       <View style={{
         minHeight: 34,
         paddingHorizontal: 12,
-        borderRadius: 999,
+        borderRadius: radius.full,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: active ? colors.accent : colors.surfaceHover,
@@ -208,13 +208,13 @@ function ListingCard({ item, width, featured = false }: { item: ListingWithSelle
         />
 
         <View style={{ position: 'absolute', left: 9, right: 9, bottom: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <View style={{ borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4, maxWidth: '72%' }}>
+          <View style={{ borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4, maxWidth: '72%' }}>
             <Text style={{ color: ON_MEDIA, fontSize: 11, ...font.bodyBold }} numberOfLines={1}>
               {item.condition}
             </Text>
           </View>
           {item.photoUrls.length > 1 ? (
-            <View style={{ borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4 }}>
+            <View style={{ borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4 }}>
               <Text style={{ color: ON_MEDIA, fontSize: 11, ...font.bodyBold }}>
                 1/{item.photoUrls.length}
               </Text>
@@ -265,9 +265,9 @@ function ListingCard({ item, width, featured = false }: { item: ListingWithSelle
 }
 
 function MiniBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 7, paddingVertical: 4, maxWidth: '100%' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: radius.full, backgroundColor: colors.surfaceHover, paddingHorizontal: 7, paddingVertical: 4, maxWidth: '100%' }}>
       {icon}
       <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 10 }]} numberOfLines={1}>
         {text}
@@ -317,7 +317,7 @@ function SpotlightRail({ items, width }: { items: ListingWithSeller[]; width: nu
 
 /** Compact "jump back in" thumbnail for a recently viewed listing. */
 function RecentListingChip({ item }: { item: RecentListing }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const meta = categoryMeta(item.category);
   return (
     <AnimatedPressable
@@ -327,7 +327,7 @@ function RecentListingChip({ item }: { item: RecentListing }) {
       style={{ width: 132 }}
       accessibilityLabel={`Open ${item.title}`}
     >
-      <View style={{ width: 132, height: 100, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+      <View style={{ width: 132, height: 100, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
         {item.photo ? (
           <Image source={{ uri: item.photo }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
         ) : (
@@ -361,7 +361,7 @@ function RecentlyViewedRail({ items, onClear }: { items: RecentListing[]; onClea
 
 export default function MarketplaceScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, font, fontSizes } = useTheme();
+  const { colors, font, fontSizes, radius } = useTheme();
   const layout = useResponsiveLayout();
   const { width: windowWidth } = useWindowDimensions();
   const targetCategoryId = useAppStore(s => s.targetCategory);
@@ -470,7 +470,7 @@ export default function MarketplaceScreen() {
         alignItems: 'center',
         gap: 10,
         backgroundColor: colors.surface,
-        borderRadius: 18,
+        borderRadius: radius.xl,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: colors.border,
         paddingHorizontal: 13,
@@ -614,7 +614,7 @@ export default function MarketplaceScreen() {
                   maxWidth: 260,
                   minHeight: 48,
                   backgroundColor: colors.accent,
-                  borderRadius: 18,
+                  borderRadius: radius.xl,
                   marginTop: 8,
                   flexDirection: 'row',
                   alignItems: 'center',

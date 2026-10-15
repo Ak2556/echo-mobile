@@ -111,7 +111,7 @@ function YearInEchoScreenInner() {
                       style={{
                         paddingHorizontal: 12,
                         paddingVertical: 6,
-                        borderRadius: 99,
+                        borderRadius: radius.full,
                         backgroundColor: colors.accent + (i === 0 ? '44' : i === 1 ? '33' : '22'),
                         borderWidth: 1,
                         borderColor: colors.accent + '55',

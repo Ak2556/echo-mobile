@@ -82,7 +82,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { notifications: storeNotifications, markAllNotificationsRead, markNotificationRead: storeMarkRead, unreadNotificationCount, mutedIds } = useAppStore();
-  const { colors, animation, font } = useTheme();
+  const { colors, animation, font, radius } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
   const [filter, setFilter] = useState<NotificationFilter>('all');
@@ -349,7 +349,7 @@ export default function NotificationsScreen() {
                   <View
                     style={{
                       backgroundColor: colors.accent,
-                      borderRadius: 99,
+                      borderRadius: radius.full,
                       paddingHorizontal: 7,
                       paddingVertical: 2,
                       minWidth: 20,
@@ -371,7 +371,7 @@ export default function NotificationsScreen() {
                     gap: 6,
                     paddingHorizontal: 12,
                     paddingVertical: 7,
-                    borderRadius: 99,
+                    borderRadius: radius.full,
                     borderWidth: StyleSheet.hairlineWidth,
                     borderColor: colors.border,
                   }}
@@ -391,7 +391,7 @@ export default function NotificationsScreen() {
                   style={({ pressed }) => ({
                     paddingHorizontal: 14,
                     paddingVertical: 6,
-                    borderRadius: 99,
+                    borderRadius: radius.full,
                     backgroundColor: filter === tab ? colors.accent : 'transparent',
                     borderWidth: StyleSheet.hairlineWidth,
                     borderColor: filter === tab ? 'transparent' : colors.border,

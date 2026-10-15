@@ -241,7 +241,7 @@ export default function EmailAuthScreen() {
 
               <View style={{ alignItems: 'center', marginTop: 18 }}>
                 <View style={{
-                  borderRadius: 999,
+                  borderRadius: radius.full,
                   backgroundColor: cooldown > 0 ? 'transparent' : colors.surface,
                   borderWidth: cooldown > 0 ? 0 : 1,
                   borderColor: colors.border,

@@ -248,7 +248,7 @@ export default function SignupWizard() {
   const router = useRouter();
   // Colours here are deliberately fixed to the branded backdrop, but the
   // typography must still follow the Font Style setting like everywhere else.
-  const { font } = useTheme();
+  const { font, radius } = useTheme();
   const { session, status } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -690,7 +690,7 @@ export default function SignupWizard() {
                   autoCapitalize="none"
                   returnKeyType="send"
                   onSubmitEditing={handleSendOtp}
-                  style={{ fontSize: 20, color: DARK.text, backgroundColor: DARK.raised, borderRadius: 14, borderWidth: 1, borderColor: email ? DARK.lineStrong : DARK.line, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20 }}
+                  style={{ fontSize: 20, color: DARK.text, backgroundColor: DARK.raised, borderRadius: radius.lg, borderWidth: 1, borderColor: email ? DARK.lineStrong : DARK.line, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20 }}
                 />
               </View>
               <View style={{ paddingBottom: 16 }}>
@@ -698,7 +698,7 @@ export default function SignupWizard() {
                   onPress={handleSendOtp}
                   disabled={!canSendOtp}
                   scaleValue={0.97} haptic="medium"
-                  style={{ backgroundColor: canSendOtp ? ACCENT : DARK.line, opacity: canSendOtp ? 1 : 0.5, borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
+                  style={{ backgroundColor: canSendOtp ? ACCENT : DARK.line, opacity: canSendOtp ? 1 : 0.5, borderRadius: radius.lg, paddingVertical: 16, alignItems: 'center' }}
                 >
                   {authLoading ? <ActivityIndicator color={DARK.text} /> : <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{authCooldown > 0 ? ttx("Wait") + " " + authCooldown + "s" : ttx("Send Code")}</Text>}
                 </AnimatedPressable>
@@ -722,7 +722,7 @@ export default function SignupWizard() {
                   keyboardType="number-pad"
                   returnKeyType="done"
                   onSubmitEditing={handleVerifyOtp}
-                  style={{ fontSize: 32, letterSpacing: 12, textAlign: 'center', color: DARK.text, backgroundColor: DARK.raised, borderRadius: 14, borderWidth: 1, borderColor: otp.length === 6 ? ACCENT : DARK.line, paddingVertical: 20, marginBottom: 20 }}
+                  style={{ fontSize: 32, letterSpacing: 12, textAlign: 'center', color: DARK.text, backgroundColor: DARK.raised, borderRadius: radius.lg, borderWidth: 1, borderColor: otp.length === 6 ? ACCENT : DARK.line, paddingVertical: 20, marginBottom: 20 }}
                   maxLength={6}
                 />
               </View>
@@ -731,7 +731,7 @@ export default function SignupWizard() {
                   onPress={handleVerifyOtp}
                   disabled={!canVerifyOtp}
                   scaleValue={0.97} haptic="medium"
-                  style={{ backgroundColor: canVerifyOtp ? ACCENT : DARK.line, opacity: canVerifyOtp ? 1 : 0.5, borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
+                  style={{ backgroundColor: canVerifyOtp ? ACCENT : DARK.line, opacity: canVerifyOtp ? 1 : 0.5, borderRadius: radius.lg, paddingVertical: 16, alignItems: 'center' }}
                 >
                   {authLoading ? <ActivityIndicator color={DARK.text} /> : <Text style={{ color: DARK.text, fontWeight: '700', fontSize: 16 }}>{ttx("Verify")}</Text>}
                 </AnimatedPressable>
@@ -812,7 +812,7 @@ export default function SignupWizard() {
                   style={{
                     fontSize: 20, color: DARK.text, fontWeight: '600',
                     backgroundColor: DARK.raised,
-                    borderRadius: 14, borderWidth: 1,
+                    borderRadius: radius.lg, borderWidth: 1,
                     borderColor: displayName ? DARK.lineStrong : DARK.line,
                     paddingHorizontal: 16, paddingVertical: 14,
                     marginBottom: 20,
@@ -827,7 +827,7 @@ export default function SignupWizard() {
                 </Text>
                 <View style={{
                   flexDirection: 'row', alignItems: 'center',
-                  backgroundColor: DARK.raised, borderRadius: 14, borderWidth: 1,
+                  backgroundColor: DARK.raised, borderRadius: radius.lg, borderWidth: 1,
                   borderColor:
                     usernameStatus === 'taken' ? STATUS.danger
                     : usernameStatus === 'available' ? STATUS.success
@@ -892,7 +892,7 @@ export default function SignupWizard() {
                   haptic="medium"
                   style={{
                     backgroundColor: canStep0 ? ACCENT : DARK.line,
-                    borderRadius: 14, paddingVertical: 16,
+                    borderRadius: radius.lg, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     opacity: canStep0 ? 1 : 0.5,
                     shadowColor: ACCENT,
@@ -946,7 +946,7 @@ export default function SignupWizard() {
                         accessibilityLabel={f.label}
                         style={{
                           fontSize: 20, color: DARK.text, backgroundColor: DARK.raised,
-                          borderRadius: 14, borderWidth: 1,
+                          borderRadius: radius.lg, borderWidth: 1,
                           borderColor: f.value ? DARK.lineStrong : DARK.line,
                           paddingHorizontal: 16, paddingVertical: 14, textAlign: 'center',
                         }}
@@ -975,7 +975,7 @@ export default function SignupWizard() {
                   haptic="medium"
                   style={{
                     backgroundColor: dobResult?.ok ? ACCENT : DARK.line,
-                    borderRadius: 14, paddingVertical: 16,
+                    borderRadius: radius.lg, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     opacity: dobResult?.ok ? 1 : 0.5,
                     shadowColor: ACCENT,
@@ -1076,7 +1076,7 @@ export default function SignupWizard() {
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
-                    backgroundColor: ACCENT, borderRadius: 14, paddingVertical: 16,
+                    backgroundColor: ACCENT, borderRadius: radius.lg, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     shadowColor: ACCENT, shadowOpacity: 0.4,
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
@@ -1131,7 +1131,7 @@ export default function SignupWizard() {
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
-                    backgroundColor: ACCENT, borderRadius: 14, paddingVertical: 16,
+                    backgroundColor: ACCENT, borderRadius: radius.lg, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     shadowColor: ACCENT, shadowOpacity: 0.4,
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
@@ -1201,7 +1201,7 @@ export default function SignupWizard() {
                   haptic="medium"
                   style={{
                     backgroundColor: selectedInterests.length >= 3 ? ACCENT : DARK.line,
-                    borderRadius: 14, paddingVertical: 16,
+                    borderRadius: radius.lg, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     opacity: selectedInterests.length >= 3 ? 1 : 0.5,
                     shadowColor: ACCENT,
@@ -1294,7 +1294,7 @@ export default function SignupWizard() {
                   haptic="medium"
                   style={{
                     backgroundColor: Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? ACCENT : DARK.line,
-                    borderRadius: 14, paddingVertical: 16,
+                    borderRadius: radius.lg, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     opacity: Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? 1 : 0.5,
                     shadowColor: ACCENT,
@@ -1365,7 +1365,7 @@ export default function SignupWizard() {
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
-                    backgroundColor: ACCENT, borderRadius: 14, paddingVertical: 16,
+                    backgroundColor: ACCENT, borderRadius: radius.lg, paddingVertical: 16,
                     alignItems: 'center', justifyContent: 'center',
                     shadowColor: ACCENT, shadowOpacity: 0.4,
                     shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
@@ -1439,7 +1439,7 @@ export default function SignupWizard() {
                     haptic="medium"
                     style={{
                       backgroundColor: ACCENT,
-                      borderRadius: 14, paddingVertical: 16,
+                      borderRadius: radius.lg, paddingVertical: 16,
                       alignItems: 'center', justifyContent: 'center',
                       shadowColor: ACCENT, shadowOpacity: 0.5,
                       shadowRadius: 16, shadowOffset: { width: 0, height: 6 },

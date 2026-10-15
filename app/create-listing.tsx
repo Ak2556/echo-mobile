@@ -41,13 +41,13 @@ function Eyebrow({ children, style }: { children: React.ReactNode; style?: objec
 }
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <Pressable onPress={onPress}>
       <View style={{
         paddingHorizontal: 14,
         paddingVertical: 9,
-        borderRadius: 999,
+        borderRadius: radius.full,
         backgroundColor: active ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: active ? 'transparent' : colors.border,
@@ -65,7 +65,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 }
 
 export default function CreateListingScreen() {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [photos, setPhotos] = useState<string[]>([]);
@@ -181,7 +181,7 @@ export default function CreateListingScreen() {
 
   const softField = {
     backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-    borderRadius: 14,
+    borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     color: colors.text,
@@ -246,7 +246,7 @@ export default function CreateListingScreen() {
                   <View key={uri + i}>
                     <Image
                       source={{ uri }}
-                      style={{ width: 110, height: 110, borderRadius: 18 }}
+                      style={{ width: 110, height: 110, borderRadius: radius.xl }}
                       contentFit="cover"
                     />
                     {i === 0 && (
@@ -278,7 +278,7 @@ export default function CreateListingScreen() {
                   <Pressable onPress={addPhotos}>
                     <View style={{
                       width: 110, height: 110,
-                      borderRadius: 18,
+                      borderRadius: radius.xl,
                       borderWidth: 1.5,
                       borderColor: colors.accent + '55',
                       borderStyle: 'dashed',

@@ -184,7 +184,7 @@ export default function ListingDetailScreen() {
                 <View style={{
                   alignSelf: 'flex-start',
                   backgroundColor: `${colors.danger}20`,
-                  borderRadius: 6,
+                  borderRadius: radius.sm,
                   paddingHorizontal: 8,
                   paddingVertical: 3,
                 }}>

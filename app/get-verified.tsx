@@ -18,7 +18,7 @@ import { ON_MEDIA } from '../lib/ui/fixedColors';
 type Phase = 'loading' | 'intro' | 'preview' | 'submitting' | 'approved' | 'pending' | 'rejected';
 
 export default function GetVerifiedScreen() {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const { profile } = useAuth();
 
   const [phase, setPhase] = useState<Phase>('loading');
@@ -151,7 +151,7 @@ export default function GetVerifiedScreen() {
           </Text>
 
           {rejectReason ? (
-            <View style={{ backgroundColor: `${colors.danger}14`, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: `${colors.danger}33` }}>
+            <View style={{ backgroundColor: `${colors.danger}14`, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: `${colors.danger}33` }}>
               <Text style={{ color: colors.danger, fontSize: 13.5, lineHeight: 19 }}>{ttx("Last attempt:")} {rejectReason}</Text>
             </View>
           ) : null}
@@ -170,7 +170,7 @@ export default function GetVerifiedScreen() {
           </View>
 
           {!profile?.avatar_url ? (
-            <View style={{ backgroundColor: `${colors.warning}14`, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: `${colors.warning}33` }}>
+            <View style={{ backgroundColor: `${colors.warning}14`, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: `${colors.warning}33` }}>
               <Text style={{ color: colors.warning, fontSize: 13.5, lineHeight: 19 }}>
                 {ttx("You need a profile photo with your face first. Add one in Edit profile, then come back.")}
               </Text>
