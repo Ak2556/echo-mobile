@@ -53,12 +53,24 @@ export function restingY(pathname: string, screenH: number, savedY: number): num
  * nothing but video.
  */
 const LEFT_EDGE_ROUTES = new Set(['/watch']);
-export const EDGE_MARGIN = 14;
+/**
+ * Gap between the bubble and the screen edge, on both sides. Android's gesture navigation
+ * claims roughly the outer 24 dp of each edge for Back, and a touch that starts there
+ * never reaches the app: with the old 6 pt gap, half the bubble sat inside that strip, so a
+ * drag or long-press started on its outer half sent the app to the launcher. 32 dp leaves
+ * the whole bubble clear, with slack for a raised Back sensitivity.
+ */
+export const EDGE_MARGIN = 32;
 
-/** Resting x for the bubble. `savedX` is the persisted drag (negative when never dragged). */
+/**
+ * Resting x for the bubble. `savedX` is the persisted drag (negative when never dragged);
+ * it is clamped inside the margins so positions saved with the old 6 pt gap move clear of
+ * the gesture strip too.
+ */
 export function restingX(pathname: string, screenW: number, savedX: number): number {
   if (LEFT_EDGE_ROUTES.has(pathname)) return EDGE_MARGIN;
-  return savedX >= 0 ? savedX : screenW - BUBBLE_SIZE - EDGE_MARGIN;
+  if (savedX < 0) return screenW - BUBBLE_SIZE - EDGE_MARGIN;
+  return Math.min(Math.max(savedX, EDGE_MARGIN), screenW - BUBBLE_SIZE - EDGE_MARGIN);
 }
 
 /** A finished drag is remembered only where the corner is free. */

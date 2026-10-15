@@ -6,7 +6,7 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withSpring, withTiming, Easing, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
 import { usePathname } from 'expo-router';
-import { BUBBLE_SIZE, bubbleOpacity, restingX, restingY, shouldPersistDrag } from '../../lib/ui/floatingBubblePlacement';
+import { BUBBLE_SIZE, bubbleOpacity, EDGE_MARGIN, restingX, restingY, shouldPersistDrag } from '../../lib/ui/floatingBubblePlacement';
 import { useScrollActivity } from '../../lib/ui/scrollActivity';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Waveform, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
@@ -32,6 +32,8 @@ const CATALOG_BY_ID = new Map<string, (typeof MINI_APP_CATALOG)[number]>(
 );
 
 const BUBBLE = BUBBLE_SIZE;
+// A released drag settles this far from the side edge, outside the system Back gesture strip.
+const EDGE = EDGE_MARGIN;
 /** No overshoot: the bubble moves and stops (see the position effect below). */
 const BUBBLE_GLIDE = { duration: 220, easing: Easing.out(Easing.cubic) };
 
@@ -139,7 +141,7 @@ function Bubble({ pathname }: { pathname: string }) {
     .onFinalize(() => { runOnJS(setDragging)(false); })
     .onEnd(() => {
       // Snap to the nearest side edge.
-      const snapX = tx.value + BUBBLE / 2 < SCREEN_W / 2 ? 6 : SCREEN_W - BUBBLE - 6;
+      const snapX = tx.value + BUBBLE / 2 < SCREEN_W / 2 ? EDGE : SCREEN_W - BUBBLE - EDGE;
       tx.value = withTiming(snapX, BUBBLE_GLIDE);
       // Only remembered where the corner is free; on a lifted screen the drag
       // lasts for the visit, so it cannot move the tab position into a control.

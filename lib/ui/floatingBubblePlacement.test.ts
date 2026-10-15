@@ -57,9 +57,27 @@ describe('restingX', () => {
   });
 
   it('keeps the saved side everywhere else', () => {
-    expect(restingX('/settings', W, 6)).toBe(6);
-    expect(restingX('/explore', W, 6)).toBe(6);
+    expect(restingX('/settings', W, EDGE_MARGIN)).toBe(EDGE_MARGIN);
+    expect(restingX('/explore', W, EDGE_MARGIN)).toBe(EDGE_MARGIN);
     expect(restingX('/explore', W, -1)).toBe(W - BUBBLE_SIZE - EDGE_MARGIN);
+  });
+
+  it('stays outside the 24 dp Back-gesture strip on both sides, by default and after a drag', () => {
+    const GESTURE = 24;
+    expect(EDGE_MARGIN).toBeGreaterThan(GESTURE);
+    expect(restingX('/explore', W, -1) + BUBBLE_SIZE).toBeLessThan(W - GESTURE);
+    expect(restingX('/explore', W, -1)).toBeGreaterThan(GESTURE);
+  });
+
+  it('moves a position saved with the old 6 pt gap clear of the strip', () => {
+    expect(restingX('/explore', W, 6)).toBe(EDGE_MARGIN);
+    expect(restingX('/explore', W, W - BUBBLE_SIZE - 6)).toBe(W - BUBBLE_SIZE - EDGE_MARGIN);
+  });
+
+  it('the bubble settles by EDGE_MARGIN, not a literal', () => {
+    const src = readFileSync(resolve(__dirname, '../../components/mini-apps/FloatingMiniApp.tsx'), 'utf8');
+    expect(src).toMatch(/SCREEN_W - BUBBLE - EDGE/);
+    expect(src).not.toMatch(/\? 6 : SCREEN_W/);
   });
 });
 
