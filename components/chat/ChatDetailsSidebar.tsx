@@ -1,4 +1,5 @@
 import React from 'react';
+import { ttx } from '../../lib/i18n/i18n';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
@@ -29,18 +30,18 @@ export function ChatDetailsSidebar({ recipient, colors }: Props) {
       <View style={[styles.actionsSection, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.bgSecondary }]}>
           <Bell size={ICON_SIZE.md} color={colors.textMuted} />
-          <Text style={[styles.actionText, { color: colors.text }]}>Mute Notifications</Text>
+          <Text style={[styles.actionText, { color: colors.text }]}>{ttx('Mute Notifications')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.bgSecondary }]}>
           <ImageIcon size={ICON_SIZE.md} color={colors.textMuted} />
-          <Text style={[styles.actionText, { color: colors.text }]}>Shared Media</Text>
+          <Text style={[styles.actionText, { color: colors.text }]}>{ttx('Shared Media')}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.footerSection}>
         <TouchableOpacity style={[styles.dangerButton, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
           <WarningCircle size={18} color="#ef4444" />
-          <Text style={styles.dangerText}>Block or Report</Text>
+          <Text style={styles.dangerText}>{ttx('Block or Report')}</Text>
         </TouchableOpacity>
       </View>
     </View>

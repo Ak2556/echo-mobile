@@ -28,7 +28,7 @@ import { FeedCard } from '../../components/feed/FeedCard';
 import { ThinkingFingerprintCard } from '../../components/feed/ThinkingFingerprintCard';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
-import { useI18n } from '../../lib/i18n/i18n';
+import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { signOut } from '../../lib/auth';
 import { FeedItem } from '../../types';
 import { useQuery } from '@tanstack/react-query';
@@ -293,7 +293,7 @@ export default function ProfileScreen() {
                 scaleValue={0.96}
               >
                 <PencilSimple color={colors.textSecondary} size={ICON_SIZE.sm} />
-                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, fontWeight: '700' }}>Edit Profile</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, fontWeight: '700' }}>{ttx('Edit Profile')}</Text>
               </AnimatedPressable>
               
               <AnimatedPressable
@@ -302,7 +302,7 @@ export default function ProfileScreen() {
                 scaleValue={0.96}
               >
                 <Gear color={colors.textSecondary} size={ICON_SIZE.sm} />
-                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, fontWeight: '700' }}>Settings</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, fontWeight: '700' }}>{ttx('Settings')}</Text>
               </AnimatedPressable>
             </View>
           </View>
@@ -376,12 +376,12 @@ export default function ProfileScreen() {
                 style={[font.displayBlack, { color: colors.text, fontSize: 24, textAlign: 'center', marginBottom: 8 }]}
                 numberOfLines={2}
               >
-                No Re-echoes yet.
+                {ttx('No Re-echoes yet.')}
               </Text>
               <Text
                 style={[font.body, { color: colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22 }]}
               >
-                When you re-echo someone else&apos;s post, it will appear here.
+                {ttx("When you re-echo someone else's post, it will appear here.")}
               </Text>
             </View>
           )}
@@ -557,13 +557,13 @@ function ProfileEmptyPosts({
         numberOfLines={2}
         maxFontSizeMultiplier={TITLE_TEXT_SCALE}
       >
-        Your space, empty.
+        {ttx('Your space, empty.')}
       </Text>
       <Text
         style={[font.body, { color: colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22, marginBottom: 28, paddingHorizontal: 16 }]}
         maxFontSizeMultiplier={BODY_TEXT_SCALE}
       >
-        Publish your first Echo to start building your unique digital footprint.
+        {ttx('Publish your first Echo to start building your unique digital footprint.')}
       </Text>
       <Pressable
         onPress={onCreate}
@@ -577,7 +577,7 @@ function ProfileEmptyPosts({
             numberOfLines={1}
             maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
           >
-            Create Echo
+            {ttx('Create Echo')}
           </Text>
         </View>
       </Pressable>
@@ -623,7 +623,7 @@ function AboutPanel({
               numberOfLines={1}
               maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
             >
-              Add a profile bio
+              {ttx('Add a profile bio')}
             </Text>
           </Pressable>
         )}

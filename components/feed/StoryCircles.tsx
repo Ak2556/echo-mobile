@@ -1,4 +1,5 @@
 import React from 'react';
+import { ttx } from '../../lib/i18n/i18n';
 import { View, Text, ScrollView } from 'react-native';
 import { Plus } from 'phosphor-react-native';
 import { useRouter } from 'expo-router';
@@ -71,7 +72,7 @@ export function StoryCircles() {
           <Text
             style={{ color: colors.textSecondary, fontSize: 10, marginTop: 6, fontWeight: '500' }}
           >
-            Your story
+            {ttx('Your story')}
           </Text>
         </AnimatedPressable>
       </Animated.View>

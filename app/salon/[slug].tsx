@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ttx } from '../../lib/i18n/i18n';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
@@ -70,7 +71,7 @@ function SalonDetailScreenInner() {
         </View>
         <View style={{ padding: 24, alignItems: 'center', marginTop: 60 }}>
           <Text style={{ color: colors.textMuted, fontSize: 15, textAlign: 'center' }}>
-            Salon not found.
+            {ttx('Salon not found.')}
           </Text>
         </View>
       </SafeAreaView>

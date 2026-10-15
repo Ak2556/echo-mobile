@@ -9,7 +9,7 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniChip, MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/ui/theme';
-import { useI18n } from '../../lib/i18n/i18n';
+import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { showToast } from '../../components/ui/Toast';
 import {
   TaskItem, TaskPriority, SubTask, loadTasks, saveTasks, taskStats,
@@ -380,7 +380,7 @@ export default function TasksScreen() {
                   <View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <NotePencil color={accent} size={18} weight="fill" />
-                      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text }}>Notes</Text>
+                      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text }}>{ttx('Notes')}</Text>
                     </View>
                     <TextInput
                       value={detailNotes}
@@ -394,7 +394,7 @@ export default function TasksScreen() {
 
                   {/* Properties (Priority, Due Date) */}
                   <View>
-                    <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text, marginBottom: 12 }}>Properties</Text>
+                    <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text, marginBottom: 12 }}>{ttx('Properties')}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                       {PRIORITIES.map(p => {
                         const pColor = colors[p.tone];
@@ -412,13 +412,13 @@ export default function TasksScreen() {
                   
                   {/* Due Date & Reminders */}
                   <View>
-                    <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text, marginBottom: 12 }}>Schedule & Alarm</Text>
+                    <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text, marginBottom: 12 }}>{ttx('Schedule & Alarm')}</Text>
 
                     <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 16 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                           <Bell color={detailAlarm ? accent : colors.textMuted} size={18} weight={detailAlarm ? "fill" : "regular"} />
-                          <Text style={{ fontSize: fontSizes.body, fontWeight: '600', color: colors.text }}>Task Schedule</Text>
+                          <Text style={{ fontSize: fontSizes.body, fontWeight: '600', color: colors.text }}>{ttx('Task Schedule')}</Text>
                         </View>
                         <View style={{ flexDirection: 'row', gap: 8 }}>
                           {detailAlarm && (
@@ -446,7 +446,7 @@ export default function TasksScreen() {
                   <View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                       <CheckCircle color={accent} size={18} weight="fill" />
-                      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text }}>Subtasks</Text>
+                      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text }}>{ttx('Subtasks')}</Text>
                     </View>
                     <View style={{ gap: 8 }}>
                       {detailTask.subtasks?.map(st => (
@@ -482,7 +482,7 @@ export default function TasksScreen() {
                   <View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <Tag color={accent} size={18} weight="fill" />
-                      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text }}>Tags (comma separated)</Text>
+                      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text }}>{ttx('Tags (comma separated)')}</Text>
                     </View>
                     <TextInput
                       value={detailTags}
@@ -505,7 +505,7 @@ export default function TasksScreen() {
             <Pressable style={{ flex: 1 }} onPress={() => setShowAlarmPicker(false)} />
             <Animated.View entering={SlideInDown.duration(300).springify()} exiting={SlideOutDown.duration(200)} style={{ backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 24, paddingBottom: Platform.OS === 'ios' ? 48 : 24 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text }}>Set Alarm</Text>
+                <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text }}>{ttx('Set Alarm')}</Text>
                 <Pressable onPress={() => setShowAlarmPicker(false)} style={{ backgroundColor: colors.surfaceHover, padding: 8, borderRadius: radius.card }}>
                   <X color={colors.text} size={ICON_SIZE.md} weight="bold" />
                 </Pressable>
@@ -533,7 +533,7 @@ export default function TasksScreen() {
                   opacity: pressed ? 0.8 : 1,
                 })}
               >
-                <Text style={{ color: colors.bg, fontSize: 18, fontWeight: '700' }}>Save Alarm</Text>
+                <Text style={{ color: colors.bg, fontSize: 18, fontWeight: '700' }}>{ttx('Save Alarm')}</Text>
               </Pressable>
             </Animated.View>
           </View>

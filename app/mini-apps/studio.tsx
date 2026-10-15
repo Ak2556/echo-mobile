@@ -304,9 +304,9 @@ export default function StudioApp() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: 60 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 20 }}>
-          <Text style={{ color: colors.text, fontSize: 32, ...font.displayBlack, letterSpacing: -0.5 }}>Review</Text>
+          <Text style={{ color: colors.text, fontSize: 32, ...font.displayBlack, letterSpacing: -0.5 }}>{ttx('Review')}</Text>
           <Pressable onPress={() => { setRawVideoUri(null); player.pause(); }}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontWeight: '700' }}>Cancel</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontWeight: '700' }}>{ttx('Cancel')}</Text>
           </Pressable>
         </View>
 
@@ -362,7 +362,7 @@ export default function StudioApp() {
             style={{ backgroundColor: accent, paddingVertical: 20, borderRadius: radius.xl, alignItems: 'center' }}
             haptic="heavy"
           >
-            {loading ? <ActivityIndicator color={colors.bg} /> : <Text style={{ color: colors.bg, fontSize: 18, fontWeight: '900' }}>Save Video</Text>}
+            {loading ? <ActivityIndicator color={colors.bg} /> : <Text style={{ color: colors.bg, fontSize: 18, fontWeight: '900' }}>{ttx('Save Video')}</Text>}
           </AnimatedPressable>
         </View>
       </View>
@@ -389,7 +389,7 @@ export default function StudioApp() {
         >
           <Camera color={colors.bg} size={ICON_SIZE.xl} weight="fill" />
           <Text style={{ color: colors.bg, fontWeight: '900', fontSize: 18, letterSpacing: -0.5 }}>
-            Photo
+            {ttx('Photo')}
           </Text>
         </AnimatedPressable>
 
@@ -408,7 +408,7 @@ export default function StudioApp() {
         >
           <VideoCamera color={colors.bg} size={ICON_SIZE.xl} weight="fill" />
           <Text style={{ color: colors.bg, fontWeight: '900', fontSize: 18, letterSpacing: -0.5 }}>
-            Video
+            {ttx('Video')}
           </Text>
         </AnimatedPressable>
       </Animated.View>
@@ -431,7 +431,7 @@ export default function StudioApp() {
               {selected.type === 'video' ? (
                 <View style={{ width: '100%', aspectRatio: 4 / 3, alignItems: 'center', justifyContent: 'center' }}>
                   <VideoCamera color={colors.textMuted} size={48} weight="duotone" />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 8, fontWeight: '600' }}>Video saved to gallery</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 8, fontWeight: '600' }}>{ttx('Video saved to gallery')}</Text>
                 </View>
               ) : (
                 <Image source={{ uri: selected.uri }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: radius.xl }} resizeMode="cover" />

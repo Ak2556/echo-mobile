@@ -3702,10 +3702,10 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 24, shadowColor: SHADOW, shadowOpacity: 0.2, shadowRadius: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
               <Hourglass color={colors.accent} size={ICON_SIZE.lg} weight="bold" />
-              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>Time Capsule</Text>
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{ttx('Time Capsule')}</Text>
             </View>
             <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, textAlign: 'center', marginBottom: 20 }}>
-              Write a message that will remain locked until the future date you choose.
+              {ttx('Write a message that will remain locked until the future date you choose.')}
             </Text>
             
             <RNTextInput
@@ -3736,7 +3736,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
 
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Pressable style={{ flex: 1, padding: 14, borderRadius: 16, backgroundColor: colors.surfaceHover, alignItems: 'center' }} onPress={() => setCapsuleModalOpen(false)}>
-                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Cancel</Text>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{ttx('Cancel')}</Text>
               </Pressable>
               <Pressable 
                 style={{ flex: 1, padding: 14, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', opacity: capsuleText.trim() ? 1 : 0.5 }}
@@ -3761,7 +3761,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   }
                 }}
               >
-                <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: 15 }}>Seal & Send</Text>
+                <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: 15 }}>{ttx('Seal & Send')}</Text>
               </Pressable>
             </View>
           </View>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { ttx } from '../../lib/i18n/i18n';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, StyleSheet, Linking } from 'react-native';
 import { Image } from 'expo-image';
@@ -52,7 +53,7 @@ export function AdCard({ ad }: { ad: AdItem }) {
             {ad.advertiser?.display_name || 'Sponsored'}
           </Text>
         </View>
-        <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12 }]}>Sponsored</Text>
+        <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12 }]}>{ttx('Sponsored')}</Text>
       </View>
 
       <Text style={[font.bodyBold, { color: colors.text, fontSize: 18, marginBottom: 8 }]}>{ad.headline}</Text>

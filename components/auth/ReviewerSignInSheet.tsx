@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ttx } from '../../lib/i18n/i18n';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { useTheme } from '../../lib/ui/theme';
 
@@ -87,7 +88,7 @@ export function ReviewerSignInSheet({ visible, onClose, onSubmit }: ReviewerSign
             </Pressable>
           </View>
           <Pressable onPress={onClose} accessibilityRole="button" style={{ paddingVertical: 10, alignItems: 'center' }}>
-            <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 15 }]}>Cancel</Text>
+            <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 15 }]}>{ttx('Cancel')}</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

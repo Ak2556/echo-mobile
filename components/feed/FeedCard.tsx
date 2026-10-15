@@ -952,7 +952,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
               <ChartBar color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '500' }}>
-                Poll
+                {ttx('Poll')}
               </Text>
             </View>
             {!!item.prompt && (
