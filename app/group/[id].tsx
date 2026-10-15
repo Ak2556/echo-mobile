@@ -20,6 +20,7 @@ import {
 } from '../../lib/supabaseEchoApi';
 import { ttx } from '../../lib/i18n/i18n';
 import { WARM, ON_MEDIA } from '../../lib/ui/fixedColors';
+import { confirmAction } from '../../lib/ui/confirm';
 
 async function suggestGroupName(memberNames: string[]): Promise<string | null> {
   let acc = '';
@@ -144,16 +145,16 @@ export default function GroupInfoScreen() {
   };
 
   const confirmLeave = () => {
-    Alert.alert('Leave group?', 'You’ll stop receiving messages from this group.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Leave', style: 'destructive',
-        onPress: async () => {
-          try { await leaveGroup(id!); router.dismissAll?.(); router.replace('/messages'); }
-          catch (e) { showToast(e instanceof Error ? e.message : 'Could not leave', 'Error'); }
-        },
-      },
-    ]);
+    void confirmAction({
+      title: 'Leave group?',
+      message: 'You’ll stop receiving messages from this group.',
+      confirmLabel: 'Leave',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      try { await leaveGroup(id!); router.dismissAll?.(); router.replace('/messages'); }
+            catch (e) { showToast(e instanceof Error ? e.message : 'Could not leave', 'Error'); }
+    });
   };
 
   const eyebrow = { color: colors.textMuted, fontSize: 12, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase' as const };

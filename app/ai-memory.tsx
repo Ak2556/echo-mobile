@@ -12,6 +12,7 @@ import { showToast } from '../components/ui/Toast';
 import { clearMemory, forgetPreference, loadMemory, MemoryItem, rememberPreference, updatePreference } from '../lib/ai/aiMemory';
 import { useTheme } from '../lib/ui/theme';
 import { ttx } from '../lib/i18n/i18n';
+import { confirmAction } from '../lib/ui/confirm';
 
 const NEW_ID = '__new__';
 
@@ -47,34 +48,32 @@ export default function AIMemoryScreen() {
   );
 
   const removeItem = (item: MemoryItem) => {
-    Alert.alert('Forget memory?', `${item.key}: ${item.value}`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Forget',
-        style: 'destructive',
-        onPress: async () => {
-          await forgetPreference({ id: item.id });
-          await refresh();
-          showToast('Memory removed');
-        },
-      },
-    ]);
+    void confirmAction({
+      title: 'Forget memory?',
+      message: `${item.key}: ${item.value}`,
+      confirmLabel: 'Forget',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      await forgetPreference({ id: item.id });
+            await refresh();
+            showToast('Memory removed');
+    });
   };
 
   const removeAll = () => {
     if (!items.length) return;
-    Alert.alert('Clear AI memory?', 'This removes all remembered preferences stored on this device.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Clear',
-        style: 'destructive',
-        onPress: async () => {
-          const count = await clearMemory();
-          await refresh();
-          showToast(`${count} memories cleared`);
-        },
-      },
-    ]);
+    void confirmAction({
+      title: 'Clear AI memory?',
+      message: 'This removes all remembered preferences stored on this device.',
+      confirmLabel: 'Clear',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      const count = await clearMemory();
+            await refresh();
+            showToast(`${count} memories cleared`);
+    });
   };
 
   const startEdit = (item: MemoryItem) => {

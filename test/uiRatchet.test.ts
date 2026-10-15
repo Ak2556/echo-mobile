@@ -27,7 +27,7 @@ function count(re: RegExp, dirs: string[] = ['app']): number {
 const CEILINGS = {
   rawRadius: 347,
   rawFontSize: 1258,
-  alertAlert: 115,
+  alertAlert: 91,
 };
 
 describe('UI drift ratchets', () => {

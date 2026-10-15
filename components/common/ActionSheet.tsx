@@ -22,6 +22,8 @@ interface ActionSheetProps {
   title?: string;
   subtitle?: string;
   actions: ActionItem[];
+  /** How many lines the subtitle may take before it is cut. A confirmation's message must not be. */
+  subtitleLines?: number;
 }
 
 /**
@@ -33,7 +35,7 @@ interface ActionSheetProps {
  * backdrop + blur(60) + a 62% bg fill, which keeps text solid while still
  * reading as glass. Don't reduce the fill below ~0.55.
  */
-export function ActionSheet({ visible, onClose, title, subtitle, actions }: ActionSheetProps) {
+export function ActionSheet({ visible, onClose, title, subtitle, actions, subtitleLines = 2 }: ActionSheetProps) {
   const { colors, font } = useTheme();
 
   return (
@@ -80,7 +82,7 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
                     textAlign: 'center',
                     marginTop: 3,
                   }]}
-                  numberOfLines={2}
+                  numberOfLines={subtitleLines}
                 >
                   {subtitle}
                 </Text>

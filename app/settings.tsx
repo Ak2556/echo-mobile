@@ -49,6 +49,7 @@ import { useHealthConsent } from '../lib/privacy/healthConsent';
 import { deleteRemoteFitness } from '../lib/mini-apps/fitnessRemote';
 import { BackButton } from '../components/ui/BackButton';
 import { WARM, ON_MEDIA, ON_STATUS, SWITCH_THUMB } from '../lib/ui/fixedColors';
+import { confirmAction } from '../lib/ui/confirm';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@downloadecho.com';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@downloadecho.com';
@@ -573,16 +574,15 @@ export default function SettingsScreen() {
   const [activeGroup, setActiveGroup] = useState<SettingsGroup>('all');
 
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out', style: 'destructive',
-        onPress: async () => {
-          await signOut();
-          
-        },
-      },
-    ]);
+    void confirmAction({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      confirmLabel: 'Sign Out',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      await signOut();
+    });
   };
 
   const handleDeleteAccount = () => {
@@ -592,49 +592,61 @@ export default function SettingsScreen() {
   };
 
   const handleClearCache = () => {
-    Alert.alert('Clear Cache', `Current cache: ${s.getCacheSize()}\n\nThis will clear cached data but keep your account and settings.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: () => {
-        s.clearChatHistory();
-        s.clearNotifications();
-        showToast('Cache cleared', 'Cleared');
-      }},
-    ]);
+    void confirmAction({
+      title: 'Clear Cache',
+      message: `Current cache: ${s.getCacheSize()}\n\nThis will clear cached data but keep your account and settings.`,
+      confirmLabel: 'Clear',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      s.clearChatHistory();
+          s.clearNotifications();
+          showToast('Cache cleared', 'Cleared');
+    });
   };
 
   const handleClearChats = () => {
-    Alert.alert('Clear Chat History', `Delete all ${s.sessions.length} chat sessions and server-side AI conversations? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear All', style: 'destructive', onPress: async () => {
-        try {
-          await deleteRemoteAIConversations();
-          s.clearChatHistory();
-          showToast('Chat history cleared', 'Done');
-        } catch (e) {
-          Alert.alert('Could not clear chat history', (e as Error).message);
-        }
-      }},
-    ]);
+    void confirmAction({
+      title: 'Clear Chat History',
+      message: `Delete all ${s.sessions.length} chat sessions and server-side AI conversations? This cannot be undone.`,
+      confirmLabel: 'Clear All',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      try {
+            await deleteRemoteAIConversations();
+            s.clearChatHistory();
+            showToast('Chat history cleared', 'Done');
+          } catch (e) {
+            Alert.alert('Could not clear chat history', (e as Error).message);
+          }
+    });
   };
 
   const handleClearBookmarks = () => {
-    Alert.alert('Clear Bookmarks', `Remove all ${s.bookmarkedIds.length} bookmarks?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear All', style: 'destructive', onPress: () => {
-        s.clearAllBookmarks();
-        showToast('Bookmarks cleared', '');
-      }},
-    ]);
+    void confirmAction({
+      title: 'Clear Bookmarks',
+      message: `Remove all ${s.bookmarkedIds.length} bookmarks?`,
+      confirmLabel: 'Clear All',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      s.clearAllBookmarks();
+          showToast('Bookmarks cleared', '');
+    });
   };
 
   const handleClearNotifications = () => {
-    Alert.alert('Clear Notifications', 'Remove all notifications?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear All', style: 'destructive', onPress: () => {
-        s.clearNotifications();
-        showToast('Notifications cleared', '');
-      }},
-    ]);
+    void confirmAction({
+      title: 'Clear Notifications',
+      message: 'Remove all notifications?',
+      confirmLabel: 'Clear All',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      s.clearNotifications();
+          showToast('Notifications cleared', '');
+    });
   };
 
   const handlePushToggle = async (enabled: boolean) => {
@@ -740,26 +752,21 @@ export default function SettingsScreen() {
   const setHealthConsent = useHealthConsent(c => c.set);
   const handleHealthConsent = (on: boolean) => {
     if (on) { setHealthConsent('granted'); return; }
-    Alert.alert(
-      ttx('Stop backing up health data?'),
-      ttx('Your fitness data stays on this device. The copy on our servers is deleted, and other devices stop syncing it.'),
-      [
-        { text: ttx('Cancel'), style: 'cancel' },
-        {
-          text: ttx('Delete server copy'),
-          style: 'destructive',
-          onPress: async () => {
-            const ok = await deleteRemoteFitness();
-            if (ok) {
-              setHealthConsent('declined');
-              showToast(ttx('Health data removed from our servers'), '');
-            } else {
-              showToast(ttx('Could not delete. Check your connection and try again.'), '');
-            }
-          },
-        },
-      ],
-    );
+    void confirmAction({
+      title: ttx('Stop backing up health data?'),
+      message: ttx('Your fitness data stays on this device. The copy on our servers is deleted, and other devices stop syncing it.'),
+      confirmLabel: ttx('Delete server copy'),
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      const ok = await deleteRemoteFitness();
+              if (ok) {
+                setHealthConsent('declined');
+                showToast(ttx('Health data removed from our servers'), '');
+              } else {
+                showToast(ttx('Could not delete. Check your connection and try again.'), '');
+              }
+    });
   };
 
   const handlePersonalizedNotifications = async (enabled: boolean) => {

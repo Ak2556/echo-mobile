@@ -31,6 +31,7 @@ import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/mini-apps/mini
 import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/mini-apps/voiceMemos';
 import { ttx } from '../../lib/i18n/i18n';
 import { playbackEnded } from '../../lib/mini-apps/audioPlayback';
+import { confirmAction } from '../../lib/ui/confirm';
 
 async function playbackCandidates(memo: Memo): Promise<string[]> {
   const candidates: string[] = [];
@@ -190,10 +191,15 @@ export default function VoiceMemoApp() {
   };
 
   const confirmDelete = (memo: Memo) => {
-    Alert.alert('Delete memo?', `"${memo.title}" will be deleted.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteMemo(memo.id) },
-    ]);
+    void confirmAction({
+      title: 'Delete memo?',
+      message: `"${memo.title}" will be deleted.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      deleteMemo(memo.id);
+    });
   };
 
   const saveRename = () => {

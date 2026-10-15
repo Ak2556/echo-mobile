@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ShareSheet } from '../common/ShareSheet';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
 import { RepostChoiceSheet } from './RepostChoiceSheet';
@@ -44,6 +44,7 @@ import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, us
 import { useFollow } from '../../hooks/queries/useFollow';
 import { usePerformanceProfile } from '../../lib/ui/performance';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
+import { confirmAction } from '../../lib/ui/confirm';
 
 interface FeedCardProps {
   item: FeedItem;
@@ -312,24 +313,19 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
       icon: <Trash color={colors.danger} size={20} />,
       destructive: true,
       onPress: () => {
-        Alert.alert(
-          ttx('Delete post'),
-          ttx('Are you sure you want to delete this post? This cannot be undone.'),
-          [
-            { text: ttx('Cancel'), style: 'cancel' },
-            { 
-              text: ttx('Delete'), 
-              style: 'destructive',
-              onPress: () => {
-                // Optimistically remove from local state for immediate feedback
-                deleteEcho(item.id);
-                if (remote) {
-                  deleteRemoteEchoMut.mutate(item.id);
-                }
-              }
-            }
-          ]
-        );
+        void confirmAction({
+          title: ttx('Delete post'),
+          message: ttx('Are you sure you want to delete this post? This cannot be undone.'),
+          confirmLabel: ttx('Delete'),
+          destructive: true,
+        }).then(async (confirmed) => {
+          if (!confirmed) return;
+          // Optimistically remove from local state for immediate feedback
+                  deleteEcho(item.id);
+                  if (remote) {
+                    deleteRemoteEchoMut.mutate(item.id);
+                  }
+        });
       },
     }] : []),
     {

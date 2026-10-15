@@ -1,8 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import {
-  View, Text, ScrollView, TextInput, Pressable,
-  KeyboardAvoidingView, Platform, Alert, Modal, StyleSheet, Share,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform, Modal, StyleSheet, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
@@ -21,6 +18,7 @@ import { ActionSheet, type ActionItem } from '../../components/common/ActionShee
 import { showToast } from '../../components/ui/Toast';
 import { NOTE_COLORS, Note, loadNotes, saveNotes } from '../../lib/mini-apps/notes';
 import { countWords } from '../../lib/mini-apps/wordCount';
+import { confirmAction } from '../../lib/ui/confirm';
 
 type NoteView = 'active' | 'pinned' | 'favorites' | 'checklists' | 'archive' | 'all';
 type SortMode = 'recent' | 'oldest' | 'title';
@@ -541,10 +539,15 @@ export default function NotesApp() {
   };
 
   const deleteNote = (id: string) => {
-    Alert.alert(tt('Delete note?'), tt('This cannot be undone.'), [
-      { text: tt('Cancel'), style: 'cancel' },
-      { text: tt('Delete'), style: 'destructive', onPress: () => persist(notes.filter(n => n.id !== id)) },
-    ]);
+    void confirmAction({
+      title: tt('Delete note?'),
+      message: tt('This cannot be undone.'),
+      confirmLabel: tt('Delete'),
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      persist(notes.filter(n => n.id !== id));
+    });
   };
 
   const duplicateNote = (note: Note) => {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Modal, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { FilmSlate, LinkSimple, Plus, Trash, X } from 'phosphor-react-native';
@@ -17,6 +17,7 @@ import {
   type Lecture,
   type LectureNote,
 } from '../../lib/mini-apps/learnApi';
+import { confirmAction } from '../../lib/ui/confirm';
 
 /**
  * Lectures: upload one, or point at one, then watch it and take notes on it.
@@ -112,20 +113,20 @@ export function LecturesPanel() {
   };
 
   const remove = (lecture: Lecture) => {
-    Alert.alert('Delete lecture?', lecture.title, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteLecture(lecture.id);
-            await reload();
-          } catch {
-            showToast('Could not delete', 'Error');
-          }
-        },
-      },
-    ]);
+    void confirmAction({
+      title: 'Delete lecture?',
+      message: lecture.title,
+      confirmLabel: 'Delete',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      try {
+              await deleteLecture(lecture.id);
+              await reload();
+            } catch {
+              showToast('Could not delete', 'Error');
+            }
+    });
   };
 
   return (

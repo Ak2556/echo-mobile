@@ -13,6 +13,7 @@ import {
   bestLiftFor, detectPRs, lastLiftFor, workoutVolume,
 } from '../../lib/mini-apps/fitness';
 import { ttx } from '../../lib/i18n/i18n';
+import { confirmAction } from '../../lib/ui/confirm';
 
 interface ExerciseState {
   weight: string;
@@ -155,10 +156,15 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
   const confirmClose = () => {
     const anyDone = states.some(s => s.setsDone > 0);
     if (!anyDone) { onClose(); return; }
-    Alert.alert('Leave workout?', 'Progress from this session will be lost.', [
-      { text: 'Keep going', style: 'cancel' },
-      { text: 'Leave', style: 'destructive', onPress: onClose },
-    ]);
+    void confirmAction({
+      title: 'Leave workout?',
+      message: 'Progress from this session will be lost.',
+      confirmLabel: 'Leave',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      onClose();
+    });
   };
 
   // ── Completion summary ──────────────────────────────────────────────────

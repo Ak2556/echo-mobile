@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Share, View, Text, Alert } from 'react-native';
+import { Share, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { SpeakButton } from '../../components/ui/SpeakButton';
@@ -41,6 +41,7 @@ import { countLabel } from '../../lib/ui/a11yCount';
 import { ProfileRank } from '../../components/ranks/ProfileRank';
 import { personName } from '../../lib/social/personName';
 import { BackButton } from '../../components/ui/BackButton';
+import { confirmAction } from '../../lib/ui/confirm';
 
 // FlashList still owns the header and scrolling; the grid is the footer.
 const EMPTY_LIST: any[] = [];
@@ -512,19 +513,19 @@ export default function UserProfileScreen() {
                 }
               }}
               onBlock={() => {
-                Alert.alert(blocked ? 'Unblock User' : 'Block User',
-                  blocked ? `Unblock @${user.username}?` : `Block @${user.username}?`,
-                  [{ text: 'Cancel', style: 'cancel' }, {
-                    text: blocked ? 'Unblock' : 'Block',
-                    style: 'destructive',
-                    onPress: () => {
-                      if (remote) {
-                        blockMut.mutate({ targetUserId: user.id, block: !blocked });
-                      } else {
-                        toggleBlock(user.id);
-                      }
-                    },
-                  }]);
+                void confirmAction({
+                  title: blocked ? 'Unblock User' : 'Block User',
+                  message: blocked ? `Unblock @${user.username}?` : `Block @${user.username}?`,
+                  confirmLabel: blocked ? 'Unblock' : 'Block',
+                  destructive: true,
+                }).then(async (confirmed) => {
+                  if (!confirmed) return;
+                  if (remote) {
+                          blockMut.mutate({ targetUserId: user.id, block: !blocked });
+                        } else {
+                          toggleBlock(user.id);
+                        }
+                });
               }}
               showMenu={showMenu}
               setShowMenu={setShowMenu}
@@ -612,9 +613,15 @@ export default function UserProfileScreen() {
             onReport={() => router.push({ pathname: '/report', params: { targetType: 'user', targetId: user.id, targetName: user.username } })}
             onMute={() => toggleMute(user.id)}
             onBlock={() => {
-              Alert.alert(blocked ? 'Unblock User' : 'Block User',
-                blocked ? `Unblock @${user.username}?` : `Block @${user.username}?`,
-                [{ text: 'Cancel', style: 'cancel' }, { text: blocked ? 'Unblock' : 'Block', style: 'destructive', onPress: () => toggleBlock(user.id) }]);
+              void confirmAction({
+                title: blocked ? 'Unblock User' : 'Block User',
+                message: blocked ? `Unblock @${user.username}?` : `Block @${user.username}?`,
+                confirmLabel: blocked ? 'Unblock' : 'Block',
+                destructive: true,
+              }).then(async (confirmed) => {
+                if (!confirmed) return;
+                toggleBlock(user.id);
+              });
             }}
             showMenu={showMenu}
             setShowMenu={setShowMenu}

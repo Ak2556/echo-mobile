@@ -32,6 +32,7 @@ import { countLabel } from '../../lib/ui/a11yCount';
 import { CommentsSheet } from '../../components/feed/CommentsSheet';
 import { BackButton } from '../../components/ui/BackButton';
 import { STAGE } from '../../lib/ui/fixedColors';
+import { confirmAction } from '../../lib/ui/confirm';
 
 export default function ThreadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -126,23 +127,26 @@ export default function ThreadDetailScreen() {
   const isOwner = item.userId === currentUserId || item.userId === 'me';
 
   const handleDelete = () => {
-    Alert.alert('Delete Echo', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
-        // Remote-first: confirm the server deleted it before removing locally,
-        // so we never tell the user it's gone while it lives on the server.
-        try {
-          if (remote) await deleteRemoteEcho(item.id);
-        } catch (e) {
-          Alert.alert('Delete failed', friendlyWriteError(e));
-          return;
-        }
-        deleteEcho(item.id);
-        qc.invalidateQueries({ queryKey: ['feed'] });
-        qc.invalidateQueries({ queryKey: ['profile'] });
-        safeBack();
-      } },
-    ]);
+    void confirmAction({
+      title: 'Delete Echo',
+      message: 'This cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      // Remote-first: confirm the server deleted it before removing locally,
+          // so we never tell the user it's gone while it lives on the server.
+          try {
+            if (remote) await deleteRemoteEcho(item.id);
+          } catch (e) {
+            Alert.alert('Delete failed', friendlyWriteError(e));
+            return;
+          }
+          deleteEcho(item.id);
+          qc.invalidateQueries({ queryKey: ['feed'] });
+          qc.invalidateQueries({ queryKey: ['profile'] });
+          safeBack();
+    });
   };
 
   return (

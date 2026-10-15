@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, Pressable, Modal, StyleSheet, Share, ScrollView, Platform, Alert
-} from 'react-native';
+import { View, Text, TextInput, Pressable, Modal, StyleSheet, Share, ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -28,6 +26,7 @@ import {
   saveExpensesDoc, shiftMonth, transactionsToCsv, pnlToCsv, daybookToCsv, gstReportToCsv, generatePdfHtml
 } from '../../lib/mini-apps/expenses';
 import { MoneyCategoryIcon } from '../../components/mini-apps/MoneyCategoryIcon';
+import { confirmAction } from '../../lib/ui/confirm';
 
 const PROFILE_TERM: Record<KhataProfile, any> = {
   personal: {
@@ -541,10 +540,15 @@ export default function ExpensesApp() {
   };
 
   const deleteTx = (id: string) => {
-    Alert.alert(tt('Delete?'), tt('Remove this transaction?'), [
-      { text: tt('Cancel'), style: 'cancel' },
-      { text: tt('Delete'), style: 'destructive', onPress: () => update({ ...doc, txs: txs.filter(t => t.id !== id) }) },
-    ]);
+    void confirmAction({
+      title: tt('Delete?'),
+      message: tt('Remove this transaction?'),
+      confirmLabel: tt('Delete'),
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      update({ ...doc, txs: txs.filter(t => t.id !== id) });
+    });
   };
 
   const doExport = async (buttonIndex: number) => {
