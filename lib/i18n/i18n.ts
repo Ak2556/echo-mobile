@@ -401,7 +401,7 @@ const COMMON_TRANSLATIONS: Record<Exclude<AppLanguageCode, 'en'>, TranslationMap
     'mini.echoAi': "Echo AI",
     'settings.title': "सेटिंग्स",
     'settings.subtitle': "प्रोफाइल, प्राइवेसी, फीड और Echo AI को एक जगह से सेट करें",
-    'settings.editProfile': "प्रोफ़ाइल संपादित करें",
+    'settings.editProfile': "प्रोफ़ाइल बदलें",
     'settings.targetTools': "लक्ष्य टूल्स",
     'settings.aiMemory': "AI मेमोरी",
     'settings.groups.all': "सभी",

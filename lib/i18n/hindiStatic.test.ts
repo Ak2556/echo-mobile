@@ -38,7 +38,7 @@ describe('Hindi shared strings', () => {
     'common.retry': 'फिर कोशिश करें',
     'common.loading': 'लोड हो रहा है',
     'settings.title': 'सेटिंग्स',
-    'settings.editProfile': 'प्रोफ़ाइल संपादित करें',
+    'settings.editProfile': 'प्रोफ़ाइल बदलें', // short enough for the narrow Settings card
     'settings.groups.display': 'डिस्प्ले',
     'explore.clear': 'साफ करें',
     'explore.searchPlaceholder': 'लोग, Echoes, विषय, टूल खोजें',
