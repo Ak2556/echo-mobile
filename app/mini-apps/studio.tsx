@@ -44,10 +44,10 @@ function formatDuration(ms: number) {
 }
 
 function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; accent: string; onChange: (v: CaptureIntent) => void }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <View style={{ marginBottom: 14 }}>
-      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 9 }}>
+      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 9 }}>
         {ttx("Capture intent")}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -74,8 +74,8 @@ function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Icon color={active ? colors.bg : accent} size={17} weight="bold" />
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ color: active ? colors.bg : colors.text, fontSize: 14, fontWeight: '900' }}>{intent.label}</Text>
-                  <Text style={{ color: active ? colors.bg : colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>{intent.detail}</Text>
+                  <Text style={{ color: active ? colors.bg : colors.text, fontSize: fontSizes.label, fontWeight: '900' }}>{intent.label}</Text>
+                  <Text style={{ color: active ? colors.bg : colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', marginTop: 2 }}>{intent.detail}</Text>
                 </View>
               </View>
             </AnimatedPressable>
@@ -87,7 +87,7 @@ function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; 
 }
 
 export default function StudioApp() {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const accent = colors.accent;
   const [intent, setIntent] = useState<CaptureIntent>('proof');
   const [captured, setCaptured] = useState<CameraCapture[]>([]);
@@ -305,7 +305,7 @@ export default function StudioApp() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 20 }}>
           <Text style={{ color: colors.text, fontSize: 32, ...font.displayBlack, letterSpacing: -0.5 }}>Review</Text>
           <Pressable onPress={() => { setRawVideoUri(null); player.pause(); }}>
-            <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '700' }}>Cancel</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontWeight: '700' }}>Cancel</Text>
           </Pressable>
         </View>
 
@@ -328,8 +328,8 @@ export default function StudioApp() {
               <View style={{ height: '100%', width: `${progressPct}%`, backgroundColor: accent, borderRadius: radius.sm }} />
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-              <Text style={{ color: colors.textMuted, fontSize: 11 }}>{formatDuration(position)}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11 }}>{formatDuration(duration)}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{formatDuration(position)}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{formatDuration(duration)}</Text>
             </View>
           </View>
 
@@ -416,11 +416,11 @@ export default function StudioApp() {
       {captured.length > 0 && (
         <Animated.View entering={FadeInDown}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, flex: 1 }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700', letterSpacing: 1, flex: 1 }}>
               {ttx("CAPTURED ·")} {captured.length}
             </Text>
             <Pressable onPress={() => { persistCaptured([]); setSelected(null); }}>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Clear all")}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Clear all")}</Text>
             </Pressable>
           </View>
 
@@ -430,14 +430,14 @@ export default function StudioApp() {
               {selected.type === 'video' ? (
                 <View style={{ width: '100%', aspectRatio: 4 / 3, alignItems: 'center', justifyContent: 'center' }}>
                   <VideoCamera color={colors.textMuted} size={48} weight="duotone" />
-                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 8, fontWeight: '600' }}>Video saved to gallery</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 8, fontWeight: '600' }}>Video saved to gallery</Text>
                 </View>
               ) : (
                 <Image source={{ uri: selected.uri }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: radius.xl }} resizeMode="cover" />
               )}
               <View style={{ position: 'absolute', left: 12, bottom: 12, right: 12, flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1, borderRadius: radius.card, padding: 10, backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                  <Text style={{ color: ON_MEDIA, fontSize: 13, fontWeight: '900' }}>{selected.intent ? selected.intent[0].toUpperCase() + selected.intent.slice(1) : 'Capture'}</Text>
+                  <Text style={{ color: ON_MEDIA, fontSize: fontSizes.small, fontWeight: '900' }}>{selected.intent ? selected.intent[0].toUpperCase() + selected.intent.slice(1) : 'Capture'}</Text>
                 </View>
               </View>
               <AnimatedPressable

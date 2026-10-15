@@ -23,7 +23,7 @@ import { createNote } from '../lib/mini-apps/notes';
  */
 export default function ShareIntentScreen() {
   const router = useRouter();
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext();
   // Text selected in another app arrives here as a query param rather than a
   // share intent: ACTION_PROCESS_TEXT carries it in an intent extra, which a
@@ -92,7 +92,7 @@ export default function ShareIntentScreen() {
         {icon}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[font.bodyBold, { color: primary ? colors.bg : colors.text, fontSize: 15 }]}>{label}</Text>
-          <Text style={[font.body, { color: primary ? colors.bg : colors.textMuted, fontSize: 12, marginTop: 2, opacity: primary ? 0.8 : 1 }]}>
+          <Text style={[font.body, { color: primary ? colors.bg : colors.textMuted, fontSize: fontSizes.meta, marginTop: 2, opacity: primary ? 0.8 : 1 }]}>
             {hint}
           </Text>
         </View>
@@ -106,7 +106,7 @@ export default function ShareIntentScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
         {!!body && (
           <View style={{ padding: 14, borderRadius: radius.card, backgroundColor: colors.surface }}>
-            <Text numberOfLines={6} style={[font.body, { color: colors.text, fontSize: 14, lineHeight: 21 }]}>
+            <Text numberOfLines={6} style={[font.body, { color: colors.text, fontSize: fontSizes.label, lineHeight: 21 }]}>
               {body}
             </Text>
           </View>

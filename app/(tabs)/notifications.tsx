@@ -82,7 +82,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { notifications: storeNotifications, markAllNotificationsRead, markNotificationRead: storeMarkRead, unreadNotificationCount, mutedIds } = useAppStore();
-  const { colors, animation, font, radius } = useTheme();
+  const { colors, animation, font, radius, fontSizes } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
   const [filter, setFilter] = useState<NotificationFilter>('all');
@@ -180,7 +180,7 @@ export default function NotificationsScreen() {
       return (
         <View style={listContentStyle}>
           <View style={{ paddingHorizontal: 16, paddingTop: 22, paddingBottom: 10 }}>
-            <Text style={{ fontSize: 12, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
+            <Text style={{ fontSize: fontSizes.meta, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
               {item.label === 'Today' ? t('notif.today') : item.label === 'This Week' ? t('notif.thisWeek') : t('notif.earlier')}
             </Text>
           </View>
@@ -226,7 +226,7 @@ export default function NotificationsScreen() {
               style={{ width: 88, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.border }}
             >
               <Trash color={colors.textSecondary} size={19} />
-              <Text style={{ ...font.bodySemibold, fontSize: 11, color: colors.textSecondary, marginTop: 4 }}>
+              <Text style={{ ...font.bodySemibold, fontSize: fontSizes.caption, color: colors.textSecondary, marginTop: 4 }}>
                 {t('notif.dismiss')}
               </Text>
             </Pressable>
@@ -344,7 +344,7 @@ export default function NotificationsScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>{t('notif.title')}</Text>
+                <Text style={[font.displayBlack, { color: colors.text, fontSize: fontSizes.heading, letterSpacing: -0.5, marginTop: 2 }]}>{t('notif.title')}</Text>
                 {unreadCount > 0 && (
                   <View
                     style={{
@@ -356,7 +356,7 @@ export default function NotificationsScreen() {
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 11 }]}>{unreadCount}</Text>
+                    <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: fontSizes.caption }]}>{unreadCount}</Text>
                   </View>
                 )}
               </View>
@@ -377,7 +377,7 @@ export default function NotificationsScreen() {
                   }}
                 >
                   <Checks color={colors.textSecondary} size={14} />
-                  <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{t('notif.readAll')}</Text>
+                  <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.meta }]}>{t('notif.readAll')}</Text>
                 </AnimatedPressable>
               )}
             </View>
@@ -402,7 +402,7 @@ export default function NotificationsScreen() {
                     style={[
                       font.bodySemibold,
                       {
-                        fontSize: 13,
+                        fontSize: fontSizes.small,
                         textTransform: 'capitalize',
                         color: filter === tab ? colors.onAccent : colors.textSecondary,
                       }

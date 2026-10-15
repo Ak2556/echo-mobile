@@ -72,7 +72,7 @@ function modelLabel(model: string): string {
  * already means something else (Echo vs Messages).
  */
 function AskDoSwitch({ mode, onChange }: { mode: AiMode; onChange: (next: AiMode) => void }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
 
   return (
     <View
@@ -107,7 +107,7 @@ function AskDoSwitch({ mode, onChange }: { mode: AiMode; onChange: (next: AiMode
               style={[
                 font.body,
                 {
-                  fontSize: 12,
+                  fontSize: fontSizes.meta,
                   fontWeight: active ? '700' : '600',
                   color: active ? colors.bg : colors.textMuted,
                 },
@@ -139,7 +139,7 @@ function ChatEmptyLaunchpad({
   onSend?: (value: string) => void;
   showPrivacy: boolean;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
   const router = useRouter();
@@ -194,13 +194,13 @@ function ChatEmptyLaunchpad({
                   <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]}>
                     {t('chat.emptyTitle')}
                   </Text>
-                  <Text style={[font.body, { color: colors.textSecondary, fontSize: 14, lineHeight: 22, marginTop: 8 }]} numberOfLines={2}>
+                  <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.label, lineHeight: 22, marginTop: 8 }]} numberOfLines={2}>
                     {targetOutcome || t('chat.emptyBody', { target: targetLabel.toLowerCase() })}
                   </Text>
                 </>
               )}
               {showPrivacy ? (
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 11, lineHeight: 15, marginTop: 8 }]} numberOfLines={1}>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: 15, marginTop: 8 }]} numberOfLines={1}>
                   {t('chat.avoidPrivate')}
                 </Text>
               ) : null}
@@ -259,8 +259,8 @@ function ChatEmptyLaunchpad({
               {action.icon}
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]} numberOfLines={1}>{action.title}</Text>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]} numberOfLines={1}>{action.title}</Text>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
             </View>
             {action.key === 'target' ? <ChartLineUp color={colors.textMuted} size={17} weight="bold" /> : <ArrowUpRight color={colors.textMuted} size={17} weight="bold" />}
           </Pressable>
@@ -280,7 +280,7 @@ export default function ChatScreen() {
   const voiceParams = useLocalSearchParams<{ prompt?: string }>();
   const sentVoicePromptRef = useRef<string | null>(null);
   const pathname = usePathname();
-  const { colors, animation, reduceAnimations, font, radius } = useTheme();
+  const { colors, animation, reduceAnimations, font, radius, fontSizes } = useTheme();
   const { t } = useI18n();
   const showTyping = useAppStore(s => s.showTypingIndicator);
   const aiModel = useAppStore(s => s.aiModel);
@@ -931,10 +931,10 @@ export default function ChatScreen() {
                   paddingVertical: 12,
                 }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 14 }]}>
+                    <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: fontSizes.label }]}>
                       {ttx('Draft ready')}
                     </Text>
-                    <Text style={{ color: colors.onAccent, opacity: 0.8, fontSize: 12, marginTop: 2 }}>
+                    <Text style={{ color: colors.onAccent, opacity: 0.8, fontSize: fontSizes.meta, marginTop: 2 }}>
                       {ttx('Turn this conversation into an Echo.')}
                     </Text>
                   </View>
@@ -977,11 +977,11 @@ export default function ChatScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: radius.full }}>
                   <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                    <Text style={{ color: ON_MEDIA, fontSize: 13, fontWeight: '700' }}>Echo</Text>
+                    <Text style={{ color: ON_MEDIA, fontSize: fontSizes.small, fontWeight: '700' }}>Echo</Text>
                   </View>
                   <Pressable onPress={() => router.push('/messages' as Href)} accessibilityRole="button">
                     <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>{ttx('Messages')}</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700' }}>{ttx('Messages')}</Text>
                     </View>
                   </Pressable>
                 </View>
@@ -1019,7 +1019,7 @@ export default function ChatScreen() {
             zIndex: 20,
           }}
         >
-          <Text style={{ color: ON_MEDIA, fontSize: 13, fontWeight: '600' }}>Tip · long-press the Chat tab to open quick actions</Text>
+          <Text style={{ color: ON_MEDIA, fontSize: fontSizes.small, fontWeight: '600' }}>Tip · long-press the Chat tab to open quick actions</Text>
         </Animated.View>
       )}
 

@@ -173,7 +173,7 @@ function ScienceKey({ item, active, accent, colors, onPress }: { item: KeySpec; 
 }
 
 export default function CalculatorScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
   const insets = useSafeAreaInsets();
   const accent = colors.accent;
@@ -329,7 +329,7 @@ export default function CalculatorScreen() {
                 <FunctionIcon color={accent} size={17} weight="bold" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>{ttx("Decision math")}</Text>
+                <Text style={{ color: colors.text, fontSize: fontSizes.label, fontWeight: '900' }}>{ttx("Decision math")}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 11.5, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>
                   {history.length ? `${history.length} recent calculations` : 'Tap numbers to start'}
                 </Text>
@@ -341,7 +341,7 @@ export default function CalculatorScreen() {
             </View>
 
             <View style={{ alignItems: 'flex-end', marginTop: 8 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 16, fontWeight: '700', minHeight: 22 }} numberOfLines={1}>
+              <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, fontWeight: '700', minHeight: 22 }} numberOfLines={1}>
                 {expression || (stored && operator ? `${stored} ${operator}` : '')}
               </Text>
               <Text
@@ -374,7 +374,7 @@ export default function CalculatorScreen() {
                   >
                     <View style={{ maxWidth: 154, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                       <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700' }} numberOfLines={1}>{item.expression}</Text>
-                      <Text style={{ color: accent, fontSize: 13, fontWeight: '900', marginTop: 2 }} numberOfLines={1}>{item.result}</Text>
+                      <Text style={{ color: accent, fontSize: fontSizes.small, fontWeight: '900', marginTop: 2 }} numberOfLines={1}>{item.result}</Text>
                     </View>
                   </AnimatedPressable>
                 ))}

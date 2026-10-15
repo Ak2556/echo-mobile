@@ -12,7 +12,7 @@ import { BRAND } from '../lib/ui/fixedColors';
 import { LoadingState } from '../components/common/LoadingState';
 
 function QuestsScreenInner() {
-  const { colors } = useTheme();
+  const { colors, fontSizes } = useTheme();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +37,7 @@ function QuestsScreenInner() {
     <ResponsiveScreen>
       <ScreenHeader
         title={ttx("Quests")}
-        right={<Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700', marginRight: 10 }}>{totalCompleted}/{quests.length} {ttx("completed")}</Text>}
+        right={<Text style={{ color: colors.accent, fontSize: fontSizes.small, fontWeight: '700', marginRight: 10 }}>{totalCompleted}/{quests.length} {ttx("completed")}</Text>}
       />
 
       {loading ? (
@@ -60,12 +60,12 @@ function QuestsScreenInner() {
 }
 
 function Section({ title, icon, quests }: { title: string; icon: React.ReactNode; quests: Quest[] }) {
-  const { colors } = useTheme();
+  const { colors, fontSizes } = useTheme();
   return (
     <View style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10, marginLeft: 4 }}>
         {icon}
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{title}</Text>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{title}</Text>
       </View>
       {quests.map((q, i) => (
         <Animated.View key={q.id} entering={FadeInUp.delay(i * 30).duration(220)}>
@@ -77,7 +77,7 @@ function Section({ title, icon, quests }: { title: string; icon: React.ReactNode
 }
 
 function QuestRow({ quest }: { quest: Quest }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const progress = Math.min(quest.progress ?? 0, quest.goal_value);
   const pct = (progress / quest.goal_value) * 100;
   const completed = !!quest.completed_at;
@@ -102,10 +102,10 @@ function QuestRow({ quest }: { quest: Quest }) {
         </View>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>{quest.title}</Text>
-            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>+{quest.reward_xp} {ttx("XP")}</Text>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.label }}>{quest.title}</Text>
+            <Text style={{ color: colors.accent, fontSize: fontSizes.meta, fontWeight: '700' }}>+{quest.reward_xp} {ttx("XP")}</Text>
           </View>
-          <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18, marginBottom: 8 }}>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.meta, lineHeight: 18, marginBottom: 8 }}>
             {quest.description}
           </Text>
           {/* Progress bar */}
@@ -119,7 +119,7 @@ function QuestRow({ quest }: { quest: Quest }) {
               }}
             />
           </View>
-          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 4 }}>
             {progress}/{quest.goal_value} {completed ? '· completed' : ''}
           </Text>
         </View>

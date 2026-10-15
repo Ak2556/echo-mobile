@@ -45,7 +45,7 @@ const PRIORITIES: { id: TaskPriority; label: string; tone: 'textSecondary' | 'wa
 ];
 
 export default function TasksScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const { tt } = useI18n();
   const accent = colors.accent; 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -304,20 +304,20 @@ export default function TasksScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4, flexWrap: 'wrap' }}>
                         {task.reminderId && !task.done && <Bell color={accent} size={12} weight="fill" />}
                         {task.priority === 'urgent' && <WarningCircle color={pColor} size={12} weight="bold" />}
-                        <Text style={{ color: task.priority === 'urgent' ? pColor : colors.textMuted, fontSize: 12, fontWeight: task.priority === 'urgent' ? '700' : '500' }}>
+                        <Text style={{ color: task.priority === 'urgent' ? pColor : colors.textMuted, fontSize: fontSizes.meta, fontWeight: task.priority === 'urgent' ? '700' : '500' }}>
                           {task.due ? new Date(`${task.due}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) : tt('No due date')}
                         </Text>
-                        {task.time && <Text style={{ color: colors.textMuted, fontSize: 12 }}>· {formatTaskTime(task.time)}</Text>}
+                        {task.time && <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>· {formatTaskTime(task.time)}</Text>}
                         {task.subtasks && task.subtasks.length > 0 && (
-                          <Text style={{ color: colors.textMuted, fontSize: 12 }}>· {task.subtasks.filter(s => s.done).length}/{task.subtasks.length} steps</Text>
+                          <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>· {task.subtasks.filter(s => s.done).length}/{task.subtasks.length} steps</Text>
                         )}
                         {task.tags && task.tags.length > 0 && (
                           <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
-                            <Text style={{ color: colors.textMuted, fontSize: 12 }}>·</Text>
+                            <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>·</Text>
                             {task.tags.slice(0, 2).map((t, i) => (
-                              <Text key={i} style={{ color: accent, fontSize: 11, fontWeight: '700' }}>#{t}</Text>
+                              <Text key={i} style={{ color: accent, fontSize: fontSizes.caption, fontWeight: '700' }}>#{t}</Text>
                             ))}
-                            {task.tags.length > 2 && <Text style={{ color: colors.textMuted, fontSize: 11 }}>+{task.tags.length - 2}</Text>}
+                            {task.tags.length > 2 && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>+{task.tags.length - 2}</Text>}
                           </View>
                         )}
                       </View>
@@ -367,7 +367,7 @@ export default function TasksScreen() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                   <View style={{ flex: 1, marginRight: 16 }}>
                     <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text }}>{detailTask.title}</Text>
-                    <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>Created {new Date(detailTask.createdAt).toLocaleDateString()}</Text>
+                    <Text style={{ fontSize: fontSizes.small, color: colors.textMuted, marginTop: 4 }}>Created {new Date(detailTask.createdAt).toLocaleDateString()}</Text>
                   </View>
                   <Pressable onPress={closeDetail} style={{ backgroundColor: colors.surfaceHover, padding: 8, borderRadius: radius.card }}>
                     <X color={colors.text} size={20} weight="bold" />
@@ -379,7 +379,7 @@ export default function TasksScreen() {
                   <View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <NotePencil color={accent} size={18} weight="fill" />
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>Notes</Text>
+                      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text }}>Notes</Text>
                     </View>
                     <TextInput
                       value={detailNotes}
@@ -393,7 +393,7 @@ export default function TasksScreen() {
 
                   {/* Properties (Priority, Due Date) */}
                   <View>
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 }}>Properties</Text>
+                    <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text, marginBottom: 12 }}>Properties</Text>
                     <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                       {PRIORITIES.map(p => {
                         const pColor = colors[p.tone];
@@ -401,7 +401,7 @@ export default function TasksScreen() {
                           <Pressable key={p.id} onPress={() => updateTask(detailTask.id, { priority: p.id })}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: detailTask.priority === p.id ? pColor : colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.md }}>
                               <Flag color={detailTask.priority === p.id ? colors.bg : pColor} size={14} weight="fill" />
-                              <Text style={{ color: detailTask.priority === p.id ? colors.bg : colors.textSecondary, fontSize: 13, fontWeight: '700' }}>{p.label}</Text>
+                              <Text style={{ color: detailTask.priority === p.id ? colors.bg : colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700' }}>{p.label}</Text>
                             </View>
                           </Pressable>
                         );
@@ -411,13 +411,13 @@ export default function TasksScreen() {
                   
                   {/* Due Date & Reminders */}
                   <View>
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 }}>Schedule & Alarm</Text>
+                    <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text, marginBottom: 12 }}>Schedule & Alarm</Text>
 
                     <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 16 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                           <Bell color={detailAlarm ? accent : colors.textMuted} size={18} weight={detailAlarm ? "fill" : "regular"} />
-                          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>Task Schedule</Text>
+                          <Text style={{ fontSize: fontSizes.body, fontWeight: '600', color: colors.text }}>Task Schedule</Text>
                         </View>
                         <View style={{ flexDirection: 'row', gap: 8 }}>
                           {detailAlarm && (
@@ -445,7 +445,7 @@ export default function TasksScreen() {
                   <View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                       <CheckCircle color={accent} size={18} weight="fill" />
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>Subtasks</Text>
+                      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text }}>Subtasks</Text>
                     </View>
                     <View style={{ gap: 8 }}>
                       {detailTask.subtasks?.map(st => (
@@ -481,7 +481,7 @@ export default function TasksScreen() {
                   <View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <Tag color={accent} size={18} weight="fill" />
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>Tags (comma separated)</Text>
+                      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text }}>Tags (comma separated)</Text>
                     </View>
                     <TextInput
                       value={detailTags}
@@ -554,21 +554,21 @@ export default function TasksScreen() {
         onSubmitEditing={() => { add(); setShowAddSheet(false); }}
       />
       
-      <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Priority')}</Text>
+      <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Priority')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
         {PRIORITIES.map(item => {
           const pColor = colors[item.tone];
           return (
             <Pressable key={item.id} onPress={() => setPriority(item.id)}>
               <View style={{ borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: priority === item.id ? pColor : colors.surfaceHover, borderWidth: priority === item.id ? 0 : 1, borderColor: colors.border }}>
-                <Text style={{ color: priority === item.id ? colors.bg : colors.textSecondary, fontSize: 14, fontWeight: '800' }}>{tt(item.label)}</Text>
+                <Text style={{ color: priority === item.id ? colors.bg : colors.textSecondary, fontSize: fontSizes.label, fontWeight: '800' }}>{tt(item.label)}</Text>
               </View>
             </Pressable>
           );
         })}
       </View>
       
-      <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Schedule & Alarm')}</Text>
+      <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Schedule & Alarm')}</Text>
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: showAddPicker ? 16 : 32 }}>
         <Pressable onPress={() => {
           if (!showAddPicker && !alarmTime) {
@@ -579,7 +579,7 @@ export default function TasksScreen() {
         }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: alarmTime ? accent : colors.surfaceHover, borderWidth: alarmTime ? 0 : 1, borderColor: colors.border }}>
             <Bell color={alarmTime ? colors.bg : colors.textSecondary} size={16} weight={alarmTime ? "fill" : "regular"} />
-            <Text style={{ color: alarmTime ? colors.bg : colors.textSecondary, fontSize: 14, fontWeight: '800' }}>
+            <Text style={{ color: alarmTime ? colors.bg : colors.textSecondary, fontSize: fontSizes.label, fontWeight: '800' }}>
               {alarmTime ? `Scheduled: ${formatAlarmTime(alarmTime)}` : tt('Set Schedule...')}
             </Text>
           </View>

@@ -15,7 +15,7 @@ import { ttx } from '../../lib/i18n/i18n';
  */
 export default function CommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors } = useTheme();
+  const { colors, fontSizes } = useTheme();
   const [count, setCount] = useState<number | null>(null);
 
   return (
@@ -24,7 +24,7 @@ export default function CommentsScreen() {
         title={ttx("Comments")}
         right={
           count === null ? undefined : (
-            <Text style={{ color: colors.textMuted, fontSize: 14, marginRight: 10 }}>{count}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, marginRight: 10 }}>{count}</Text>
           )
         }
       />

@@ -297,7 +297,7 @@ function formatLastSeen(dateStr: string | null): string {
 // ─── EchoShareCard ────────────────────────────────────────────────────────────
 
 function EchoShareCard({ title, preview, author }: { title: string; preview: string; author?: string }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <View style={{
       padding: 12, borderRadius: radius.card,
@@ -306,16 +306,16 @@ function EchoShareCard({ title, preview, author }: { title: string; preview: str
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <Quotes color={colors.accent} size={14} />
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>{title}</Text>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.small }} numberOfLines={1}>{title}</Text>
       </View>
-      <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }} numberOfLines={3}>{preview}</Text>
-      {author ? <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 6 }}>{ttx("From")} {author}</Text> : null}
+      <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 19 }} numberOfLines={3}>{preview}</Text>
+      {author ? <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 6 }}>{ttx("From")} {author}</Text> : null}
     </View>
   );
 }
 
 function LinkShareCard({ url, title, subtitle }: { url: string; title?: string | null; subtitle?: string | null }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <View style={{
       padding: 12, borderRadius: radius.card,
@@ -324,14 +324,14 @@ function LinkShareCard({ url, title, subtitle }: { url: string; title?: string |
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <LinkSimple color={colors.accent} size={15} weight="bold" />
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13, flex: 1 }} numberOfLines={1}>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.small, flex: 1 }} numberOfLines={1}>
           {title || urlHost(url)}
         </Text>
       </View>
-      <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 17 }} numberOfLines={2}>
+      <Text style={{ color: colors.textSecondary, fontSize: fontSizes.meta, lineHeight: 17 }} numberOfLines={2}>
         {subtitle || urlHost(url)}
       </Text>
-      <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 6 }} numberOfLines={1}>
+      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 6 }} numberOfLines={1}>
         {url}
       </Text>
     </View>
@@ -341,7 +341,7 @@ function LinkShareCard({ url, title, subtitle }: { url: string; title?: string |
 function ContactShareCard({
   displayName, username, avatarColor, avatarUrl,
 }: { displayName: string; username: string; avatarColor: string; avatarUrl?: string | null }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <View style={{
       flexDirection: 'row', alignItems: 'center', gap: 11,
@@ -351,10 +351,10 @@ function ContactShareCard({
     }}>
       <Avatar name={displayName} color={avatarColor} url={avatarUrl} size={42} />
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }} numberOfLines={1}>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.label }} numberOfLines={1}>
           {displayName}
         </Text>
-        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }} numberOfLines={1}>
           @{username}
         </Text>
       </View>
@@ -368,7 +368,7 @@ function ContactShareCard({
 function ReplyCard({
   content, kind, isDeleted, isMe,
 }: { content: string | null; kind: string | null; isDeleted: boolean; isMe: boolean }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const preview = isDeleted
     ? 'Deleted message'
     : kind === 'image' ? (content?.trim() ? content.trim() : 'Photo')
@@ -386,7 +386,7 @@ function ReplyCard({
     }}>
       <Text style={{
         color: isMe ? 'rgba(255,255,255,0.8)' : colors.textSecondary,
-        fontSize: 12, lineHeight: 16,
+        fontSize: fontSizes.meta, lineHeight: 16,
         fontStyle: isDeleted ? 'italic' : 'normal',
       }} numberOfLines={2}>
         {preview}
@@ -405,7 +405,7 @@ function ReactionBar({
   isMe: boolean;
   onToggle: (reactionValue: string, hasReacted: boolean) => void;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   if (!reactions.length) return null;
 
   const grouped: Record<string, { count: number; hasReacted: boolean }> = {};
@@ -428,9 +428,9 @@ function ReactionBar({
               borderWidth: 1, borderColor: hasReacted ? colors.accent : colors.border,
             }}
           >
-            <Text style={{ fontSize: 14 }}>{val}</Text>
+            <Text style={{ fontSize: fontSizes.label }}>{val}</Text>
             {count > 1 && (
-              <Text style={{ fontSize: 11, fontWeight: '600', color: hasReacted ? colors.accent : colors.textMuted }}>
+              <Text style={{ fontSize: fontSizes.caption, fontWeight: '600', color: hasReacted ? colors.accent : colors.textMuted }}>
                 {count}
               </Text>
             )}
@@ -478,11 +478,11 @@ function TypingDots() {
 // ─── DateSeparator ────────────────────────────────────────────────────────────
 
 function DateSeparator({ label }: { label: string }) {
-  const { colors } = useTheme();
+  const { colors, fontSizes } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14 }}>
       <Text style={{
-        color: colors.textMuted, fontSize: 11, fontWeight: '600',
+        color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600',
         textTransform: 'uppercase', letterSpacing: 0.5,
       }}>
         {label}
@@ -496,7 +496,7 @@ function DateSeparator({ label }: { label: string }) {
 function PinnedMessageBanner({
   content, kind, onUnpin,
 }: { content: string | null; kind: string; onUnpin: () => void }) {
-  const { colors } = useTheme();
+  const { colors, fontSizes } = useTheme();
   const label = kind === 'image'
     ? (content?.trim() ? content.trim() : 'Photo')
     : kind === 'voice'
@@ -518,7 +518,7 @@ function PinnedMessageBanner({
       }}
     >
       <PushPin color={colors.accent} size={13} weight="fill" />
-      <Text style={{ flex: 1, color: colors.textSecondary, fontSize: 12 }} numberOfLines={1}>
+      <Text style={{ flex: 1, color: colors.textSecondary, fontSize: fontSizes.meta }} numberOfLines={1}>
         <Text style={{ fontWeight: '700', color: colors.text }}>{ttx("Pinned:")} </Text>{label}
       </Text>
       <Pressable onPress={onUnpin} hitSlop={10}>
@@ -544,7 +544,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress, sessionToke
   onLongPress: () => void;
   sessionToken?: string | null;
 }) {
-  const { colors } = useTheme();
+  const { colors, fontSizes } = useTheme();
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [speed, setSpeed] = useState(1);
@@ -632,13 +632,13 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress, sessionToke
               return <View key={i} style={{ width: 2.5, borderRadius: 2, height: 5 + h * 16, backgroundColor: played ? fill : track }} />;
             })}
           </View>
-          <Text style={{ color: isMe ? 'rgba(255,255,255,0.85)' : colors.textMuted, fontSize: 11, fontVariant: ['tabular-nums'] }}>
+          <Text style={{ color: isMe ? 'rgba(255,255,255,0.85)' : colors.textMuted, fontSize: fontSizes.caption, fontVariant: ['tabular-nums'] }}>
             {playing ? fmtVoiceTime(position) : fmtVoiceTime(durationSec)}
           </Text>
         </View>
         {playing || speed !== 1 ? (
           <Pressable onPress={cycleSpeed} hitSlop={6} accessibilityLabel={ttx("Playback speed")} style={{ paddingHorizontal: 6, paddingVertical: 3, borderRadius: 9, backgroundColor: isMe ? 'rgba(255,255,255,0.22)' : colors.accent + '22' }}>
-            <Text style={{ color: isMe ? colors.onAccent : colors.accent, fontSize: 11, fontWeight: '800' }}>{speed}×</Text>
+            <Text style={{ color: isMe ? colors.onAccent : colors.accent, fontSize: fontSizes.caption, fontWeight: '800' }}>{speed}×</Text>
           </Pressable>
         ) : (
           <Microphone color={isMe ? 'rgba(255,255,255,0.7)' : colors.textMuted} size={14} weight="fill" />
@@ -799,7 +799,7 @@ function DMBubble({
 }) {
   const router = useRouter();
   const fontSizeSetting = useAppStore(s => s.fontSize);
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const textSize = ({ small: 14, medium: 16, large: 18 } as Record<string, number>)[fontSizeSetting] ?? 16;
   const isDeleted = !!message.deletedAt;
   const isFailed = message.id.startsWith('failed-');
@@ -899,14 +899,14 @@ function DMBubble({
               <View style={{ width: 46, height: 46, borderRadius: radius.xl, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
                 <Images color={colors.textMuted} size={23} weight="bold" />
               </View>
-              <Text style={{ color: isMe ? colors.accent : colors.text, fontSize: 14, fontWeight: '900', textAlign: 'center' }}>
+              <Text style={{ color: isMe ? colors.accent : colors.text, fontSize: fontSizes.label, fontWeight: '900', textAlign: 'center' }}>
                 {ttx("Image unavailable")}
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 17, textAlign: 'center', marginTop: 4 }}>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 17, textAlign: 'center', marginTop: 4 }}>
                 {ttx("The preview could not be loaded.")}
               </Text>
               {caption ? (
-                <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18, textAlign: 'center', marginTop: 8 }} numberOfLines={2}>
+                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 18, textAlign: 'center', marginTop: 8 }} numberOfLines={2}>
                   {caption}
                 </Text>
               ) : null}
@@ -1007,14 +1007,14 @@ function DMBubble({
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: unlocked ? 6 : 0 }}>
             <Hourglass color={colors.accent} size={15} weight="bold" />
-            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '800' }}>
+            <Text style={{ color: colors.accent, fontSize: fontSizes.meta, fontWeight: '800' }}>
               {unlocked ? 'Time Capsule' : 'Sealed'}
             </Text>
           </View>
           {unlocked ? (
             <Text style={{ color: colors.text, fontSize: 15, lineHeight: 21 }}>{sealedText}</Text>
           ) : (
-            <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 4 }}>
               {opensOn ? `Opens ${opensOn}` : 'Opens later'}
             </Text>
           )}
@@ -1197,7 +1197,7 @@ function DMBubble({
         <Pressable onPress={onRetry} hitSlop={8}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3, marginHorizontal: 2 }}>
             <WarningCircle color={colors.danger} size={12} weight="fill" />
-            <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700' }}>{ttx("Failed to send. Tap to retry")}</Text>
+            <Text style={{ color: colors.danger, fontSize: fontSizes.caption, fontWeight: '700' }}>{ttx("Failed to send. Tap to retry")}</Text>
           </View>
         </Pressable>
       ) : !groupedWithNext && (
@@ -1234,10 +1234,10 @@ function DMBubble({
 // ─── UnreadDivider ───────────────────────────────────────────────────────────
 
 function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?: boolean; onCatchUp?: () => void }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <View style={{ paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', gap: 9 }}>
-      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("NEW MESSAGES")}</Text>
+      <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("NEW MESSAGES")}</Text>
       {false && (
         <View style={{ alignItems: 'center' }}>
           <AnimatedPressable
@@ -1274,7 +1274,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
   onSelect: (sticker: string) => void;
   onClose: () => void;
 }) {
-  const { colors, reduceAnimations, font } = useTheme();
+  const { colors, reduceAnimations, font, fontSizes } = useTheme();
   const insets = useSafeAreaInsets();
   const [category, setCategory] = useState('recents');
   const [query, setQuery] = useState('');
@@ -1319,7 +1319,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
         <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
             <Waveform color={colors.accent} size={16} weight="fill" />
-            <Text style={{ color: colors.text, fontSize: 16, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Emoji & Stickers")}</Text>
+            <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Emoji & Stickers")}</Text>
             <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
           </View>
 
@@ -1348,7 +1348,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
             contentContainerStyle={{ paddingHorizontal: 8 }}
             ListEmptyComponent={
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 14 }}>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.label }}>
                   {q ? 'No emoji found' : 'Your recent emoji show up here'}
                 </Text>
               </View>
@@ -1369,7 +1369,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 10, gap: 2, alignItems: 'center' }} style={{ borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, paddingTop: 8 }}>
               {tabs.map(t => (
                 <Pressable key={t.id} onPress={() => setCategory(t.id)} style={{ paddingHorizontal: 9, paddingVertical: 6, borderRadius: 11, backgroundColor: category === t.id ? colors.accentMuted : 'transparent' }}>
-                  <Text style={{ fontSize: 20 }}>{t.icon}</Text>
+                  <Text style={{ fontSize: fontSizes.title }}>{t.icon}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -1388,7 +1388,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
   onSelect: (recipientId: string, displayName: string) => void;
   onClose: () => void;
 }) {
-  const { colors, reduceAnimations } = useTheme();
+  const { colors, reduceAnimations, fontSizes } = useTheme();
   const insets = useSafeAreaInsets();
   const { data: conversations = [] } = useRemoteConversations();
   const targets = conversations.filter(c => c.id !== currentConversationId && !c.archived && !c.isGroup && c.otherUserId);
@@ -1416,11 +1416,11 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
         <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 6 }}>
           <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
         </View>
-        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', paddingHorizontal: 20, paddingBottom: 10 }}>
+        <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '800', paddingHorizontal: 20, paddingBottom: 10 }}>
           {ttx("Forward to…")}
         </Text>
         {targets.length === 0 ? (
-          <Text style={{ color: colors.textMuted, fontSize: 14, paddingHorizontal: 20, paddingVertical: 18 }}>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, paddingHorizontal: 20, paddingVertical: 18 }}>
             {ttx("No other conversations yet.")}
           </Text>
         ) : (
@@ -1448,7 +1448,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
                     {item.otherDisplayName}
                   </Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }} numberOfLines={1}>
                     @{item.otherUsername}
                   </Text>
                 </View>
@@ -1488,7 +1488,7 @@ function MessageActionSheet({
   onSmartReply: () => void;
   onReport: () => void;
 }) {
-  const { colors, reduceAnimations, radius } = useTheme();
+  const { colors, reduceAnimations, radius, fontSizes } = useTheme();
   const insets = useSafeAreaInsets();
   if (!message) return null;
 
@@ -1712,7 +1712,7 @@ function MessageActionSheet({
                 }
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>
+                <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '900' }} numberOfLines={1}>
                   {ttx("Message actions")}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={1}>
@@ -1800,7 +1800,7 @@ function MessageActionSheet({
                     <Waveform color={colors.accent} size={18} weight="fill" />
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={{ color: colors.accent, fontSize: 13.5, fontWeight: '900' }} numberOfLines={1}>{ttx("Echo reply")}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{ttx("Draft in context")}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{ttx("Draft in context")}</Text>
                     </View>
                   </Pressable>
                 ) : null}
@@ -1825,7 +1825,7 @@ function MessageActionSheet({
                   <Translate color={colors.accent} size={18} weight="bold" />
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '900' }} numberOfLines={1}>{ttx("Translate")}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{ttx("Inline helper")}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{ttx("Inline helper")}</Text>
                   </View>
                 </Pressable>
               </View>
@@ -1915,7 +1915,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const readReceipts = useAppStore(s => s.readReceipts);
   const autoReadMessages = useAppStore(s => s.autoReadMessages);
-  const { colors, radius, isUserOnline, reduceAnimations, font } = useTheme();
+  const { colors, radius, isUserOnline, reduceAnimations, font, fontSizes } = useTheme();
 
   const [text, setText] = useState(() => id ? persistGet<string>('chat:draft:' + id, '') : '');
   const [sharedPending, setSharedPending] = useState(Boolean(echoId));
@@ -2862,10 +2862,10 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         ListEmptyComponent={searchTerm ? (
           <View style={{ alignItems: 'center', paddingVertical: 42, paddingHorizontal: 24 }}>
             <MagnifyingGlass color={colors.textMuted} size={28} />
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12 }}>
+            <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700', marginTop: 12 }}>
               {ttx("No messages found")}
             </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 5 }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, textAlign: 'center', marginTop: 5 }}>
               {ttx("Try a different word, link, contact, or photo search.")}
             </Text>
           </View>
@@ -2882,7 +2882,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             <Text style={{ color: colors.text, ...font.displayBlack, fontSize: 23, textAlign: 'center', letterSpacing: -0.3 }}>
               {conversation.isGroup ? conversation.displayName : `Say hi to ${conversation.displayName}`}
             </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21, textAlign: 'center', maxWidth: 300 }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, lineHeight: 21, textAlign: 'center', maxWidth: 300 }}>
               {conversation.isGroup
                 ? 'This is the start of the group. Send something to get it going.'
                 : 'The start of your conversation. Send the first message, Echo can help you find the words.'}
@@ -3004,7 +3004,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
 
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }} numberOfLines={1}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }} numberOfLines={1}>
                 {(convPrefs && conversation.userId ? convPrefs.nicknames[conversation.userId] : undefined) || conversation.displayName}
               </Text>
               {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
@@ -3022,7 +3022,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             </View>
             <Text style={{
               color: partnerIsTyping ? colors.accent : online ? colors.success : colors.textMuted,
-              fontSize: 12,
+              fontSize: fontSizes.meta,
               fontWeight: partnerIsTyping ? '600' : '400',
             }}>
               {conversation.isGroup
@@ -3069,7 +3069,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               style={{ flex: 1, color: colors.text, fontSize: 15, paddingVertical: 9 }}
             />
             {searchTerm ? (
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700' }}>
                 {searchMatchCount}
               </Text>
             ) : null}
@@ -3098,7 +3098,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           }}
         >
           <Waveform color={colors.accent} size={14} weight="fill" />
-          <Text style={{ color: colors.textSecondary, fontSize: 13, flex: 1 }} numberOfLines={1}>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, flex: 1 }} numberOfLines={1}>
             <Text style={{ fontWeight: '700', color: colors.text }}>{ttx("Echo:")} </Text>
             {echoTitle}
           </Text>
@@ -3164,7 +3164,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               ? <PencilSimple color={colors.accent} size={15} weight="fill" />
               : <ArrowBendUpLeft color={colors.accent} size={15} weight="fill" />
             }
-            <Text style={{ flex: 1, color: colors.textSecondary, fontSize: 13 }} numberOfLines={1}>
+            <Text style={{ flex: 1, color: colors.textSecondary, fontSize: fontSizes.small }} numberOfLines={1}>
               {editingMessage ? 'Editing message' : (replyingTo?.content?.slice(0, 60) ?? 'Message')}
             </Text>
             <Pressable onPress={cancelComposerExtra} hitSlop={10}>
@@ -3185,8 +3185,8 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                 >
                   <Avatar name={mem.displayName} color={mem.avatarColor} url={mem.avatarUrl ?? undefined} size={32} />
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>{mem.displayName}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>@{mem.username}</Text>
+                    <Text style={{ color: colors.text, fontSize: fontSizes.label, fontWeight: '700' }} numberOfLines={1}>{mem.displayName}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }} numberOfLines={1}>@{mem.username}</Text>
                   </View>
                   {mem.role === 'admin' && <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800' }}>{ttx("ADMIN")}</Text>}
                 </Pressable>
@@ -3221,7 +3221,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                     {busy
                       ? <ActivityIndicator size="small" color={colors.accent} />
                       : <Waveform color={colors.textMuted} size={12} weight="fill" />}
-                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600' }} numberOfLines={1}>{t.label}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: fontSizes.meta, fontWeight: '600' }} numberOfLines={1}>{t.label}</Text>
                   </AnimatedPressable>
                 );
               })}
@@ -3260,7 +3260,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                     }
                     <Text style={{
                       color: quickAction === key ? colors.accent : colors.textSecondary,
-                      fontSize: 12, fontWeight: '600',
+                      fontSize: fontSizes.meta, fontWeight: '600',
                     }} numberOfLines={1}>
                       {busy ? 'Echo…' : label}
                     </Text>
@@ -3366,7 +3366,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                 <Text style={{ color: colors.text, fontSize: 15, fontVariant: ['tabular-nums'], fontWeight: '600' }}>
                   {Math.floor(recordSec / 60)}:{String(recordSec % 60).padStart(2, '0')}
                 </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13, flex: 1 }} numberOfLines={1}>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, flex: 1 }} numberOfLines={1}>
                   {ttx("Recording voice message…")}
                 </Text>
               </View>
@@ -3580,7 +3580,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 14, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 14 }}>
               <PaintBrush color={colors.accent} size={16} weight="bold" />
-              <Text style={{ color: colors.text, fontSize: 16, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Chat wallpaper")}</Text>
+              <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Chat wallpaper")}</Text>
               <Pressable onPress={() => setShowWallpaper(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16 }}>
@@ -3623,7 +3623,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, maxHeight: '70%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
               <BookmarkSimple color={colors.accent} size={16} weight="fill" />
-              <Text style={{ color: colors.text, fontSize: 16, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Saved messages")}</Text>
+              <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Saved messages")}</Text>
               <Pressable onPress={() => setShowSaved(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
             <FlashList 
@@ -3634,8 +3634,8 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               renderItem={({ item }) => (
                 <View style={{ paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, flexDirection: 'row', gap: 10 }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 3 }}>{item.fromName}</Text>
-                    <Text style={{ color: colors.text, fontSize: 14, lineHeight: 20 }}>{item.content}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', marginBottom: 3 }}>{item.fromName}</Text>
+                    <Text style={{ color: colors.text, fontSize: fontSizes.label, lineHeight: 20 }}>{item.content}</Text>
                   </View>
                   <Pressable
                     onPress={() => setSavedMsgs(prev => { const next = prev.filter(s => s.id !== item.id); persistSet('chat:savedMessages', next); return next; })}
@@ -3671,7 +3671,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             {catchupLoading && !catchup ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }}>
                 <ActivityIndicator size="small" color={colors.accent} />
-                <Text style={{ color: colors.textMuted, fontSize: 14 }}>{ttx("Reading your unread messages…")}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.label }}>{ttx("Reading your unread messages…")}</Text>
               </View>
             ) : (
               <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 23 }}>{catchup}</Text>
@@ -3703,12 +3703,12 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               <Hourglass color={colors.accent} size={24} weight="bold" />
               <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>Time Capsule</Text>
             </View>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, textAlign: 'center', marginBottom: 20 }}>
               Write a message that will remain locked until the future date you choose.
             </Text>
             
             <RNTextInput
-              style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', color: colors.text, padding: 16, borderRadius: 16, fontSize: 16, minHeight: 100, marginBottom: 20 }}
+              style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', color: colors.text, padding: 16, borderRadius: 16, fontSize: fontSizes.body, minHeight: 100, marginBottom: 20 }}
               placeholder="What do you want to say to the future?"
               placeholderTextColor={colors.textMuted}
               multiline
@@ -3726,7 +3726,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                     backgroundColor: capsuleDurationDays === days ? colors.accent : colors.surfaceHover
                   }}
                 >
-                  <Text style={{ color: capsuleDurationDays === days ? colors.onAccent : colors.text, fontWeight: '700', fontSize: 13 }}>
+                  <Text style={{ color: capsuleDurationDays === days ? colors.onAccent : colors.text, fontWeight: '700', fontSize: fontSizes.small }}>
                     {days === 1 ? '1 day' : days === 7 ? '1 week' : days === 30 ? '1 month' : '1 year'}
                   </Text>
                 </Pressable>

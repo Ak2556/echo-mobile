@@ -184,7 +184,7 @@ function NoteEditor({
   onSave: (n: Note) => void;
   onClose: () => void;
 }) {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const isNew = !note;
@@ -256,7 +256,7 @@ function NoteEditor({
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: insets.top + 8, paddingBottom: 10 }}>
             <Pressable onPress={() => { save(); onClose(); }} hitSlop={10} accessibilityRole="button" accessibilityLabel={tt('Done')}>
               <View style={{ paddingVertical: 6, paddingRight: 8 }}>
-                <Text style={[font.bodyBold, { color: colors.accent, fontSize: 16 }]}>{tt('Done')}</Text>
+                <Text style={[font.bodyBold, { color: colors.accent, fontSize: fontSizes.body }]}>{tt('Done')}</Text>
               </View>
             </Pressable>
             <View style={{ flex: 1 }} />
@@ -291,13 +291,13 @@ function NoteEditor({
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 6, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
             {showTemplates ? (
               <View style={{ marginBottom: 14 }}>
-                <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: 12, marginBottom: 8 }]}>{tt('Start from')}</Text>
+                <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: fontSizes.meta, marginBottom: 8 }]}>{tt('Start from')}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                   {TEMPLATES.filter(t => t.id !== 'blank').map(template => (
                     <Pressable key={template.id} onPress={() => applyNoteTemplate(template)} accessibilityRole="button" accessibilityLabel={tt(template.label)}>
                       <View style={[pill, { backgroundColor: `${template.color}1F` }]}>
                         {TEMPLATE_ICONS[template.id]?.(template.color)}
-                        <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{tt(template.label)}</Text>
+                        <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small }]}>{tt(template.label)}</Text>
                       </View>
                     </Pressable>
                   ))}
@@ -310,7 +310,7 @@ function NoteEditor({
               onChangeText={setTitle}
               placeholder={tt('Title')}
               placeholderTextColor={colors.textMuted}
-              style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 34, padding: 0 }]}
+              style={[font.display, { color: colors.text, fontSize: fontSizes.heading, lineHeight: 34, padding: 0 }]}
               multiline
             />
 
@@ -323,7 +323,7 @@ function NoteEditor({
                   placeholder={tt('Inbox')}
                   placeholderTextColor={colors.textMuted}
                   accessibilityLabel={tt('Folder')}
-                  style={[font.body, { color: colors.textSecondary, fontSize: 13, padding: 0, minWidth: 48 }]}
+                  style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.small, padding: 0, minWidth: 48 }]}
                 />
               </View>
               <View style={[pill, { flex: 1 }]}>
@@ -335,7 +335,7 @@ function NoteEditor({
                   placeholderTextColor={colors.textMuted}
                   autoCapitalize="none"
                   accessibilityLabel={tt('Tags')}
-                  style={[font.body, { flex: 1, color: colors.textSecondary, fontSize: 13, padding: 0 }]}
+                  style={[font.body, { flex: 1, color: colors.textSecondary, fontSize: fontSizes.small, padding: 0 }]}
                 />
               </View>
             </View>
@@ -378,7 +378,7 @@ function NoteEditor({
 }
 
 function NoteCard({ note, onOpen, onMore }: { note: Note; onOpen: () => void; onMore: () => void }) {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const { tt } = useI18n();
   const stats = checklistStats(note.body);
   const progress = stats.total ? stats.done / stats.total : 0;
@@ -417,7 +417,7 @@ function NoteCard({ note, onOpen, onMore }: { note: Note; onOpen: () => void; on
           </View>
 
           {preview ? (
-            <Text style={[font.body, { color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 4, paddingRight: 14 }]} numberOfLines={3}>
+            <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.label, lineHeight: 20, marginTop: 4, paddingRight: 14 }]} numberOfLines={3}>
               {preview}
             </Text>
           ) : null}
@@ -431,7 +431,7 @@ function NoteCard({ note, onOpen, onMore }: { note: Note; onOpen: () => void; on
             </View>
           ) : null}
 
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 8, paddingRight: 14 }]} numberOfLines={1}>{meta}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 8, paddingRight: 14 }]} numberOfLines={1}>{meta}</Text>
         </View>
       </View>
     </Pressable>
@@ -439,7 +439,7 @@ function NoteCard({ note, onOpen, onMore }: { note: Note; onOpen: () => void; on
 }
 
 export default function NotesApp() {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const { tt } = useI18n();
   const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
@@ -623,8 +623,8 @@ export default function NotesApp() {
             }}
           >
             {TEMPLATE_ICONS[template.id]?.(template.id === 'blank' ? colors.textSecondary : template.color)}
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, marginTop: 9 }]}>{tt(template.label)}</Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label, marginTop: 9 }]}>{tt(template.label)}</Text>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }]} numberOfLines={1}>
               {tt(template.folder)}
             </Text>
           </AnimatedPressable>
@@ -665,7 +665,7 @@ export default function NotesApp() {
           return (
             <Pressable key={f.id} onPress={() => setView(f.id)} accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={tt(f.label)}>
               <View style={{ height: 34, paddingHorizontal: 14, borderRadius: radius.full, justifyContent: 'center', backgroundColor: active ? colors.text : colors.surface }}>
-                <Text style={[font.bodyBold, { color: active ? colors.bg : colors.textSecondary, fontSize: 13 }]}>
+                <Text style={[font.bodyBold, { color: active ? colors.bg : colors.textSecondary, fontSize: fontSizes.small }]}>
                   {tt(f.label)}{f.count ? ` ${f.count}` : ''}
                 </Text>
               </View>
@@ -704,7 +704,7 @@ export default function NotesApp() {
           {sections.map(section => (
             <View key={section.key} style={{ gap: 10 }}>
               {section.label ? (
-                <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', marginLeft: 4 }]}>{section.label}</Text>
+                <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: 0.6, textTransform: 'uppercase', marginLeft: 4 }]}>{section.label}</Text>
               ) : null}
               {section.notes.map((note, i) => (
                 <Animated.View key={note.id} entering={FadeInDown.delay(Math.min(i * 30, 180)).duration(200)}>

@@ -20,7 +20,7 @@ import { useUserRefresh } from '../../hooks/useUserRefresh';
 // behind them is the theme background (white in light mode).
 function FlowSortTabs({ sort, onChange, top, overVideo }: { sort: FlowSort; onChange: (s: FlowSort) => void; top: number; overVideo: boolean }) {
   const { t } = useI18n();
-  const { font, colors } = useTheme();
+  const { font, colors, fontSizes } = useTheme();
   const on = overVideo ? ON_MEDIA : colors.text;
   const off = overVideo ? 'rgba(255,255,255,0.6)' : colors.textMuted;
   const tabs: { key: FlowSort; label: string }[] = [
@@ -45,7 +45,7 @@ function FlowSortTabs({ sort, onChange, top, overVideo }: { sort: FlowSort; onCh
                 <Text
                   style={[font.bodySemibold, {
                     color: active ? on : off,
-                    fontSize: 16,
+                    fontSize: fontSizes.body,
                     textShadowColor: overVideo ? 'rgba(0,0,0,0.5)' : 'transparent',
                     textShadowRadius: 6,
                     textShadowOffset: { width: 0, height: 1 },

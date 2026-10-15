@@ -13,7 +13,7 @@ import { canSaveToGallery, canTrimVideo, mediaErrorMessage, saveToGallery } from
 import { WARM, BRAND } from '../../lib/ui/fixedColors';
 
 export default function EditorApp() {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const [editingPhotoUri, setEditingPhotoUri] = useState<string | null>(null);
   const [trimmingVideoUri, setTrimmingVideoUri] = useState<string | null>(null);
 
@@ -88,7 +88,7 @@ export default function EditorApp() {
         <View style={{ alignItems: 'center', marginBottom: 24 }}>
           <SlidersHorizontal size={48} color={colors.accent} weight="duotone" />
           <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: 24, color: colors.text, marginTop: 16 }}>Full Scale Editor</Text>
-          <Text style={{ fontFamily: font.body.fontFamily, fontSize: 14, color: colors.textMuted, textAlign: 'center', marginTop: 8 }}>
+          <Text style={{ fontFamily: font.body.fontFamily, fontSize: fontSizes.label, color: colors.textMuted, textAlign: 'center', marginTop: 8 }}>
             Pro-grade image color adjustments and native video trimming suite.
           </Text>
         </View>
@@ -98,8 +98,8 @@ export default function EditorApp() {
             <ImageSquare size={24} color={BRAND.ember} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: 16, color: colors.text }}>Edit Photo</Text>
-            <Text style={{ fontFamily: font.body.fontFamily, fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Color grading, crop, and filters</Text>
+            <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>Edit Photo</Text>
+            <Text style={{ fontFamily: font.body.fontFamily, fontSize: fontSizes.small, color: colors.textMuted, marginTop: 2 }}>Color grading, crop, and filters</Text>
           </View>
         </Pressable>
 
@@ -108,8 +108,8 @@ export default function EditorApp() {
             <VideoCamera size={24} color={WARM.sage} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: 16, color: colors.text }}>Edit Video</Text>
-            <Text style={{ fontFamily: font.body.fontFamily, fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Trim, crop, and apply native effects</Text>
+            <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>Edit Video</Text>
+            <Text style={{ fontFamily: font.body.fontFamily, fontSize: fontSizes.small, color: colors.textMuted, marginTop: 2 }}>Trim, crop, and apply native effects</Text>
           </View>
         </Pressable>
       </View>

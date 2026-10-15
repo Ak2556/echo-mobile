@@ -72,7 +72,7 @@ const SENSITIVE_TAGS = new Set(['nsfw', 'adult', 'explicit', 'mature', '18+', '1
 const VOICE_VIEWABILITY = { itemVisiblePercentThreshold: 60 };
 
 function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: React.ReactNode }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
   return (
     <View
@@ -85,9 +85,9 @@ function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: Rea
         gap: 8,
       }}
     >
-      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{label}</Text>
+      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{label}</Text>
       {sub && (
-        <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>
+        <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta }]}>
           · {sub}
         </Text>
       )}
@@ -169,7 +169,7 @@ function HomeHero({
  * stays stable across re-renders and restarts.
  */
 function DailyThought() {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
   const interests = useAppStore(s => s.interests);
@@ -222,7 +222,7 @@ function DailyThought() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <Waveform color={colors.accent} size={14} weight="fill" />
-              <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase' }]}>
+              <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption, letterSpacing: 1.3, textTransform: 'uppercase' }]}>
                 {t('home.thoughtForToday')}
               </Text>
             </View>
@@ -673,7 +673,7 @@ export default function DiscoverScreen() {
                 <Text style={[font.display, { color: ON_MEDIA, fontSize: 18, lineHeight: 24 }]}>
                   {t('home.todayQuestion')}
                 </Text>
-                <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, ...font.bodyMedium }}>
+                <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.meta, marginTop: 2, ...font.bodyMedium }}>
                   {t('home.tapToAnswer')}
                 </Text>
               </View>
@@ -850,7 +850,7 @@ export default function DiscoverScreen() {
               always on screen, and it used to be the word alone. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 2 }}>
             <EchoWordmark height={22} />
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5 }]}>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: fontSizes.heading, letterSpacing: -0.5 }]}>
               Echo
             </Text>
           </View>
@@ -879,7 +879,7 @@ export default function DiscoverScreen() {
 
 function EvolvingNowRail({ items }: { items: EvolutionGroup[] }) {
   const router = useRouter();
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
 
   return (
@@ -909,14 +909,14 @@ function EvolvingNowRail({ items }: { items: EvolutionGroup[] }) {
               <View style={{ padding: 15 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 9 }}>
                   <GitBranch color={colors.accent} size={14} weight="fill" />
-                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.meta }]}>
                     {item.branchCount} {item.branchCount === 1 ? 'perspective' : 'perspectives'}
                   </Text>
                 </View>
-                <Text style={[font.display, { color: colors.text, fontSize: 16, lineHeight: 21 }]} numberOfLines={2}>
+                <Text style={[font.display, { color: colors.text, fontSize: fontSizes.body, lineHeight: 21 }]} numberOfLines={2}>
                   {item.rootTitle || item.rootPrompt}
                 </Text>
-                <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12, marginTop: 9 }]} numberOfLines={1}>
+                <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 9 }]} numberOfLines={1}>
                   {summary || `${item.uniqueAuthors} people are adding angles`}
                 </Text>
               </View>

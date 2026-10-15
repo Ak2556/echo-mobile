@@ -177,7 +177,7 @@ export default function ListingDetailScreen() {
           {/* Price + status */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <View style={{ flex: 1, gap: 4 }}>
-              <Text style={{ color: colors.text, fontSize: 28, ...font.bodyBold, lineHeight: 34 }}>
+              <Text style={{ color: colors.text, fontSize: fontSizes.heading, ...font.bodyBold, lineHeight: 34 }}>
                 {formatPrice(listing.price, listing.currency)}
               </Text>
               {listing.status === 'sold' && (
@@ -188,7 +188,7 @@ export default function ListingDetailScreen() {
                   paddingHorizontal: 8,
                   paddingVertical: 3,
                 }}>
-                  <Text style={{ color: colors.danger, fontSize: 12, ...font.bodySemibold }}>{ttx("SOLD")}</Text>
+                  <Text style={{ color: colors.danger, fontSize: fontSizes.meta, ...font.bodySemibold }}>{ttx("SOLD")}</Text>
                 </View>
               )}
             </View>
@@ -199,7 +199,7 @@ export default function ListingDetailScreen() {
               paddingHorizontal: 10,
               paddingVertical: 5,
             }}>
-              <Text style={{ color: condColor, fontSize: 13, ...font.bodySemibold }}>
+              <Text style={{ color: condColor, fontSize: fontSizes.small, ...font.bodySemibold }}>
                 {listing.condition}
               </Text>
             </View>

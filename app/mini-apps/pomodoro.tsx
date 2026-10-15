@@ -120,7 +120,7 @@ function SettingsSheet({ settings, onSave, onClose }: {
   onSave: (s: PomodoroSettings) => void;
   onClose: () => void;
 }) {
-  const { colors, switchTrack, radius } = useTheme();
+  const { colors, switchTrack, radius, fontSizes } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const [s, setS] = useState(settings);
@@ -142,7 +142,7 @@ function SettingsSheet({ settings, onSave, onClose }: {
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600' }}>{tt('Auto-start breaks')}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{tt('Break timer starts the moment focus ends')}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }}>{tt('Break timer starts the moment focus ends')}</Text>
             </View>
             <Switch value={s.autoStartBreaks} onValueChange={v => setS({ ...s, autoStartBreaks: v })} trackColor={switchTrack} />
           </View>
@@ -151,7 +151,7 @@ function SettingsSheet({ settings, onSave, onClose }: {
             scaleValue={0.96} haptic="medium"
             style={{ backgroundColor: accent, borderRadius: radius.card, paddingVertical: 16, alignItems: 'center', marginTop: 12 }}
           >
-            <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{tt('Save Settings')}</Text>
+            <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: fontSizes.body }}>{tt('Save Settings')}</Text>
           </AnimatedPressable>
         </ScrollView>
       </View>
@@ -160,7 +160,7 @@ function SettingsSheet({ settings, onSave, onClose }: {
 }
 
 function StageRail({ mode, elapsedRatio, accent }: { mode: Mode; elapsedRatio: number; accent: string }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const { tt } = useI18n();
   const stages = mode === 'focus'
     ? ['Settle', 'Build', 'Push', 'Ship']
@@ -186,7 +186,7 @@ function StageRail({ mode, elapsedRatio, accent }: { mode: Mode; elapsedRatio: n
               borderColor: active ? `${accent}66` : colors.glassBorder,
             }}
           >
-            <Text style={{ color: active ? accent : colors.textMuted, fontSize: 11, fontWeight: '900' }} numberOfLines={1}>
+            <Text style={{ color: active ? accent : colors.textMuted, fontSize: fontSizes.caption, fontWeight: '900' }} numberOfLines={1}>
               {tt(stage)}
             </Text>
           </View>
@@ -205,7 +205,7 @@ function FocusPresetRail({
   accent: string;
   onSelect: (minutes: number) => void;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const { tt } = useI18n();
   return (
     <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
@@ -230,7 +230,7 @@ function FocusPresetRail({
               borderColor: selected ? `${accent}AA` : colors.glassBorder,
             }}
           >
-            <Text numberOfLines={1} style={{ color: selected ? colors.bgPure : colors.text, fontSize: 13, fontWeight: '800', textAlign: 'center' }}>
+            <Text numberOfLines={1} style={{ color: selected ? colors.bgPure : colors.text, fontSize: fontSizes.small, fontWeight: '800', textAlign: 'center' }}>
               {minutes}m · {tt(presetName(minutes))}
             </Text>
           </AnimatedPressable>
@@ -305,7 +305,7 @@ function FocusGarden({
   elapsedRatio: number;
   running: boolean;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const { tt } = useI18n();
   const growth = Math.min(1, (stats.count + (running ? elapsedRatio : 0)) / Math.max(stats.goal, 1));
   const leafCount = Math.min(10, Math.max(2, Math.floor(growth * 8) + Math.min(2, streak)));
@@ -365,8 +365,8 @@ function FocusGarden({
         </View>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', flex: 1 }}>{tt('Focus tree')}</Text>
-            <Text style={{ color: accent, fontSize: 12, fontWeight: '900', textTransform: 'uppercase' }}>
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '900', flex: 1 }}>{tt('Focus tree')}</Text>
+            <Text style={{ color: accent, fontSize: fontSizes.meta, fontWeight: '900', textTransform: 'uppercase' }}>
               {forestCount > 0 ? `${tt('Forest')} ${forestCount}` : tt(stage)}
             </Text>
           </View>
@@ -550,7 +550,7 @@ function FocusMomentumStrip({
 }
 
 export default function PomodoroScreen() {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const { tt } = useI18n();
   const layout = useResponsiveLayout();
 
@@ -951,7 +951,7 @@ export default function PomodoroScreen() {
             style={{ flex: 1 }}
           >
             <View style={{ paddingVertical: 12, borderRadius: radius.md, alignItems: 'center', backgroundColor: mode === m ? modeColor(m, colors) : 'transparent' }}>
-              <Text style={{ color: mode === m ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: 13 }}>
+              <Text style={{ color: mode === m ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: fontSizes.small }}>
                 {tt(MODE_META[m].label.split(' ')[0])} · {m === 'focus' && draftTotalSecs ? Math.round(draftTotalSecs / 60) : minutesFor(m)}m
               </Text>
             </View>
@@ -1063,7 +1063,7 @@ export default function PomodoroScreen() {
             {mins}:{secs}
           </Text>
           <View style={{ paddingHorizontal: 14, paddingVertical: 5, backgroundColor: accent + '22', borderRadius: 20, borderWidth: 1, borderColor: accent + '44', marginTop: 8 }}>
-            <Text style={{ color: accent, fontSize: 12, fontWeight: '700' }}>
+            <Text style={{ color: accent, fontSize: fontSizes.meta, fontWeight: '700' }}>
               {running ? `${tt(phase)} · ${pct}% ${tt('done')}` : pct === 0 ? tt('Ready') : `${tt('Paused')} · ${tt(phase)}`}
             </Text>
           </View>
@@ -1146,8 +1146,8 @@ export default function PomodoroScreen() {
       {/* Week chart */}
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{tt('LAST 7 DAYS')}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 11 }}>{stats.minutes} {tt('focus min today')}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1 }}>{tt('LAST 7 DAYS')}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{stats.minutes} {tt('focus min today')}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 64 }}>
           {bars.map((b, i) => (
@@ -1168,7 +1168,7 @@ export default function PomodoroScreen() {
       {todaySessions.length > 0 && (
         <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ overflow: 'hidden' }} style={{ marginTop: 14 }}>
           <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{tt('TODAY')}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1 }}>{tt('TODAY')}</Text>
           </View>
           {todaySessions.slice(0, 10).map((s, i, arr) => (
             <View key={s.id} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: i < arr.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>

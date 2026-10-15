@@ -31,7 +31,7 @@ function colorize(json: string): { text: string; color: string }[] {
 }
 
 export default function JsonFormatterScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const accent = colors.accent;
 
   const [input, setInput] = useState('');
@@ -60,14 +60,14 @@ export default function JsonFormatterScreen() {
         style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.md, backgroundColor: colors.inputBg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, flexDirection: 'row', alignItems: 'center', gap: 5 }}
       >
         {viewMode === 'formatted' ? <CornersIn color={colors.textMuted} size={15} weight="bold" /> : <CornersOut color={colors.textMuted} size={15} weight="bold" />}
-        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>{viewMode === 'formatted' ? 'Minify' : 'Format'}</Text>
+        <Text style={{ color: colors.text, fontSize: fontSizes.meta, fontWeight: '600' }}>{viewMode === 'formatted' ? 'Minify' : 'Format'}</Text>
       </Pressable>
       <Pressable
         onPress={copy}
         style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.md, backgroundColor: copied ? colors.success : accent, flexDirection: 'row', alignItems: 'center', gap: 5 }}
       >
         {copied ? <Check color={colors.bgPure} size={15} weight="bold" /> : <Copy color={colors.bgPure} size={15} weight="bold" />}
-        <Text style={{ color: colors.bgPure, fontSize: 12, fontWeight: '600' }}>{copied ? 'Done!' : 'Copy'}</Text>
+        <Text style={{ color: colors.bgPure, fontSize: fontSizes.meta, fontWeight: '600' }}>{copied ? 'Done!' : 'Copy'}</Text>
       </Pressable>
     </View>
   ) : undefined;
@@ -91,10 +91,10 @@ export default function JsonFormatterScreen() {
         {/* Input */}
         <View style={{ marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("PASTE JSON")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1 }}>{ttx("PASTE JSON")}</Text>
             <Pressable onPress={() => { setInput(''); setError(''); setParsed(null); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Trash color={colors.textMuted} size={14} weight="bold" />
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Clear")}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Clear")}</Text>
             </Pressable>
           </View>
           <TextInput
@@ -106,20 +106,20 @@ export default function JsonFormatterScreen() {
             style={{
               backgroundColor: colors.inputBg, borderRadius: radius.card, borderWidth: 1.5,
               borderColor: error ? colors.danger : parsed ? colors.success : colors.glassBorder,
-              padding: 16, color: colors.text, fontSize: 13, fontFamily: 'monospace',
+              padding: 16, color: colors.text, fontSize: fontSizes.small, fontFamily: 'monospace',
               height: 160, textAlignVertical: 'top', lineHeight: 20,
             }}
           />
           {error ? (
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 8, padding: 12, backgroundColor: colors.danger + '18', borderRadius: radius.md, borderWidth: 1, borderColor: colors.danger + '33' }}>
               <Warning color={colors.danger} size={16} weight="fill" />
-              <Text style={{ color: colors.danger, fontSize: 13, flex: 1, fontFamily: 'monospace' }}>{error}</Text>
+              <Text style={{ color: colors.danger, fontSize: fontSizes.small, flex: 1, fontFamily: 'monospace' }}>{error}</Text>
             </View>
           ) : parsed ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
               <CheckCircle color={colors.success} size={16} weight="fill" />
-              <Text style={{ color: colors.success, fontSize: 13, fontWeight: '600' }}>{ttx("Valid JSON")}</Text>
-              {stats && <Text style={{ color: colors.textMuted, fontSize: 13 }}>· {stats.keys} {ttx("keys ·")} {stats.size}</Text>}
+              <Text style={{ color: colors.success, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Valid JSON")}</Text>
+              {stats && <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>· {stats.keys} {ttx("keys ·")} {stats.size}</Text>}
             </View>
           ) : null}
         </View>
@@ -127,10 +127,10 @@ export default function JsonFormatterScreen() {
         {/* Output */}
         {output ? (
           <View style={{ marginBottom: 14 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("OUTPUT")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("OUTPUT")}</Text>
             <GlassPanel variant="medium" borderRadius={radius.card}>
               <ScrollView style={{ maxHeight: 360, backgroundColor: colors.inputBg, borderRadius: radius.card }} contentContainerStyle={{ padding: 16 }} nestedScrollEnabled>
-                <Text style={{ fontFamily: 'monospace', fontSize: 13, lineHeight: 22 }}>
+                <Text style={{ fontFamily: 'monospace', fontSize: fontSizes.small, lineHeight: 22 }}>
                   {tokens.map((t, i) => <Text key={i} style={{ color: t.color }}>{t.text}</Text>)}
                 </Text>
               </ScrollView>

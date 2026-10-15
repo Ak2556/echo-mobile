@@ -21,7 +21,7 @@ const TIER_COLOR: Record<Badge['tier'], string> = {
 };
 
 function BadgesScreenInner() {
-  const { colors } = useTheme();
+  const { colors, fontSizes } = useTheme();
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,7 +43,7 @@ function BadgesScreenInner() {
     <ResponsiveScreen>
       <ScreenHeader
         title={ttx("Badges")}
-        right={<Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginRight: 10 }}>{earned.length}/{badges.length}</Text>}
+        right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', marginRight: 10 }}>{earned.length}/{badges.length}</Text>}
       />
 
       {loading ? (
@@ -52,7 +52,7 @@ function BadgesScreenInner() {
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
           {earned.length > 0 && (
             <>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginLeft: 4 }}>{ttx("Earned")}</Text>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 10, marginLeft: 4 }}>{ttx("Earned")}</Text>
               {earned.map((b, i) => (
                 <Animated.View key={b.id} entering={FadeInUp.delay(i * 30).duration(220)}>
                   <BadgeCard badge={b} />
@@ -62,7 +62,7 @@ function BadgesScreenInner() {
           )}
           {unearned.length > 0 && (
             <>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginTop: earned.length ? 16 : 0, marginLeft: 4 }}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 10, marginTop: earned.length ? 16 : 0, marginLeft: 4 }}>
                 {ttx("Locked")}
               </Text>
               {unearned.map((b, i) => (
@@ -79,7 +79,7 @@ function BadgesScreenInner() {
 }
 
 function BadgeCard({ badge, locked }: { badge: Badge; locked?: boolean }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const tint = TIER_COLOR[badge.tier];
   return (
     <View
@@ -112,7 +112,7 @@ function BadgeCard({ badge, locked }: { badge: Badge; locked?: boolean }) {
             <Text style={{ color: tint, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 }}>{badge.tier.toUpperCase()}</Text>
           </View>
         </View>
-        <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 17 }}>
+        <Text style={{ color: colors.textSecondary, fontSize: fontSizes.meta, lineHeight: 17 }}>
           {badge.description}
         </Text>
       </View>

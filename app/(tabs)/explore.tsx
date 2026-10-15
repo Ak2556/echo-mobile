@@ -502,7 +502,7 @@ function TopicTile({
   Icon: React.ComponentType<any>;
   onPress: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   return (
     <Pressable onPress={onPress} style={{ width }}>
       {/* A background and a border: the tile used to be a tint fading to
@@ -536,10 +536,10 @@ function TopicTile({
           <Icon color={color} size={19} weight="bold" />
         </View>
         <View style={{ marginTop: 14 }}>
-          <Text style={[font.display, { color: colors.text, fontSize: 16 }]} numberOfLines={1}>
+          <Text style={[font.display, { color: colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>
             {label}
           </Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 3 }]}>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 3 }]}>
             {count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : 'Start exploring'}
           </Text>
         </View>
@@ -550,15 +550,15 @@ function TopicTile({
 
 
 function SectionHeader({ label, actionLabel, onAction }: { label: string; actionLabel?: string; onAction?: () => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   return (
     <View style={{ paddingHorizontal: 16, marginTop: 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center' }}>
-      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }]}>
+      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }]}>
         {label}
       </Text>
       {actionLabel && onAction ? (
         <Pressable onPress={onAction} hitSlop={8}>
-          <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>
+          <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.meta }]}>
             {actionLabel}
           </Text>
         </Pressable>
@@ -577,7 +577,7 @@ function ResultSection({ label, children }: { label: string; children: React.Rea
 }
 
 function ActionRow({ icon, title, subtitle, onPress }: { icon: React.ReactNode; title: string; subtitle: string; onPress: () => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   return (
     <AnimatedPressable onPress={onPress}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
@@ -585,8 +585,8 @@ function ActionRow({ icon, title, subtitle, onPress }: { icon: React.ReactNode; 
           {icon}
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]} numberOfLines={1}>{title}</Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{subtitle}</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]} numberOfLines={1}>{title}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>{subtitle}</Text>
         </View>
         <CaretRight color={colors.textMuted} size={15} />
       </View>
@@ -595,13 +595,13 @@ function ActionRow({ icon, title, subtitle, onPress }: { icon: React.ReactNode; 
 }
 
 function PillButton({ label, onPress }: { label: string; onPress: () => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   return (
     <AnimatedPressable
       onPress={onPress}
       style={{ paddingHorizontal: 13, paddingVertical: 7, borderRadius: 999, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
     >
-      <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]} numberOfLines={1}>
+      <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.meta }]} numberOfLines={1}>
         {label}
       </Text>
     </AnimatedPressable>
@@ -659,7 +659,7 @@ function ExploreVideoTile({ item, width, height, colors }: { item: any; width: n
 }
 
 function ExploreGridTile({ item, width, onPress }: { item: any; width: number; onPress: () => void }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   
   const isVideo = item.postType === 'video' && !!item.videoUri;
   const isPhoto = !!item.mediaUris?.[0];
@@ -693,11 +693,11 @@ function ExploreGridTile({ item, width, onPress }: { item: any; width: number; o
           <>
             <LinearGradient colors={[`${tint}50`, `${tint}14`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFill as any} pointerEvents="none" />
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 12 }}>
-              <Text style={[font.display, { color: colors.text, fontSize: 14, lineHeight: 19, textAlign: 'center', marginBottom: 4 }]} numberOfLines={isTall ? 3 : 2}>
+              <Text style={[font.display, { color: colors.text, fontSize: fontSizes.label, lineHeight: 19, textAlign: 'center', marginBottom: 4 }]} numberOfLines={isTall ? 3 : 2}>
                 {item.editorialTitle || item.prompt}
               </Text>
               {!!item.response && (
-                <Text style={[font.body, { color: colors.textSecondary, fontSize: 11, lineHeight: 16, textAlign: 'center' }]} numberOfLines={isTall ? 3 : 2}>
+                <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.caption, lineHeight: 16, textAlign: 'center' }]} numberOfLines={isTall ? 3 : 2}>
                   {item.response}
                 </Text>
               )}
@@ -708,11 +708,11 @@ function ExploreGridTile({ item, width, onPress }: { item: any; width: number; o
         <View style={{ position: 'absolute', bottom: 8, left: 8, right: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
             <Avatar name={item.username} url={item.avatarUrl} color={item.avatarColor} size={18} />
-            <Text style={[font.bodySemibold, { color: hasMedia ? ON_MEDIA : colors.text, fontSize: 11 }]} numberOfLines={1}>
+            <Text style={[font.bodySemibold, { color: hasMedia ? ON_MEDIA : colors.text, fontSize: fontSizes.caption }]} numberOfLines={1}>
               {item.username}
             </Text>
           </View>
-          <Text style={[font.bodyBold, { color: mediaUri ? 'rgba(255,255,255,0.85)' : colors.textMuted, fontSize: 11 }]}>
+          <Text style={[font.bodyBold, { color: mediaUri ? 'rgba(255,255,255,0.85)' : colors.textMuted, fontSize: fontSizes.caption }]}>
             {item.likes}
           </Text>
         </View>

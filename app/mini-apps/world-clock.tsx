@@ -51,7 +51,7 @@ function timeOfDay(hour: number) {
 }
 
 export default function WorldClockScreen() {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const accent = colors.accent;
   const [cities, setCities] = useState<WorldClockCity[]>([]);
   const [weather, setWeather] = useState<Record<string, WeatherSnapshot | null>>({});
@@ -165,7 +165,7 @@ export default function WorldClockScreen() {
               <LocationResult key={`${city.id}-${city.timezone}`} city={city} now={now} onAdd={() => addCity(city)} />
             ))}
             {results.length === 0 && !searching ? (
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 18 }]}>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, textAlign: 'center', paddingVertical: 18 }]}>
                 {ttx("No locations found. Try a city, country, or region name.")}
               </Text>
             ) : null}
@@ -224,7 +224,7 @@ function WeatherBadge({ snapshot, fallback }: { snapshot?: WeatherSnapshot | nul
 }
 
 function LocationResult({ city, now, onAdd }: { city: WorldClockCity; now: number; onAdd: () => void }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const clock = getTimeInZone(city.timezone, now);
   return (
     <Pressable onPress={onAdd} accessibilityRole="button" accessibilityLabel={`Add ${city.name}`}>
@@ -234,14 +234,14 @@ function LocationResult({ city, now, onAdd }: { city: WorldClockCity; now: numbe
           <Text style={[font.bodyBold, { color: colors.text, fontSize: 14.5 }]} numberOfLines={1}>{city.name}</Text>
           <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]} numberOfLines={1}>{zoneLabel(city, now)} · {city.timezone}</Text>
         </View>
-        <Text style={[font.display, { color: colors.text, fontSize: 20 }]}>{clock.time.slice(0, 5)}</Text>
+        <Text style={[font.display, { color: colors.text, fontSize: fontSizes.title }]}>{clock.time.slice(0, 5)}</Text>
       </View>
     </Pressable>
   );
 }
 
 function CityCard({ city, now, weather, onRemove }: { city: WorldClockCity; now: number; weather?: WeatherSnapshot | null; onRemove: () => void }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const clock = getTimeInZone(city.timezone, now);
   const day = clock.hour >= 6 && clock.hour < 20;
   const tone = day ? colors.warning : colors.textMuted;
@@ -253,12 +253,12 @@ function CityCard({ city, now, weather, onRemove }: { city: WorldClockCity; now:
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flexShrink: 1 }]} numberOfLines={1}>{city.name}</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.body, flexShrink: 1 }]} numberOfLines={1}>{city.name}</Text>
             <View style={{ borderRadius: radius.full, paddingHorizontal: 7, paddingVertical: 3, backgroundColor: `${tone}18` }}>
               <Text style={{ color: tone, fontSize: 10.2, ...font.bodyBold }}>{timeOfDay(clock.hour)}</Text>
             </View>
           </View>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{clock.date} · {zoneLabel(city, now)}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>{clock.date} · {zoneLabel(city, now)}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 7 }}>
             <WeatherInline snapshot={weather} />
           </View>

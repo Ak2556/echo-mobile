@@ -56,7 +56,7 @@ function ProfileCompletionBanner({
   onDismiss: () => void;
   onPress: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   const done = steps.filter(s => s.done).length;
   const total = steps.length;
   const pct = Math.round((done / total) * 100);
@@ -77,10 +77,10 @@ function ProfileCompletionBanner({
         borderBottomColor: colors.border,
       }}
     >
-      <Text style={[font.bodySemibold, { color: colors.text, fontSize: 13, flex: 1 }]} numberOfLines={1}>
+      <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.small, flex: 1 }]} numberOfLines={1}>
         Complete your profile{missing.length ? ` — add ${missing[0].toLowerCase()}` : ''}
       </Text>
-      <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>{pct}%</Text>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta }]}>{pct}%</Text>
       <Pressable onPress={onDismiss} hitSlop={12}>
         <X color={colors.textMuted} size={14} />
       </Pressable>
@@ -95,7 +95,7 @@ type ProfileFont = ReturnType<typeof useTheme>['font'];
 export default function ProfileScreen() {
   const { t } = useI18n();
   const router = useRouter();
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const insets = useSafeAreaInsets();
   const layout = useResponsiveLayout();
   const {
@@ -251,7 +251,7 @@ export default function ProfileScreen() {
                 {displayLabel}
               </Text>
               <Text
-                style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 16, marginTop: 4, letterSpacing: 0.2 }]}
+                style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.body, marginTop: 4, letterSpacing: 0.2 }]}
                 numberOfLines={1}
                 maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
               >
@@ -292,7 +292,7 @@ export default function ProfileScreen() {
                 scaleValue={0.96}
               >
                 <PencilSimple color={colors.textSecondary} size={16} />
-                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>Edit Profile</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, fontWeight: '700' }}>Edit Profile</Text>
               </AnimatedPressable>
               
               <AnimatedPressable
@@ -301,7 +301,7 @@ export default function ProfileScreen() {
                 scaleValue={0.96}
               >
                 <Gear color={colors.textSecondary} size={16} />
-                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>Settings</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, fontWeight: '700' }}>Settings</Text>
               </AnimatedPressable>
             </View>
           </View>

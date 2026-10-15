@@ -53,7 +53,7 @@ function runUndo(factId: string): void {
 }
 
 export default function ShoppingListScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const accent = colors.accent;
   
   const [lists, setLists] = useState<ShoppingListInfo[]>([]);
@@ -222,7 +222,7 @@ export default function ShoppingListScreen() {
       {/* Header with List Selector */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <AnimatedPressable onPress={() => { tap('selection'); setShowListSelector(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ fontSize: 28, fontWeight: '900', color: colors.text }}>
+          <Text style={{ fontSize: fontSizes.heading, fontWeight: '900', color: colors.text }}>
             {currentList?.name || 'My List'}
           </Text>
           <CaretDown color={colors.textMuted} size={24} weight="bold" />
@@ -235,11 +235,11 @@ export default function ShoppingListScreen() {
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 24 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Est. Total</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Est. Total</Text>
             <Text style={{ color: colors.text, fontSize: 36, fontWeight: '900', marginTop: 4 }}>{cur}{stats.cost.toFixed(2)}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Remaining</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Remaining</Text>
             <Text style={{ color: accent, fontSize: 36, fontWeight: '900', marginTop: 4 }}>{stats.remaining}</Text>
           </View>
         </View>
@@ -249,14 +249,14 @@ export default function ShoppingListScreen() {
           <AnimatedPressable onPress={clearChecked} scaleValue={0.95} haptic="medium" style={{ flex: 1 }}>
             <View style={{ flex: 1, borderRadius: radius.lg, paddingVertical: 12, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <Trash color={colors.textMuted} size={20} />
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800' }}>{ttx("Clear")}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '800' }}>{ttx("Clear")}</Text>
             </View>
           </AnimatedPressable>
         </View>
       </GlassPanel>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text }}>Items</Text>
+        <Text style={{ fontSize: fontSizes.title, fontWeight: '800', color: colors.text }}>Items</Text>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16, marginBottom: 8 }}>
@@ -279,14 +279,14 @@ export default function ShoppingListScreen() {
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                     <Tag color={colors.textMuted} size={12} weight="fill" />
-                    <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{item.category}</Text>
-                    <Text style={{ color: colors.glassBorder, fontSize: 13 }}>•</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>Qty: {item.quantity}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>{item.category}</Text>
+                    <Text style={{ color: colors.glassBorder, fontSize: fontSizes.small }}>•</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>Qty: {item.quantity}</Text>
                   </View>
                 </View>
                 <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
                   {item.price > 0 && (
-                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginBottom: 4 }}>
+                    <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '800', marginBottom: 4 }}>
                       {cur}{(item.price * (parseFloat(item.quantity) || 1)).toFixed(2)}
                     </Text>
                   )}
@@ -315,12 +315,12 @@ export default function ShoppingListScreen() {
       <TextInput
         value={name} onChangeText={setName}
         placeholder={ttx("What do you need?")} placeholderTextColor={colors.textMuted}
-        style={{ color: colors.text, fontSize: 20, fontWeight: '700', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.glassBorder, marginBottom: 16 }}
+        style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.glassBorder, marginBottom: 16 }}
         autoFocus
       />
       <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-          <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '600' }}>Qty: </Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontWeight: '600' }}>Qty: </Text>
           <TextInput value={quantity} onChangeText={setQuantity} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="numbers-and-punctuation" />
         </View>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
@@ -329,7 +329,7 @@ export default function ShoppingListScreen() {
         </View>
       </View>
       
-      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 8 }}>Category</Text>
+      <Text style={{ fontSize: fontSizes.body, fontWeight: '700', color: colors.text, marginBottom: 8 }}>Category</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8, marginBottom: 16 }}>
         {SHOPPING_CATEGORIES.map(item => (
           <MiniChip key={item} accent={accent} label={item} active={category === item} onPress={() => { tap('selection'); setCategory(item); }} />
@@ -403,7 +403,7 @@ export default function ShoppingListScreen() {
                   <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>{item.name}</Text>
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted, marginTop: 4 }}>{item.category} • ${item.price.toFixed(2)}</Text>
+                      <Text style={{ fontSize: fontSizes.label, fontWeight: '600', color: colors.textMuted, marginTop: 4 }}>{item.category} • ${item.price.toFixed(2)}</Text>
                     </View>
                     <AnimatedPressable onPress={() => addFrequent(item)} style={{ paddingVertical: 10, paddingHorizontal: 16, backgroundColor: accent, borderRadius: radius.lg }}>
                       <Text style={{ color: colors.bgPure, fontWeight: '800' }}>Add</Text>

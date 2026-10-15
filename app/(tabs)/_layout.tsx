@@ -109,7 +109,7 @@ function routeLabel(routeName: string, t: (key: TranslationKey) => string, title
 }
 
 function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { colors, font, lineHeights } = useTheme();
+  const { colors, font, lineHeights, fontSizes } = useTheme();
   const { t } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -151,7 +151,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
         </View>
         <View>
           <Text style={[font.bodyBold, { color: colors.text, fontSize: 17, lineHeight: lineHeights.body }]}>Echo</Text>
-          <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12, lineHeight: lineHeights.caption, marginTop: 1 }]}>
+          <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: lineHeights.caption, marginTop: 1 }]}>
             {layout.isMacDesktop ? 'Mac' : 'Desktop'}
           </Text>
         </View>
@@ -173,7 +173,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
         }}
       >
         <Plus color={colors.onAccent} size={18} weight="bold" />
-          <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 14, lineHeight: lineHeights.small }]}>{t('nav.newEcho')}</Text>
+          <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: fontSizes.label, lineHeight: lineHeights.small }]}>{t('nav.newEcho')}</Text>
       </Pressable>
 
       <View style={{ gap: 4 }}>
@@ -231,7 +231,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
                 )}
               </ReflectiveNavIcon>
               <Text
-                style={[font.bodySemibold, { color, fontSize: 14, lineHeight: lineHeights.small, flex: 1 }]}
+                style={[font.bodySemibold, { color, fontSize: fontSizes.label, lineHeight: lineHeights.small, flex: 1 }]}
                 numberOfLines={1}
               >
                 {label}
@@ -260,7 +260,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
         }}
       >
         <MagicWand color={colors.accent} size={17} weight="bold" />
-        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 13, lineHeight: lineHeights.small }]}>{t('nav.commandPalette')}</Text>
+        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>{t('nav.commandPalette')}</Text>
       </Pressable>
     </View>
   );

@@ -102,7 +102,7 @@ function matchesTarget(listing: ListingWithSeller, terms: string[]): boolean {
 }
 
 function CategoryPill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const meta = categoryMeta(label);
   const Icon = meta.Icon;
   return (
@@ -121,7 +121,7 @@ function CategoryPill({ label, active, onPress }: { label: string; active: boole
         }}
       >
         <Icon color={active ? ON_MEDIA : meta.color} size={16} weight="bold" />
-        <Text style={[font.bodySemibold, { color: active ? ON_MEDIA : colors.textSecondary, fontSize: 13 }]}>
+        <Text style={[font.bodySemibold, { color: active ? ON_MEDIA : colors.textSecondary, fontSize: fontSizes.small }]}>
           {label}
         </Text>
       </View>
@@ -130,7 +130,7 @@ function CategoryPill({ label, active, onPress }: { label: string; active: boole
 }
 
 function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: active }}>
       <View style={{
@@ -143,7 +143,7 @@ function FilterChip({ label, active, onPress }: { label: string; active: boolean
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: active ? colors.accent : colors.border,
       }}>
-        <Text style={[font.bodySemibold, { color: active ? colors.onAccent : colors.textSecondary, fontSize: 12 }]}>
+        <Text style={[font.bodySemibold, { color: active ? colors.onAccent : colors.textSecondary, fontSize: fontSizes.meta }]}>
           {label}
         </Text>
       </View>
@@ -152,7 +152,7 @@ function FilterChip({ label, active, onPress }: { label: string; active: boolean
 }
 
 function ListingCard({ item, width, featured = false }: { item: ListingWithSeller; width: number; featured?: boolean }) {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const hasPhoto = item.photoUrls.length > 0;
   const meta = categoryMeta(item.category);
   const imageHeight = featured ? Math.round(width * 0.66) : Math.round(width * 0.78);
@@ -209,13 +209,13 @@ function ListingCard({ item, width, featured = false }: { item: ListingWithSelle
 
         <View style={{ position: 'absolute', left: 9, right: 9, bottom: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <View style={{ borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4, maxWidth: '72%' }}>
-            <Text style={{ color: ON_MEDIA, fontSize: 11, ...font.bodyBold }} numberOfLines={1}>
+            <Text style={{ color: ON_MEDIA, fontSize: fontSizes.caption, ...font.bodyBold }} numberOfLines={1}>
               {item.condition}
             </Text>
           </View>
           {item.photoUrls.length > 1 ? (
             <View style={{ borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4 }}>
-              <Text style={{ color: ON_MEDIA, fontSize: 11, ...font.bodyBold }}>
+              <Text style={{ color: ON_MEDIA, fontSize: fontSizes.caption, ...font.bodyBold }}>
                 1/{item.photoUrls.length}
               </Text>
             </View>
@@ -252,10 +252,10 @@ function ListingCard({ item, width, featured = false }: { item: ListingWithSelle
             size={20}
             showHalo={false}
           />
-          <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11, flex: 1 }]} numberOfLines={1}>
+          <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.caption, flex: 1 }]} numberOfLines={1}>
             @{item.sellerUsername}
           </Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 11 }]}>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
             {timeAgo(item.createdAt)}
           </Text>
         </View>
@@ -277,22 +277,22 @@ function MiniBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
 }
 
 function SectionHeader({ title, caption, actionLabel, onAction }: { title: string; caption?: string; actionLabel?: string; onAction?: () => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10, gap: 12 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase' }]}>
+        <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: 1.2, textTransform: 'uppercase' }]}>
           {title}
         </Text>
         {caption ? (
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>
             {caption}
           </Text>
         ) : null}
       </View>
       {actionLabel && onAction ? (
         <Pressable onPress={onAction} hitSlop={8}>
-          <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>
+          <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.meta }]}>
             {actionLabel}
           </Text>
         </Pressable>
@@ -599,10 +599,10 @@ export default function MarketplaceScreen() {
               <View style={{ width: 58, height: 58, borderRadius: 22, backgroundColor: `${colors.accent}18`, alignItems: 'center', justifyContent: 'center' }}>
                 <Package color={colors.accent} size={30} weight="bold" />
               </View>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, textAlign: 'center' }]}>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.body, textAlign: 'center' }]}>
                 {ttx("No listings found")}
               </Text>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, textAlign: 'center' }]}>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: 19, textAlign: 'center' }]}>
                 {ttx("Try another lane or seed the market with the first useful listing.")}
               </Text>
               <Pressable
@@ -627,7 +627,7 @@ export default function MarketplaceScreen() {
                 }}
               >
                 <Plus color={colors.onAccent} size={16} weight="bold" />
-                <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 14 }]}>{ttx("Post a listing")}</Text>
+                <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: fontSizes.label }]}>{ttx("Post a listing")}</Text>
               </Pressable>
             </View>
           }
@@ -648,29 +648,29 @@ export default function MarketplaceScreen() {
           >
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: 20 }]}>{ttx("Filters")}</Text>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: fontSizes.title }]}>{ttx("Filters")}</Text>
               {activeFilterCount > 0 ? (
                 <Pressable onPress={() => { setMode('all'); setSort('newest'); setCondition('All'); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Reset filters")}>
-                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 14 }]}>{ttx("Reset")}</Text>
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.label }]}>{ttx("Reset")}</Text>
                 </Pressable>
               ) : null}
             </View>
 
-            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>{ttx("Deal type")}</Text>
+            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>{ttx("Deal type")}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
               {([['all', 'All deals'], ['services', 'Services'], ['local', 'Local pickup'], ['digital', 'Remote/digital']] as const).map(([value, label]) => (
                 <FilterChip key={value} label={label} active={mode === value} onPress={() => setMode(value)} />
               ))}
             </View>
 
-            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>{ttx("Sort")}</Text>
+            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>{ttx("Sort")}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
               <FilterChip label={ttx("Newest")} active={sort === 'newest'} onPress={() => setSort('newest')} />
               <FilterChip label={ttx("Lowest price")} active={sort === 'price-low'} onPress={() => setSort('price-low')} />
               <FilterChip label={ttx("Highest price")} active={sort === 'price-high'} onPress={() => setSort('price-high')} />
             </View>
 
-            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>{ttx("Condition")}</Text>
+            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>{ttx("Condition")}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
               {(['All', ...LISTING_CONDITIONS] as ConditionFilter[]).map(item => (
                 <FilterChip key={item} label={item === 'All' ? 'Any condition' : item} active={condition === item} onPress={() => setCondition(item)} />

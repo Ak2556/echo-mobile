@@ -137,7 +137,7 @@ export default function WelcomeScreen() {
                 <Text style={[font.display, { color: colors.text, fontSize: 30, lineHeight: 36, letterSpacing: -0.4 }]}>
                   {t('welcome.startTitle')}
                 </Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 16, lineHeight: 23, marginTop: 10 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, lineHeight: 23, marginTop: 10 }}>
                   {t('welcome.startBody')}
                 </Text>
               </Animated.View>
@@ -254,7 +254,7 @@ function RevealDoors({
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 15.5, fontWeight: '700', marginBottom: 2 }}>{d.title}</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>{d.body}</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 18 }}>{d.body}</Text>
             </View>
             <ArrowRight color={colors.textMuted} size={18} />
           </AnimatedPressable>

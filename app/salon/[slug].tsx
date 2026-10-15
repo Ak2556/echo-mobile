@@ -24,7 +24,7 @@ function SalonDetailScreenInner() {
     scroll: voiceList.scroll,
   });
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
 
   const [salon, setSalon] = useState<Salon | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
@@ -110,7 +110,7 @@ function SalonDetailScreenInner() {
           scaleValue={0.92}
           haptic="medium"
         >
-          <Text style={{ color: salon.is_member ? colors.textMuted : colors.onAccent, fontWeight: '700', fontSize: 12 }}>
+          <Text style={{ color: salon.is_member ? colors.textMuted : colors.onAccent, fontWeight: '700', fontSize: fontSizes.meta }}>
             {salon.is_member ? 'Joined' : 'Join'}
           </Text>
         </AnimatedPressable>
@@ -138,25 +138,25 @@ function SalonDetailScreenInner() {
           }}
         >
           {salon.description ? (
-            <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginBottom: 10 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, lineHeight: 20, marginBottom: 10 }}>
               {salon.description}
             </Text>
           ) : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: salon.topic_tags?.length ? 10 : 0 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
               <UsersThree color={colors.textMuted} size={13} />
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{salon.member_count} members</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{salon.member_count} members</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
               <Hash color={colors.textMuted} size={13} />
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{salon.echo_count} echoes</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{salon.echo_count} echoes</Text>
             </View>
           </View>
           {salon.topic_tags && salon.topic_tags.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {salon.topic_tags.map(tag => (
                 <View key={tag} style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.full, backgroundColor: salon.cover_color + '22' }}>
-                  <Text style={{ color: salon.cover_color, fontSize: 11, fontWeight: '600' }}>#{tag}</Text>
+                  <Text style={{ color: salon.cover_color, fontSize: fontSizes.caption, fontWeight: '600' }}>#{tag}</Text>
                 </View>
               ))}
             </View>
@@ -166,7 +166,7 @@ function SalonDetailScreenInner() {
         {/* Scoped feed */}
         {feed.length === 0 ? (
           <View style={{ padding: 32, alignItems: 'center' }}>
-            <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center' }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, textAlign: 'center' }}>
               No echoes in this salon yet. {salon.is_member ? 'Be the first.' : 'Join to post here.'}
             </Text>
           </View>

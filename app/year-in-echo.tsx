@@ -23,7 +23,7 @@ import { LoadingState } from '../components/common/LoadingState';
 
 function YearInEchoScreenInner() {
   const router = useRouter();
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const [wrap, setWrap] = useState<YearWrap | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +52,7 @@ function YearInEchoScreenInner() {
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '600', marginTop: 16, textAlign: 'center' }}>
             {ttx("Your year is just getting started")}
           </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
             {"Post a few echoes and come back. We'll roll up your stats, top topics, and most-loved echo."}
           </Text>
         </View>
@@ -68,7 +68,7 @@ function YearInEchoScreenInner() {
             >
               <Confetti color={ON_MEDIA} size={32} weight="fill" />
               <Text style={{ color: ON_MEDIA, fontSize: 38, fontWeight: '800', marginTop: 8 }}>{wrap.total_echoes}</Text>
-              <Text style={{ color: ON_MEDIA, fontSize: 14, opacity: 0.9, marginTop: 4, fontWeight: '600' }}>{ttx("echoes posted in")} {year}</Text>
+              <Text style={{ color: ON_MEDIA, fontSize: fontSizes.label, opacity: 0.9, marginTop: 4, fontWeight: '600' }}>{ttx("echoes posted in")} {year}</Text>
             </LinearGradient>
           </Animated.View>
 
@@ -100,7 +100,7 @@ function YearInEchoScreenInner() {
           {/* Top topics */}
           {wrap.top_topics.length > 0 && (
             <Animated.View entering={FadeInUp.delay(250).duration(220)} style={{ marginBottom: 16 }}>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginLeft: 4 }}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 10, marginLeft: 4 }}>
                 {ttx("Top Topics")}
               </Text>
               <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border }}>
@@ -117,7 +117,7 @@ function YearInEchoScreenInner() {
                         borderColor: colors.accent + '55',
                       }}
                     >
-                      <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 13 }}>{tag}</Text>
+                      <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.small }}>{tag}</Text>
                     </View>
                   ))}
                 </View>
@@ -128,7 +128,7 @@ function YearInEchoScreenInner() {
           {/* Top echo */}
           {wrap.top_echo_prompt && (
             <Animated.View entering={FadeInUp.delay(300).duration(220)}>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginLeft: 4 }}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 10, marginLeft: 4 }}>
                 {ttx("Most-loved echo")}
               </Text>
               <AnimatedPressable
@@ -145,10 +145,10 @@ function YearInEchoScreenInner() {
                 scaleValue={0.98}
                 haptic="light"
               >
-                <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.5, marginBottom: 6 }}>
+                <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.5, marginBottom: 6 }}>
                   {ttx("YOUR HIT OF THE YEAR")}
                 </Text>
-                <Text style={{ color: colors.text, fontSize: 16, lineHeight: 22, fontWeight: '600' }}>
+                <Text style={{ color: colors.text, fontSize: fontSizes.body, lineHeight: 22, fontWeight: '600' }}>
                   {wrap.top_echo_prompt}
                 </Text>
               </AnimatedPressable>
@@ -161,7 +161,7 @@ function YearInEchoScreenInner() {
 }
 
 function StatCard({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <View
       style={{
@@ -175,7 +175,7 @@ function StatCard({ icon, value, label }: { icon: React.ReactNode; value: number
     >
       {icon}
       <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginTop: 4 }}>{value}</Text>
-      <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2, textAlign: 'center' }}>{label}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2, textAlign: 'center' }}>{label}</Text>
     </View>
   );
 }

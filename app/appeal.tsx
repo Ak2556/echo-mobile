@@ -141,7 +141,7 @@ export default function AppealScreen() {
                     <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, ...font.body, lineHeight: 20 }}>
                       {decision.reason}
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, ...font.body, lineHeight: 16 }}>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, ...font.body, lineHeight: 16 }}>
                       {ttx("Basis:")} {decision.ground}{decision.automated ? ' · automated decision' : ''}
                       {'\n'}{ttx("You can appeal until")} {new Date(decision.appealDeadline).toLocaleDateString()}.
                     </Text>
@@ -186,7 +186,7 @@ export default function AppealScreen() {
                     onChangeText={t => setReason(t.slice(0, MAX_CHARS))}
                     returnKeyType="default"
                   />
-                  <Text style={{ color: colors.textMuted, fontSize: 11, ...font.body, marginTop: 4, textAlign: 'right' }}>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, ...font.body, marginTop: 4, textAlign: 'right' }}>
                     {reason.length}/{MAX_CHARS}
                     {reason.length < MIN_CHARS && reason.length > 0 && (
                       <Text style={{ color: colors.danger }}>{` · ${MIN_CHARS - reason.length} more chars needed`}</Text>
@@ -198,7 +198,7 @@ export default function AppealScreen() {
                 <Button label={ttx("Submit appeal")} onPress={handleSubmit} disabled={!canSubmit} loading={submitting} size="large" fullWidth style={{ marginTop: 4 }} />
 
                 <Text style={{
-                  color: colors.textMuted, fontSize: 11, ...font.body,
+                  color: colors.textMuted, fontSize: fontSizes.caption, ...font.body,
                   textAlign: 'center', lineHeight: 16,
                 }}>
                   {ttx("This appeal is subject to our Terms of Service. Frivolous appeals may affect your standing on the platform.")}
@@ -237,10 +237,10 @@ export default function AppealScreen() {
                       {/* Status row */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <cfg.Icon color={statusColor} size={16} weight="fill" />
-                        <Text style={{ color: statusColor, fontSize: 13, ...font.bodySemibold, flex: 1 }}>
+                        <Text style={{ color: statusColor, fontSize: fontSizes.small, ...font.bodySemibold, flex: 1 }}>
                           {cfg.label}
                         </Text>
-                        <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+                        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
                           {timeAgo(a.createdAt)}
                         </Text>
                       </View>
@@ -270,7 +270,7 @@ export default function AppealScreen() {
 
                       {/* Resolved date */}
                       {a.resolvedAt && (
-                        <Text style={{ color: colors.textMuted, fontSize: 11, ...font.body }}>
+                        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, ...font.body }}>
                           {ttx("Resolved")} {timeAgo(a.resolvedAt)}
                         </Text>
                       )}

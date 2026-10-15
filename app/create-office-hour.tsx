@@ -124,7 +124,7 @@ function CreateOfficeHourScreenInner() {
                   scaleValue={0.94}
                   haptic="light"
                 >
-                  <Text style={{ color: active ? colors.accent : colors.textMuted, fontWeight: '600', fontSize: 13 }}>{opt.label}</Text>
+                  <Text style={{ color: active ? colors.accent : colors.textMuted, fontWeight: '600', fontSize: fontSizes.small }}>{opt.label}</Text>
                 </AnimatedPressable>
               );
             })}
@@ -152,7 +152,7 @@ function CreateOfficeHourScreenInner() {
                   scaleValue={0.94}
                   haptic="light"
                 >
-                  <Text style={{ color: active ? colors.accent : colors.textMuted, fontWeight: '600', fontSize: 13 }}>{d.label}</Text>
+                  <Text style={{ color: active ? colors.accent : colors.textMuted, fontWeight: '600', fontSize: fontSizes.small }}>{d.label}</Text>
                 </AnimatedPressable>
               );
             })}

@@ -114,7 +114,7 @@ function OfficeHoursScreenInner() {
 
 function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolean) => void }) {
   const router = useRouter();
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const liveNow = new Date(oh.starts_at).getTime() <= Date.now() && new Date(oh.ends_at).getTime() > Date.now();
   return (
     <AnimatedPressable
@@ -133,15 +133,15 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Clock color={liveNow ? colors.danger : colors.accent} size={13} weight={liveNow ? 'fill' : 'regular'} />
-          <Text style={{ color: liveNow ? colors.danger : colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.4 }}>
+          <Text style={{ color: liveNow ? colors.danger : colors.accent, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.4 }}>
             {liveNow ? 'LIVE' : relativeStart(oh.starts_at).toUpperCase()}
           </Text>
         </View>
         <Button label={oh.has_rsvp ? ttx('Going') : ttx('RSVP')} onPress={() => onRSVP(!oh.has_rsvp)} size="compact" variant={oh.has_rsvp ? 'secondary' : 'primary'} />
       </View>
-      <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 4 }}>{oh.topic}</Text>
+      <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 4 }}>{oh.topic}</Text>
       {oh.description ? (
-        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginBottom: 8 }} numberOfLines={2}>
+        <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 19, marginBottom: 8 }} numberOfLines={2}>
           {oh.description}
         </Text>
       ) : null}
@@ -155,13 +155,13 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
               size={22}
               showHalo={false}
             />
-            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>@{oh.host.username}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.meta }}>@{oh.host.username}</Text>
           </>
         )}
         <View style={{ flex: 1 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <UsersThree color={colors.textMuted} size={13} />
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>{oh.rsvp_count}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{oh.rsvp_count}</Text>
         </View>
       </View>
     </AnimatedPressable>

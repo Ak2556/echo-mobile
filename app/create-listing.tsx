@@ -26,11 +26,11 @@ import { ON_MEDIA } from '../lib/ui/fixedColors';
 const MAX_PHOTOS = 6;
 
 function Eyebrow({ children, style }: { children: React.ReactNode; style?: object }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   return (
     <Text style={[{
       color: colors.textMuted,
-      fontSize: 12,
+      fontSize: fontSizes.meta,
       ...font.bodySemibold,
       letterSpacing: 1.4,
       textTransform: 'uppercase',
@@ -65,7 +65,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 }
 
 export default function CreateListingScreen() {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [photos, setPhotos] = useState<string[]>([]);
@@ -239,7 +239,7 @@ export default function CreateListingScreen() {
             <View>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
                 <Eyebrow>{ttx("Photos")}</Eyebrow>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{photos.length}/{MAX_PHOTOS}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontVariant: ['tabular-nums'] }}>{photos.length}/{MAX_PHOTOS}</Text>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
                 {photos.map((uri, i) => (

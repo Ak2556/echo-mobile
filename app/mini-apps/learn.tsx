@@ -117,7 +117,7 @@ const TAB_LABEL: Record<LearnTab, string> = {
 };
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <AnimatedPressable onPress={onPress} scaleValue={0.94} haptic="light" accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active }}>
       <View style={{
@@ -128,7 +128,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: active ? colors.accent : colors.border,
       }}>
-        <Text style={{ color: active ? colors.bgPure : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{label}</Text>
+        <Text style={{ color: active ? colors.bgPure : colors.textSecondary, fontSize: fontSizes.meta, fontWeight: '800' }}>{label}</Text>
       </View>
     </AnimatedPressable>
   );
@@ -157,7 +157,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export default function LearnScreen() {
   const router = useRouter();
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const [goals, setGoals] = useState<LearningGoal[]>([]);
   const [settings, setSettings] = useState<LearningSettings>(DEFAULT_LEARNING_SETTINGS);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -788,7 +788,7 @@ export default function LearnScreen() {
         <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 18, alignItems: 'center' }}>
           <GraduationCap color={colors.accent} size={42} weight="duotone" />
           <Text style={[font.display, { color: colors.text, fontSize: 24, marginTop: 12 }]}>{ttx("No learning path yet")}</Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 19, marginTop: 6 }]}>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, textAlign: 'center', lineHeight: 19, marginTop: 6 }]}>
             {ttx("Create one path for a subject, skill, exam, class, or coaching target.")}
           </Text>
           <Pressable onPress={() => setShowSetup(true)} style={{ marginTop: 16 }}>
@@ -811,14 +811,14 @@ function SetupPanel(props: {
   dailyMinutes: number; setDailyMinutes: (v: number) => void;
   onCreate: () => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <IconBadge color={colors.accent} size={44} radius={15}><GraduationCap color={colors.bgPure} size={22} weight="bold" /></IconBadge>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("Create a learning path")}</Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{ttx("For students, teachers, tutors, and skill coaching.")}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]}>{ttx("For students, teachers, tutors, and skill coaching.")}</Text>
         </View>
       </View>
       <LearnInput value={props.title} onChangeText={props.setTitle} placeholder={ttx("What do you want to learn or teach?")} strong />
@@ -850,7 +850,7 @@ function SetupPanel(props: {
 }
 
 function Hero({ goal, stats }: { goal: LearningGoal; stats: ReturnType<typeof learningStats> }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -858,8 +858,8 @@ function Hero({ goal, stats }: { goal: LearningGoal; stats: ReturnType<typeof le
           {goal.mode === 'teacher' ? <ChalkboardTeacher color={colors.bgPure} size={26} weight="bold" /> : <GraduationCap color={colors.bgPure} size={27} weight="bold" />}
         </IconBadge>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 33 }]} numberOfLines={1}>{goal.title}</Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 2 }]} numberOfLines={2}>
+          <Text style={[font.display, { color: colors.text, fontSize: fontSizes.heading, lineHeight: 33 }]} numberOfLines={1}>{goal.title}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: 18, marginTop: 2 }]} numberOfLines={2}>
             {`${MODE_LABELS[goal.mode]} -> ${goal.category} -> ${goal.dailyMinutes} min/day`}
           </Text>
         </View>
@@ -868,7 +868,7 @@ function Hero({ goal, stats }: { goal: LearningGoal; stats: ReturnType<typeof le
           <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>{ttx("done")}</Text>
         </View>
       </View>
-      <Text style={[font.body, { color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 14 }]}>
+      <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.label, lineHeight: 21, marginTop: 14 }]}>
         {goal.targetOutcome || 'Set a clear target outcome to make this roadmap sharper.'}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
@@ -889,7 +889,7 @@ function TodayTab({ goal, stats, onToggleTask, onSaveNote, onAddTask, onSchedule
   onSchedule: () => void;
   onPomodoro: () => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <>
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
@@ -905,8 +905,8 @@ function TodayTab({ goal, stats, onToggleTask, onSaveNote, onAddTask, onSchedule
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 7 }}>
               {task.done ? <CheckCircle color={colors.accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[font.bodySemibold, { color: task.done ? colors.textMuted : colors.text, fontSize: 14, textDecorationLine: task.done ? 'line-through' : 'none' }]} numberOfLines={1}>{task.title}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2, textTransform: 'uppercase', fontWeight: '800' }}>{task.type}</Text>
+                <Text style={[font.bodySemibold, { color: task.done ? colors.textMuted : colors.text, fontSize: fontSizes.label, textDecorationLine: task.done ? 'line-through' : 'none' }]} numberOfLines={1}>{task.title}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2, textTransform: 'uppercase', fontWeight: '800' }}>{task.type}</Text>
               </View>
             </View>
           </Pressable>
@@ -922,7 +922,7 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
   setQuery: (v: string) => void;
   onStartTopic: (topic: CuratedLearningTopic) => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const q = query.trim().toLowerCase();
   const topics = CURATED_LEARNING_TOPICS.filter(topic => !q || [
     topic.title,
@@ -940,7 +940,7 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
           <IconBadge color={colors.accent} size={44} radius={15}><Waveform color={colors.bgPure} size={21} weight="bold" /></IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("2026 learning library")}</Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 2 }]}>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 2 }]}>
               {ttx("30 high-demand topics curated with free online material, Echo proof projects, notes, practice, and code-alongs where useful.")}
             </Text>
           </View>
@@ -957,26 +957,26 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, lineHeight: 20 }]}>{topic.title}</Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 }]}>{topic.summary}</Text>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 3 }]}>{topic.summary}</Text>
               </View>
             </View>
-            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12, lineHeight: 18 }]}>
+            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.meta, lineHeight: 18 }]}>
               {topic.whyNow}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
               {[topic.category, `${topic.dailyMinutes}m/day`, `${topic.materials.length} free links`, ...topic.tags.slice(0, 2)].map(label => (
                 <View key={label} style={{ borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800' }}>{label}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, fontWeight: '800' }}>{label}</Text>
                 </View>
               ))}
             </View>
             <View style={{ borderRadius: radius.card, backgroundColor: colors.surfaceHover, padding: 11 }}>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }}>{ttx("Echo proof project")}</Text>
-              <Text style={[font.body, { color: colors.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 3 }]}>{topic.project}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '900', textTransform: 'uppercase' }}>{ttx("Echo proof project")}</Text>
+              <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 3 }]}>{topic.project}</Text>
             </View>
             <Pressable onPress={() => onStartTopic(topic)}>
               <View style={{ minHeight: 42, borderRadius: radius.card, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: colors.bgPure, fontSize: 13, fontWeight: '900' }}>{ttx("Start curated path")}</Text>
+                <Text style={{ color: colors.bgPure, fontSize: fontSizes.small, fontWeight: '900' }}>{ttx("Start curated path")}</Text>
               </View>
             </Pressable>
           </GlassPanel>
@@ -1020,7 +1020,7 @@ function OneOnOneTab(props: {
   onSaveBookingNotes: (bookingId: string) => void;
   onUpdateBookingStatus: (id: string, status: 'requested' | 'accepted' | 'scheduled' | 'completed' | 'cancelled', paymentStatus?: 'unpaid' | 'pending' | 'paid' | 'refunded') => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const activePackages = props.goal.oneOnOnePackages.filter(item => item.active);
   const currencyRevenue = props.goal.oneOnOneBookings
     .filter(item => item.paymentStatus === 'paid' && item.currency === props.goal.oneOnOneProfile.baseCurrency)
@@ -1032,7 +1032,7 @@ function OneOnOneTab(props: {
           <IconBadge color={colors.warning} size={48} radius={radius.card}><ChalkboardTeacher color={colors.bgPure} size={23} weight="bold" /></IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("Paid 1:1 mastery")}</Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 2 }]}>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 2 }]}>
               {ttx("Sell personal teaching, coaching, diagnostics, code-alongs, homework review, and follow-up from this path.")}
             </Text>
           </View>
@@ -1074,12 +1074,12 @@ function OneOnOneTab(props: {
                   <Text style={{ color: item.active ? colors.warning : colors.textMuted, fontWeight: '900' }}>{item.sessionCount}x</Text>
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{item.title}</Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{item.minutes}{ttx("m each ·")} {item.active ? 'Active' : 'Paused'}</Text>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{item.title}</Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]}>{item.minutes}{ttx("m each ·")} {item.active ? 'Active' : 'Paused'}</Text>
                 </View>
-                <Text style={[font.bodyBold, { color: colors.warning, fontSize: 16 }]}>{formatPrice(item.price, item.currency)}</Text>
+                <Text style={[font.bodyBold, { color: colors.warning, fontSize: fontSizes.body }]}>{formatPrice(item.price, item.currency)}</Text>
               </View>
-              <Text style={[font.body, { color: colors.textSecondary, fontSize: 12, lineHeight: 18 }]}>{item.description}</Text>
+              <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.meta, lineHeight: 18 }]}>{item.description}</Text>
             </GlassPanel>
           </Pressable>
         ))}
@@ -1102,8 +1102,8 @@ function OneOnOneTab(props: {
             <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 {slot.available ? <CheckCircle color={colors.success} size={21} weight="fill" /> : <CircleDashed color={colors.textMuted} size={21} />}
-                <Text style={[font.bodyBold, { color: colors.text, flex: 1, fontSize: 13 }]}>{slot.label}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800' }}>{slot.durationMinutes}m</Text>
+                <Text style={[font.bodyBold, { color: colors.text, flex: 1, fontSize: fontSizes.small }]}>{slot.label}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '800' }}>{slot.durationMinutes}m</Text>
               </View>
             </GlassPanel>
           </Pressable>
@@ -1125,7 +1125,7 @@ function OneOnOneTab(props: {
           {activePackages.length ? activePackages.map(item => (
             <Pressable key={item.id} onPress={() => props.onCreateBooking(item.id)}>
               <View style={{ minHeight: 42, borderRadius: radius.card, backgroundColor: colors.warning, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: colors.bgPure, fontSize: 13, fontWeight: '900' }}>{ttx("Request")} {item.title} · {formatPrice(item.price, item.currency)}</Text>
+                <Text style={{ color: colors.bgPure, fontSize: fontSizes.small, fontWeight: '900' }}>{ttx("Request")} {item.title} · {formatPrice(item.price, item.currency)}</Text>
               </View>
             </Pressable>
           )) : <InlineButton label={ttx("Request session")} onPress={() => props.onCreateBooking()} />}
@@ -1137,7 +1137,7 @@ function OneOnOneTab(props: {
         {props.goal.oneOnOneBookings.length === 0 ? (
           <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("No 1:1 bookings yet")}</Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 5 }]}>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 5 }]}>
               {ttx("Add packages and availability, then create learner requests from this path.")}
             </Text>
           </GlassPanel>
@@ -1148,23 +1148,23 @@ function OneOnOneTab(props: {
                 <Text style={{ color: colors.warning, fontWeight: '900' }}>{booking.learnerName.slice(0, 1).toUpperCase()}</Text>
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{booking.learnerName}</Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{booking.packageTitle} · {formatPrice(booking.price, booking.currency)}</Text>
+                <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{booking.learnerName}</Text>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>{booking.packageTitle} · {formatPrice(booking.price, booking.currency)}</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ color: booking.paymentStatus === 'paid' ? colors.success : colors.warning, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }}>{booking.paymentStatus}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginTop: 2 }}>{booking.status}</Text>
+                <Text style={{ color: booking.paymentStatus === 'paid' ? colors.success : colors.warning, fontSize: fontSizes.caption, fontWeight: '900', textTransform: 'uppercase' }}>{booking.paymentStatus}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '800', textTransform: 'uppercase', marginTop: 2 }}>{booking.status}</Text>
               </View>
             </View>
-            <Text style={[font.body, { color: colors.textSecondary, fontSize: 12, lineHeight: 18 }]}>{booking.learnerGoal}</Text>
+            <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.meta, lineHeight: 18 }]}>{booking.learnerGoal}</Text>
             {booking.scheduledFor || booking.meetingLink ? (
-              <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>
+              <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18 }]}>
                 {[booking.scheduledFor, booking.meetingLink].filter(Boolean).join(' · ')}
               </Text>
             ) : null}
-            {booking.prepNote ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{ttx("Prep:")} {booking.prepNote}</Text> : null}
-            {booking.homework ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{ttx("Homework:")} {booking.homework}</Text> : null}
-            {booking.followUp ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{ttx("Follow-up:")} {booking.followUp}</Text> : null}
+            {booking.prepNote ? <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18 }]}>{ttx("Prep:")} {booking.prepNote}</Text> : null}
+            {booking.homework ? <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18 }]}>{ttx("Homework:")} {booking.homework}</Text> : null}
+            {booking.followUp ? <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18 }]}>{ttx("Follow-up:")} {booking.followUp}</Text> : null}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               <SmallAction label={ttx("Accept")} onPress={() => props.onUpdateBookingStatus(booking.id, 'accepted', 'pending')} />
               <SmallAction label={ttx("Paid")} onPress={() => props.onUpdateBookingStatus(booking.id, 'scheduled', 'paid')} />
@@ -1200,7 +1200,7 @@ function StudioTab(props: {
   setEvidenceDetail: (v: string) => void;
   onCreateEvidence: () => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
@@ -1217,9 +1217,9 @@ function StudioTab(props: {
               <View style={{ flexDirection: 'row', gap: 11 }}>
                 {week.done ? <CheckCircle color={colors.accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{week.title}</Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 }]}>{week.objective}</Text>
-                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 11, lineHeight: 16, marginTop: 7 }]}>{week.deliverable}</Text>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{week.title}</Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 4 }]}>{week.objective}</Text>
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption, lineHeight: 16, marginTop: 7 }]}>{week.deliverable}</Text>
                 </View>
               </View>
             </GlassPanel>
@@ -1232,14 +1232,14 @@ function StudioTab(props: {
         {props.goal.rubric.map(item => (
           <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
             <View>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{item.title}</Text>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 }]}>{item.description}</Text>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{item.title}</Text>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 3 }]}>{item.description}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 7 }}>
               {Array.from({ length: item.maxScore + 1 }).map((_, score) => (
                 <Pressable key={score} onPress={() => props.onScoreRubric(item.id, score)} style={{ flex: 1 }}>
                   <View style={{ minHeight: 34, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: item.score === score ? colors.accent : colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: item.score === score ? colors.accent : colors.border }}>
-                    <Text style={{ color: item.score === score ? colors.bgPure : colors.textSecondary, fontWeight: '900', fontSize: 12 }}>{score}</Text>
+                    <Text style={{ color: item.score === score ? colors.bgPure : colors.textSecondary, fontWeight: '900', fontSize: fontSizes.meta }}>{score}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -1265,8 +1265,8 @@ function StudioTab(props: {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <LinkSimple color={colors.accent} size={17} weight="bold" />
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{item.title}</Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={2}>{item.detail || item.kind}</Text>
+                <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small }]}>{item.title}</Text>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={2}>{item.detail || item.kind}</Text>
               </View>
             </View>
           </GlassPanel>
@@ -1289,7 +1289,7 @@ function PeopleTab(props: {
   onCreateLearner: () => void;
   onUpdateProgress: (id: string, progress: number) => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const average = props.goal.learners.length
     ? Math.round(props.goal.learners.reduce((sum, learner) => sum + learner.progress, 0) / props.goal.learners.length)
     : 0;
@@ -1317,7 +1317,7 @@ function PeopleTab(props: {
         {props.goal.learners.length === 0 ? (
           <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("No learners yet")}</Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 5 }]}>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: 19, marginTop: 5 }]}>
               {ttx("Add yourself, a student, a coaching client, or a group member to track progress separately.")}
             </Text>
           </GlassPanel>
@@ -1325,11 +1325,11 @@ function PeopleTab(props: {
           <GlassPanel key={learner.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 42, height: 42, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}22` }}>
-                <Text style={{ color: colors.accent, fontWeight: '900', fontSize: 16 }}>{learner.name.slice(0, 1).toUpperCase()}</Text>
+                <Text style={{ color: colors.accent, fontWeight: '900', fontSize: fontSizes.body }}>{learner.name.slice(0, 1).toUpperCase()}</Text>
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]} numberOfLines={1}>{learner.name}</Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{learner.target}</Text>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>{learner.target}</Text>
               </View>
               <Text style={[font.bodyBold, { color: colors.accent, fontSize: 18 }]}>{learner.progress}%</Text>
             </View>
@@ -1340,12 +1340,12 @@ function PeopleTab(props: {
               {[25, 50, 75, 100].map(score => (
                 <Pressable key={score} onPress={() => props.onUpdateProgress(learner.id, score)} style={{ flex: 1 }}>
                   <View style={{ minHeight: 34, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: learner.progress === score ? colors.accent : colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: learner.progress === score ? colors.accent : colors.border }}>
-                    <Text style={{ color: learner.progress === score ? colors.bgPure : colors.textSecondary, fontSize: 11, fontWeight: '900' }}>{score}%</Text>
+                    <Text style={{ color: learner.progress === score ? colors.bgPure : colors.textSecondary, fontSize: fontSizes.caption, fontWeight: '900' }}>{score}%</Text>
                   </View>
                 </Pressable>
               ))}
             </View>
-            {learner.notes ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{learner.notes}</Text> : null}
+            {learner.notes ? <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18 }]}>{learner.notes}</Text> : null}
           </GlassPanel>
         ))}
       </View>
@@ -1354,7 +1354,7 @@ function PeopleTab(props: {
 }
 
 function RoadmapTab({ goal }: { goal: LearningGoal }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <View style={{ gap: 10, marginBottom: 16 }}>
       {goal.modules.map((module, index) => {
@@ -1368,8 +1368,8 @@ function RoadmapTab({ goal }: { goal: LearningGoal }) {
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{module.title}</Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 }]}>{module.description}</Text>
-                <Text style={{ color: active ? colors.accent : colors.textMuted, fontSize: 11, fontWeight: '900', marginTop: 8, textTransform: 'uppercase' }}>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 3 }]}>{module.description}</Text>
+                <Text style={{ color: active ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, fontWeight: '900', marginTop: 8, textTransform: 'uppercase' }}>
                   {complete ? 'Completed' : active ? 'Active now' : 'Locked'}
                 </Text>
               </View>
@@ -1397,7 +1397,7 @@ function PracticeTab(props: {
   onToggleCodeLab: (id: string) => void;
   showCodeLabs: boolean;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <>
       <SectionTitle title={ttx("Flashcards")} subtitle={`${props.goal.flashcards.filter(card => card.mastered).length}/${props.goal.flashcards.length} mastered`} />
@@ -1405,9 +1405,9 @@ function PracticeTab(props: {
         {props.goal.flashcards.map(card => (
           <Pressable key={card.id} onPress={() => props.onToggleCard(card.id)}>
             <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{card.front}</Text>
-              <Text style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 6 }]}>{card.back}</Text>
-              <Text style={{ color: card.mastered ? colors.accent : colors.textMuted, fontSize: 11, fontWeight: '900', marginTop: 9 }}>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{card.front}</Text>
+              <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 19, marginTop: 6 }]}>{card.back}</Text>
+              <Text style={{ color: card.mastered ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, fontWeight: '900', marginTop: 9 }}>
                 {card.mastered ? 'MASTERED' : 'TAP TO MARK MASTERED'}
               </Text>
             </GlassPanel>
@@ -1424,18 +1424,18 @@ function PracticeTab(props: {
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.quiz.map(question => (
           <GlassPanel key={question.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 9 }}>
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, lineHeight: 20 }]}>{question.question}</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label, lineHeight: 20 }]}>{question.question}</Text>
             {question.options.map(option => {
               const selected = question.selected === option;
               return (
                 <Pressable key={option} onPress={() => props.onAnswer(question.id, option)}>
                   <View style={{ borderRadius: radius.md, padding: 10, backgroundColor: selected ? (question.correct ? `${colors.accent}2A` : colors.dangerMuted) : colors.surfaceHover }}>
-                    <Text style={[font.bodySemibold, { color: selected ? (question.correct ? colors.accent : colors.danger) : colors.textSecondary, fontSize: 12 }]}>{option}</Text>
+                    <Text style={[font.bodySemibold, { color: selected ? (question.correct ? colors.accent : colors.danger) : colors.textSecondary, fontSize: fontSizes.meta }]}>{option}</Text>
                   </View>
                 </Pressable>
               );
             })}
-            {question.selected ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{question.explanation}</Text> : null}
+            {question.selected ? <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18 }]}>{question.explanation}</Text> : null}
           </GlassPanel>
         ))}
       </View>
@@ -1446,8 +1446,8 @@ function PracticeTab(props: {
           <View style={{ gap: 10, marginBottom: 16 }}>
             {props.goal.codeLabs.length === 0 ? (
               <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
-                <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("No code labs yet")}</Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 }]}>
+                <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{ttx("No code labs yet")}</Text>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 4 }]}>
                   {ttx("Add one for coding, app building, data work, formulas, or any step-by-step practice.")}
                 </Text>
               </GlassPanel>
@@ -1457,15 +1457,15 @@ function PracticeTab(props: {
                   <View style={{ flexDirection: 'row', gap: 10 }}>
                     {item.done ? <CheckCircle color={colors.accent} size={22} weight="fill" /> : <ClipboardText color={colors.textMuted} size={22} />}
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{item.title}</Text>
-                      <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 11, marginTop: 2 }]}>{item.language}</Text>
+                      <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{item.title}</Text>
+                      <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption, marginTop: 2 }]}>{item.language}</Text>
                     </View>
                   </View>
-                  <Text style={[font.body, { color: colors.textSecondary, fontSize: 12, lineHeight: 18 }]}>{item.prompt}</Text>
+                  <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.meta, lineHeight: 18 }]}>{item.prompt}</Text>
                   <View style={{ borderRadius: radius.card, backgroundColor: colors.inputBg, padding: 12 }}>
-                    <Text style={{ color: colors.text, fontSize: 12, lineHeight: 18, fontFamily: 'monospace' }} numberOfLines={6}>{item.starterCode}</Text>
+                    <Text style={{ color: colors.text, fontSize: fontSizes.meta, lineHeight: 18, fontFamily: 'monospace' }} numberOfLines={6}>{item.starterCode}</Text>
                   </View>
-                  {item.notes ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{item.notes}</Text> : null}
+                  {item.notes ? <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18 }]}>{item.notes}</Text> : null}
                 </GlassPanel>
               </Pressable>
             ))}
@@ -1492,7 +1492,7 @@ function CoachTab({ goal, prompts, reflection, setReflection, onCreateReflection
   onCreateReflection: () => void;
   onChat: () => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <>
       <SectionTitle title={ttx("Coach prompts")} subtitle={ttx("Coach")} />
@@ -1502,7 +1502,7 @@ function CoachTab({ goal, prompts, reflection, setReflection, onCreateReflection
             <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 13 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Question color={colors.accent} size={18} weight="bold" />
-                <Text style={[font.bodySemibold, { color: colors.textSecondary, flex: 1, fontSize: 13, lineHeight: 18 }]}>{prompt}</Text>
+                <Text style={[font.bodySemibold, { color: colors.textSecondary, flex: 1, fontSize: fontSizes.small, lineHeight: 18 }]}>{prompt}</Text>
                 <Play color={colors.textMuted} size={16} weight="bold" />
               </View>
             </GlassPanel>
@@ -1517,7 +1517,7 @@ function CoachTab({ goal, prompts, reflection, setReflection, onCreateReflection
       <View style={{ gap: 10, marginBottom: 16 }}>
         {goal.reflections.map(item => (
           <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 12 }}>
-            <Text style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 19 }]}>{item.text}</Text>
+            <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 19 }]}>{item.text}</Text>
           </GlassPanel>
         ))}
       </View>
@@ -1538,7 +1538,7 @@ function ClassroomTab(props: {
   linkedNoteBody: string; setLinkedNoteBody: (v: string) => void;
   onCreateLinkedNote: () => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <>
       <SectionTitle title={ttx("Assignments")} subtitle={`${props.goal.assignments.filter(item => !item.done).length} open`} />
@@ -1549,8 +1549,8 @@ function ClassroomTab(props: {
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 {item.done ? <CheckCircle color={colors.accent} size={22} weight="fill" /> : <ClipboardText color={colors.textMuted} size={22} />}
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{item.title}</Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 }]}>{item.instructions}</Text>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{item.title}</Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 4 }]}>{item.instructions}</Text>
                 </View>
               </View>
             </GlassPanel>
@@ -1565,8 +1565,8 @@ function ClassroomTab(props: {
 
       <SectionTitle title={ttx("Resources")} subtitle={`${props.goal.resources.length} saved`} />
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("Learning note")}</Text>
-        <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{ttx("Learning note")}</Text>
+        <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18 }]}>
           {ttx("Write notes while learning and save them into the Notes app while keeping them linked here as a resource.")}
         </Text>
         <LearnInput value={props.linkedNoteTitle} onChangeText={props.setLinkedNoteTitle} placeholder={ttx("Note title")} />
@@ -1584,8 +1584,8 @@ function ClassroomTab(props: {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <LinkSimple color={colors.accent} size={17} weight="bold" />
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{item.title}</Text>
-                {item.detail ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={2}>{item.detail}</Text> : null}
+                <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small }]}>{item.title}</Text>
+                {item.detail ? <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={2}>{item.detail}</Text> : null}
               </View>
             </View>
           </GlassPanel>
@@ -1609,7 +1609,7 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
   setSessionMinutes: (v: string) => void;
   onCreateSession: () => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
@@ -1627,8 +1627,8 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
               <View style={{ flexDirection: 'row', gap: 11 }}>
                 {milestone.done ? <CheckCircle color={colors.accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{milestone.title}</Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 }]}>{milestone.proof}</Text>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{milestone.title}</Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 4 }]}>{milestone.proof}</Text>
                 </View>
               </View>
             </GlassPanel>
@@ -1658,8 +1658,8 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Timer color={colors.accent} size={18} weight="bold" />
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]} numberOfLines={1}>{session.title}</Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={2}>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small }]} numberOfLines={1}>{session.title}</Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={2}>
                     {`${session.minutes}m -> ${session.focus}${session.notes ? ` -> ${session.notes}` : ''}`}
                   </Text>
                 </View>
@@ -1672,7 +1672,7 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 15, gap: 10 }} style={{ marginBottom: 16 }}>
         <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("Weak topics")}</Text>
         {(goal.weakTopics.length ? goal.weakTopics : ['No weak topic captured yet']).map(topic => (
-          <Text key={topic} style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 20 }]}>- {topic}</Text>
+          <Text key={topic} style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 20 }]}>- {topic}</Text>
         ))}
       </GlassPanel>
       <LearningSystemCard goal={goal} />
@@ -1695,7 +1695,7 @@ function SettingsTab(props: {
   onSaveDefaults: () => void;
   onUpdateSettings: (settings: LearningSettings) => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <>
       <SectionTitle title={ttx("Path settings")} subtitle={props.goal.title} />
@@ -1750,8 +1750,8 @@ function SettingsTab(props: {
       </GlassPanel>
 
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }} style={{ marginBottom: 16 }}>
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("What settings control")}</Text>
-        <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 5 }]}>
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{ttx("What settings control")}</Text>
+        <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 5 }]}>
           {ttx("Keep Learn lightweight for solo study, or turn on the larger teaching/coaching surfaces when managing learners, assignments, rubrics, proof, and code-alongs.")}
         </Text>
       </GlassPanel>
@@ -1765,12 +1765,12 @@ function SettingsToggle({ title, subtitle, value, onValueChange }: {
   value: boolean;
   onValueChange: (value: boolean) => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{title}</Text>
-        <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 2 }]}>{subtitle}</Text>
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{title}</Text>
+        <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 17, marginTop: 2 }]}>{subtitle}</Text>
       </View>
       <Switch
         value={value}
@@ -1783,7 +1783,7 @@ function SettingsToggle({ title, subtitle, value, onValueChange }: {
 }
 
 function LearningSystemCard({ goal }: { goal: LearningGoal }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 15, gap: 10 }} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -1792,7 +1792,7 @@ function LearningSystemCard({ goal }: { goal: LearningGoal }) {
           {goal.mode === 'teacher' ? 'Teacher workflow' : goal.mode === 'coach' ? 'Coaching loop' : 'Study system'}
         </Text>
       </View>
-      <Text style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 20 }]}>
+      <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 20 }]}>
         {goal.mode === 'teacher'
           ? 'Create lessons, assign practice, collect resources, and use reflections as feedback notes.'
           : goal.mode === 'coach'
@@ -1804,18 +1804,18 @@ function LearningSystemCard({ goal }: { goal: LearningGoal }) {
 }
 
 function SectionTitle({ title, subtitle }: { title: string; subtitle?: string }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   return (
     <View style={{ marginBottom: 9, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-      <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{title}</Text>
-      {subtitle ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>{subtitle}</Text> : null}
+      <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.body }]}>{title}</Text>
+      {subtitle ? <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta }]}>{subtitle}</Text> : null}
     </View>
   );
 }
 
 function Label({ text }: { text: string }) {
-  const { colors, font, radius } = useTheme();
-  return <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{text}</Text>;
+  const { colors, font, radius, fontSizes } = useTheme();
+  return <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small }]}>{text}</Text>;
 }
 
 function LearnInput({ value, onChangeText, placeholder, multiline = false, strong = false }: {
@@ -1851,18 +1851,18 @@ function LearnInput({ value, onChangeText, placeholder, multiline = false, stron
 }
 
 function InlineButton({ label, onPress }: { label: string; onPress: () => void }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <AnimatedPressable onPress={onPress} scaleValue={0.96} haptic="medium" accessibilityRole="button" accessibilityLabel={label}>
       <View style={{ minHeight: 42, borderRadius: radius.card, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: colors.bgPure, fontSize: 13, fontWeight: '900' }}>{label}</Text>
+        <Text style={{ color: colors.bgPure, fontSize: fontSizes.small, fontWeight: '900' }}>{label}</Text>
       </View>
     </AnimatedPressable>
   );
 }
 
 function SmallAction({ label, onPress, danger = false }: { label: string; onPress: () => void; danger?: boolean }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const color = danger ? colors.danger : colors.accent;
   return (
     <AnimatedPressable onPress={onPress} scaleValue={0.93} haptic="light" accessibilityRole="button" accessibilityLabel={label}>
@@ -1876,7 +1876,7 @@ function SmallAction({ label, onPress, danger = false }: { label: string; onPres
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: danger ? colors.danger : `${colors.accent}55`,
       }}>
-        <Text style={{ color, fontSize: 11, fontWeight: '900' }}>{label}</Text>
+        <Text style={{ color, fontSize: fontSizes.caption, fontWeight: '900' }}>{label}</Text>
       </View>
     </AnimatedPressable>
   );
@@ -1888,7 +1888,7 @@ function ActionButton({ icon, label, onPress, filled = false }: {
   onPress: () => void;
   filled?: boolean;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   // flex lives on the plain wrapper View — a flex prop on AnimatedPressable
   // would drop and collapse the cell to content width.
   return (
@@ -1905,7 +1905,7 @@ function ActionButton({ icon, label, onPress, filled = false }: {
           borderColor: filled ? colors.accent : colors.border,
         }}>
           {icon}
-          <Text style={{ color: filled ? colors.bgPure : colors.textSecondary, fontSize: 11, fontWeight: '900' }}>{label}</Text>
+          <Text style={{ color: filled ? colors.bgPure : colors.textSecondary, fontSize: fontSizes.caption, fontWeight: '900' }}>{label}</Text>
         </View>
       </AnimatedPressable>
     </View>

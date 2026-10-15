@@ -876,7 +876,7 @@ export default function CreatePostScreen() {
                       style={{ position: 'absolute', bottom: 8, left: 8 }}
                     >
                       <View style={{ paddingHorizontal: 9, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: img.alt ? colors.accent : 'rgba(0,0,0,0.6)' }}>
-                        <Text style={{ color: ON_MEDIA, fontSize: 12, fontWeight: '800' }}>{img.alt ? ttx('ALT ✓') : ttx('+ ALT')}</Text>
+                        <Text style={{ color: ON_MEDIA, fontSize: fontSizes.meta, fontWeight: '800' }}>{img.alt ? ttx('ALT ✓') : ttx('+ ALT')}</Text>
                       </View>
                     </Pressable>
                     {images.length > 1 && (

@@ -83,7 +83,7 @@ function AppealCard({
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Clock size={12} color={slaColor(appeal.daysRemaining)} weight="bold" />
-          <Text style={[font.bodySemibold, { color: slaColor(appeal.daysRemaining), fontSize: 11 }]}>
+          <Text style={[font.bodySemibold, { color: slaColor(appeal.daysRemaining), fontSize: fontSizes.caption }]}>
             {appeal.daysRemaining}{ttx("d left (SLA)")}
           </Text>
         </View>
