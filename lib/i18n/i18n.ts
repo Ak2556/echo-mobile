@@ -323,14 +323,14 @@ type TranslationMap = Partial<Record<TranslationKey, string>>;
 
 const COMMON_TRANSLATIONS: Record<Exclude<AppLanguageCode, 'en'>, TranslationMap> = {
   hi: {
-    'nav.home': "हो",
-    'nav.explore': "खोजे",
-    'nav.market': "मार्के",
-    'nav.chat': "चै",
-    'nav.you': "आ",
-    'nav.alerts': "अलर्",
-    'nav.tools': "टूल्",
-    'nav.newEcho': "नया Ech",
+    'nav.home': "होम",
+    'nav.explore': "खोजें",
+    'nav.market': "मार्केट",
+    'nav.chat': "चैट",
+    'nav.you': "आप",
+    'nav.alerts': "अलर्ट",
+    'nav.tools': "टूल्स",
+    'nav.newEcho': "नया Echo",
     'common.back': "पीछ",
     'common.done': "हो गय",
     'common.start': "शुर",
