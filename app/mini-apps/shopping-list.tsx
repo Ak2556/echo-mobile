@@ -2,9 +2,11 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash, ListDashes, MagnifyingGlass, Tag, Scan, CaretDown, CurrencyDollar } from 'phosphor-react-native';
-import Animated, { FadeInDown, FadeOutUp, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOutUp, Layout } from 'react-native-reanimated';
 import { tap } from '../../lib/ui/haptics';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { BottomSheet } from '../../components/common/BottomSheet';
+import { Button } from '../../components/ui/Button';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniChip, MiniStatCard } from '../../components/mini-apps/MiniKit';
@@ -304,90 +306,75 @@ export default function ShoppingListScreen() {
       </View>
 
 
-      {/* Slide-Up Bottom Sheet for Adding Item */}
-      {isAdding && (
-        <>
-          <Pressable style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 11 }} onPress={() => setIsAdding(false)} />
-          <Animated.View entering={SlideInDown.duration(300).springify()} exiting={SlideOutDown.duration(200)} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 12, backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 24, paddingBottom: 50, shadowColor: colors.text, shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 20 }}>
-            <View style={{ width: 40, height: 5, borderRadius: radius.sm, backgroundColor: colors.glassBorder, alignSelf: 'center', marginBottom: 20 }} />
-            <Text style={{ fontSize: 22, fontWeight: '900', color: colors.text, marginBottom: 16 }}>{ttx("Add New Item")}</Text>
-            
-            <TextInput
-              value={name} onChangeText={setName}
-              placeholder={ttx("What do you need?")} placeholderTextColor={colors.textMuted}
-              style={{ color: colors.text, fontSize: 20, fontWeight: '700', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.glassBorder, marginBottom: 16 }}
-              autoFocus
-            />
-            <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-                <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '600' }}>Qty: </Text>
-                <TextInput value={quantity} onChangeText={setQuantity} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="numbers-and-punctuation" />
-              </View>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-                <CurrencyDollar color={colors.textMuted} size={20} />
-                <TextInput value={price} onChangeText={setPrice} placeholder="0.00" placeholderTextColor={colors.textMuted} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="decimal-pad" />
-              </View>
-            </View>
-            
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 8 }}>Category</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8, marginBottom: 16 }}>
-              {SHOPPING_CATEGORIES.map(item => (
-                <MiniChip key={item} accent={accent} label={item} active={category === item} onPress={() => { tap('selection'); setCategory(item); }} />
-              ))}
-            </ScrollView>
-            
-            <AnimatedPressable onPress={add} style={{ height: 56, borderRadius: radius.lg, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: colors.bgPure, fontSize: 18, fontWeight: '900' }}>{ttx("Save Item")}</Text>
-            </AnimatedPressable>
-          </Animated.View>
-        </>
-      )}
-
-      {/* List Selector Modal */}
-      <Modal visible={showListSelector} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 24, paddingBottom: 60, minHeight: 400 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-              <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text }}>Your Lists</Text>
-              <Pressable onPress={() => setShowListSelector(false)} style={{ padding: 8, backgroundColor: colors.surface, borderRadius: radius.lg }}>
-                <Text style={{ color: colors.text, fontWeight: '800' }}>Done</Text>
-              </Pressable>
-            </View>
-            
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 12 }}>
-              {lists.map(list => {
-                const isActive = list.id === currentListId;
-                return (
-                  <AnimatedPressable
-                    key={list.id}
-                    onPress={() => {
-                      tap('selection');
-                      setCurrentListId(list.id);
-                      setShowListSelector(false);
-                    }}
-                    style={{
-                      flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: radius.lg,
-                      backgroundColor: isActive ? `${accent}15` : colors.surface,
-                      borderWidth: 2, borderColor: isActive ? accent : 'transparent'
-                    }}
-                  >
-                    <ListDashes color={isActive ? accent : colors.textMuted} size={24} weight="duotone" />
-                    <Text style={{ flex: 1, marginLeft: 16, fontSize: 18, fontWeight: '800', color: isActive ? accent : colors.text }}>
-                      {list.name}
-                    </Text>
-                    {isActive && <CheckCircle color={accent} size={24} weight="fill" />}
-                  </AnimatedPressable>
-                );
-              })}
-            </ScrollView>
-            
-            <AnimatedPressable onPress={createNewList} style={{ height: 56, borderRadius: radius.lg, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 16 }}>
-              <Plus color={colors.bg} size={20} weight="bold" />
-              <Text style={{ color: colors.bg, fontSize: 17, fontWeight: '900' }}>Create New List</Text>
-            </AnimatedPressable>
-          </View>
+      {/* The add-item sheet */}
+      <BottomSheet visible={isAdding} onClose={() => setIsAdding(false)} form>
+      <Text style={{ fontSize: 22, fontWeight: '900', color: colors.text, marginBottom: 16 }}>{ttx("Add New Item")}</Text>
+      
+      <TextInput
+        value={name} onChangeText={setName}
+        placeholder={ttx("What do you need?")} placeholderTextColor={colors.textMuted}
+        style={{ color: colors.text, fontSize: 20, fontWeight: '700', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.glassBorder, marginBottom: 16 }}
+        autoFocus
+      />
+      <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
+          <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '600' }}>Qty: </Text>
+          <TextInput value={quantity} onChangeText={setQuantity} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="numbers-and-punctuation" />
         </View>
-      </Modal>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
+          <CurrencyDollar color={colors.textMuted} size={20} />
+          <TextInput value={price} onChangeText={setPrice} placeholder="0.00" placeholderTextColor={colors.textMuted} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="decimal-pad" />
+        </View>
+      </View>
+      
+      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 8 }}>Category</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8, marginBottom: 16 }}>
+        {SHOPPING_CATEGORIES.map(item => (
+          <MiniChip key={item} accent={accent} label={item} active={category === item} onPress={() => { tap('selection'); setCategory(item); }} />
+        ))}
+      </ScrollView>
+      
+      <Button label={ttx("Save Item")} onPress={add} size="large" fullWidth />
+      </BottomSheet>
+
+      {/* List Selector */}
+      <BottomSheet visible={showListSelector} onClose={() => setShowListSelector(false)}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text }}>Your Lists</Text>
+        <Pressable onPress={() => setShowListSelector(false)} style={{ padding: 8, backgroundColor: colors.surface, borderRadius: radius.lg }}>
+          <Text style={{ color: colors.text, fontWeight: '800' }}>Done</Text>
+        </Pressable>
+      </View>
+      
+      <ScrollView style={{ maxHeight: 360 }} contentContainerStyle={{ gap: 12 }}>
+        {lists.map(list => {
+          const isActive = list.id === currentListId;
+          return (
+            <AnimatedPressable
+              key={list.id}
+              onPress={() => {
+                tap('selection');
+                setCurrentListId(list.id);
+                setShowListSelector(false);
+              }}
+              style={{
+                flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: radius.lg,
+                backgroundColor: isActive ? `${accent}15` : colors.surface,
+                borderWidth: 2, borderColor: isActive ? accent : 'transparent'
+              }}
+            >
+              <ListDashes color={isActive ? accent : colors.textMuted} size={24} weight="duotone" />
+              <Text style={{ flex: 1, marginLeft: 16, fontSize: 18, fontWeight: '800', color: isActive ? accent : colors.text }}>
+                {list.name}
+              </Text>
+              {isActive && <CheckCircle color={accent} size={24} weight="fill" />}
+            </AnimatedPressable>
+          );
+        })}
+      </ScrollView>
+      
+      <Button label={ttx("Create New List")} onPress={createNewList} leftIcon={Plus} size="large" fullWidth style={{ marginTop: 16 }} />
+      </BottomSheet>
 
       {/* Scanner / Frequent Items Modal */}
       <Modal visible={showScanner} transparent animationType="slide">

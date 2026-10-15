@@ -1,8 +1,8 @@
 import React from 'react';
-import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { GlassPanel } from '../ui/GlassPanel';
+import { BottomSheet } from './BottomSheet';
+import { SHADOW } from '../../lib/ui/fixedColors';
 import { useTheme } from '../../lib/ui/theme';
 import { tap } from '../../lib/ui/haptics';
 import { ttx } from '../../lib/i18n/i18n';
@@ -34,40 +34,16 @@ interface ActionSheetProps {
  * reading as glass. Don't reduce the fill below ~0.55.
  */
 export function ActionSheet({ visible, onClose, title, subtitle, actions }: ActionSheetProps) {
-  const { colors, reduceAnimations, font } = useTheme();
-  const insets = useSafeAreaInsets();
-
-  // Don't keep a Modal portal mounted when invisible.
-  if (!visible) return null;
+  const { colors, font } = useTheme();
 
   return (
-    <Modal visible transparent animationType="none" onRequestClose={onClose}>
-      <Animated.View
-        entering={reduceAnimations ? undefined : FadeIn.duration(160)}
-        exiting={reduceAnimations ? undefined : FadeOut.duration(120)}
-        style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
-      >
-        <Pressable style={{ flex: 1 }} onPress={onClose} />
-      </Animated.View>
-
-      <Animated.View
-        entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
-        exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          paddingHorizontal: 12,
-          paddingBottom: insets.bottom + 12,
-        }}
-      >
+    <BottomSheet visible={visible} onClose={onClose} variant="floating">
         {/* Action card — glass sheet over the dimmed content */}
         <GlassPanel
           overlay
           borderRadius={22}
           style={{
-            shadowColor: '#000',
+            shadowColor: SHADOW,
             shadowOpacity: 0.35,
             shadowRadius: 24,
             shadowOffset: { width: 0, height: 12 },
@@ -177,7 +153,7 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
           borderRadius={18}
           style={{
             marginTop: 10,
-            shadowColor: '#000',
+            shadowColor: SHADOW,
             shadowOpacity: 0.25,
             shadowRadius: 16,
             shadowOffset: { width: 0, height: 8 },
@@ -192,7 +168,6 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{ttx("Cancel")}</Text>
           </Pressable>
         </GlassPanel>
-      </Animated.View>
-    </Modal>
+    </BottomSheet>
   );
 }

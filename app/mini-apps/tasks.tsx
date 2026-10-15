@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TextInput, Pressable, Keyboard, Modal, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, Pressable, Keyboard, Modal, ScrollView, Platform } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Bell, CheckCircle, CircleDashed, Flag, Plus, Trash, Tag, NotePencil, X, WarningCircle } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
@@ -17,6 +17,7 @@ import {
 import { scheduleTaskReminder, cancelTaskReminder } from '../../lib/mini-apps/taskReminders';
 import { parseVoiceTask, type AlarmTime, type VoiceTask } from '../../lib/mini-apps/voiceTask';
 import { ActionSheet } from '../../components/common/ActionSheet';
+import { BottomSheet } from '../../components/common/BottomSheet';
 import { tap } from '../../lib/ui/haptics';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
 import { DateTimePicker } from '../../components/ui/DateTimePicker';
@@ -541,88 +542,76 @@ export default function TasksScreen() {
       
 
       {/* Bottom Sheet */}
-      {showAddSheet && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}>
-          <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.isDark ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.45)' }} onPress={() => setShowAddSheet(false)} />
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end' }}>
-            <Animated.View entering={SlideInDown.springify().damping(18).stiffness(200)} exiting={SlideOutDown} style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 24, paddingBottom: 40, maxHeight: '90%' }}>
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-            
-            <View style={{ width: 40, height: 4, borderRadius: radius.sm, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 20 }} />
-            
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder={tt('What needs to be done?')}
-              placeholderTextColor={colors.textMuted}
-              style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginBottom: 24 }}
-              returnKeyType="done"
-              onSubmitEditing={() => { add(); setShowAddSheet(false); }}
-            />
-            
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Priority')}</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-              {PRIORITIES.map(item => {
-                const pColor = colors[item.tone];
-                return (
-                  <Pressable key={item.id} onPress={() => setPriority(item.id)}>
-                    <View style={{ borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: priority === item.id ? pColor : colors.surfaceHover, borderWidth: priority === item.id ? 0 : 1, borderColor: colors.border }}>
-                      <Text style={{ color: priority === item.id ? colors.bg : colors.textSecondary, fontSize: 14, fontWeight: '800' }}>{tt(item.label)}</Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
-            
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Schedule & Alarm')}</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: showAddPicker ? 16 : 32 }}>
-              <Pressable onPress={() => {
-                if (!showAddPicker && !alarmTime) {
-                  setAlarmTime({ hour: 9, minute: 0 });
-                  setDue(todayTaskDate());
-                }
-                setShowAddPicker(!showAddPicker);
-              }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: alarmTime ? accent : colors.surfaceHover, borderWidth: alarmTime ? 0 : 1, borderColor: colors.border }}>
-                  <Bell color={alarmTime ? colors.bg : colors.textSecondary} size={16} weight={alarmTime ? "fill" : "regular"} />
-                  <Text style={{ color: alarmTime ? colors.bg : colors.textSecondary, fontSize: 14, fontWeight: '800' }}>
-                    {alarmTime ? `Scheduled: ${formatAlarmTime(alarmTime)}` : tt('Set Schedule...')}
-                  </Text>
-                </View>
-              </Pressable>
-              {alarmTime && (
-                <Pressable onPress={() => { setAlarmTime(null); setShowAddPicker(false); }}>
-                  <View style={{ borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }}>
-                    <X color={colors.textSecondary} size={16} weight="bold" />
-                  </View>
-                </Pressable>
-              )}
-            </View>
-
-            {showAddPicker && alarmTime && due && (
-              <View style={{ marginVertical: 8, marginBottom: 32 }}>
-                <DateTimePicker 
-                  value={{ date: due, hour: alarmTime.hour, minute: alarmTime.minute }} 
-                  onChange={(val) => {
-                    setDue(val.date);
-                    setAlarmTime({ hour: val.hour, minute: val.minute });
-                  }} 
-                />
-              </View>
-            )}
-
-            <Pressable onPress={() => { add(); setShowAddSheet(false); }}>
-              <View style={{ height: 56, borderRadius: radius.xl, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, elevation: 5 }}>
-                <Plus color={colors.bg} size={20} weight="bold" />
-                <Text style={{ color: colors.bg, fontSize: 17, fontWeight: '900' }}>{tt('Create Task')}</Text>
+      <BottomSheet visible={showAddSheet} onClose={() => setShowAddSheet(false)} form>
+      
+      <TextInput
+        value={title}
+        onChangeText={setTitle}
+        placeholder={tt('What needs to be done?')}
+        placeholderTextColor={colors.textMuted}
+        style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginBottom: 24 }}
+        returnKeyType="done"
+        onSubmitEditing={() => { add(); setShowAddSheet(false); }}
+      />
+      
+      <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Priority')}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+        {PRIORITIES.map(item => {
+          const pColor = colors[item.tone];
+          return (
+            <Pressable key={item.id} onPress={() => setPriority(item.id)}>
+              <View style={{ borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: priority === item.id ? pColor : colors.surfaceHover, borderWidth: priority === item.id ? 0 : 1, borderColor: colors.border }}>
+                <Text style={{ color: priority === item.id ? colors.bg : colors.textSecondary, fontSize: 14, fontWeight: '800' }}>{tt(item.label)}</Text>
               </View>
             </Pressable>
-            
-              </ScrollView>
-            </Animated.View>
-          </KeyboardAvoidingView>
+          );
+        })}
+      </View>
+      
+      <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Schedule & Alarm')}</Text>
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: showAddPicker ? 16 : 32 }}>
+        <Pressable onPress={() => {
+          if (!showAddPicker && !alarmTime) {
+            setAlarmTime({ hour: 9, minute: 0 });
+            setDue(todayTaskDate());
+          }
+          setShowAddPicker(!showAddPicker);
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: alarmTime ? accent : colors.surfaceHover, borderWidth: alarmTime ? 0 : 1, borderColor: colors.border }}>
+            <Bell color={alarmTime ? colors.bg : colors.textSecondary} size={16} weight={alarmTime ? "fill" : "regular"} />
+            <Text style={{ color: alarmTime ? colors.bg : colors.textSecondary, fontSize: 14, fontWeight: '800' }}>
+              {alarmTime ? `Scheduled: ${formatAlarmTime(alarmTime)}` : tt('Set Schedule...')}
+            </Text>
+          </View>
+        </Pressable>
+        {alarmTime && (
+          <Pressable onPress={() => { setAlarmTime(null); setShowAddPicker(false); }}>
+            <View style={{ borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }}>
+              <X color={colors.textSecondary} size={16} weight="bold" />
+            </View>
+          </Pressable>
+        )}
+      </View>
+
+      {showAddPicker && alarmTime && due && (
+        <View style={{ marginVertical: 8, marginBottom: 32 }}>
+          <DateTimePicker 
+            value={{ date: due, hour: alarmTime.hour, minute: alarmTime.minute }} 
+            onChange={(val) => {
+              setDue(val.date);
+              setAlarmTime({ hour: val.hour, minute: val.minute });
+            }} 
+          />
         </View>
       )}
+
+      <Pressable onPress={() => { add(); setShowAddSheet(false); }}>
+        <View style={{ height: 56, borderRadius: radius.xl, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, elevation: 5 }}>
+          <Plus color={colors.bg} size={20} weight="bold" />
+          <Text style={{ color: colors.bg, fontSize: 17, fontWeight: '900' }}>{tt('Create Task')}</Text>
+        </View>
+      </Pressable>
+      </BottomSheet>
 
       {/* A spoken reminder is shown here first. An unsaid am or pm is offered both ways. */}
       <ActionSheet
