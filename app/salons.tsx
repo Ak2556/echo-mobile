@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { Plus, UsersThree, Hash } from 'phosphor-react-native';
+import { UsersThree, Hash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
+import { EmptyState } from '../components/common/EmptyState';
 import { HeaderAddButton } from '../components/ui/HeaderAddButton';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Button } from '../components/ui/Button';
@@ -15,6 +16,7 @@ import { fetchSalons, setSalonMembership, type Salon } from '../lib/supabaseEcho
 import { showToast } from '../components/ui/Toast';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../lib/i18n/i18n';
+import { LoadingState } from '../components/common/LoadingState';
 
 /**
  * Salons — topic-based circles. Browse list shows the most popular first,
@@ -55,19 +57,16 @@ function SalonsScreenInner() {
       />
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
+        <LoadingState />
       ) : salons.length === 0 ? (
-        <View style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center' }}>
-          <UsersThree color={colors.textMuted} size={56} />
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '600', marginTop: 16, textAlign: 'center' }}>
-            {ttx("No salons yet")}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
-            {ttx("Start the first one. A circle of people thinking about a shared topic.")}
-          </Text>
-          <Button label={ttx("Start a salon")} onPress={() => router.push('/create-salon')} leftIcon={Plus} style={{ marginTop: 20, alignSelf: 'center' }} />
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <EmptyState
+            icon={<UsersThree color={colors.textMuted} size={40} />}
+            title={ttx("No salons yet")}
+            subtitle={ttx("Start the first one. A circle of people thinking about a shared topic.")}
+            actionLabel={ttx("Start a salon")}
+            onAction={() => router.push('/create-salon')}
+          />
         </View>
       ) : (
         <ScrollView

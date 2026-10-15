@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useTheme } from '../../lib/ui/theme';
+import { Button } from '../ui/Button';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -18,7 +19,7 @@ interface EmptyStateProps {
  * single outline-style CTA. Icon is optional — most uses can drop it.
  */
 export function EmptyState({ icon, title, subtitle, actionLabel, onAction }: EmptyStateProps) {
-  const { colors, radius, animation, font } = useTheme();
+  const { colors, animation, font } = useTheme();
 
   return (
     <Animated.View
@@ -49,20 +50,7 @@ export function EmptyState({ icon, title, subtitle, actionLabel, onAction }: Emp
         {subtitle}
       </Text>
       {actionLabel && onAction && (
-        <Pressable
-          onPress={onAction}
-          style={({ pressed }) => ({
-            marginTop: 22,
-            paddingHorizontal: 18,
-            paddingVertical: 10,
-            borderRadius: radius.full,
-            backgroundColor: pressed ? colors.surfaceHover : 'transparent',
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.accent,
-          })}
-        >
-          <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 14 }]}>{actionLabel}</Text>
-        </Pressable>
+        <Button label={actionLabel} onPress={onAction} variant="secondary" style={{ marginTop: 22, alignSelf: 'center' }} />
       )}
     </Animated.View>
   );

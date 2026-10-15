@@ -6,6 +6,7 @@ import Animated, { FadeInDown, FadeOutUp, Layout } from 'react-native-reanimated
 import { tap } from '../../lib/ui/haptics';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { BottomSheet } from '../../components/common/BottomSheet';
+import { EmptyState } from '../../components/common/EmptyState';
 import { Button } from '../../components/ui/Button';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -298,10 +299,11 @@ export default function ShoppingListScreen() {
           </Animated.View>
         ))}
         {visible.length === 0 && !isAdding && (
-          <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 60, opacity: 0.5 }}>
-            <ShoppingCart color={colors.textMuted} size={64} weight="duotone" />
-            <Text style={{ color: colors.textMuted, fontSize: 18, fontWeight: '700', marginTop: 16 }}>List is empty</Text>
-          </View>
+          <EmptyState
+            icon={<ShoppingCart color={colors.textMuted} size={40} weight="duotone" />}
+            title={ttx("List is empty")}
+            subtitle={ttx("Tap + to add your first item.")}
+          />
         )}
       </View>
 

@@ -21,6 +21,7 @@ import {
 import { ttx } from '../../lib/i18n/i18n';
 import { WARM, ON_MEDIA } from '../../lib/ui/fixedColors';
 import { confirmAction } from '../../lib/ui/confirm';
+import { LoadingState } from '../../components/common/LoadingState';
 
 async function suggestGroupName(memberNames: string[]): Promise<string | null> {
   let acc = '';
@@ -164,7 +165,7 @@ export default function GroupInfoScreen() {
       <ScreenHeader title={ttx("Group info")} />
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={colors.accent} /></View>
+        <LoadingState />
       ) : !conv?.isGroup ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Text style={{ color: colors.textMuted }}>{ttx("This isn’t a group conversation.")}</Text>

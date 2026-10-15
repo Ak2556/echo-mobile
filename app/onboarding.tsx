@@ -1,14 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Target, ArrowRight } from 'phosphor-react-native';
@@ -25,6 +16,7 @@ import { TextInput } from '../components/ui/TextInput';
 import { ttx } from '../lib/i18n/i18n';
 import { SHADOW } from '../lib/ui/fixedColors';
 import { Button } from '../components/ui/Button';
+import { LoadingState } from '../components/common/LoadingState';
 
 /**
  * Optional "set a goal" screen.
@@ -84,9 +76,7 @@ export default function SetGoalScreen() {
 
   if (status === 'checking') {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} size="large" />
-      </View>
+      <LoadingState screen size="large" />
     );
   }
 

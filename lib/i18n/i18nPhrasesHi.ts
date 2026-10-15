@@ -1177,4 +1177,8 @@ export const HI_BULK: Record<string, string> = {
   'Leave': 'छोड़ें',
   'Block': 'ब्लॉक करें',
   'Cancel': 'रद्द करें',
+  // Loading and empty states. HI: native review needed.
+  'List is empty': 'सूची खाली है',
+  'Tap + to add your first item.': 'पहला आइटम जोड़ने के लिए + दबाएँ।',
+  'Loading': 'लोड हो रहा है',
 };

@@ -23,6 +23,7 @@ import {
 } from '../../lib/supabaseEchoApi';
 import { ttx } from '../../lib/i18n/i18n';
 import { BackButton } from '../../components/ui/BackButton';
+import { LoadingState } from '../../components/common/LoadingState';
 
 function OfficeHourDetailScreenInner() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -89,9 +90,7 @@ function OfficeHourDetailScreenInner() {
 
   if (loading) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} />
-      </SafeAreaView>
+      <LoadingState screen />
     );
   }
 

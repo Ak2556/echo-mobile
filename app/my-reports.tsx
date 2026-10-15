@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -10,6 +10,7 @@ import { GlassPanel } from '../components/ui/GlassPanel';
 import { useTheme } from '../lib/ui/theme';
 import { fetchMyReports, type MyReport } from '../lib/supabaseEchoApi';
 import { ttx } from '../lib/i18n/i18n';
+import { LoadingState } from '../components/common/LoadingState';
 
 // `tone` resolves to a theme token at render so status color adapts per theme.
 const STATUS_CONFIG = {
@@ -61,9 +62,7 @@ export default function MyReportsScreen() {
       />
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
+        <LoadingState />
       ) : error ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Text style={[font.body, { color: colors.textMuted, textAlign: 'center' }]}>{error}</Text>

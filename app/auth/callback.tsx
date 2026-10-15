@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { consumeAuthCallbackUrl } from '../../lib/auth/callback';
 import { useTheme } from '../../lib/ui/theme';
 import { captureException } from '../../lib/core/monitoring';
+import { LoadingState } from '../../components/common/LoadingState';
 
 /**
  * Handles echo://auth/callback#access_token=…&refresh_token=…
@@ -45,8 +46,6 @@ export default function AuthCallbackScreen() {
   }, [router, url]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-      <ActivityIndicator color={colors.accent} size="large" />
-    </View>
+    <LoadingState screen size="large" />
   );
 }

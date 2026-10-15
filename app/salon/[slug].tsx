@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -14,6 +14,7 @@ import { fetchSalonBySlug, fetchSalonEchoes, setSalonMembership, type Salon } fr
 import type { FeedItem } from '../../types';
 import { V2FeatureGuard } from '../../components/common/V2FeatureGuard';
 import { BackButton } from '../../components/ui/BackButton';
+import { LoadingState } from '../../components/common/LoadingState';
 
 function SalonDetailScreenInner() {
 
@@ -56,9 +57,7 @@ function SalonDetailScreenInner() {
 
   if (loading) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} />
-      </SafeAreaView>
+      <LoadingState screen />
     );
   }
 

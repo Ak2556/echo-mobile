@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { CheckCircle, Lightning, Trophy } from 'phosphor-react-native';
@@ -9,6 +9,7 @@ import { fetchActiveQuests, type Quest } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../lib/i18n/i18n';
 import { BRAND } from '../lib/ui/fixedColors';
+import { LoadingState } from '../components/common/LoadingState';
 
 function QuestsScreenInner() {
   const { colors } = useTheme();
@@ -40,9 +41,7 @@ function QuestsScreenInner() {
       />
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
+        <LoadingState />
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
           {dailyQuests.length > 0 && (

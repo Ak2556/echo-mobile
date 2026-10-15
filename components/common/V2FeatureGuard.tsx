@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../lib/ui/theme';
 import type { FeatureFlag } from '../../lib/core/featureFlags';
 import { useFeature } from '../../hooks/useFeature';
 import { ttx } from '../../lib/i18n/i18n';
+import { LoadingState } from './LoadingState';
 
 interface V2FeatureGuardProps {
   flag: FeatureFlag;
@@ -30,10 +31,7 @@ export function V2FeatureGuard({ flag, children }: V2FeatureGuardProps) {
 
   if (!enabled) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.accent} />
-        <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 12 }}>{ttx("Redirecting…")}</Text>
-      </View>
+      <LoadingState screen message={ttx("Redirecting…")} />
     );
   }
 
