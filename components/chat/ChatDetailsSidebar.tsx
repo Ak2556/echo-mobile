@@ -1,48 +1,78 @@
 import React from 'react';
 import { ttx } from '../../lib/i18n/i18n';
 import { ICON_SIZE } from '../../lib/ui/icons';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'expo-image';
-import { Bell, Image as ImageIcon, WarningCircle } from 'phosphor-react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Bell, BellSlash, Image as ImageIcon, WarningCircle } from 'phosphor-react-native';
+import { Avatar } from '../ui/Avatar';
 
 interface Recipient {
   name: string;
-  avatar: string;
-  handle: string;
+  /** A person's @handle, without the @. Absent for groups. */
+  handle?: string;
+  /** What to show instead of a handle, for groups: "5 members". */
+  subtitle?: string;
+  avatarUrl?: string;
+  avatarColor?: string;
 }
 
 interface Props {
   recipient: Recipient;
+  muted?: boolean;
+  /** Mute lives on the full Details screen, where the duration is chosen. */
+  onMute: () => void;
+  onSharedMedia: () => void;
+  onBlockOrReport: () => void;
   colors: any;
 }
 
-export function ChatDetailsSidebar({ recipient, colors }: Props) {
+/**
+ * The right-hand pane of the three-column messages layout: who this conversation is with, and
+ * the three things people reach for first. Each button opens the same screen the phone layout
+ * uses; nothing here is a second implementation.
+ */
+export function ChatDetailsSidebar({ recipient, muted, onMute, onSharedMedia, onBlockOrReport, colors }: Props) {
+  const MuteIcon = muted ? BellSlash : Bell;
+  const secondary = recipient.handle ? `@${recipient.handle}` : recipient.subtitle;
   return (
     <View style={[styles.container, { backgroundColor: colors.bg, borderLeftColor: colors.border }]}>
       <View style={[styles.profileSection, { borderBottomColor: colors.border }]}>
         <View style={styles.avatarContainer}>
-          <Image source={recipient.avatar} style={styles.avatar} />
+          <Avatar name={recipient.name} color={recipient.avatarColor} url={recipient.avatarUrl} size={96} />
         </View>
-        <Text style={[styles.name, { color: colors.text }]}>{recipient.name}</Text>
-        <Text style={[styles.handle, { color: colors.textMuted }]}>@{recipient.handle}</Text>
+        <Text style={[styles.name, { color: colors.text }]} numberOfLines={2}>{recipient.name}</Text>
+        {secondary ? <Text style={[styles.handle, { color: colors.textMuted }]} numberOfLines={1}>{secondary}</Text> : null}
       </View>
 
       <View style={[styles.actionsSection, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.bgSecondary }]}>
-          <Bell size={ICON_SIZE.md} color={colors.textMuted} />
-          <Text style={[styles.actionText, { color: colors.text }]}>{ttx('Mute Notifications')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.bgSecondary }]}>
+        <Pressable
+          onPress={onMute}
+          accessibilityRole="button"
+          style={[styles.actionButton, { backgroundColor: colors.bgSecondary }]}
+        >
+          <MuteIcon size={ICON_SIZE.md} color={colors.textMuted} />
+          <Text style={[styles.actionText, { color: colors.text }]}>
+            {muted ? ttx('Notifications muted') : ttx('Mute Notifications')}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={onSharedMedia}
+          accessibilityRole="button"
+          style={[styles.actionButton, { backgroundColor: colors.bgSecondary }]}
+        >
           <ImageIcon size={ICON_SIZE.md} color={colors.textMuted} />
           <Text style={[styles.actionText, { color: colors.text }]}>{ttx('Shared Media')}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <View style={styles.footerSection}>
-        <TouchableOpacity style={[styles.dangerButton, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-          <WarningCircle size={18} color="#ef4444" />
-          <Text style={styles.dangerText}>{ttx('Block or Report')}</Text>
-        </TouchableOpacity>
+        <Pressable
+          onPress={onBlockOrReport}
+          accessibilityRole="button"
+          style={[styles.dangerButton, { backgroundColor: colors.danger + '1A' }]}
+        >
+          <WarningCircle size={ICON_SIZE.md} color={colors.danger} />
+          <Text style={[styles.dangerText, { color: colors.danger }]}>{ttx('Block or Report')}</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -61,20 +91,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   avatarContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    overflow: 'hidden',
     marginBottom: 16,
-  },
-  avatar: {
-    width: '100%',
-    height: '100%',
   },
   name: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 4,
+    textAlign: 'center',
   },
   handle: {
     fontSize: 14,
@@ -108,7 +131,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dangerText: {
-    color: '#ef4444',
     fontSize: 14,
     fontWeight: '600',
   },
