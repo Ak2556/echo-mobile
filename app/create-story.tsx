@@ -58,7 +58,7 @@ function CreateStoryScreenInner() {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <Broadcast color={colors.accent} size={48} />
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginTop: 16, textAlign: 'center' }}>{ttx("Stories are unavailable")}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 21 }}>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, marginTop: 8, textAlign: 'center', lineHeight: 21 }}>
             {ttx("Share your thoughts as an Echo instead. Echoes stay available in your feed.")}
           </Text>
           <Button label={ttx("Share an Echo instead")} onPress={() => router.replace('/create-post')} style={{ marginTop: 24, alignSelf: 'center' }} />

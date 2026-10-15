@@ -49,7 +49,7 @@ function VerificationCard({ item, onDecide }: {
         <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.small, flex: 1 }]}>
           @{item.profiles?.username ?? 'unknown'}
         </Text>
-        <Text style={[font.body, { color: colors.textMuted, fontSize: 11 }]}>
+        <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
           {new Date(item.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
         </Text>
       </View>
@@ -60,20 +60,20 @@ function VerificationCard({ item, onDecide }: {
             <Image source={{ uri: item.profiles.avatar_url }} style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 14, backgroundColor: colors.surfaceHover }} resizeMode="cover" />
           ) : (
             <View style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("No photo")}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("No photo")}</Text>
             </View>
           )}
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 11 }]}>{ttx("Profile photo")}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>{ttx("Profile photo")}</Text>
         </View>
         <View style={{ flex: 1, alignItems: 'center', gap: 6 }}>
           {item.selfie_url ? (
             <Image source={{ uri: item.selfie_url }} style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 14, backgroundColor: colors.surfaceHover }} resizeMode="cover" />
           ) : (
             <View style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Selfie missing")}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Selfie missing")}</Text>
             </View>
           )}
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 11 }]}>{ttx("Selfie ·")} {item.pose.toLowerCase()}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>{ttx("Selfie ·")} {item.pose.toLowerCase()}</Text>
         </View>
       </View>
 
@@ -92,14 +92,14 @@ function VerificationCard({ item, onDecide }: {
           style={{ flex: 1, borderRadius: 12, borderWidth: 1, borderColor: `${colors.danger}55`, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
         >
           <XCircle color={colors.danger} size={16} weight="fill" />
-          <Text style={{ color: colors.danger, fontWeight: '700', fontSize: 14 }}>{ttx("Reject")}</Text>
+          <Text style={{ color: colors.danger, fontWeight: '700', fontSize: fontSizes.label }}>{ttx("Reject")}</Text>
         </AnimatedPressable>
         <AnimatedPressable
           onPress={() => confirm(true)} disabled={busy} scaleValue={0.96} haptic="medium"
           style={{ flex: 1, borderRadius: 12, backgroundColor: colors.success, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
         >
           <CheckCircle color={ON_STATUS} size={16} weight="fill" />
-          <Text style={{ color: ON_STATUS, fontWeight: '700', fontSize: 14 }}>{ttx("Approve")}</Text>
+          <Text style={{ color: ON_STATUS, fontWeight: '700', fontSize: fontSizes.label }}>{ttx("Approve")}</Text>
         </AnimatedPressable>
       </View>
     </GlassPanel>

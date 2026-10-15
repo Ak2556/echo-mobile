@@ -31,7 +31,7 @@ import { LoadingState } from '../components/common/LoadingState';
 export default function SetGoalScreen() {
   const router = useRouter();
   const { status } = useAuth();
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
   const storedTargetCategory = useAppStore(s => s.targetCategory);
   const storedTargetOutcome = useAppStore(s => s.targetOutcome);
@@ -138,7 +138,7 @@ export default function SetGoalScreen() {
                 </Animated.View>
 
                 <Animated.View entering={FadeInDown.delay(150).duration(400).springify().mass(0.7)}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, marginBottom: 10 }]}>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label, marginBottom: 10 }]}>
                     {ttx("Desired output")}
                   </Text>
                   <TextInput
@@ -146,7 +146,7 @@ export default function SetGoalScreen() {
                     onChangeText={setTargetOutcome}
                     maxLength={140}
                     placeholder={ttx("Example: lose 8 kg, pass an exam, post 3 times a week...")}
-                    style={{ minHeight: 64, fontSize: 16, backgroundColor: colors.inputBg, borderWidth: 0 }}
+                    style={{ minHeight: 64, fontSize: fontSizes.body, backgroundColor: colors.inputBg, borderWidth: 0 }}
                   />
                 </Animated.View>
 
@@ -161,13 +161,13 @@ export default function SetGoalScreen() {
                   shadowRadius: 10,
                   shadowOffset: { width: 0, height: 4 },
                 }}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, marginBottom: 6 }]}>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.body, marginBottom: 6 }]}>
                     {selectedTarget.label}: {selectedTarget.outcome}
                   </Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 14, lineHeight: 22 }]}>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.label, lineHeight: 22 }]}>
                     {selectedTarget.starter}
                   </Text>
-                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 13, marginTop: 14, textTransform: 'capitalize', letterSpacing: 0.2 }]}>
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.small, marginTop: 14, textTransform: 'capitalize', letterSpacing: 0.2 }]}>
                     {recommendedAppNames}
                   </Text>
                 </Animated.View>
@@ -192,7 +192,7 @@ export default function SetGoalScreen() {
 }
 
 function TargetChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -221,7 +221,7 @@ function TargetChip({ label, active, onPress }: { label: string; active: boolean
           shadowOffset: { width: 0, height: 2 },
         }}
       >
-        <Text style={[font.bodyBold, { color: active ? colors.onAccent : colors.textSecondary, fontSize: 14 }]}>
+        <Text style={[font.bodyBold, { color: active ? colors.onAccent : colors.textSecondary, fontSize: fontSizes.label }]}>
           {label}
         </Text>
       </Pressable>

@@ -48,7 +48,7 @@ const EMPTY_PREFS: ConversationPrefs = {
 export default function ChatDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const toggleBlock = useAppStore(s => s.toggleBlock);
   const isBlocked = useAppStore(s => s.isBlocked);
 
@@ -135,9 +135,9 @@ export default function ChatDetailsScreen() {
           </Avatar>
           <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack, letterSpacing: -0.3 }}>{name}</Text>
           {!isGroup && conv?.otherUsername ? (
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>@{conv.otherUsername}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>@{conv.otherUsername}</Text>
           ) : isGroup ? (
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{conv?.memberCount ?? 0} {ttx("members")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{conv?.memberCount ?? 0} {ttx("members")}</Text>
           ) : null}
         </View>
 
@@ -145,7 +145,7 @@ export default function ChatDetailsScreen() {
         <SectionLabel colors={colors}>{ttx("Customization")}</SectionLabel>
         {!isGroup && (
           <View style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 14 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', marginBottom: 6 }}>{ttx("Nickname")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700', marginBottom: 6 }}>{ttx("Nickname")}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <TextInput
                 value={nickname}
@@ -186,7 +186,7 @@ export default function ChatDetailsScreen() {
             const active = prefs.quickReaction === e || (!prefs.quickReaction && e === '❤️');
             return (
               <Pressable key={e} onPress={() => chooseReaction(e)} accessibilityRole="button" accessibilityLabel={`Quick reaction ${e}`} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? colors.accentMuted : colors.surfaceHover, borderWidth: active ? 1 : StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border }}>
-                <Text style={{ fontSize: 20 }}>{e}</Text>
+                <Text style={{ fontSize: fontSizes.title }}>{e}</Text>
               </Pressable>
             );
           })}

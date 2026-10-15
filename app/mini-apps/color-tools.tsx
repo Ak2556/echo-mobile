@@ -60,13 +60,13 @@ function mix(hex: string, amount: number, target = 255) {
 }
 
 function ColorIntelligencePanel({ hex }: { hex: string; saved: string[] }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const shades = [mix(hex, 0.66), mix(hex, 0.34), hex.toUpperCase(), mix(hex, 0.22, 0), mix(hex, 0.44, 0)];
   // Just the scale. The card also repeated the stat strip above it (contrast,
   // saved count) behind a "Palette intelligence" headline.
   return (
     <View style={{ marginBottom: 14 }}>
-      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("TINTS & SHADES")}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("TINTS & SHADES")}</Text>
       <View style={{ flexDirection: 'row', gap: 6, height: 42 }}>
         {shades.map(shade => (
           <View key={shade} style={{ flex: 1, borderRadius: radius.md, backgroundColor: shade, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
@@ -77,7 +77,7 @@ function ColorIntelligencePanel({ hex }: { hex: string; saved: string[] }) {
 }
 
 export default function ColorToolsScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const [hex, setHex] = useState('#C65F3F');
   const [inputHex, setInputHex] = useState('#C65F3F');
   const [copied, setCopied] = useState('');
@@ -110,11 +110,11 @@ export default function ColorToolsScreen() {
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Pressable onPress={randomize} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.25)' }}>
             <Shuffle color={textColor} size={15} weight="bold" />
-            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>{ttx("Random")}</Text>
+            <Text style={{ color: textColor, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Random")}</Text>
           </Pressable>
           <Pressable onPress={save} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.25)' }}>
             <FloppyDisk color={textColor} size={15} weight="bold" />
-            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>{ttx("Save")}</Text>
+            <Text style={{ color: textColor, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Save")}</Text>
           </Pressable>
         </View>
       </View>
@@ -122,7 +122,7 @@ export default function ColorToolsScreen() {
       {/* Conversions */}
       {rgb && hsl && (
         <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ paddingHorizontal: 20, paddingTop: 16 }} style={{ marginBottom: 14 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>{ttx("FORMATS. Tap to copy")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>{ttx("FORMATS. Tap to copy")}</Text>
           {[
             { label: 'HEX', value: hex.toUpperCase() },
             { label: 'RGB', value: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` },
@@ -134,8 +134,8 @@ export default function ColorToolsScreen() {
               onPress={() => copyVal(row.value)}
               style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: i < arr.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}
             >
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', width: 52 }}>{row.label}</Text>
-              <Text style={{ color: colors.text, fontSize: 14, fontFamily: 'monospace', flex: 1 }}>{row.value}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700', width: 52 }}>{row.label}</Text>
+              <Text style={{ color: colors.text, fontSize: fontSizes.label, fontFamily: 'monospace', flex: 1 }}>{row.value}</Text>
               {copied === row.value ? <Check color={colors.success} size={16} weight="bold" /> : <Copy color={colors.textMuted} size={16} />}
             </Pressable>
           ))}
@@ -146,7 +146,7 @@ export default function ColorToolsScreen() {
       {/* Saved */}
       {saved.length > 0 && (
         <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SAVED")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SAVED")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {saved.map(c => (
               <Pressable
@@ -162,7 +162,7 @@ export default function ColorToolsScreen() {
       {/* Palettes */}
       {PALETTES.map(pal => (
         <GlassPanel key={pal.name} variant="light" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 10 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{pal.name.toUpperCase()}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{pal.name.toUpperCase()}</Text>
           <View style={{ flexDirection: 'row', gap: 6, height: 48 }}>
             {pal.colors.map(c => (
               <Pressable

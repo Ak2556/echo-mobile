@@ -56,7 +56,7 @@ export default function MyReportsScreen() {
             style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, borderRadius: radius.full, backgroundColor: colors.accentMuted }}
           >
             <Scales color={colors.accent} size={14} weight="bold" />
-            <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>{ttx("My appeals")}</Text>
+            <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.meta }]}>{ttx("My appeals")}</Text>
           </AnimatedPressable>
         }
       />
@@ -110,7 +110,7 @@ export default function MyReportsScreen() {
                   )}
 
                   {report.reviewedAt && (
-                    <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 8 }]}>
+                    <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }]}>
                       {ttx("Reviewed")} {timeAgo(report.reviewedAt)}
                     </Text>
                   )}

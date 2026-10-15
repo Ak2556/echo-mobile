@@ -15,7 +15,7 @@ import {
 import { ttx } from '../../lib/i18n/i18n';
 
 export default function PlannerScreen() {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const accent = colors.accent;
   const [items, setItems] = useState<PlannerItem[]>([]);
   const [date, setDate] = useState(plannerToday());
@@ -101,7 +101,7 @@ export default function PlannerScreen() {
           <Pressable onPress={() => setDate(plannerToday())}>
             <View style={{ alignItems: 'center' }}>
               <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack }}>{dayLabel}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{date}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }}>{date}</Text>
             </View>
           </Pressable>
           <Pressable onPress={() => setDate(shiftPlannerDate(date, 1))} hitSlop={8}>
@@ -114,7 +114,7 @@ export default function PlannerScreen() {
           onChangeText={setTitle}
           placeholder={ttx("Add a plan...")}
           placeholderTextColor={colors.textMuted}
-          style={{ color: colors.text, fontSize: 16, fontWeight: '700', paddingVertical: 8 }}
+          style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700', paddingVertical: 8 }}
           returnKeyType="done"
           onSubmitEditing={add}
         />
@@ -152,7 +152,7 @@ export default function PlannerScreen() {
                 ))}
                 {rows.length === 0 && (
                   <View style={{ height: 44, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("No")} {section.label.toLowerCase()} {ttx("plans")}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("No")} {section.label.toLowerCase()} {ttx("plans")}</Text>
                   </View>
                 )}
               </View>

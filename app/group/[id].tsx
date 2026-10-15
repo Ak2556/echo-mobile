@@ -45,7 +45,7 @@ async function suggestGroupName(memberNames: string[]): Promise<string | null> {
 export default function GroupInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors, isUserOnline, font, radius } = useTheme();
+  const { colors, isUserOnline, font, radius, fontSizes } = useTheme();
   const myId = useAppStore(s => s.userId);
 
   const [conv, setConv] = useState<RemoteConversation | null>(null);
@@ -158,7 +158,7 @@ export default function GroupInfoScreen() {
     });
   };
 
-  const eyebrow = { color: colors.textMuted, fontSize: 12, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase' as const };
+  const eyebrow = { color: colors.textMuted, fontSize: fontSizes.meta, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase' as const };
 
   return (
     <ResponsiveScreen>
@@ -189,7 +189,7 @@ export default function GroupInfoScreen() {
             ) : (
               <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, textAlign: 'center', letterSpacing: -0.5 }}>{name}</Text>
             )}
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{members.length} {ttx("member")}{members.length === 1 ? '' : 's'}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{members.length} {ttx("member")}{members.length === 1 ? '' : 's'}</Text>
 
             {isAdmin && (
               <AnimatedPressable
@@ -199,7 +199,7 @@ export default function GroupInfoScreen() {
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: radius.full, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '66', paddingHorizontal: 14, paddingVertical: 8, opacity: suggesting ? 0.6 : 1 }}
               >
                 {suggesting ? <ActivityIndicator size="small" color={colors.accent} /> : <Waveform color={colors.accent} size={15} weight="fill" />}
-                <Text style={{ color: colors.accent, fontSize: 13, ...font.bodySemibold }}>{ttx("Ask Echo to name it")}</Text>
+                <Text style={{ color: colors.accent, fontSize: fontSizes.small, ...font.bodySemibold }}>{ttx("Ask Echo to name it")}</Text>
               </AnimatedPressable>
             )}
           </View>
@@ -225,7 +225,7 @@ export default function GroupInfoScreen() {
               <Pressable onPress={() => setAdding(a => !a)} hitSlop={8}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <UserPlus color={colors.accent} size={15} weight="bold" />
-                  <Text style={{ color: colors.accent, fontSize: 13, ...font.bodySemibold }}>{ttx("Add")}</Text>
+                  <Text style={{ color: colors.accent, fontSize: fontSizes.small, ...font.bodySemibold }}>{ttx("Add")}</Text>
                 </View>
               </Pressable>
             )}
@@ -245,7 +245,7 @@ export default function GroupInfoScreen() {
                     <Avatar name={u.display_name || u.username} color={u.avatar_color} url={u.avatar_url} size={38} />
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600' }} numberOfLines={1}>{u.display_name || u.username}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>@{u.username}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }} numberOfLines={1}>@{u.username}</Text>
                     </View>
                     <UserPlus color={colors.accent} size={18} weight="bold" />
                   </View>
@@ -272,10 +272,10 @@ export default function GroupInfoScreen() {
                         </View>
                       )}
                     </View>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }} numberOfLines={1}>@{m.username}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 1 }} numberOfLines={1}>@{m.username}</Text>
                   </View>
                   {isAdmin && m.userId !== myId && (
-                    <Text style={{ color: colors.textMuted, fontSize: 20, marginTop: -4 }}>⋯</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.title, marginTop: -4 }}>⋯</Text>
                   )}
                 </View>
               </Pressable>

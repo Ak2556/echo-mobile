@@ -18,7 +18,7 @@ import { ON_MEDIA } from '../lib/ui/fixedColors';
 type Phase = 'loading' | 'intro' | 'preview' | 'submitting' | 'approved' | 'pending' | 'rejected';
 
 export default function GetVerifiedScreen() {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const { profile } = useAuth();
 
   const [phase, setPhase] = useState<Phase>('loading');
@@ -131,7 +131,7 @@ export default function GetVerifiedScreen() {
       {phase === 'preview' && selfieUri && (
         <ScrollView contentContainerStyle={{ padding: 24, gap: 18, alignItems: 'center' }}>
           <Image source={{ uri: selfieUri }} style={{ width: 240, height: 320, borderRadius: 24, backgroundColor: colors.surface }} resizeMode="cover" />
-          <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center' }}>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, textAlign: 'center' }}>
             {ttx("Pose:")} {pose.toLowerCase()}
           </Text>
           <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -178,12 +178,12 @@ export default function GetVerifiedScreen() {
           ) : (
             <>
               <View style={{ backgroundColor: colors.accent + '12', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.accent + '33' }}>
-                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>{ttx("YOUR POSE")}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>{ttx("YOUR POSE")}</Text>
                 <Text style={{ color: colors.text, fontSize: 17, ...font.displayBlack }}>{pose}</Text>
               </View>
               <AnimatedPressable onPress={takeSelfie} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
                 <Camera color={ON_MEDIA} size={18} weight="fill" />
-                <Text style={{ color: ON_MEDIA, fontWeight: '800', fontSize: 16 }}>{ttx("Take the selfie")}</Text>
+                <Text style={{ color: ON_MEDIA, fontWeight: '800', fontSize: fontSizes.body }}>{ttx("Take the selfie")}</Text>
               </AnimatedPressable>
             </>
           )}

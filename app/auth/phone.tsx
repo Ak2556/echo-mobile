@@ -17,7 +17,7 @@ const RESEND_COOLDOWN_S = 30;
 
 export default function PhoneAuthScreen() {
   const router = useRouter();
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
   const { t, textDirection } = useI18n();
 
@@ -185,7 +185,7 @@ export default function PhoneAuthScreen() {
                 >
                   {loading
                     ? <ActivityIndicator color={colors.onAccent} />
-                    : <Text style={[font.bodyBold, { color: canSendPhone ? colors.onAccent : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>{t('auth.sendCode')}</Text>}
+                    : <Text style={[font.bodyBold, { color: canSendPhone ? colors.onAccent : colors.textMuted, fontSize: fontSizes.body, letterSpacing: -0.2 }]}>{t('auth.sendCode')}</Text>}
                 </Pressable>
               </View>
             </View>
@@ -233,7 +233,7 @@ export default function PhoneAuthScreen() {
                 >
                   {loading
                     ? <ActivityIndicator color={colors.onAccent} />
-                    : <Text style={[font.bodyBold, { color: canVerify ? colors.onAccent : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>{t('auth.verify')}</Text>}
+                    : <Text style={[font.bodyBold, { color: canVerify ? colors.onAccent : colors.textMuted, fontSize: fontSizes.body, letterSpacing: -0.2 }]}>{t('auth.verify')}</Text>}
                 </Pressable>
               </View>
 
@@ -256,7 +256,7 @@ export default function PhoneAuthScreen() {
                     accessibilityLabel={cooldown > 0 ? t('auth.resendInSeconds', { count: cooldown }) : t('auth.resendCode')}
                   >
                     <ArrowClockwise color={cooldown > 0 ? colors.textMuted : colors.accent} size={16} weight="bold" />
-                    <Text style={[font.bodySemibold, { color: cooldown > 0 ? colors.textMuted : colors.accent, fontSize: 14 }]}>
+                    <Text style={[font.bodySemibold, { color: cooldown > 0 ? colors.textMuted : colors.accent, fontSize: fontSizes.label }]}>
                       {cooldown > 0 ? t('auth.resendIn', { count: cooldown }) : t('auth.resendCode')}
                     </Text>
                   </Pressable>

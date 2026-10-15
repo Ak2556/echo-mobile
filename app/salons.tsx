@@ -98,7 +98,7 @@ function SalonsScreenInner() {
 
 function SalonCard({ salon, onToggle }: { salon: Salon; onToggle: (join: boolean) => void }) {
   const router = useRouter();
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <AnimatedPressable
       onPress={() => router.push({ pathname: '/salon/[slug]', params: { slug: salon.slug } })}
@@ -116,22 +116,22 @@ function SalonCard({ salon, onToggle }: { salon: Salon; onToggle: (join: boolean
       haptic="none"
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{salon.name}</Text>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{salon.name}</Text>
         <Button label={salon.is_member ? ttx('Joined') : ttx('Join')} onPress={() => onToggle(!salon.is_member)} size="compact" variant={salon.is_member ? 'secondary' : 'primary'} />
       </View>
       {salon.description ? (
-        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginBottom: 8 }} numberOfLines={2}>
+        <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 19, marginBottom: 8 }} numberOfLines={2}>
           {salon.description}
         </Text>
       ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <UsersThree color={colors.textMuted} size={13} />
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>{salon.member_count}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{salon.member_count}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Hash color={colors.textMuted} size={13} />
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>{salon.echo_count} {ttx("echoes")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{salon.echo_count} {ttx("echoes")}</Text>
         </View>
       </View>
     </AnimatedPressable>

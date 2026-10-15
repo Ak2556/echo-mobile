@@ -18,7 +18,7 @@ import { WARM } from '../lib/ui/fixedColors';
 
 export default function TargetProgressScreen() {
   const router = useRouter();
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
   const targetCategory = useAppStore(s => s.targetCategory);
   const targetOutcome = useAppStore(s => s.targetOutcome);
@@ -76,7 +76,7 @@ export default function TargetProgressScreen() {
             <Text style={[font.display, { color: colors.text, fontSize: 27, lineHeight: 32 }]}>
               {category.label}
             </Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19 }]} numberOfLines={2}>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: 19 }]} numberOfLines={2}>
               {targetOutcome.trim() || category.outcome}
             </Text>
           </View>
@@ -103,7 +103,7 @@ export default function TargetProgressScreen() {
             <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 16 }}>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 10 }]}>{ttx("Today's proof")}</Text>
               {digest.response.split('\n').slice(1, 6).map(line => (
-                <Text key={line} style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 20, marginBottom: 6 }]}>
+                <Text key={line} style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 20, marginBottom: 6 }]}>
                   {line}
                 </Text>
               ))}
@@ -148,7 +148,7 @@ export default function TargetProgressScreen() {
                   borderBottomColor: colors.border,
                   gap: 10,
                 }}>
-                  <Text style={[font.bodySemibold, { color: colors.text, fontSize: 13, flex: 1 }]} numberOfLines={1}>
+                  <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.small, flex: 1 }]} numberOfLines={1}>
                     {row.label}
                   </Text>
                   <Metric label={ttx("You")} value={row.you} />
@@ -177,7 +177,7 @@ function ActionButton({
   onPress: () => void;
   filled?: boolean;
 }) {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -197,10 +197,10 @@ function ActionButton({
         {icon}
       </IconBadge>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[font.bodyBold, { color: filled ? colors.onAccent : colors.text, fontSize: 14 }]}>
+        <Text style={[font.bodyBold, { color: filled ? colors.onAccent : colors.text, fontSize: fontSizes.label }]}>
           {label}
         </Text>
-        <Text style={[font.body, { color: filled ? 'rgba(255,255,255,0.78)' : colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 2 }]}>
+        <Text style={[font.body, { color: filled ? 'rgba(255,255,255,0.78)' : colors.textMuted, fontSize: fontSizes.meta, lineHeight: 17, marginTop: 2 }]}>
           {caption}
         </Text>
       </View>
@@ -220,10 +220,10 @@ function CrossStat({ icon, value, label }: { icon: React.ReactNode; value: strin
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   return (
     <View style={{ minWidth: 58, alignItems: 'flex-end' }}>
-      <Text style={[font.bodySemibold, { color: colors.text, fontSize: 12 }]} numberOfLines={1}>
+      <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.meta }]} numberOfLines={1}>
         {value}
       </Text>
       <Text style={[font.body, { color: colors.textMuted, fontSize: 10 }]} numberOfLines={1}>

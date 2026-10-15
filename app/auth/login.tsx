@@ -42,7 +42,7 @@ const ROTATING_PROMPT_KEYS: TranslationKey[] = [
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
   // The marketing column only exists on a wide browser; WebLandingPanel makes
   // the same call, so both sides agree on the layout.
@@ -232,7 +232,7 @@ export default function LoginScreen() {
               >
                 {`"${t(ROTATING_PROMPT_KEYS[promptIdx])}"`}
               </Animated.Text>
-              <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 11, marginTop: 14, letterSpacing: 1.6 }]}>
+              <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 14, letterSpacing: 1.6 }]}>
                 {t('auth.loginQuestionLabel').toUpperCase()}
               </Text>
             </View>
@@ -312,7 +312,7 @@ export default function LoginScreen() {
 
 
             <Animated.View entering={FadeInDown.delay(260).duration(400)} style={{ alignItems: 'center', marginTop: 8 }}>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 16, letterSpacing: 0.1 }]}>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', lineHeight: 16, letterSpacing: 0.1 }]}>
                 {t('auth.termsPrefix')}{' '}
                 <Text
                   style={[font.bodySemibold, { color: colors.textSecondary, textDecorationLine: 'underline' }]}

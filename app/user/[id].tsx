@@ -121,7 +121,7 @@ function ProfileSections({ section, onChange, counts, colors }: any) {
 }
 
 function ProfileHeader({ user, echoeCount, following, requested, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId, section, onSectionChange, sectionCounts }: any) {
-  const { colors, radius, animation, isUserOnline } = useTheme();
+  const { colors, radius, animation, isUserOnline, fontSizes } = useTheme();
   const online = isUserOnline(user.id);
   const primaryTopic = creatorProfile?.topics?.[0];
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
@@ -212,17 +212,17 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
           </View>
         </AnimatedPressable>
         <View className="flex-row items-center gap-1.5 mb-1">
-          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>{personName(user)}</Text>
+          <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700' }}>{personName(user)}</Text>
           {user.isVerified && <SealCheck color={colors.accent} size={20} weight="fill" />}
         </View>
-        <Text style={{ color: colors.textMuted, fontSize: 14, marginBottom: 8 }}>@{user.username}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, marginBottom: 8 }}>@{user.username}</Text>
         <View style={{ marginTop: -4, marginBottom: 8 }}>
           <ProfileRank userId={user.id} />
         </View>
-        {online && <Text style={{ color: colors.success, fontSize: 12, marginBottom: 8 }}>{ttx("Active now")}</Text>}
+        {online && <Text style={{ color: colors.success, fontSize: fontSizes.meta, marginBottom: 8 }}>{ttx("Active now")}</Text>}
         {user.bio ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16, paddingHorizontal: 20 }}>
-            <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 14, flexShrink: 1 }}>{user.bio}</Text>
+            <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: fontSizes.label, flexShrink: 1 }}>{user.bio}</Text>
             <SpeakButton text={user.bio} id={`bio:${user.id}`} size={15} />
           </View>
         ) : null}
@@ -238,7 +238,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
                 haptic="light"
                 style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted }}
               >
-                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
+                <Text style={{ color: colors.accent, fontSize: fontSizes.meta, fontWeight: '700' }}>#{topic}</Text>
               </AnimatedPressable>
             ))}
           </View>
@@ -247,15 +247,15 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
         <View className="flex-row gap-8 mb-4">
           <View style={{ alignItems: "center" }} accessible accessibilityLabel={countLabel(echoeCount, ttx('Echo'), ttx('Echoes'))}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{echoeCount}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Echoes")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Echoes")}</Text>
           </View>
           <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light" accessibilityRole="button" accessibilityLabel={countLabel(user.followerCount, ttx('follower'), ttx('followers'))}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followerCount}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Followers")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Followers")}</Text>
           </AnimatedPressable>
           <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'following' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light" accessibilityRole="button" accessibilityLabel={`${ttx('Following')} ${user.followingCount ?? 0}`}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followingCount}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Following")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Following")}</Text>
           </AnimatedPressable>
         </View>
 

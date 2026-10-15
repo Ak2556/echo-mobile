@@ -27,7 +27,7 @@ import { LoadingState } from '../../components/common/LoadingState';
 
 function OfficeHourDetailScreenInner() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
 
   const [oh, setOh] = useState<OfficeHour | null>(null);
   const [questions, setQuestions] = useState<OfficeHourQuestion[]>([]);
@@ -134,13 +134,13 @@ function OfficeHourDetailScreenInner() {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
               <Clock color={liveNow ? colors.danger : colors.accent} size={13} weight={liveNow ? 'fill' : 'regular'} />
-              <Text style={{ color: liveNow ? colors.danger : colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>
+              <Text style={{ color: liveNow ? colors.danger : colors.accent, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.5 }}>
                 {liveNow ? 'LIVE NOW' : new Date(oh.starts_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }).toUpperCase()}
               </Text>
             </View>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginBottom: 6 }}>{oh.topic}</Text>
             {oh.description ? (
-              <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginBottom: 10 }}>{oh.description}</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, lineHeight: 20, marginBottom: 10 }}>{oh.description}</Text>
             ) : null}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -153,13 +153,13 @@ function OfficeHourDetailScreenInner() {
                       size={28}
                       showHalo={false}
                     />
-                    <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{ttx("Hosted by @")}{oh.host.username}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{ttx("Hosted by @")}{oh.host.username}</Text>
                   </>
                 )}
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <UsersThree color={colors.textMuted} size={13} />
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{oh.rsvp_count}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{oh.rsvp_count}</Text>
               </View>
             </View>
             <Button
@@ -179,14 +179,14 @@ function OfficeHourDetailScreenInner() {
             />
           </Animated.View>
 
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 8, marginLeft: 4 }}>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 8, marginLeft: 4 }}>
             {ttx("Questions (")}{questions.length})
           </Text>
 
           {questions.length === 0 ? (
             <View style={{ padding: 20, alignItems: 'center' }}>
               <Microphone color={colors.textMuted} size={28} />
-              <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 8, textAlign: 'center' }}>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginTop: 8, textAlign: 'center' }}>
                 {ttx("No questions yet. Be first. Top-voted Qs get answered first.")}
               </Text>
             </View>
@@ -221,19 +221,19 @@ function OfficeHourDetailScreenInner() {
                   haptic="light"
                 >
                   <ArrowUp size={16} color={q.has_upvoted ? colors.accent : colors.textMuted} weight={q.has_upvoted ? 'bold' : 'regular'} />
-                  <Text style={{ color: q.has_upvoted ? colors.accent : colors.textMuted, fontSize: 12, fontWeight: '700' }}>{q.upvote_count}</Text>
+                  <Text style={{ color: q.has_upvoted ? colors.accent : colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700' }}>{q.upvote_count}</Text>
                 </AnimatedPressable>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontSize: 14, lineHeight: 20 }}>{q.question}</Text>
+                  <Text style={{ color: colors.text, fontSize: fontSizes.label, lineHeight: 20 }}>{q.question}</Text>
                   {q.asker && (
-                    <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 4 }}>
                       @{q.asker.username}
                     </Text>
                   )}
                   {q.answer ? (
                     <View style={{ marginTop: 10, padding: 10, backgroundColor: colors.accent + '10', borderRadius: 8, borderLeftWidth: 2, borderLeftColor: colors.accent }}>
-                      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', marginBottom: 4 }}>{ttx("HOST")}</Text>
-                      <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19 }}>{q.answer}</Text>
+                      <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '700', marginBottom: 4 }}>{ttx("HOST")}</Text>
+                      <Text style={{ color: colors.text, fontSize: fontSizes.small, lineHeight: 19 }}>{q.answer}</Text>
                     </View>
                   ) : null}
                 </View>

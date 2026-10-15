@@ -35,10 +35,10 @@ function getCat(bmi: number) {
 }
 
 function InputField({ label, value, onChange, placeholder, unit }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; unit?: string }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <View style={{ flex: 1 }}>
-      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{label}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{label}</Text>
       <View style={{
         flexDirection: 'row', alignItems: 'flex-end',
         backgroundColor: colors.inputBg,
@@ -53,14 +53,14 @@ function InputField({ label, value, onChange, placeholder, unit }: { label: stri
           placeholderTextColor={colors.textMuted}
           style={{ flex: 1, color: colors.text, fontSize: 22, fontWeight: '300' }}
         />
-        {unit && <Text style={{ color: colors.textMuted, fontSize: 14, marginLeft: 4, marginBottom: 2 }}>{unit}</Text>}
+        {unit && <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, marginLeft: 4, marginBottom: 2 }}>{unit}</Text>}
       </View>
     </View>
   );
 }
 
 export default function BmiScreen() {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const accent = colors.accent;
 
   const [unit, setUnit] = useState<Unit>('metric');
@@ -174,10 +174,10 @@ export default function BmiScreen() {
             onPress={() => setUnit(u)}
             style={{ flex: 1, paddingVertical: 11, borderRadius: radius.card, backgroundColor: unit === u ? accent : 'transparent', alignItems: 'center' }}
           >
-            <Text style={{ color: unit === u ? colors.bg : colors.textMuted, fontWeight: '700', fontSize: 14 }}>
+            <Text style={{ color: unit === u ? colors.bg : colors.textMuted, fontWeight: '700', fontSize: fontSizes.label }}>
               {u === 'metric' ? 'Metric' : 'Imperial'}
             </Text>
-            <Text style={{ color: unit === u ? colors.bg : colors.textMuted, fontSize: 11, marginTop: 2 }}>
+            <Text style={{ color: unit === u ? colors.bg : colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>
               {u === 'metric' ? 'kg · cm' : 'lbs · ft'}
             </Text>
           </Pressable>
@@ -203,12 +203,12 @@ export default function BmiScreen() {
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <InputField label={ttx("AGE")} value={age} onChange={setAge} placeholder="28" unit="yrs" />
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{ttx("SEX")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{ttx("SEX")}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {(['male', 'female'] as Sex[]).map(s => (
                 <Pressable key={s} onPress={() => setSex(s)} style={{ flex: 1 }}>
                   <View style={{ paddingVertical: 14, borderRadius: radius.card, alignItems: 'center', backgroundColor: sex === s ? accent : colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: sex === s ? 'transparent' : colors.glassBorder }}>
-                    <Text style={{ color: sex === s ? colors.bg : colors.text, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>{s}</Text>
+                    <Text style={{ color: sex === s ? colors.bg : colors.text, fontWeight: '700', fontSize: fontSizes.small, textTransform: 'capitalize' }}>{s}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -221,15 +221,15 @@ export default function BmiScreen() {
         <>
           {/* BMI result */}
           <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.xl, borderWidth: 1.5, borderColor: catColor, padding: 28, alignItems: 'center', marginBottom: 14 }}>
-            <Text style={{ color: catColor, fontSize: 14, fontWeight: '800', marginBottom: 4 }}>{cat.marker}</Text>
+            <Text style={{ color: catColor, fontSize: fontSizes.label, fontWeight: '800', marginBottom: 4 }}>{cat.marker}</Text>
             <Text style={{ color: catColor, fontSize: 76, ...font.display, letterSpacing: -2, lineHeight: 84 }}>{bmi.toFixed(1)}</Text>
             <Text style={{ color: catColor, fontSize: 22, fontWeight: '800', marginBottom: 4 }}>{cat.label}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{ttx("BMI range:")} {cat.range}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{ttx("BMI range:")} {cat.range}</Text>
           </View>
 
           {/* Scale */}
           <GlassPanel variant="medium" borderRadius={radius.xl} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 14 }}>{ttx("BMI SCALE")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 14 }}>{ttx("BMI SCALE")}</Text>
             <View style={{ height: 14, borderRadius: radius.sm, overflow: 'hidden', flexDirection: 'row', marginBottom: 8 }}>
               {CATS.slice(0, 5).map((c, i) => (
                 <View key={i} style={{ flex: 1, backgroundColor: colors[c.tone] }} />
@@ -259,7 +259,7 @@ export default function BmiScreen() {
             }
             return (
               <GlassPanel variant="medium" borderRadius={radius.xl} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("DAILY ENERGY")}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("DAILY ENERGY")}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
                   {ACTIVITY_LEVELS.map((a, i) => (
                     <Pressable key={a.label} onPress={() => setActivityIdx(i)} style={{ flex: 1 }}>
@@ -269,18 +269,18 @@ export default function BmiScreen() {
                     </Pressable>
                   ))}
                 </View>
-                <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 14 }}>{ACTIVITY_LEVELS[activityIdx].caption}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginBottom: 14 }}>{ACTIVITY_LEVELS[activityIdx].caption}</Text>
 
                 <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                   <View style={{ flex: 1, backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 14, borderWidth: 1, borderColor: colors.glassBorder }}>
                     <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("BMR (AT REST)")}</Text>
                     <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, marginTop: 3 }}>{e.bmr}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>{ttx("kcal / day")}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("kcal / day")}</Text>
                   </View>
                   <View style={{ flex: 1, backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 14, borderWidth: 1, borderColor: colors.glassBorder }}>
                     <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("TDEE (MAINTAIN)")}</Text>
                     <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, marginTop: 3 }}>{e.tdee}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>{ttx("kcal / day")}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("kcal / day")}</Text>
                   </View>
                 </View>
 
@@ -322,12 +322,12 @@ export default function BmiScreen() {
               { label: 'Category', value: `${cat.label} (${cat.range})` },
             ].map((row) => (
               <View key={row.label} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-                <Text style={{ color: colors.textMuted, fontSize: 14 }}>{row.label}</Text>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{row.value}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.label }}>{row.label}</Text>
+                <Text style={{ color: colors.text, fontSize: fontSizes.label, fontWeight: '700' }}>{row.value}</Text>
               </View>
             ))}
             <View style={{ paddingHorizontal: 20, paddingVertical: 14, backgroundColor: colors.surfaceHover }}>
-              <Text style={{ color: catColor, fontSize: 14, fontWeight: '600', lineHeight: 20 }}>{cat.advice}</Text>
+              <Text style={{ color: catColor, fontSize: fontSizes.label, fontWeight: '600', lineHeight: 20 }}>{cat.advice}</Text>
             </View>
           </GlassPanel>
 
@@ -350,7 +350,7 @@ export default function BmiScreen() {
           {/* Legend */}
           <GlassPanel variant="light" borderRadius={radius.xl} contentStyle={{ overflow: 'hidden' }}>
             <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("ALL CATEGORIES")}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1 }}>{ttx("ALL CATEGORIES")}</Text>
             </View>
             {CATS.map((c, i) => {
               const cColor = colors[c.tone];
@@ -358,8 +358,8 @@ export default function BmiScreen() {
               return (
                 <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 11, borderBottomWidth: i < CATS.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder, backgroundColor: isCurrent ? colors.surfaceHover : 'transparent' }}>
                   <View style={{ width: 10, height: 10, borderRadius: radius.sm, backgroundColor: cColor, marginRight: 12 }} />
-                  <Text style={{ color: isCurrent ? cColor : colors.text, flex: 1, fontSize: 14, fontWeight: isCurrent ? '700' : '400' }}>{c.label}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>{c.range}</Text>
+                  <Text style={{ color: isCurrent ? cColor : colors.text, flex: 1, fontSize: fontSizes.label, fontWeight: isCurrent ? '700' : '400' }}>{c.label}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{c.range}</Text>
                 </View>
               );
             })}

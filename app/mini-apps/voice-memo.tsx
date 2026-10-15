@@ -49,7 +49,7 @@ async function playbackCandidates(memo: Memo): Promise<string[]> {
 }
 
 export default function VoiceMemoApp() {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const accent = colors.accent;
   const REC_COLOR = colors.danger;
   const [memos, setMemos] = useState<Memo[]>([]);
@@ -211,7 +211,7 @@ export default function VoiceMemoApp() {
   };
 
   const CountBadge = (
-    <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>
+    <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>
       {memos.length} {ttx("saved")}
     </Text>
   );
@@ -280,7 +280,7 @@ export default function VoiceMemoApp() {
           </AnimatedPressable>
         </Animated.View>
 
-        <Text style={{ color: colors.textMuted, fontSize: 13 }}>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>
           {isRecording ? 'Tap to stop recording' : 'Tap to start recording'}
         </Text>
       </GlassPanel>
@@ -336,7 +336,7 @@ export default function VoiceMemoApp() {
                     <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }} numberOfLines={1}>{memo.title}</Text>
                   </Pressable>
                 )}
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>
                   {formatMemoTime(memo.duration)} · {formatMemoDate(memo.createdAt)}
                 </Text>
               </View>

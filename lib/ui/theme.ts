@@ -318,15 +318,19 @@ const THEMES: Record<ThemeName, BaseThemeColors> = {
 };
 
 
+// meta (between caption and small) and label (between small and body) are the 12 and 14
+// that screens had been writing as raw numbers: 360 of the 1,258 raw fontSize literals.
 const FONT_SIZE_MAP = {
-  small:  { caption: 10, small: 12, body: 14, title: 18, heading: 24 },
-  medium: { caption: 11, small: 13, body: 16, title: 20, heading: 28 },
-  large:  { caption: 12, small: 14, body: 18, title: 22, heading: 32 },
+  small:  { caption: 10, meta: 11, small: 12, label: 13, body: 14, title: 18, heading: 24 },
+  medium: { caption: 11, meta: 12, small: 13, label: 14, body: 16, title: 20, heading: 28 },
+  large:  { caption: 12, meta: 13, small: 14, label: 15, body: 18, title: 22, heading: 32 },
 } as const;
 
 const LINE_HEIGHT_MULTIPLIERS = {
   caption: 1.35,
+  meta: 1.4,
   small: 1.45,
+  label: 1.45,
   body: 1.5,
   title: 1.3,
   heading: 1.22,

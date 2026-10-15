@@ -56,7 +56,7 @@ function DieFace({ value, sides, color }: { value: number; sides: number; color:
 }
 
 export default function DiceApp() {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const dice = getDice(colors);
   const headsColor = colors.warning;
   const tailsColor = colors.textMuted;
@@ -112,7 +112,7 @@ export default function DiceApp() {
     <MiniAppShell title={ttx("Dice & Coin")} subtitle={ttx("Chance")} headerRight={ClearBtn}>
       {/* Die selector */}
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
-        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SELECT DIE")}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SELECT DIE")}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {dice.map((d, index) => (
             <Pressable key={d.label} onPress={() => { setSelectedDieIndex(index); setResult(null); }}>
@@ -131,7 +131,7 @@ export default function DiceApp() {
 
       {/* Dice count */}
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
-        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("NUMBER OF DICE")}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("NUMBER OF DICE")}</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {[1, 2, 3, 4, 5, 6].map(n => (
             <Pressable key={n} onPress={() => { setDiceCount(n); setResult(null); }}>
@@ -141,7 +141,7 @@ export default function DiceApp() {
                 borderWidth: diceCount === n ? 2 : StyleSheet.hairlineWidth,
                 borderColor: diceCount === n ? selectedDie.color : colors.glassBorder,
               }}>
-                <Text style={{ color: diceCount === n ? selectedDie.color : colors.textMuted, fontWeight: '800', fontSize: 16 }}>{n}</Text>
+                <Text style={{ color: diceCount === n ? selectedDie.color : colors.textMuted, fontWeight: '800', fontSize: fontSizes.body }}>{n}</Text>
               </View>
             </Pressable>
           ))}
@@ -166,7 +166,7 @@ export default function DiceApp() {
         {result !== null && (
           <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
             <Text style={{ color: selectedDie.color, fontSize: 52, ...font.displayBlack, letterSpacing: -1.5 }}>{result}</Text>
-            {diceCount > 1 && <Text style={{ color: colors.textMuted, fontSize: 14 }}>{diceCount}× {selectedDie.label} {ttx("· total")}</Text>}
+            {diceCount > 1 && <Text style={{ color: colors.textMuted, fontSize: fontSizes.label }}>{diceCount}× {selectedDie.label} {ttx("· total")}</Text>}
           </Animated.View>
         )}
 
@@ -180,7 +180,7 @@ export default function DiceApp() {
       {/* Divider */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
         <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
-        <Text style={{ color: colors.textMuted, fontSize: 13 }}>{ttx("Coin Flip")}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{ttx("Coin Flip")}</Text>
         <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
       </View>
 
@@ -195,23 +195,23 @@ export default function DiceApp() {
         </Animated.View>
         {coinFace && (
           <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
-            <Text style={{ color: coinFace === 'heads' ? headsColor : tailsColor, fontSize: 28, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2 }}>{coinFace}</Text>
+            <Text style={{ color: coinFace === 'heads' ? headsColor : tailsColor, fontSize: fontSizes.heading, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2 }}>{coinFace}</Text>
           </Animated.View>
         )}
         <AnimatedPressable onPress={flipCoin} scaleValue={0.95} haptic="heavy" style={{ backgroundColor: headsColor, borderRadius: radius.lg, paddingVertical: 14, paddingHorizontal: 40, shadowColor: headsColor, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-          <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{ttx("Flip Coin")}</Text>
+          <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: fontSizes.body }}>{ttx("Flip Coin")}</Text>
         </AnimatedPressable>
       </View>
 
       {/* History */}
       {history.length > 0 && (
         <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("RECENT ROLLS")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("RECENT ROLLS")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {history.map((h, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.md, backgroundColor: h.color + '15', borderWidth: 1, borderColor: h.color + '33' }}>
-                <Text style={{ color: h.color, fontSize: 12, fontWeight: '700' }}>{h.die}</Text>
-                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>{h.die === 'Coin' ? (h.result === 1 ? 'H' : 'T') : h.result}</Text>
+                <Text style={{ color: h.color, fontSize: fontSizes.meta, fontWeight: '700' }}>{h.die}</Text>
+                <Text style={{ color: colors.text, fontSize: fontSizes.small, fontWeight: '800' }}>{h.die === 'Coin' ? (h.result === 1 ? 'H' : 'T') : h.result}</Text>
               </View>
             ))}
           </View>

@@ -135,7 +135,7 @@ function CreateGroupModal({
           <Pressable onPress={onClose} hitSlop={10}>
             <X color={colors.text} size={22} />
           </Pressable>
-          <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: 20, ...font.displayBlack }}>
+          <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: fontSizes.title, ...font.displayBlack }}>
             {ttx("New Group")}
           </Text>
           <Pressable
@@ -151,7 +151,7 @@ function CreateGroupModal({
 
         <View style={{ padding: 16, gap: 12 }}>
           <View style={{ padding: 12, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>{ttx("Group name")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700', marginBottom: 8 }}>{ttx("Group name")}</Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
@@ -183,7 +183,7 @@ function CreateGroupModal({
                   onPress={() => toggle(user)}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted }}
                 >
-                  <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '800' }}>
+                  <Text style={{ color: colors.accent, fontSize: fontSizes.meta, fontWeight: '800' }}>
                     {user.display_name || user.username}
                   </Text>
                   <X color={colors.accent} size={12} weight="bold" />
@@ -219,7 +219,7 @@ function CreateGroupModal({
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }} numberOfLines={1}>
                     {user.display_name || user.username}
                   </Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>@{user.username}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }} numberOfLines={1}>@{user.username}</Text>
                 </View>
                 <View style={{
                   width: 26,
@@ -337,7 +337,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
           </Text>
           {showUnread && (
             <View style={{ minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }}>
-              <Text style={{ color: colors.onAccent, fontSize: 11, fontWeight: '800' }}>{conversation.unreadCount > 9 ? '9+' : conversation.unreadCount > 0 ? conversation.unreadCount : ''}</Text>
+              <Text style={{ color: colors.onAccent, fontSize: fontSizes.caption, fontWeight: '800' }}>{conversation.unreadCount > 9 ? '9+' : conversation.unreadCount > 0 ? conversation.unreadCount : ''}</Text>
             </View>
           )}
         </View>
@@ -361,7 +361,7 @@ function InboxHero({
   onNewGroup: () => void;
   onFindPeople: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   const stats = [
     { label: 'Unread', value: unread },
     { label: 'Groups', value: groups },
@@ -385,7 +385,7 @@ function InboxHero({
             <Text style={{ color: colors.text, fontSize: 26, lineHeight: 31, ...font.displayBlack, letterSpacing: -0.4 }}>
               {total ? 'Pick up where you left off.' : 'Start a conversation.'}
             </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, lineHeight: 19, marginTop: 6 }}>
               {total === 0
                 ? 'Message anyone on Echo, or start a group.'
                 : unread > 0
@@ -399,7 +399,7 @@ function InboxHero({
           {stats.map(stat => (
             <View key={stat.label} style={{ flex: 1, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
               <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{stat.value}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>{stat.label}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', marginTop: 2 }}>{stat.label}</Text>
             </View>
           ))}
         </View>
@@ -487,7 +487,7 @@ function InboxToolbar({
               <Text
                 style={{
                   color: active ? colors.onAccent : colors.textMuted,
-                  fontSize: 14,
+                  fontSize: fontSizes.label,
                   fontWeight: '600',
                 }}
               >
@@ -502,7 +502,7 @@ function InboxToolbar({
 }
 
 export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <Pressable onPress={onPress} style={{ alignItems: 'center', marginHorizontal: 8, marginTop: 16, position: 'relative' }}>
       {aura ? (
@@ -513,7 +513,7 @@ export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
           borderRadius: 16, borderWidth: 1, borderColor: colors.glassBorder,
           shadowColor: SHADOW, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10,
         }}>
-          <Text style={{ fontSize: 11, color: colors.text, fontWeight: '700' }} numberOfLines={1}>{aura.text_content || 'Voice Note'}</Text>
+          <Text style={{ fontSize: fontSizes.caption, color: colors.text, fontWeight: '700' }} numberOfLines={1}>{aura.text_content || 'Voice Note'}</Text>
         </Animated.View>
       ) : null}
       <View style={{
@@ -532,7 +532,7 @@ export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
           </View>
         ) : null}
       </View>
-      <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 6, fontWeight: '600' }}>
+      <Text style={{ color: colors.textSecondary, fontSize: fontSizes.meta, marginTop: 6, fontWeight: '600' }}>
         {isMe ? 'Your Aura' : name.split(' ')[0]}
       </Text>
     </Pressable>
@@ -620,12 +620,12 @@ export function AurasRow() {
             <Text style={{ color: ON_MEDIA, fontSize: 24, fontWeight: 'bold' }}>{viewingAura?.name}</Text>
             {viewingAura?.text_content || viewingAura?.aura?.text_content ? (
               <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 24 }}>
-                <Text style={{ color: ON_MEDIA, fontSize: 20 }}>{viewingAura?.text_content || viewingAura?.aura?.text_content}</Text>
+                <Text style={{ color: ON_MEDIA, fontSize: fontSizes.title }}>{viewingAura?.text_content || viewingAura?.aura?.text_content}</Text>
               </View>
             ) : null}
             {viewingAura?.music_title ? (
               <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ color: ON_MEDIA, fontSize: 16 }}>🎵 {viewingAura.music_title} - {viewingAura.music_artist}</Text>
+                <Text style={{ color: ON_MEDIA, fontSize: fontSizes.body }}>🎵 {viewingAura.music_title} - {viewingAura.music_artist}</Text>
               </View>
             ) : null}
           </View>
@@ -635,7 +635,7 @@ export function AurasRow() {
       <Modal visible={modalOpen} animationType="fade" transparent onRequestClose={() => setModalOpen(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: colors.surface, borderRadius: radius.card, padding: 20, borderWidth: 1, borderColor: colors.border }}>
-            <Text style={{ color: colors.text, fontSize: 20, ...font.displayBlack, marginBottom: 16 }}>Set your Aura</Text>
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, ...font.displayBlack, marginBottom: 16 }}>Set your Aura</Text>
             <TextInput
               value={auraText}
               onChangeText={setAuraText}
@@ -645,7 +645,7 @@ export function AurasRow() {
             />
             {selectedMusic ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, padding: 10, borderRadius: 8, marginBottom: 12 }}>
-                <Text style={{ color: colors.text, fontSize: 13, flex: 1 }} numberOfLines={1}>🎵 {selectedMusic.title} - {selectedMusic.artist}</Text>
+                <Text style={{ color: colors.text, fontSize: fontSizes.small, flex: 1 }} numberOfLines={1}>🎵 {selectedMusic.title} - {selectedMusic.artist}</Text>
                 <Pressable onPress={() => setSelectedMusic(null)} hitSlop={10}><Text style={{ color: colors.danger, fontWeight: '700' }}>X</Text></Pressable>
               </View>
             ) : (
@@ -654,10 +654,10 @@ export function AurasRow() {
               </Pressable>
             )}
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 12 }}>
-              <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>Expires in:</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>Expires in:</Text>
               {[8, 12, 24].map(hrs => (
                 <Pressable key={hrs} onPress={() => setExpiresInHours(hrs)} style={{ backgroundColor: expiresInHours === hrs ? colors.accent : colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-                  <Text style={{ color: expiresInHours === hrs ? colors.onAccent : colors.text, fontSize: 13, fontWeight: '600' }}>{hrs}h</Text>
+                  <Text style={{ color: expiresInHours === hrs ? colors.onAccent : colors.text, fontSize: fontSizes.small, fontWeight: '600' }}>{hrs}h</Text>
                 </Pressable>
               ))}
             </View>
@@ -795,7 +795,7 @@ export default function MessagesListScreen() {
   const SwipeAction = ({ icon, label, bg, onPress }: { icon: React.ReactNode; label: string; bg: string; onPress: () => void }) => (
     <Pressable onPress={onPress} style={{ width: 76, alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: bg }}>
       {icon}
-      <Text style={{ color: ON_STATUS, fontSize: 11, fontWeight: '700' }}>{label}</Text>
+      <Text style={{ color: ON_STATUS, fontSize: fontSizes.caption, fontWeight: '700' }}>{label}</Text>
     </Pressable>
   );
 
@@ -850,10 +850,10 @@ export default function MessagesListScreen() {
           <View style={{ flex: 1, alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: radius.full }}>
               <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Echo</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700' }}>Echo</Text>
               </Pressable>
               <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                <Text style={{ color: colors.onAccent, fontSize: 13, fontWeight: '700' }}>Messages</Text>
+                <Text style={{ color: colors.onAccent, fontSize: fontSizes.small, fontWeight: '700' }}>Messages</Text>
               </View>
             </View>
           </View>
@@ -887,10 +887,10 @@ export default function MessagesListScreen() {
         <View style={{ flex: 1, alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: radius.full }}>
             <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Echo</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700' }}>Echo</Text>
             </Pressable>
             <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-              <Text style={{ color: colors.onAccent, fontSize: 13, fontWeight: '700' }}>Messages</Text>
+              <Text style={{ color: colors.onAccent, fontSize: fontSizes.small, fontWeight: '700' }}>Messages</Text>
             </View>
           </View>
         </View>
@@ -922,7 +922,7 @@ export default function MessagesListScreen() {
               <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>
                 {filter === 'all' ? 'Recent conversations' : `${filter[0].toUpperCase()}${filter.slice(1)} conversations`}
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700' }}>
                 {filteredActive.length} {ttx("shown")}
               </Text>
             </View>

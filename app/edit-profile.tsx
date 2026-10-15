@@ -289,11 +289,11 @@ export default function EditProfileScreen() {
                 <Text style={[font.display, { color: colors.text, fontSize: 30, lineHeight: 35 }]} numberOfLines={1}>
                   {newDisplayName || newUsername || 'Your profile'}
                 </Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 13, marginTop: 4 }]} numberOfLines={1}>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, marginTop: 4 }]} numberOfLines={1}>
                   @{newUsername || 'username'}
                 </Text>
                 {!!newMood.trim() && (
-                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12, marginTop: 8 }]} numberOfLines={1}>
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.meta, marginTop: 8 }]} numberOfLines={1}>
                     {newMood.trim()}
                   </Text>
                 )}
@@ -307,7 +307,7 @@ export default function EditProfileScreen() {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
                 {completionItems.map(item => (
                   <View key={item.label} style={{ borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: item.done ? `${colors.success}1E` : colors.surfaceHover }}>
-                    <Text style={[font.bodySemibold, { color: item.done ? colors.success : colors.textMuted, fontSize: 11 }]}>{item.label}</Text>
+                    <Text style={[font.bodySemibold, { color: item.done ? colors.success : colors.textMuted, fontSize: fontSizes.caption }]}>{item.label}</Text>
                   </View>
                 ))}
               </View>
@@ -316,7 +316,7 @@ export default function EditProfileScreen() {
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(130).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 12 }}>
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("Profile color")}</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{ttx("Profile color")}</Text>
           <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
             {AVATAR_COLORS.map(color => (
               <AnimatedPressable

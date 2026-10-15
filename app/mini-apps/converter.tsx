@@ -61,7 +61,7 @@ function convertTemp(val: number, from: string, to: string): number {
 }
 
 export default function ConverterScreen() {
-  const { colors, radius, font } = useTheme();
+  const { colors, radius, font, fontSizes } = useTheme();
   const [catIdx, setCatIdx] = useState(0);
   const [fromIdx, setFromIdx] = useState(0);
   const [toIdx, setToIdx] = useState(1);
@@ -97,7 +97,7 @@ export default function ConverterScreen() {
               shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
             }}
           >
-            <Text style={{ color: i === catIdx ? colors.bgPure : colors.text, fontWeight: '700', fontSize: 14 }}>{c.marker} · {c.name}</Text>
+            <Text style={{ color: i === catIdx ? colors.bgPure : colors.text, fontWeight: '700', fontSize: fontSizes.label }}>{c.marker} · {c.name}</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -105,7 +105,7 @@ export default function ConverterScreen() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, gap: 14 }} showsVerticalScrollIndicator={false}>
         {/* FROM */}
         <GlassPanel variant="medium" borderRadius={radius.card} style={{ borderColor: accent + '55', borderWidth: 1 }} contentStyle={{ padding: 20 }}>
-          <Text style={{ color: accent, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("FROM")}</Text>
+          <Text style={{ color: accent, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("FROM")}</Text>
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -126,7 +126,7 @@ export default function ConverterScreen() {
                     borderColor: i === fromIdx ? 'transparent' : colors.glassBorder,
                   }}
                 >
-                  <Text style={{ color: i === fromIdx ? colors.bgPure : colors.text, fontSize: 13, fontWeight: '600' }}>{u.label}</Text>
+                  <Text style={{ color: i === fromIdx ? colors.bgPure : colors.text, fontSize: fontSizes.small, fontWeight: '600' }}>{u.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -147,7 +147,7 @@ export default function ConverterScreen() {
 
         {/* TO */}
         <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("TO")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("TO")}</Text>
           <Text style={{ color: accent, fontSize: 42, ...font.display, letterSpacing: -1, marginBottom: 14 }} numberOfLines={1} adjustsFontSizeToFit>{result}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -162,7 +162,7 @@ export default function ConverterScreen() {
                     borderColor: i === toIdx ? 'transparent' : colors.glassBorder,
                   }}
                 >
-                  <Text style={{ color: i === toIdx ? colors.bgPure : colors.text, fontSize: 13, fontWeight: '600' }}>{u.label}</Text>
+                  <Text style={{ color: i === toIdx ? colors.bgPure : colors.text, fontSize: fontSizes.small, fontWeight: '600' }}>{u.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -171,7 +171,7 @@ export default function ConverterScreen() {
 
         {/* Formula */}
         <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, alignItems: 'center' }}>
-          <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center' }}>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, fontWeight: '500', textAlign: 'center' }}>
             <Text style={{ color: colors.text, fontWeight: '700' }}>{input || '0'} {cat.units[fromIdx]?.label}</Text>
             {'  =  '}
             <Text style={{ color: accent, fontWeight: '700' }}>{result} {cat.units[toIdx]?.label}</Text>

@@ -48,10 +48,10 @@ const APPS: MiniApp[] = MINI_APP_CATALOG.filter(a =>
 
 /** Eyebrow section label — quiet, letterspaced, the app's editorial voice. */
 function Eyebrow({ children, trailing }: { children: React.ReactNode; trailing?: React.ReactNode }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-      <Text style={{ color: colors.textMuted, fontSize: 12, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }}>
+      <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }}>
         {children}
       </Text>
       {trailing}
@@ -118,14 +118,14 @@ function RecentChip({ app, onOpen }: { app: MiniApp; onOpen: (app: MiniApp) => v
 function StatChip({ value, label, sub, color, onPress }: {
   value: string; label: string; sub: string; color: string; onPress: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes } = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.96 : 1 }] })}>
       <View style={{ width: 138, minHeight: 96, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
         <LinearGradient colors={[`${color}22`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
         <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, letterSpacing: -0.5 }} numberOfLines={1}>{value}</Text>
-        <Text style={{ color: colors.text, ...font.bodySemibold, fontSize: 13, marginTop: 5 }} numberOfLines={1}>{label}</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }} numberOfLines={1}>{sub}</Text>
+        <Text style={{ color: colors.text, ...font.bodySemibold, fontSize: fontSizes.small, marginTop: 5 }} numberOfLines={1}>{label}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 1 }} numberOfLines={1}>{sub}</Text>
       </View>
     </Pressable>
   );
@@ -137,7 +137,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
   targetLabel: string;
   onOpen: (app: MiniApp) => void;
 }) {
-  const { colors, font, radius } = useTheme();
+  const { colors, font, radius, fontSizes } = useTheme();
   const accent = primary?.color ?? colors.accent;
 
   return (
@@ -149,7 +149,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
             <Text style={{ color: colors.textMuted, fontSize: 11.5, ...font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase' }}>
               {ttx("Smart start")}
             </Text>
-            <Text style={{ color: colors.text, fontSize: 20, lineHeight: 25, ...font.displayBlack, marginTop: 3 }} numberOfLines={1}>
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, lineHeight: 25, ...font.displayBlack, marginTop: 3 }} numberOfLines={1}>
               {primary ? `Continue ${primary.name}` : `Tools for ${targetLabel}`}
             </Text>
             <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={2}>
@@ -184,7 +184,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
 }
 
 export default function AppsScreen() {
-  const { colors, reduceAnimations, font, radius } = useTheme();
+  const { colors, reduceAnimations, font, radius, fontSizes } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const layout = useResponsiveLayout();
@@ -343,8 +343,8 @@ export default function AppsScreen() {
                 {results.map((r, i) => (
                   <Pressable key={`${r.app}-${r.id}`} onPress={() => router.push(r.route as Href)}>
                     <View style={{ paddingVertical: 11, borderBottomWidth: i < results.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.border }}>
-                      <Text style={{ color: colors.text, ...font.bodySemibold, fontSize: 14 }} numberOfLines={1}>{r.title}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{r.app} · {r.subtitle}</Text>
+                      <Text style={{ color: colors.text, ...font.bodySemibold, fontSize: fontSizes.label }} numberOfLines={1}>{r.title}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }} numberOfLines={1}>{r.app} · {r.subtitle}</Text>
                     </View>
                   </Pressable>
                 ))}
@@ -354,7 +354,7 @@ export default function AppsScreen() {
               <View style={{ alignItems: 'center', paddingVertical: 40, gap: 8 }}>
                 <MagnifyingGlass color={colors.glassBorder} size={34} weight="duotone" />
                 <Text style={{ color: colors.text, fontSize: 15, ...font.bodySemibold }}>{ttx("No matches")}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>{ttx("Try a tool name, or a note, habit, or expense term.")}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, textAlign: 'center' }}>{ttx("Try a tool name, or a note, habit, or expense term.")}</Text>
               </View>
             )}
           </Animated.View>

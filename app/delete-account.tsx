@@ -26,7 +26,7 @@ import { ON_STATUS } from '../lib/ui/fixedColors';
  */
 export default function DeleteAccountScreen() {
   const router = useRouter();
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const [confirmText, setConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const { resetSocialData, clearChatHistory } = useAppStore();
@@ -80,7 +80,7 @@ export default function DeleteAccountScreen() {
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 4 }}>
               {ttx("This is permanent")}
             </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 19 }}>
               {ttx("We'll delete your profile, echoes, comments, reactions, bookmarks, and chat history. None of it can be recovered.")}
             </Text>
           </View>
@@ -88,7 +88,7 @@ export default function DeleteAccountScreen() {
 
         {/* What gets deleted */}
         <View style={{ gap: 6 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }}>
             {ttx("What we delete")}
           </Text>
           {[
@@ -99,7 +99,7 @@ export default function DeleteAccountScreen() {
             'Your AI chat history',
             'Push token and email/phone reservation',
           ].map(item => (
-            <Text key={item} style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 22 }}>
+            <Text key={item} style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 22 }}>
               · {item}
             </Text>
           ))}
@@ -107,7 +107,7 @@ export default function DeleteAccountScreen() {
 
         {/* Confirmation field */}
         <View style={{ marginTop: 12, gap: 8 }}>
-          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
+          <Text style={{ color: colors.text, fontSize: fontSizes.label, fontWeight: '600' }}>
             {ttx("Type")} <Text style={{ color: colors.danger, fontWeight: '800' }}>{ttx("DELETE")}</Text> {ttx("to confirm")}
           </Text>
           <TextInput
@@ -153,7 +153,7 @@ export default function DeleteAccountScreen() {
           onPress={() => router.back()}
           style={{ marginTop: 4, alignItems: 'center', paddingVertical: 12 }}
         >
-          <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>{ttx("Cancel")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, fontWeight: '600' }}>{ttx("Cancel")}</Text>
         </Pressable>
       </ScrollView>
     </ResponsiveScreen>

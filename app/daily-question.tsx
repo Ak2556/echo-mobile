@@ -374,7 +374,7 @@ function ViewChip({
   icon: React.ReactNode;
   label: string;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -393,7 +393,7 @@ function ViewChip({
       haptic="light"
     >
       {icon}
-      <Text style={{ color: active ? colors.onAccent : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>
+      <Text style={{ color: active ? colors.onAccent : colors.textSecondary, fontWeight: '700', fontSize: fontSizes.small }}>
         {label}
       </Text>
     </AnimatedPressable>
@@ -487,7 +487,7 @@ function AnswerCard({
                 borderColor: mine ? colors.accent + '66' : 'transparent',
               }}
             >
-              <Text style={{ fontSize: 13 }}>{emoji}</Text>
+              <Text style={{ fontSize: fontSizes.small }}>{emoji}</Text>
               {count > 0 && (
                 <Text style={{ color: mine ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700' }}>
                   {count}

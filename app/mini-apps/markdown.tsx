@@ -111,7 +111,7 @@ function renderMarkdown(md: string, colors: any, radius?: any) {
 }
 
 export default function MarkdownScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fontSizes } = useTheme();
   const [text, setText] = useState(SAMPLE);
 
   // Voice dictation appends here, so a document can be spoken in pieces. It
@@ -154,7 +154,7 @@ export default function MarkdownScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text style={{ color: tab === t.id ? colors.text : colors.textMuted, fontWeight: '700', fontSize: 14 }}>{t.label}</Text>
+              <Text style={{ color: tab === t.id ? colors.text : colors.textMuted, fontWeight: '700', fontSize: fontSizes.label }}>{t.label}</Text>
             </Pressable>
           ))}
         </GlassPanel>
@@ -168,7 +168,7 @@ export default function MarkdownScreen() {
               flex: 1,
               backgroundColor: colors.inputBg, borderRadius: radius.card,
               borderWidth: 1, borderColor: colors.glassBorder,
-              padding: 16, color: colors.text, fontSize: 14, fontFamily: 'monospace',
+              padding: 16, color: colors.text, fontSize: fontSizes.label, fontFamily: 'monospace',
               lineHeight: 22, textAlignVertical: 'top',
             }}
           />
