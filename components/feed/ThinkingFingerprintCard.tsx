@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Fingerprint, Quotes } from 'phosphor-react-native';
@@ -122,7 +123,7 @@ export function ThinkingFingerprintCard({ userId, isSelf }: { userId: string; is
       {/* Signature question */}
       {data.signatureQuestion ? (
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start', paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
-          <Quotes color={colors.accent} size={16} weight="fill" style={{ marginTop: 2 }} />
+          <Quotes color={colors.accent} size={ICON_SIZE.sm} weight="fill" style={{ marginTop: 2 }} />
           <Text style={{ color: colors.text, fontSize: 14, lineHeight: 20, fontStyle: 'italic', flex: 1 }}>
             {data.signatureQuestion}
           </Text>

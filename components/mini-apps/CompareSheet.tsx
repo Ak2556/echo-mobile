@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Modal, Pressable, Switch, Text, View } from 'react-native';
 import { X, Trophy } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
@@ -66,7 +67,7 @@ export function CompareSheet({
               <Trophy color={accent} size={18} weight="fill" />
             </View>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>{ttx("Compare")} {appName.toLowerCase()}</Text>
-            <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={20} weight="bold" /></Pressable>
+            <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={ICON_SIZE.md} weight="bold" /></Pressable>
           </View>
 
           {/* Opt-in — nothing of yours is visible to others until this is on. */}

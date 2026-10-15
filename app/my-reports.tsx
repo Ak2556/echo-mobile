@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { View, Text, ScrollView } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
@@ -55,7 +56,7 @@ export default function MyReportsScreen() {
             hitSlop={12}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, borderRadius: radius.full, backgroundColor: colors.accentMuted }}
           >
-            <Scales color={colors.accent} size={14} weight="bold" />
+            <Scales color={colors.accent} size={ICON_SIZE.xs} weight="bold" />
             <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.meta }]}>{ttx("My appeals")}</Text>
           </AnimatedPressable>
         }
@@ -132,7 +133,7 @@ export default function MyReportsScreen() {
                         alignSelf: 'flex-start',
                       }}
                     >
-                      <Scales color={colors.textMuted} size={13} />
+                      <Scales color={colors.textMuted} size={ICON_SIZE.xs} />
                       <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
                         {ttx("Appeal this decision")}
                       </Text>

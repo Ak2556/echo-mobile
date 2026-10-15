@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { KeyboardAvoidingView, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
@@ -270,7 +271,7 @@ export default function CreateListingScreen() {
                         alignItems: 'center', justifyContent: 'center',
                       }}
                     >
-                      <X color={ON_MEDIA} size={12} weight="bold" />
+                      <X color={ON_MEDIA} size={ICON_SIZE.xs} weight="bold" />
                     </Pressable>
                   </View>
                 ))}
@@ -287,7 +288,7 @@ export default function CreateListingScreen() {
                       gap: 5,
                       backgroundColor: colors.accent + '0A',
                     }}>
-                      <Plus color={colors.accent} size={20} weight="bold" />
+                      <Plus color={colors.accent} size={ICON_SIZE.md} weight="bold" />
                       <Text style={{ color: colors.accent, fontSize: 11.5, ...font.bodySemibold }}>{ttx("Add more")}</Text>
                     </View>
                   </Pressable>

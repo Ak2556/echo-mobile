@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, ScrollView, StyleSheet, Share, Clipboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Backspace, ClockCounterClockwise, Copy, Equals, Function as FunctionIcon, ShareNetwork } from 'phosphor-react-native';
@@ -140,7 +141,7 @@ function CalcKey({
         }}
       >
         {item.action === 'backspace' ? (
-          <Backspace color={textColor} size={24} weight="bold" />
+          <Backspace color={textColor} size={ICON_SIZE.lg} weight="bold" />
         ) : (
           <Text style={{ color: textColor, fontSize: Math.min(30, height * 0.42), fontWeight: isUtility ? '800' : '700', letterSpacing: 0 }}>
             {item.label}
@@ -326,7 +327,7 @@ export default function CalculatorScreen() {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ width: 34, height: 34, borderRadius: radius.md, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-                <FunctionIcon color={accent} size={17} weight="bold" />
+                <FunctionIcon color={accent} size={ICON_SIZE.sm} weight="bold" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, fontSize: fontSizes.label, fontWeight: '900' }}>{ttx("Decision math")}</Text>
@@ -335,7 +336,7 @@ export default function CalculatorScreen() {
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: radius.full, paddingHorizontal: 9, paddingVertical: 5, backgroundColor: colors.surface }}>
-                <ClockCounterClockwise color={colors.textMuted} size={13} weight="bold" />
+                <ClockCounterClockwise color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
                 <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900' }}>{history.length}</Text>
               </View>
             </View>
@@ -415,7 +416,7 @@ export default function CalculatorScreen() {
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 }}>
-            <Equals color={colors.textMuted} size={14} weight="bold" />
+            <Equals color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
             <Text style={{ color: colors.textMuted, fontSize: 11.5, fontWeight: '700' }} numberOfLines={1}>
               {ttx("Long calculations stay in recent history.")}
             </Text>

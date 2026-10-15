@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, Alert, RefreshControl } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-native';
@@ -178,7 +179,7 @@ export function CommentsPanel({ echoId, bottomInset = 0, onCountChange }: Props)
           borderTopWidth: 0.5,
           borderTopColor: colors.border,
         }}>
-          <ArrowBendUpLeft color={colors.accent} size={16} weight="bold" />
+          <ArrowBendUpLeft color={colors.accent} size={ICON_SIZE.sm} weight="bold" />
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700' }}>
               {ttx("Replying to")}
@@ -197,7 +198,7 @@ export function CommentsPanel({ echoId, bottomInset = 0, onCountChange }: Props)
             accessibilityRole="button"
             accessibilityLabel={ttx("Cancel reply")}
           >
-            <X color={colors.textSecondary} size={14} weight="bold" />
+            <X color={colors.textSecondary} size={ICON_SIZE.xs} weight="bold" />
           </Pressable>
         </View>
       )}

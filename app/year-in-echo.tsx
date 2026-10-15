@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { View, Text, ScrollView } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
@@ -76,21 +77,21 @@ function YearInEchoScreenInner() {
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
             <Animated.View entering={FadeInUp.delay(100).duration(220)} style={{ flex: 1 }}>
               <StatCard
-                icon={<Heart color={colors.danger} size={20} weight="fill" />}
+                icon={<Heart color={colors.danger} size={ICON_SIZE.md} weight="fill" />}
                 value={wrap.total_likes_received}
                 label={ttx("hearts")}
               />
             </Animated.View>
             <Animated.View entering={FadeInUp.delay(150).duration(220)} style={{ flex: 1 }}>
               <StatCard
-                icon={<ChartLineUp color={colors.success} size={20} weight="fill" />}
+                icon={<ChartLineUp color={colors.success} size={ICON_SIZE.md} weight="fill" />}
                 value={wrap.total_reactions}
                 label={ttx("reactions")}
               />
             </Animated.View>
             <Animated.View entering={FadeInUp.delay(200).duration(220)} style={{ flex: 1 }}>
               <StatCard
-                icon={<Flame color={colors.warning} size={20} weight="fill" />}
+                icon={<Flame color={colors.warning} size={ICON_SIZE.md} weight="fill" />}
                 value={wrap.longest_streak}
                 label={ttx("longest streak")}
               />

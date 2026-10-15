@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
@@ -221,7 +222,7 @@ function DailyThought() {
         <View style={{ paddingTop: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-              <Waveform color={colors.accent} size={14} weight="fill" />
+              <Waveform color={colors.accent} size={ICON_SIZE.xs} weight="fill" />
               <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption, letterSpacing: 1.3, textTransform: 'uppercase' }]}>
                 {t('home.thoughtForToday')}
               </Text>
@@ -233,7 +234,7 @@ function DailyThought() {
               accessibilityLabel={t('home.dismissThought')}
               style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
             >
-              <X color={colors.textMuted} size={16} weight="bold" />
+              <X color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />
             </Pressable>
           </View>
           <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 20 : 24, lineHeight: layout.isPhone ? 28 : 32 }]}>
@@ -308,7 +309,7 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
               {step.body}
             </Text>
           </View>
-          <ArrowUpRight color={ON_MEDIA} size={20} weight="bold" />
+          <ArrowUpRight color={ON_MEDIA} size={ICON_SIZE.md} weight="bold" />
         </LinearGradient>
       </AnimatedPressable>
     </View>
@@ -333,7 +334,7 @@ function ChooseHandleCard({ username }: { username: string }) {
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.xl, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
           <View style={{ width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}1F` }}>
-            <At color={colors.accent} size={20} weight="bold" />
+            <At color={colors.accent} size={ICON_SIZE.md} weight="bold" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.body }]}>{ttx('Choose your username')}</Text>
@@ -418,7 +419,7 @@ function FeedScopeRail({
             gap: 6,
           }}
         >
-          <PlayCircle size={16} color={colors.textSecondary} weight="fill" />
+          <PlayCircle size={ICON_SIZE.sm} color={colors.textSecondary} weight="fill" />
           <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.small }]}>{t('nav.watch')}</Text>
         </Pressable>
       </ScrollView>
@@ -677,7 +678,7 @@ export default function DiscoverScreen() {
                   {t('home.tapToAnswer')}
                 </Text>
               </View>
-              <ArrowUpRight color={ON_MEDIA} size={20} weight="bold" />
+              <ArrowUpRight color={ON_MEDIA} size={ICON_SIZE.md} weight="bold" />
             </LinearGradient>
           </View>
         </Pressable>
@@ -695,12 +696,12 @@ export default function DiscoverScreen() {
       )}
       {!focusedHome && evolvingNow.length > 0 && (
         <>
-          <SectionHeader label={t('home.evolvingNow')} sub={t('home.perspectives')} icon={<GitBranch color={colors.accent} size={16} weight="bold" />} />
+          <SectionHeader label={t('home.evolvingNow')} sub={t('home.perspectives')} icon={<GitBranch color={colors.accent} size={ICON_SIZE.sm} weight="bold" />} />
           <EvolvingNowRail items={evolvingNow} />
         </>
       )}
       <View ref={feedTarget.ref} onLayout={feedTarget.onLayout}>
-        {(feedScope !== 'following' || popularItems.length > 0) && <SectionHeader label={focusedHome ? t('home.fromCommunity') : feedScope === 'forYou' ? t('home.topConversations') : feedScopeLabel(feedScope, t)} sub={focusedHome || feedScope !== 'forYou' ? undefined : t('home.liveNow')} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />}
+        {(feedScope !== 'following' || popularItems.length > 0) && <SectionHeader label={focusedHome ? t('home.fromCommunity') : feedScope === 'forYou' ? t('home.topConversations') : feedScopeLabel(feedScope, t)} sub={focusedHome || feedScope !== 'forYou' ? undefined : t('home.liveNow')} icon={<TrendUp color={colors.accent} size={ICON_SIZE.sm} weight="bold" />} />}
       </View>
     </View>
   );
@@ -803,7 +804,7 @@ export default function DiscoverScreen() {
               ) : (
                 <View style={{ paddingTop: 32 }}>
                   <EmptyState
-                    icon={<ChatCircleText color={colors.accent} size={28} />}
+                    icon={<ChatCircleText color={colors.accent} size={ICON_SIZE.xl} />}
                     title={t('home.communityQuietTitle')}
                     subtitle={t('home.communityQuietBody')}
                     actionLabel={t('home.openChat')}
@@ -908,7 +909,7 @@ function EvolvingNowRail({ items }: { items: EvolutionGroup[] }) {
               />
               <View style={{ padding: 15 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 9 }}>
-                  <GitBranch color={colors.accent} size={14} weight="fill" />
+                  <GitBranch color={colors.accent} size={ICON_SIZE.xs} weight="fill" />
                   <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.meta }]}>
                     {item.branchCount} {item.branchCount === 1 ? 'perspective' : 'perspectives'}
                   </Text>

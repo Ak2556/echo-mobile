@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { Barbell } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -303,7 +304,7 @@ export default function BmiScreen() {
                   scaleValue={0.96} haptic="medium"
                   style={{ backgroundColor: colors.success, borderRadius: radius.card, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: applying ? 0.6 : 1 }}
                 >
-                  <Barbell color={colors.bg} size={16} weight="fill" />
+                  <Barbell color={colors.bg} size={ICON_SIZE.sm} weight="fill" />
                   <Text style={{ color: colors.bg, fontWeight: '800', fontSize: 14.5 }}>
                     {ttx("Set as my Fitness targets")}
                   </Text>

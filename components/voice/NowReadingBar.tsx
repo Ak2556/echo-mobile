@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
@@ -58,7 +59,7 @@ export function NowReadingBar() {
           accessibilityLabel={paused ? 'Resume reading' : 'Pause reading'}
           style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}
         >
-          {paused ? <Play color={colors.text} size={16} weight="fill" /> : <Pause color={colors.text} size={16} weight="fill" />}
+          {paused ? <Play color={colors.text} size={ICON_SIZE.sm} weight="fill" /> : <Pause color={colors.text} size={ICON_SIZE.sm} weight="fill" />}
         </Pressable>
         <Pressable
           onPress={() => { tap('light'); stopSpeaking(); }}
@@ -67,7 +68,7 @@ export function NowReadingBar() {
           accessibilityLabel={ttx("Stop reading")}
           style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}
         >
-          <X color={colors.textMuted} size={16} weight="bold" />
+          <X color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />
         </Pressable>
       </View>
     </Animated.View>

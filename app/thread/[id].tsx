@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, StyleSheet, Modal } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -168,7 +169,7 @@ export default function ThreadDetailScreen() {
               accessibilityLabel={ttx("Post options")}
               accessibilityHint={ttx("Opens edit, delete, and report menu")}
             >
-              <DotsThreeOutline color={colors.textSecondary} size={24} />
+              <DotsThreeOutline color={colors.textSecondary} size={ICON_SIZE.lg} />
             </Pressable>
           ) : null}
         </View>
@@ -336,7 +337,7 @@ export default function ThreadDetailScreen() {
               accessibilityLabel={`${ttx('Comment')}, ${countLabel(item.commentCount, ttx('comment'), ttx('comments'))}`}
             >
               <View style={{ padding: 8, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: colors.surface }}>
-                <ChatCircle color={colors.textSecondary} size={20} />
+                <ChatCircle color={colors.textSecondary} size={ICON_SIZE.md} />
                 <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{item.commentCount ?? 0}</Text>
               </View>
             </Pressable>

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -135,7 +136,7 @@ export default function PersonaScreen() {
           <GlassPanel borderRadius={radius.card} contentStyle={{ padding: 18, gap: 16 }}>
             <View style={styles.heroRow}>
               <View style={[styles.heroIcon, { backgroundColor: colors.accentMuted, borderRadius: radius.lg }]}>
-                <Brain color={colors.accent} size={28} weight="fill" />
+                <Brain color={colors.accent} size={ICON_SIZE.xl} weight="fill" />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{stageLabel(status.stage)}</Text>
@@ -170,7 +171,7 @@ export default function PersonaScreen() {
         <Animated.View entering={animation(FadeInDown.delay(80).duration(220))}>
           <GlassPanel borderRadius={radius.card} contentStyle={{ padding: 16, gap: 14 }}>
             <View style={styles.row}>
-              <Clock color={colors.accent} size={20} />
+              <Clock color={colors.accent} size={ICON_SIZE.md} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }}>{ttx("First-week learning")}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 3, lineHeight: 19 }}>
@@ -179,7 +180,7 @@ export default function PersonaScreen() {
               </View>
             </View>
             <View style={styles.row}>
-              <ShieldCheck color={colors.accent} size={20} />
+              <ShieldCheck color={colors.accent} size={ICON_SIZE.md} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }}>{ttx("Private by default")}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 3, lineHeight: 19 }}>

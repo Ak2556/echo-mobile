@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
@@ -82,7 +83,7 @@ function AppealCard({
           @{appeal.appellantUsername}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Clock size={12} color={slaColor(appeal.daysRemaining)} weight="bold" />
+          <Clock size={ICON_SIZE.xs} color={slaColor(appeal.daysRemaining)} weight="bold" />
           <Text style={[font.bodySemibold, { color: slaColor(appeal.daysRemaining), fontSize: fontSizes.caption }]}>
             {appeal.daysRemaining}{ttx("d left (SLA)")}
           </Text>
@@ -142,7 +143,7 @@ function AppealCard({
             paddingVertical: 10, borderRadius: 8, backgroundColor: `${colors.success}20`,
           }}
         >
-          <CheckCircle size={15} color={colors.success} weight="bold" />
+          <CheckCircle size={ICON_SIZE.sm} color={colors.success} weight="bold" />
           <Text style={[font.bodySemibold, { color: colors.success, fontSize: fontSizes.caption }]}>{ttx("Overturn")}</Text>
         </AnimatedPressable>
 
@@ -155,7 +156,7 @@ function AppealCard({
             paddingVertical: 10, borderRadius: 8, backgroundColor: `${colors.danger}20`,
           }}
         >
-          <XCircle size={15} color={colors.danger} weight="bold" />
+          <XCircle size={ICON_SIZE.sm} color={colors.danger} weight="bold" />
           <Text style={[font.bodySemibold, { color: colors.danger, fontSize: fontSizes.caption }]}>{ttx("Uphold")}</Text>
         </AnimatedPressable>
       </View>
@@ -206,7 +207,7 @@ export default function ModAppealsScreen() {
               style={{ padding: 6 }}
               accessibilityLabel={ttx("Verification queue")}
             >
-              <SealCheck color={colors.accent} size={20} weight="fill" />
+              <SealCheck color={colors.accent} size={ICON_SIZE.md} weight="fill" />
             </AnimatedPressable>
             {!loading && (
               <View style={{
@@ -226,7 +227,7 @@ export default function ModAppealsScreen() {
       {/* Overdue banner */}
       {overdueCnt > 0 && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, padding: 12, borderRadius: radius.md, backgroundColor: `${colors.danger}20` }}>
-          <Warning size={16} color={colors.danger} weight="bold" />
+          <Warning size={ICON_SIZE.sm} color={colors.danger} weight="bold" />
           <Text style={[font.bodySemibold, { color: colors.danger, fontSize: fontSizes.caption }]}>
             {overdueCnt} {ttx("appeal")}{overdueCnt > 1 ? 's' : ''} {ttx("past the 14-day SLA")}
           </Text>

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { CheckCircle, XCircle, Wrench, ChartBar } from 'phosphor-react-native';
 import Animated, { FadeIn, Layout, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -200,7 +201,7 @@ function PollPreview({ args, accentColor }: { args: any; accentColor: string }) 
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <View style={{ width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: `${accentColor}22` }}>
-          <ChartBar color={accentColor} size={12} weight="fill" />
+          <ChartBar color={accentColor} size={ICON_SIZE.xs} weight="fill" />
         </View>
         <Text style={{ color: accentColor, fontSize: 11, fontWeight: '800', letterSpacing: 0.6 }}>{ttx("POLL")}</Text>
         <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: colors.textMuted, opacity: 0.5 }} />

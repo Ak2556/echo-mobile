@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, Alert } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
@@ -150,7 +151,7 @@ function CreateSalonScreenInner() {
                   scaleValue={0.9}
                   haptic="light"
                 >
-                  {active && <Check color={ON_MEDIA} size={16} weight="bold" />}
+                  {active && <Check color={ON_MEDIA} size={ICON_SIZE.sm} weight="bold" />}
                 </AnimatedPressable>
               );
             })}

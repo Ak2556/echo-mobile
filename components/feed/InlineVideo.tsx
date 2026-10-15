@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActionSheetIOS, ActivityIndicator, Modal, Platform, Pressable, Text, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { probePlayerCreated, probePlayerReleased } from '../../lib/media/devVideoProbe';
@@ -229,7 +230,7 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRe
               <View style={{ position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
                 {qualityList.length > 1 && (
                   <Pressable onPress={pickQuality} style={[PILL, { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10 }]}>
-                    <SlidersHorizontal size={13} color="#fff" />
+                    <SlidersHorizontal size={ICON_SIZE.xs} color="#fff" />
                     <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{activeLabel}</Text>
                   </Pressable>
                 )}
@@ -243,7 +244,7 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRe
                     accessibilityRole="button"
                     accessibilityLabel={ttx('Full screen')}
                   >
-                    <CornersOut size={16} color="#fff" />
+                    <CornersOut size={ICON_SIZE.sm} color="#fff" />
                   </Pressable>
                 )}
               </View>
@@ -271,12 +272,12 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRe
                 </View>
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
-                  {playing && <Pressable onPress={togglePlay} style={PILL}><Pause size={16} color="#fff" /></Pressable>}
+                  {playing && <Pressable onPress={togglePlay} style={PILL}><Pause size={ICON_SIZE.sm} color="#fff" /></Pressable>}
                   <Pressable onPress={toggleLoop} style={[PILL, loop && { backgroundColor: colors.accent + 'CC' }]}>
-                    <ArrowsClockwise size={16} color="#fff" weight={loop ? 'fill' : 'regular'} />
+                    <ArrowsClockwise size={ICON_SIZE.sm} color="#fff" weight={loop ? 'fill' : 'regular'} />
                   </Pressable>
                   <Pressable onPress={toggleMute} style={PILL}>
-                    {muted ? <SpeakerSlash size={16} color="#fff" /> : <SpeakerHigh size={16} color="#fff" />}
+                    {muted ? <SpeakerSlash size={ICON_SIZE.sm} color="#fff" /> : <SpeakerHigh size={ICON_SIZE.sm} color="#fff" />}
                   </Pressable>
                 </View>
               </View>

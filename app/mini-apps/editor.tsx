@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, Alert } from 'react-native';
 import { Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -95,7 +96,7 @@ export default function EditorApp() {
 
         <Pressable onPress={pickAndEditPhoto} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgPure, padding: 20, borderRadius: radius.xl, gap: 16 }}>
           <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(224, 96, 48, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
-            <ImageSquare size={24} color={BRAND.ember} weight="fill" />
+            <ImageSquare size={ICON_SIZE.lg} color={BRAND.ember} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>Edit Photo</Text>
@@ -105,7 +106,7 @@ export default function EditorApp() {
 
         <Pressable onPress={pickAndEditVideo} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgPure, padding: 20, borderRadius: radius.xl, gap: 16 }}>
           <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(78, 139, 122, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
-            <VideoCamera size={24} color={WARM.sage} weight="fill" />
+            <VideoCamera size={ICON_SIZE.lg} color={WARM.sage} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>Edit Video</Text>

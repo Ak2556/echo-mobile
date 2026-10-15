@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Share, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
@@ -147,19 +148,19 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
     ...(!isSelf ? [{
       key: 'mute',
       label: muted ? 'Unmute' : 'Mute',
-      icon: <UserMinus color={colors.textSecondary} size={20} />,
+      icon: <UserMinus color={colors.textSecondary} size={ICON_SIZE.md} />,
       onPress: onMute,
     }, {
       key: 'block',
       label: blocked ? 'Unblock' : 'Block',
-      icon: <UserMinus color={colors.danger} size={20} />,
+      icon: <UserMinus color={colors.danger} size={ICON_SIZE.md} />,
       destructive: !blocked,
       onPress: onBlock,
     }] : []),
     {
       key: 'report',
       label: 'Report',
-      icon: <Flag color={colors.warning} size={20} weight="fill" />,
+      icon: <Flag color={colors.warning} size={ICON_SIZE.md} weight="fill" />,
       destructive: true,
       onPress: onReport,
     },
@@ -177,7 +178,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
           accessibilityLabel={ttx("Profile options")}
           accessibilityHint={ttx("Opens block, mute, and report menu")}
         >
-          <DotsThreeOutline color={colors.text} size={24} />
+          <DotsThreeOutline color={colors.text} size={ICON_SIZE.lg} />
         </AnimatedPressable>
       </View>
 
@@ -213,7 +214,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
         </AnimatedPressable>
         <View className="flex-row items-center gap-1.5 mb-1">
           <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700' }}>{personName(user)}</Text>
-          {user.isVerified && <SealCheck color={colors.accent} size={20} weight="fill" />}
+          {user.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.md} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, marginBottom: 8 }}>@{user.username}</Text>
         <View style={{ marginTop: -4, marginBottom: 8 }}>
@@ -271,7 +272,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
               scaleValue={0.92}
               haptic="light"
             >
-              <Envelope color={colors.text} size={20} />
+              <Envelope color={colors.text} size={ICON_SIZE.md} />
             </AnimatedPressable>
             <AnimatedPressable
               onPress={onShare}
@@ -279,7 +280,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
               scaleValue={0.92}
               haptic="light"
             >
-              <ShareNetwork color={colors.text} size={20} />
+              <ShareNetwork color={colors.text} size={ICON_SIZE.md} />
             </AnimatedPressable>
           </View>
         )}
@@ -463,7 +464,7 @@ export default function UserProfileScreen() {
               lockedOut ? (
                 <View style={{ paddingTop: 56 }}>
                   <EmptyState
-                    icon={<Lock color={colors.accent} size={28} weight="duotone" />}
+                    icon={<Lock color={colors.accent} size={ICON_SIZE.xl} weight="duotone" />}
                     title={ttx("This account is private")}
                     subtitle={remoteRequested ? ttx("Your request is waiting for them to answer.") : ttx("Ask to follow to see their echoes.")}
                   />
@@ -471,7 +472,7 @@ export default function UserProfileScreen() {
               ) : listData.length === 0 ? (
                 <View style={{ paddingTop: 56 }}>
                   <EmptyState
-                    icon={<Images color={colors.accent} size={28} weight="duotone" />}
+                    icon={<Images color={colors.accent} size={ICON_SIZE.xl} weight="duotone" />}
                     title={ttx("No echoes yet")}
                     subtitle={ttx("When they publish, you’ll see it here.")}
                   />
@@ -585,7 +586,7 @@ export default function UserProfileScreen() {
             userEchoes.length === 0 ? (
               <View style={{ paddingTop: 56 }}>
                 <EmptyState
-                  icon={<Images color={colors.accent} size={28} weight="duotone" />}
+                  icon={<Images color={colors.accent} size={ICON_SIZE.xl} weight="duotone" />}
                   title={ttx("No echoes yet")}
                   subtitle={ttx("When they publish, you’ll see it here.")}
                 />

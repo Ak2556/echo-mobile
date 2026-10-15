@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, RefreshControl } from 'react-native';
@@ -144,11 +145,11 @@ function SalonDetailScreenInner() {
           ) : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: salon.topic_tags?.length ? 10 : 0 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <UsersThree color={colors.textMuted} size={13} />
+              <UsersThree color={colors.textMuted} size={ICON_SIZE.xs} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{salon.member_count} members</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <Hash color={colors.textMuted} size={13} />
+              <Hash color={colors.textMuted} size={ICON_SIZE.xs} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{salon.echo_count} echoes</Text>
             </View>
           </View>

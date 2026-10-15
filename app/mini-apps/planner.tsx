@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CaretLeft, CaretRight, CheckCircle, CircleDashed, Plus, Trash } from 'phosphor-react-native';
@@ -139,13 +140,13 @@ export default function PlannerScreen() {
                   <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 13 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
                       <Pressable onPress={() => toggle(item)} hitSlop={8}>
-                        {item.done ? <CheckCircle color={accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
+                        {item.done ? <CheckCircle color={accent} size={ICON_SIZE.lg} weight="fill" /> : <CircleDashed color={colors.textMuted} size={ICON_SIZE.lg} />}
                       </Pressable>
                       <Text style={{ flex: 1, color: item.done ? colors.textMuted : colors.text, fontSize: 15, fontWeight: '800', textDecorationLine: item.done ? 'line-through' : 'none' }} numberOfLines={2}>
                         {item.title}
                       </Text>
                       <Pressable onPress={() => remove(item)} hitSlop={8}>
-                        <Trash color={colors.textMuted} size={17} />
+                        <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
                       </Pressable>
                     </View>
                   </GlassPanel>

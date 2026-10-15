@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, ActivityIndicator, Linking, TextInput, Share } from 'react-native';
 import { CalendarBlank, ShareNetwork, VideoCamera } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
@@ -197,7 +198,7 @@ export function SessionsPanel() {
                       style={{ flex: 1 }}
                     >
                       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: radius.card, backgroundColor: colors.accent }}>
-                        <VideoCamera size={16} weight="fill" color={colors.bg} />
+                        <VideoCamera size={ICON_SIZE.sm} weight="fill" color={colors.bg} />
                         <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Join</Text>
                       </View>
                     </Pressable>
@@ -301,7 +302,7 @@ export function SessionsPanel() {
                 accessibilityLabel="Share your booking link"
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: radius.card, backgroundColor: colors.bg }}>
-                  <ShareNetwork size={14} weight="bold" color={colors.accent} />
+                  <ShareNetwork size={ICON_SIZE.xs} weight="bold" color={colors.accent} />
                   <Text numberOfLines={1} style={[font.body, { color: colors.textMuted, fontSize: 12, flex: 1 }]}>
                     {bookingPageUrl(mine.publicSlug)}
                   </Text>

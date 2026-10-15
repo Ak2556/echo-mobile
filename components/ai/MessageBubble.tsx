@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, StyleSheet, Platform, Pressable, Share } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
@@ -175,7 +176,7 @@ export function MessageBubble({ message, isStreaming, onCopy, onEdit, onRegenera
               borderColor: colors.border,
             }}
           >
-            <Copy color={colors.textMuted} size={13} />
+            <Copy color={colors.textMuted} size={ICON_SIZE.xs} />
           </Pressable>
         </View>
       );

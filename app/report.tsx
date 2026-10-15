@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, Alert, ScrollView, TextInput as RNTextInput } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
@@ -77,7 +78,7 @@ export default function ReportScreen() {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <Animated.View entering={FadeInDown.delay(50).duration(220)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <Warning color={colors.warning} size={20} />
+          <Warning color={colors.warning} size={ICON_SIZE.md} />
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginLeft: 8 }}>
             {ttx("Report")} {targetType === 'user' ? `@${targetName}` : 'this content'}
           </Text>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   View, Text, TextInput, KeyboardAvoidingView, Platform,
   Pressable, ActivityIndicator,
@@ -159,7 +160,7 @@ export default function EmailAuthScreen() {
               </Text>
 
               <View style={inputWrapStyle(emailFocused)}>
-                <EnvelopeSimple color={emailFocused ? colors.accent : colors.textMuted} size={20} style={{ marginRight: 12 }} />
+                <EnvelopeSimple color={emailFocused ? colors.accent : colors.textMuted} size={ICON_SIZE.md} style={{ marginRight: 12 }} />
                 <TextInput
                   ref={emailRef}
                   value={email}
@@ -257,7 +258,7 @@ export default function EmailAuthScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={cooldown > 0 ? t('auth.resendInSeconds', { count: cooldown }) : t('auth.resendCode')}
                   >
-                    <ArrowClockwise color={cooldown > 0 ? colors.textMuted : colors.accent} size={16} weight="bold" />
+                    <ArrowClockwise color={cooldown > 0 ? colors.textMuted : colors.accent} size={ICON_SIZE.sm} weight="bold" />
                     <Text style={[font.bodySemibold, { color: cooldown > 0 ? colors.textMuted : colors.accent, fontSize: fontSizes.label }]}>
                       {cooldown > 0 ? t('auth.resendIn', { count: cooldown }) : t('auth.resendCode')}
                     </Text>

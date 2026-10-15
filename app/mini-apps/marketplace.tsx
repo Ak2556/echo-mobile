@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   Modal,
   Pressable,
@@ -240,8 +241,8 @@ function ListingCard({ item, width, featured = false }: { item: ListingWithSelle
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          <MiniBadge icon={<Package color={meta.color} size={12} weight="bold" />} text={item.category} />
-          {item.fulfillment ? <MiniBadge icon={<Truck color={colors.textMuted} size={12} weight="bold" />} text={item.fulfillment} /> : null}
+          <MiniBadge icon={<Package color={meta.color} size={ICON_SIZE.xs} weight="bold" />} text={item.category} />
+          {item.fulfillment ? <MiniBadge icon={<Truck color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />} text={item.fulfillment} /> : null}
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingTop: 3 }}>
@@ -332,7 +333,7 @@ function RecentListingChip({ item }: { item: RecentListing }) {
           <Image source={{ uri: item.photo }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
         ) : (
           <LinearGradient colors={[`${meta.color}35`, `${meta.color}0D`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-            <Tag color={meta.color} size={24} weight="bold" />
+            <Tag color={meta.color} size={ICON_SIZE.lg} weight="bold" />
           </LinearGradient>
         )}
         <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 46 }} pointerEvents="none" />
@@ -552,7 +553,7 @@ export default function MarketplaceScreen() {
         <View style={{ width: '100%', maxWidth: gridOuterWidth, alignSelf: 'center', paddingHorizontal: CARD_H_PADDING, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `${colors.accent}15`, alignItems: 'center', justifyContent: 'center' }}>
-              <Storefront color={colors.accent} size={24} weight="bold" />
+              <Storefront color={colors.accent} size={ICON_SIZE.lg} weight="bold" />
             </View>
             <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
               <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]}>
@@ -626,7 +627,7 @@ export default function MarketplaceScreen() {
                   shadowOffset: { width: 0, height: 8 },
                 }}
               >
-                <Plus color={colors.onAccent} size={16} weight="bold" />
+                <Plus color={colors.onAccent} size={ICON_SIZE.sm} weight="bold" />
                 <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: fontSizes.label }]}>{ttx("Post a listing")}</Text>
               </Pressable>
             </View>

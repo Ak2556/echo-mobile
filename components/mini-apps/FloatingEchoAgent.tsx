@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { usePathname, useRouter, type Href } from 'expo-router';
 import { ArrowSquareOut, Compass, NotePencil, Waveform } from 'phosphor-react-native';
@@ -519,7 +520,7 @@ export default function FloatingEchoAgent() {
                 opacity: pressed ? 0.65 : 1,
               })}
             >
-              <Compass color={colors.accent} size={14} weight="bold" />
+              <Compass color={colors.accent} size={ICON_SIZE.xs} weight="bold" />
               <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{ttx("This screen")}</Text>
             </Pressable>
             <Pressable
@@ -538,7 +539,7 @@ export default function FloatingEchoAgent() {
                 opacity: pressed ? 0.65 : 1,
               })}
             >
-              <NotePencil color={colors.accent} size={14} weight="bold" />
+              <NotePencil color={colors.accent} size={ICON_SIZE.xs} weight="bold" />
               <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{ttx("Save note")}</Text>
             </Pressable>
           </View>

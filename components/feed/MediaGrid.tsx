@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   View, Pressable, Text, StyleSheet, useWindowDimensions,
 } from 'react-native';
@@ -198,7 +199,7 @@ function MediaGridView({ uris, height, allowDownloads = false, alts }: MediaGrid
 function ZoomHint() {
   return (
     <View style={{ position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 12, padding: 5 }}>
-      <MagnifyingGlassPlus color="#fff" size={14} />
+      <MagnifyingGlassPlus color="#fff" size={ICON_SIZE.xs} />
     </View>
   );
 }

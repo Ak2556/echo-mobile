@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -158,9 +159,9 @@ export default function GetVerifiedScreen() {
 
           <View style={{ gap: 14 }}>
             {[
-              { icon: <Camera color={colors.accent} size={20} weight="fill" />, text: 'Take a live selfie. We’ll ask for a quick pose so it can’t be a saved photo.' },
-              { icon: <SealCheck color={colors.accent} size={20} weight="fill" />, text: 'It’s compared with your profile photo. A clear match verifies you instantly; otherwise a human reviews it.' },
-              { icon: <ShieldCheck color={colors.accent} size={20} weight="fill" />, text: 'Your selfie is used only for this check and deleted as soon as a decision is made. It is never shown on your profile.' },
+              { icon: <Camera color={colors.accent} size={ICON_SIZE.md} weight="fill" />, text: 'Take a live selfie. We’ll ask for a quick pose so it can’t be a saved photo.' },
+              { icon: <SealCheck color={colors.accent} size={ICON_SIZE.md} weight="fill" />, text: 'It’s compared with your profile photo. A clear match verifies you instantly; otherwise a human reviews it.' },
+              { icon: <ShieldCheck color={colors.accent} size={ICON_SIZE.md} weight="fill" />, text: 'Your selfie is used only for this check and deleted as soon as a decision is made. It is never shown on your profile.' },
             ].map((row, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
                 <View style={{ marginTop: 1 }}>{row.icon}</View>

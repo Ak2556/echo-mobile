@@ -1,4 +1,5 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ICON_SIZE } from '../../lib/ui/icons';
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
@@ -244,9 +245,9 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
         }}
       >
         {soundEnabled ? (
-          <SpeakerHigh color="#fff" size={20} weight="fill" />
+          <SpeakerHigh color="#fff" size={ICON_SIZE.md} weight="fill" />
         ) : (
-          <SpeakerSlash color="#fff" size={20} weight="fill" />
+          <SpeakerSlash color="#fff" size={ICON_SIZE.md} weight="fill" />
         )}
       </Pressable>
 
@@ -309,7 +310,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
 
           {/* Fake Music Track */}
           <View style={{ flexDirection: 'row', alignItems: 'center', opacity: 0.9 }}>
-            <MusicNotesPlus size={14} color="#fff" weight="fill" style={ICON_SHADOW} />
+            <MusicNotesPlus size={ICON_SIZE.xs} color="#fff" weight="fill" style={ICON_SHADOW} />
             <Text style={{ color: '#fff', fontSize: 13, fontWeight: '500', marginLeft: 6, ...TEXT_SHADOW }}>Original Audio - {item.username}</Text>
           </View>
         </View>

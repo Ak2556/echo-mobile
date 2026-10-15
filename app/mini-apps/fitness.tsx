@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, Modal, StyleSheet, ScrollView, Switch, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -94,7 +95,7 @@ function FoodRow({ food, fav, onTap, onStar }: { food: FoodItem; fav: boolean; o
       <Pressable onPress={onTap} style={{ flex: 1, minWidth: 0 }} accessibilityRole="button" accessibilityLabel={`Add ${food.name}`}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600', flexShrink: 1 }} numberOfLines={1}>{food.name}</Text>
-          {food.tags?.includes('online') ? <Globe color={colors.textMuted} size={12} weight="bold" /> : null}
+          {food.tags?.includes('online') ? <Globe color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" /> : null}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 1 }}>{food.serving} {ttx("· P")} {food.protein}{ttx("g · C")} {food.carbs}{ttx("g · F")} {food.fat}g</Text>
         {(food.fiber != null || food.sugar != null || food.sodium != null) ? (
@@ -259,7 +260,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
           <View>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{ttx("FOOD DATABASE")}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 12 }}>
-              <MagnifyingGlass color={colors.textMuted} size={16} />
+              <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.sm} />
               <TextInput
                 value={search}
                 onChangeText={t => { setSearch(t); if (picked) setPicked(null); }}
@@ -303,7 +304,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
             {showQuickExtras && favoriteFoods.length > 0 && (
               <View style={{ marginTop: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                  <Star color={colors.warning} size={13} weight="fill" />
+                  <Star color={colors.warning} size={ICON_SIZE.xs} weight="fill" />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("FAVORITES")}</Text>
                 </View>
                 {favoriteFoods.slice(0, 6).map(food => (
@@ -314,7 +315,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
             {showQuickExtras && recentDistinct.length > 0 && (
               <View style={{ marginTop: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                  <ClockCounterClockwise color={colors.textMuted} size={13} weight="bold" />
+                  <ClockCounterClockwise color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("RECENT")}</Text>
                 </View>
                 {recentDistinct.map(m => (
@@ -369,7 +370,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 1 }}>{ttx("Amount:")} {qty} × {picked.serving}</Text>
                 </View>
                 <AnimatedPressable onPress={() => applyFood(picked, Math.max(0.25, Math.round((qty - 0.5) * 100) / 100))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)', borderRadius: radius.md, padding: 8 }}>
-                  <Minus color={colors.text} size={14} weight="bold" />
+                  <Minus color={colors.text} size={ICON_SIZE.xs} weight="bold" />
                 </AnimatedPressable>
                 {/* Custom quantity — type any exact multiplier; keyed to qty so
                     the +/- buttons re-sync it, blur/done applies what you typed. */}
@@ -387,7 +388,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                   style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '800', marginHorizontal: 6, minWidth: 44, textAlign: 'center', fontVariant: ['tabular-nums'], paddingVertical: 4 }}
                 />
                 <AnimatedPressable onPress={() => applyFood(picked, Math.round((qty + 0.5) * 100) / 100)} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.accent, borderRadius: radius.md, padding: 8 }}>
-                  <Plus color={colors.bgPure} size={14} weight="bold" />
+                  <Plus color={colors.bgPure} size={ICON_SIZE.xs} weight="bold" />
                 </AnimatedPressable>
               </View>
             )}
@@ -478,7 +479,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
           {/* More detail — optional fiber / sugar / note. */}
           <Pressable onPress={() => setShowMore(v => !v)} accessibilityRole="button">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {showMore ? <CaretUp color={colors.accent} size={14} weight="bold" /> : <CaretDown color={colors.accent} size={14} weight="bold" />}
+              {showMore ? <CaretUp color={colors.accent} size={ICON_SIZE.xs} weight="bold" /> : <CaretDown color={colors.accent} size={ICON_SIZE.xs} weight="bold" />}
               <Text style={{ color: colors.accent, fontSize: 12.5, fontWeight: '700' }}>{showMore ? 'Hide extra detail' : 'Add fiber, sugar, or a note'}</Text>
             </View>
           </Pressable>
@@ -502,7 +503,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                   backgroundColor: saveToFoods ? colors.accent : 'transparent',
                   borderWidth: saveToFoods ? 0 : 1.5, borderColor: colors.glassBorder,
                 }}>
-                  {saveToFoods && <FloppyDisk color={colors.bgPure} size={13} weight="fill" />}
+                  {saveToFoods && <FloppyDisk color={colors.bgPure} size={ICON_SIZE.xs} weight="fill" />}
                 </View>
                 <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label }}>
                   {ttx("Save to my foods for next time")}
@@ -731,7 +732,7 @@ function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose 
                 </View>
                 {rows.length > 1 && (
                   <AnimatedPressable onPress={() => setRows(rows.filter((_, j) => j !== i))} scaleValue={0.85} haptic="light" style={{ paddingBottom: 12 }} accessibilityRole="button" accessibilityLabel={`Remove exercise ${i + 1}`}>
-                    <Trash color={colors.textMuted} size={17} />
+                    <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
                   </AnimatedPressable>
                 )}
               </View>
@@ -756,7 +757,7 @@ function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose 
           ))}
           <Pressable onPress={() => setRows([...rows, emptyDraft()])}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: colors.accentMuted, borderStyle: 'dashed' }}>
-              <Plus color={colors.accent} size={15} weight="bold" />
+              <Plus color={colors.accent} size={ICON_SIZE.sm} weight="bold" />
               <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.label }}>{ttx("Add exercise")}</Text>
             </View>
           </Pressable>
@@ -1023,7 +1024,7 @@ export default function FitnessApp() {
                 )}
               </View>
               <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" hitSlop={10} style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.surfaceHover }} accessibilityRole="button" accessibilityLabel={ttx("Fitness settings")}>
-                <PencilSimple color={colors.textSecondary} size={17} />
+                <PencilSimple color={colors.textSecondary} size={ICON_SIZE.sm} />
               </AnimatedPressable>
             </View>
             {goalsSet && <View style={{ height: 8, backgroundColor: colors.surfaceHover, borderRadius: 4, overflow: 'hidden', marginTop: 12 }}>
@@ -1079,7 +1080,7 @@ export default function FitnessApp() {
           {totals.meals.length === 0 && (
             <MiniEmptyState
               accent={colors.accent}
-              icon={<ForkKnife color={colors.textMuted} size={44} weight="duotone" />}
+              icon={<ForkKnife color={colors.textMuted} size={ICON_SIZE.hero} weight="duotone" />}
               title={ttx("Nothing logged today")}
               subtitle={ttx("Log the first meal to see calories, protein, and daily direction.")}
               actionLabel={ttx("Log your first meal")}
@@ -1104,7 +1105,7 @@ export default function FitnessApp() {
                       </View>
                       <Text style={{ color: colors.accent, fontSize: fontSizes.body, fontWeight: '800' }}>{Math.round(m.calories)} {ttx("kcal")}</Text>
                       <AnimatedPressable onPress={() => removeItem('meal', () => ({ ...doc, meals: doc.meals.filter(x => x.id !== m.id) }))} scaleValue={0.85} haptic="light" accessibilityRole="button" accessibilityLabel={`Delete ${m.name}`}>
-                        <Trash color={colors.textMuted} size={16} />
+                        <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
                       </AnimatedPressable>
                     </GlassPanel>
                   </Animated.View>
@@ -1139,7 +1140,7 @@ export default function FitnessApp() {
               ))}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
-              <Fire color={streak > 0 ? colors.warning : colors.textMuted} size={14} weight={streak > 0 ? 'fill' : 'regular'} />
+              <Fire color={streak > 0 ? colors.warning : colors.textMuted} size={ICON_SIZE.xs} weight={streak > 0 ? 'fill' : 'regular'} />
               <Text style={{ color: streak > 0 ? colors.warning : colors.textMuted, fontSize: fontSizes.small, fontWeight: '700', flex: 1 }}>
                 {streak > 0 ? `${streak}-week streak` : 'Hit your goal to start a streak'}
               </Text>
@@ -1185,7 +1186,7 @@ export default function FitnessApp() {
                     accessibilityRole="button" accessibilityLabel={`Start routine ${r.title}`}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.accent, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 10 }}
                   >
-                    <Play color={colors.bgPure} size={13} weight="fill" />
+                    <Play color={colors.bgPure} size={ICON_SIZE.xs} weight="fill" />
                     <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: fontSizes.small }}>{ttx("Start")}</Text>
                   </AnimatedPressable>
                 </GlassPanel>
@@ -1202,7 +1203,7 @@ export default function FitnessApp() {
           {doc.workouts.length === 0 && (
             <MiniEmptyState
               accent={colors.accent}
-              icon={<Barbell color={colors.textMuted} size={44} weight="duotone" />}
+              icon={<Barbell color={colors.textMuted} size={ICON_SIZE.hero} weight="duotone" />}
               title={ttx("No workouts logged")}
               subtitle={ttx("Log a session to track volume, streaks, PRs, and consistency.")}
               actionLabel={ttx("Log your first workout")}
@@ -1223,7 +1224,7 @@ export default function FitnessApp() {
                   </View>
                   <Text style={{ color: colors.accent, fontSize: fontSizes.label, fontWeight: '800' }}>{Math.round(workoutVolume(w)).toLocaleString()} {ttx("kg")}</Text>
                   <AnimatedPressable onPress={() => removeItem('workout', () => ({ ...doc, workouts: doc.workouts.filter(x => x.id !== w.id) }))} scaleValue={0.85} haptic="light" style={{ marginLeft: 12 }} accessibilityRole="button" accessibilityLabel={`Delete workout ${w.title}`}>
-                    <Trash color={colors.textMuted} size={16} />
+                    <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
                   </AnimatedPressable>
                 </View>
                 {w.exercises.map((e, j) => (
@@ -1284,7 +1285,7 @@ export default function FitnessApp() {
                 {new Date(w.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
               </Text>
               <AnimatedPressable onPress={() => removeItem('entry', () => ({ ...doc, weights: doc.weights.filter(x => x.id !== w.id) }))} scaleValue={0.85} haptic="light" accessibilityRole="button" accessibilityLabel={`Delete weight entry ${w.kg.toFixed(1)} kg`}>
-                <Trash color={colors.textMuted} size={15} />
+                <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
               </AnimatedPressable>
             </View>
           ))}
@@ -1421,14 +1422,14 @@ export default function FitnessApp() {
           </Text>
 
           <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 }} style={{ marginBottom: 10 }}>
-            <MagnifyingGlass color={colors.textMuted} size={16} />
+            <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.sm} />
             <TextInput
               value={libQuery} onChangeText={setLibQuery}
               placeholder={ttx("Search exercises")}
               placeholderTextColor={colors.textMuted}
               style={{ flex: 1, color: colors.text, fontSize: 14.5, paddingHorizontal: 10, paddingVertical: 11 }}
             />
-            {libQuery ? <Pressable onPress={() => setLibQuery('')} hitSlop={8}><X color={colors.textMuted} size={14} /></Pressable> : null}
+            {libQuery ? <Pressable onPress={() => setLibQuery('')} hitSlop={8}><X color={colors.textMuted} size={ICON_SIZE.xs} /></Pressable> : null}
           </GlassPanel>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
@@ -1459,7 +1460,7 @@ export default function FitnessApp() {
                         </Text>
                       </View>
                       {demo ? <Text style={{ color: colors.accent, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.6, marginRight: 8 }}>{ttx("DEMO")}</Text> : null}
-                      {open ? <CaretUp color={colors.accent} size={16} weight="bold" /> : <CaretDown color={colors.textMuted} size={16} />}
+                      {open ? <CaretUp color={colors.accent} size={ICON_SIZE.sm} weight="bold" /> : <CaretDown color={colors.textMuted} size={ICON_SIZE.sm} />}
                     </View>
                   </Pressable>
                   {open && (

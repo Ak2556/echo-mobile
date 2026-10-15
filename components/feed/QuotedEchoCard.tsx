@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SealCheck } from 'phosphor-react-native';
@@ -36,7 +37,7 @@ export function QuotedEchoCard({ echo, compact }: QuotedEchoCardProps) {
           zoomable={false}
         />
         <Text style={{ color: colors.text, fontSize: fontSizes.caption, fontWeight: '700' }}>{echo.displayName || echo.username}</Text>
-        {echo.isVerified && <SealCheck color={colors.accent} size={12} weight="fill" />}
+        {echo.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{echo.username}</Text>
       </View>
       <Text numberOfLines={compact ? 2 : 4} style={{ color: colors.textSecondary, fontSize: fontSizes.caption, lineHeight: fontSizes.caption * 1.5 }}>

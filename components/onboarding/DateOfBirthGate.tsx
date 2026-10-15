@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Modal, View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cake } from 'phosphor-react-native';
@@ -93,7 +94,7 @@ export function DateOfBirthGate() {
             width: 60, height: 60, borderRadius: 30, alignSelf: 'center', marginBottom: 20,
             backgroundColor: colors.accent + '18', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Cake color={colors.accent} size={28} weight="duotone" />
+            <Cake color={colors.accent} size={ICON_SIZE.xl} weight="duotone" />
           </View>
 
           <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', textAlign: 'center', letterSpacing: -0.4 }}>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
@@ -199,7 +200,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
 
             {summary.prs.map(pr => (
               <View key={pr.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.accentMuted, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.accent + '40' }}>
-                <Trophy color={colors.accent} size={20} weight="fill" />
+                <Trophy color={colors.accent} size={ICON_SIZE.md} weight="fill" />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800' }}>{pr.name}</Text>
                   <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>{ttx("New best, ")} {pr.weight} {ttx("kg ×")} {pr.reps}</Text>
@@ -295,7 +296,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
                     borderWidth: 2, borderColor: done ? TEAL : colors.glassBorder,
                   }}>
                     {done
-                      ? <Check color={colors.bgPure} size={17} weight="bold" />
+                      ? <Check color={colors.bgPure} size={ICON_SIZE.sm} weight="bold" />
                       : <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '700' }}>{i + 1}</Text>}
                   </View>
                 );
@@ -311,7 +312,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
                 {fmtClock(restLeft)}
               </Text>
               <Pressable onPress={stopRest} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 }}>
-                <SkipForward color={colors.textMuted} size={14} weight="fill" />
+                <SkipForward color={colors.textMuted} size={ICON_SIZE.xs} weight="fill" />
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '700' }}>{ttx("Skip rest")}</Text>
               </Pressable>
             </View>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -75,7 +76,7 @@ function MosaicTile({
             pointerEvents="none"
             style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Play color="#fff" size={14} weight="fill" />
+            <Play color="#fff" size={ICON_SIZE.xs} weight="fill" />
           </View>
         ) : null}
         <View style={{ flex: 1, justifyContent: hasMedia || isVideo ? 'flex-end' : 'flex-start', padding: 13 }}>

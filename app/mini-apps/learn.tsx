@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
@@ -855,7 +856,7 @@ function Hero({ goal, stats }: { goal: LearningGoal; stats: ReturnType<typeof le
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <IconBadge color={colors.accent} size={54} radius={18}>
-          {goal.mode === 'teacher' ? <ChalkboardTeacher color={colors.bgPure} size={26} weight="bold" /> : <GraduationCap color={colors.bgPure} size={27} weight="bold" />}
+          {goal.mode === 'teacher' ? <ChalkboardTeacher color={colors.bgPure} size={26} weight="bold" /> : <GraduationCap color={colors.bgPure} size={ICON_SIZE.xl} weight="bold" />}
         </IconBadge>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[font.display, { color: colors.text, fontSize: fontSizes.heading, lineHeight: 33 }]} numberOfLines={1}>{goal.title}</Text>
@@ -893,17 +894,17 @@ function TodayTab({ goal, stats, onToggleTask, onSaveNote, onAddTask, onSchedule
   return (
     <>
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-        <ActionButton icon={<NotePencil color={colors.bgPure} size={17} weight="bold" />} label={ttx("Notes")} onPress={onSaveNote} filled />
-        <ActionButton icon={<Target color={colors.accent} size={17} weight="bold" />} label={ttx("Task")} onPress={onAddTask} />
-        <ActionButton icon={<BookOpen color={colors.accent} size={17} weight="bold" />} label={ttx("Plan")} onPress={onSchedule} />
-        <ActionButton icon={<Timer color={colors.accent} size={17} weight="bold" />} label={ttx("Focus")} onPress={onPomodoro} />
+        <ActionButton icon={<NotePencil color={colors.bgPure} size={ICON_SIZE.sm} weight="bold" />} label={ttx("Notes")} onPress={onSaveNote} filled />
+        <ActionButton icon={<Target color={colors.accent} size={ICON_SIZE.sm} weight="bold" />} label={ttx("Task")} onPress={onAddTask} />
+        <ActionButton icon={<BookOpen color={colors.accent} size={ICON_SIZE.sm} weight="bold" />} label={ttx("Plan")} onPress={onSchedule} />
+        <ActionButton icon={<Timer color={colors.accent} size={ICON_SIZE.sm} weight="bold" />} label={ttx("Focus")} onPress={onPomodoro} />
       </View>
       <SectionTitle title={ttx("Today")} subtitle={stats.activeModule?.title ?? 'Next step'} />
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         {(stats.activeModule?.tasks ?? []).map(task => (
           <Pressable key={task.id} onPress={() => onToggleTask(stats.activeModule!.id, task.id)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 7 }}>
-              {task.done ? <CheckCircle color={colors.accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
+              {task.done ? <CheckCircle color={colors.accent} size={ICON_SIZE.lg} weight="fill" /> : <CircleDashed color={colors.textMuted} size={ICON_SIZE.lg} />}
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodySemibold, { color: task.done ? colors.textMuted : colors.text, fontSize: fontSizes.label, textDecorationLine: task.done ? 'line-through' : 'none' }]} numberOfLines={1}>{task.title}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2, textTransform: 'uppercase', fontWeight: '800' }}>{task.type}</Text>
@@ -953,7 +954,7 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
           <GlassPanel key={topic.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 11 }}>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ width: 40, height: 40, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}22` }}>
-                <GraduationCap color={colors.accent} size={20} weight="bold" />
+                <GraduationCap color={colors.accent} size={ICON_SIZE.md} weight="bold" />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, lineHeight: 20 }]}>{topic.title}</Text>
@@ -1029,7 +1030,7 @@ function OneOnOneTab(props: {
     <>
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 12 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <IconBadge color={colors.warning} size={48} radius={radius.card}><ChalkboardTeacher color={colors.bgPure} size={23} weight="bold" /></IconBadge>
+          <IconBadge color={colors.warning} size={48} radius={radius.card}><ChalkboardTeacher color={colors.bgPure} size={ICON_SIZE.lg} weight="bold" /></IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("Paid 1:1 mastery")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 2 }]}>
@@ -1215,7 +1216,7 @@ function StudioTab(props: {
           <Pressable key={week.id} onPress={() => props.onToggleWeek(week.id)}>
             <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
               <View style={{ flexDirection: 'row', gap: 11 }}>
-                {week.done ? <CheckCircle color={colors.accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
+                {week.done ? <CheckCircle color={colors.accent} size={ICON_SIZE.lg} weight="fill" /> : <CircleDashed color={colors.textMuted} size={ICON_SIZE.lg} />}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{week.title}</Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 4 }]}>{week.objective}</Text>
@@ -1263,7 +1264,7 @@ function StudioTab(props: {
         {props.goal.evidence.map(item => (
           <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <LinkSimple color={colors.accent} size={17} weight="bold" />
+              <LinkSimple color={colors.accent} size={ICON_SIZE.sm} weight="bold" />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small }]}>{item.title}</Text>
                 <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={2}>{item.detail || item.kind}</Text>
@@ -1503,7 +1504,7 @@ function CoachTab({ goal, prompts, reflection, setReflection, onCreateReflection
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Question color={colors.accent} size={18} weight="bold" />
                 <Text style={[font.bodySemibold, { color: colors.textSecondary, flex: 1, fontSize: fontSizes.small, lineHeight: 18 }]}>{prompt}</Text>
-                <Play color={colors.textMuted} size={16} weight="bold" />
+                <Play color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />
               </View>
             </GlassPanel>
           </Pressable>
@@ -1582,7 +1583,7 @@ function ClassroomTab(props: {
         {props.goal.resources.map(item => (
           <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <LinkSimple color={colors.accent} size={17} weight="bold" />
+              <LinkSimple color={colors.accent} size={ICON_SIZE.sm} weight="bold" />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small }]}>{item.title}</Text>
                 {item.detail ? <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={2}>{item.detail}</Text> : null}
@@ -1625,7 +1626,7 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
           <Pressable key={milestone.id} onPress={() => onToggleMilestone(milestone.id)}>
             <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
               <View style={{ flexDirection: 'row', gap: 11 }}>
-                {milestone.done ? <CheckCircle color={colors.accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
+                {milestone.done ? <CheckCircle color={colors.accent} size={ICON_SIZE.lg} weight="fill" /> : <CircleDashed color={colors.textMuted} size={ICON_SIZE.lg} />}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{milestone.title}</Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 4 }]}>{milestone.proof}</Text>
@@ -1787,7 +1788,7 @@ function LearningSystemCard({ goal }: { goal: LearningGoal }) {
   return (
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 15, gap: 10 }} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Waveform color={colors.accent} size={19} weight="bold" />
+        <Waveform color={colors.accent} size={ICON_SIZE.md} weight="bold" />
         <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>
           {goal.mode === 'teacher' ? 'Teacher workflow' : goal.mode === 'coach' ? 'Coaching loop' : 'Study system'}
         </Text>

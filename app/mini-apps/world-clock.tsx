@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, MagnifyingGlass, Moon, Sun, X } from 'phosphor-react-native';
 import { useFocusEffect } from 'expo-router';
@@ -131,7 +132,7 @@ export default function WorldClockScreen() {
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 18 }} style={{ marginBottom: 14, borderColor: `${isLocalDay ? colors.warning : colors.textMuted}44` }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
           <View style={{ width: 48, height: 48, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: `${isLocalDay ? colors.warning : colors.textMuted}22` }}>
-            {isLocalDay ? <Sun color={colors.warning} size={24} weight="fill" /> : <Moon color={colors.textMuted} size={24} weight="fill" />}
+            {isLocalDay ? <Sun color={colors.warning} size={ICON_SIZE.lg} weight="fill" /> : <Moon color={colors.textMuted} size={ICON_SIZE.lg} weight="fill" />}
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.eyebrow, { color: colors.textMuted }]} numberOfLines={1}>{ttx("My Location")}</Text>
@@ -211,7 +212,7 @@ function WeatherBadge({ snapshot, fallback }: { snapshot?: WeatherSnapshot | nul
   return (
     <View style={{ minWidth: 76, alignItems: 'flex-end' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: radius.full, paddingHorizontal: 9, paddingVertical: 6, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-        {snapshot ? weatherIcon(snapshot.code, accent, 16) : <CloudSun color={accent} size={16} />}
+        {snapshot ? weatherIcon(snapshot.code, accent, 16) : <CloudSun color={accent} size={ICON_SIZE.sm} />}
         <Text style={[font.bodyBold, { color: colors.text, fontSize: 12.5 }]} numberOfLines={1}>
           {snapshot ? `${Math.round(snapshot.temperature)}°` : '--'}
         </Text>
@@ -269,7 +270,7 @@ function CityCard({ city, now, weather, onRemove }: { city: WorldClockCity; now:
         </View>
         <Pressable onPress={onRemove} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${city.name}`}>
           <View style={{ width: 28, height: 28, borderRadius: radius.md, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-            <X color={colors.textMuted} size={13} weight="bold" />
+            <X color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
           </View>
         </Pressable>
       </View>
@@ -282,7 +283,7 @@ function WeatherInline({ snapshot }: { snapshot?: WeatherSnapshot | null }) {
   if (!snapshot) {
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-        <CloudSun color={colors.textMuted} size={14} />
+        <CloudSun color={colors.textMuted} size={ICON_SIZE.xs} />
         <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]}>{ttx("Weather unavailable")}</Text>
       </View>
     );

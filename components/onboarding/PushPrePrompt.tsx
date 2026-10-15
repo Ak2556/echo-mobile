@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Modal, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, BellSlash } from 'phosphor-react-native';
@@ -46,7 +47,7 @@ export function PushPrePrompt({ visible, onAccept, onDecline }: PushPrePromptPro
                 marginBottom: 18,
               }}
             >
-              <Bell color={colors.accent} size={28} weight="duotone" />
+              <Bell color={colors.accent} size={ICON_SIZE.xl} weight="duotone" />
             </View>
             <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.4, textAlign: 'center' }}>
               {ttx("Stay in the loop")}
@@ -109,7 +110,7 @@ export function PushPrePrompt({ visible, onAccept, onDecline }: PushPrePromptPro
               accessibilityRole="button"
               accessibilityLabel={ttx("Not now")}
             >
-              <BellSlash color={colors.textMuted} size={16} />
+              <BellSlash color={colors.textMuted} size={ICON_SIZE.sm} />
               <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 15 }}>{ttx("Not now")}</Text>
             </Pressable>
           </View>

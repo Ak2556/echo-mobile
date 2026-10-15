@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, Modal, StyleSheet, Share, ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
@@ -239,7 +240,7 @@ function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose
             <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ overflow: 'hidden' }}>
               <View style={{ padding: 24, alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
                 <View style={{ width: 48, height: 48, borderRadius: radius.full, backgroundColor: colors.accent + '22', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                  <Export color={colors.accent} size={24} weight="bold" />
+                  <Export color={colors.accent} size={ICON_SIZE.lg} weight="bold" />
                 </View>
                 <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '800' }}>{tt('Reporting Engine')}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, marginTop: 4, textAlign: 'center' }}>{tt('Generate professional accounting reports')}</Text>
@@ -263,7 +264,7 @@ function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose
                         <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }}>{tt(item.title)}</Text>
                         <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }}>{tt(item.desc)}</Text>
                       </View>
-                      <CaretRight color={colors.textMuted} size={16} weight="bold" />
+                      <CaretRight color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />
                     </AnimatedPressable>
                   );
                 })}
@@ -332,7 +333,7 @@ function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSe
         </View>
         <View style={{ padding: 20, gap: 14, flex: 1 }}>
           <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 }}>
-            <MagnifyingGlass color={colors.textMuted} size={16} />
+            <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.sm} />
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -676,7 +677,7 @@ export default function ExpensesApp() {
               <View style={{ flexDirection: 'row', marginTop: 32, gap: 16 }}>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <ArrowDown color="rgba(255,255,255,0.9)" size={14} weight="bold" />
+                    <ArrowDown color="rgba(255,255,255,0.9)" size={ICON_SIZE.xs} weight="bold" />
                     <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: fontSizes.caption, fontWeight: '800', letterSpacing: 0.5 }}>{tt('TOTAL INCOME')}</Text>
                   </View>
                   <Text style={{ color: colors.bgPure, fontSize: 22, fontWeight: '800' }}>{money(income)}</Text>
@@ -684,7 +685,7 @@ export default function ExpensesApp() {
                 <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.2)' }} />
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <ArrowUp color="rgba(255,255,255,0.9)" size={14} weight="bold" />
+                    <ArrowUp color="rgba(255,255,255,0.9)" size={ICON_SIZE.xs} weight="bold" />
                     <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: fontSizes.caption, fontWeight: '800', letterSpacing: 0.5 }}>{tt('TOTAL SPEND')}</Text>
                   </View>
                   <Text style={{ color: colors.bgPure, fontSize: 22, fontWeight: '800' }}>{money(expense)}</Text>
@@ -746,7 +747,7 @@ export default function ExpensesApp() {
           <Animated.View key={tx.id} entering={FadeInDown.delay(Math.min(i, 8) * 40).duration(220)} style={{ marginBottom: 10 }}>
             <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}>
               <View style={{ width: 48, height: 48, borderRadius: radius.card, backgroundColor: iconColor + '18', borderWidth: 1, borderColor: iconColor + '33', alignItems: 'center', justifyContent: 'center' }}>
-                {tx.invoiceNo ? <FileText color={iconColor} size={20} weight="fill" /> : <MoneyCategoryIcon category={tx.category} color={iconColor} size={20} />}
+                {tx.invoiceNo ? <FileText color={iconColor} size={ICON_SIZE.md} weight="fill" /> : <MoneyCategoryIcon category={tx.category} color={iconColor} size={20} />}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{tt(title)}</Text>
@@ -758,7 +759,7 @@ export default function ExpensesApp() {
                 {iconColor === colors.success ? '+' : '-'}{money(tx.amount)}
               </Text>
               <AnimatedPressable onPress={() => deleteTx(tx.id)} scaleValue={0.85} haptic="light">
-                <Trash color={colors.textMuted} size={17} />
+                <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
               </AnimatedPressable>
             </GlassPanel>
           </Animated.View>

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, Alert, Image, RefreshControl } from 'react-native';
@@ -91,14 +92,14 @@ function VerificationCard({ item, onDecide }: {
           onPress={() => confirm(false)} disabled={busy} scaleValue={0.96} haptic="light"
           style={{ flex: 1, borderRadius: 12, borderWidth: 1, borderColor: `${colors.danger}55`, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
         >
-          <XCircle color={colors.danger} size={16} weight="fill" />
+          <XCircle color={colors.danger} size={ICON_SIZE.sm} weight="fill" />
           <Text style={{ color: colors.danger, fontWeight: '700', fontSize: fontSizes.label }}>{ttx("Reject")}</Text>
         </AnimatedPressable>
         <AnimatedPressable
           onPress={() => confirm(true)} disabled={busy} scaleValue={0.96} haptic="medium"
           style={{ flex: 1, borderRadius: 12, backgroundColor: colors.success, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
         >
-          <CheckCircle color={ON_STATUS} size={16} weight="fill" />
+          <CheckCircle color={ON_STATUS} size={ICON_SIZE.sm} weight="fill" />
           <Text style={{ color: ON_STATUS, fontWeight: '700', fontSize: fontSizes.label }}>{ttx("Approve")}</Text>
         </AnimatedPressable>
       </View>
@@ -142,7 +143,7 @@ export default function ModVerificationsScreen() {
     <ResponsiveScreen>
       <ScreenHeader
         title={ttx("Verification queue")}
-        right={<SealCheck color={colors.accent} size={20} weight="fill" style={{ marginRight: 8 }} />}
+        right={<SealCheck color={colors.accent} size={ICON_SIZE.md} weight="fill" style={{ marginRight: 8 }} />}
       />
 
       {items === null ? (
@@ -158,7 +159,7 @@ export default function ModVerificationsScreen() {
         >
           {items.length === 0 ? (
             <View style={{ alignItems: 'center', paddingVertical: 60, gap: 10 }}>
-              <SealCheck color={colors.glassBorder} size={44} weight="duotone" />
+              <SealCheck color={colors.glassBorder} size={ICON_SIZE.hero} weight="duotone" />
               <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.body }]}>{ttx("No pending verifications")}</Text>
             </View>
           ) : items.map((item, i) => (

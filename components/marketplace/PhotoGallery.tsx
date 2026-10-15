@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   Modal,
   Pressable,
@@ -85,7 +86,7 @@ function FullscreenViewer({
               justifyContent: 'center',
             }}
           >
-            <X color="#fff" size={20} />
+            <X color="#fff" size={ICON_SIZE.md} />
           </Pressable>
 
           <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '600' }}>
@@ -105,7 +106,7 @@ function FullscreenViewer({
               opacity: saving ? 0.5 : 1,
             }}
           >
-            <DownloadSimple color="#fff" size={20} weight="bold" />
+            <DownloadSimple color="#fff" size={ICON_SIZE.md} weight="bold" />
           </Pressable>
         </View>
 

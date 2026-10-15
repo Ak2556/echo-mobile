@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { useRouter } from 'expo-router';
 import { View, Text } from 'react-native';
 import { HeartStraight, SealCheck, ChatCircle } from 'phosphor-react-native';
@@ -102,7 +103,7 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
           <AnimatedPressable onPress={openAuthor} haptic="none" accessibilityRole="button" accessibilityLabel={comment.displayName}>
             <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{comment.displayName}</Text>
           </AnimatedPressable>
-          {comment.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+          {comment.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
           <RankMark userId={comment.userId} />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{'\u00B7'} {getTimeAgo(comment.createdAt)}</Text>
         </View>
@@ -127,8 +128,8 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
               <Animated.View style={heartAnim}>
                 <HeartStraight
                   color={comment.isLiked ? colors.danger : colors.textMuted}
-                  size={16}
-                  weight="regular"
+                  size={ICON_SIZE.sm}
+                  weight="bold"
                 />
               </Animated.View>
               <Text style={{ fontSize: fontSizes.caption, color: comment.isLiked ? colors.danger : colors.textMuted }}>
@@ -139,7 +140,7 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
           {!indented && (
             <AnimatedPressable scaleValue={0.85} haptic="light" hitSlop={ACTION_HIT_SLOP} onPress={() => onReply?.(comment)} accessibilityLabel={ttx("Reply to comment")} accessibilityRole="button">
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
-                <ChatCircle color={colors.textMuted} size={16} />
+                <ChatCircle color={colors.textMuted} size={ICON_SIZE.sm} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Reply")}</Text>
               </View>
             </AnimatedPressable>

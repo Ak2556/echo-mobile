@@ -2,6 +2,7 @@
 import React, {
   useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle,
 } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   Modal, View, Text, Pressable, ActivityIndicator, Image as RNImage, ScrollView, LayoutChangeEvent, TextInput,
 } from 'react-native';
@@ -235,11 +236,11 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
           {mode === 'transform' && (
             <>
               <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingBottom: 20 }}>
-                <ToolBtn icon={<ArrowCounterClockwise color="#fff" size={20} weight="bold" />} onPress={() => runTransform(() => [{ rotate: -90 }])} />
-                <ToolBtn icon={<ArrowClockwise color="#fff" size={20} weight="bold" />} onPress={() => runTransform(() => [{ rotate: 90 }])} />
-                <ToolBtn icon={<FlipHorizontal color="#fff" size={20} weight="bold" />} onPress={() => runTransform(m => [{ flip: m.FlipType.Horizontal }])} />
-                <ToolBtn icon={<FlipVertical color="#fff" size={20} weight="bold" />} onPress={() => runTransform(m => [{ flip: m.FlipType.Vertical }])} />
-                <ToolBtn icon={<ArrowUUpLeft color="#fff" size={20} weight="bold" />} onPress={resetTransform} />
+                <ToolBtn icon={<ArrowCounterClockwise color="#fff" size={ICON_SIZE.md} weight="bold" />} onPress={() => runTransform(() => [{ rotate: -90 }])} />
+                <ToolBtn icon={<ArrowClockwise color="#fff" size={ICON_SIZE.md} weight="bold" />} onPress={() => runTransform(() => [{ rotate: 90 }])} />
+                <ToolBtn icon={<FlipHorizontal color="#fff" size={ICON_SIZE.md} weight="bold" />} onPress={() => runTransform(m => [{ flip: m.FlipType.Horizontal }])} />
+                <ToolBtn icon={<FlipVertical color="#fff" size={ICON_SIZE.md} weight="bold" />} onPress={() => runTransform(m => [{ flip: m.FlipType.Vertical }])} />
+                <ToolBtn icon={<ArrowUUpLeft color="#fff" size={ICON_SIZE.md} weight="bold" />} onPress={resetTransform} />
               </View>
               <View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10, alignItems: 'center' }}>
@@ -248,7 +249,7 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
                       toolbar looks like one — the word makes what it is
                       unambiguous. The ratio pills are what actually crop. */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} accessible={false} importantForAccessibility="no-hide-descendants">
-                    <Crop color="rgba(255,255,255,0.6)" size={20} weight="bold" />
+                    <Crop color="rgba(255,255,255,0.6)" size={ICON_SIZE.md} weight="bold" />
                     <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '700', letterSpacing: 0.6 }}>
                       {ttx('Crop')}
                     </Text>
@@ -296,19 +297,19 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 24, paddingTop: 20, paddingHorizontal: 12 }}>
                 {[
-                  { key: 'exposure', label: 'Exposure', icon: <Sun color={activeAdjustTool === 'exposure' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'exposure' ? 'fill' : 'regular'} /> },
-                  { key: 'brightness', label: 'Brightness', icon: <SunDim color={activeAdjustTool === 'brightness' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'brightness' ? 'fill' : 'regular'} /> },
-                  { key: 'contrast', label: 'Contrast', icon: <CircleHalf color={activeAdjustTool === 'contrast' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'contrast' ? 'fill' : 'regular'} /> },
-                  { key: 'saturation', label: 'Saturation', icon: <Drop color={activeAdjustTool === 'saturation' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'saturation' ? 'fill' : 'regular'} /> },
-                  { key: 'warmth', label: 'Warmth', icon: <Thermometer color={activeAdjustTool === 'warmth' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'warmth' ? 'fill' : 'regular'} /> },
-                  { key: 'tint', label: 'Tint', icon: <DropHalf color={activeAdjustTool === 'tint' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'tint' ? 'fill' : 'regular'} /> },
-                  { key: 'fade', label: 'Fade', icon: <Cloud color={activeAdjustTool === 'fade' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'fade' ? 'fill' : 'regular'} /> },
-                  { key: 'hue', label: 'Hue', icon: <Palette color={activeAdjustTool === 'hue' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'hue' ? 'fill' : 'regular'} /> },
-                  { key: 'sepia', label: 'Sepia', icon: <Coffee color={activeAdjustTool === 'sepia' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'sepia' ? 'fill' : 'regular'} /> },
-                  { key: 'vignette', label: 'Vignette', icon: <CornersIn color={activeAdjustTool === 'vignette' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'vignette' ? 'fill' : 'regular'} /> },
-                  { key: 'red', label: 'Red', icon: <Drop color={activeAdjustTool === 'red' ? '#EF4444' : 'rgba(239, 68, 68, 0.5)'} size={24} weight={activeAdjustTool === 'red' ? 'fill' : 'regular'} /> },
-                  { key: 'green', label: 'Green', icon: <Drop color={activeAdjustTool === 'green' ? '#22C55E' : 'rgba(34, 197, 94, 0.5)'} size={24} weight={activeAdjustTool === 'green' ? 'fill' : 'regular'} /> },
-                  { key: 'blue', label: 'Blue', icon: <Drop color={activeAdjustTool === 'blue' ? '#3B82F6' : 'rgba(59, 130, 246, 0.5)'} size={24} weight={activeAdjustTool === 'blue' ? 'fill' : 'regular'} /> },
+                  { key: 'exposure', label: 'Exposure', icon: <Sun color={activeAdjustTool === 'exposure' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'exposure' ? 'fill' : 'regular'} /> },
+                  { key: 'brightness', label: 'Brightness', icon: <SunDim color={activeAdjustTool === 'brightness' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'brightness' ? 'fill' : 'regular'} /> },
+                  { key: 'contrast', label: 'Contrast', icon: <CircleHalf color={activeAdjustTool === 'contrast' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'contrast' ? 'fill' : 'regular'} /> },
+                  { key: 'saturation', label: 'Saturation', icon: <Drop color={activeAdjustTool === 'saturation' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'saturation' ? 'fill' : 'regular'} /> },
+                  { key: 'warmth', label: 'Warmth', icon: <Thermometer color={activeAdjustTool === 'warmth' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'warmth' ? 'fill' : 'regular'} /> },
+                  { key: 'tint', label: 'Tint', icon: <DropHalf color={activeAdjustTool === 'tint' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'tint' ? 'fill' : 'regular'} /> },
+                  { key: 'fade', label: 'Fade', icon: <Cloud color={activeAdjustTool === 'fade' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'fade' ? 'fill' : 'regular'} /> },
+                  { key: 'hue', label: 'Hue', icon: <Palette color={activeAdjustTool === 'hue' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'hue' ? 'fill' : 'regular'} /> },
+                  { key: 'sepia', label: 'Sepia', icon: <Coffee color={activeAdjustTool === 'sepia' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'sepia' ? 'fill' : 'regular'} /> },
+                  { key: 'vignette', label: 'Vignette', icon: <CornersIn color={activeAdjustTool === 'vignette' ? '#fff' : 'rgba(255,255,255,0.7)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'vignette' ? 'fill' : 'regular'} /> },
+                  { key: 'red', label: 'Red', icon: <Drop color={activeAdjustTool === 'red' ? '#EF4444' : 'rgba(239, 68, 68, 0.5)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'red' ? 'fill' : 'regular'} /> },
+                  { key: 'green', label: 'Green', icon: <Drop color={activeAdjustTool === 'green' ? '#22C55E' : 'rgba(34, 197, 94, 0.5)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'green' ? 'fill' : 'regular'} /> },
+                  { key: 'blue', label: 'Blue', icon: <Drop color={activeAdjustTool === 'blue' ? '#3B82F6' : 'rgba(59, 130, 246, 0.5)'} size={ICON_SIZE.lg} weight={activeAdjustTool === 'blue' ? 'fill' : 'regular'} /> },
                 ].map(tool => (
                   <Pressable key={tool.key} onPress={() => setActiveAdjustTool(tool.key as keyof Adjustments)} style={{ alignItems: 'center', gap: 8 }}>
                     <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: activeAdjustTool === tool.key ? 'rgba(255,255,255,0.15)' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
@@ -348,8 +349,8 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
           {mode === 'draw' && (
             <View style={{ paddingHorizontal: 16, paddingBottom: 16, alignItems: 'center' }}>
               <View style={{ flexDirection: 'row', gap: 16, marginBottom: 24 }}>
-                <ToolBtn icon={<ArrowUUpLeft color={drawPaths.length > 0 ? '#fff' : 'rgba(255,255,255,0.3)'} size={20} />} onPress={() => { setDrawPaths(p => p.slice(0, -1)); setDirty(true); }} />
-                <ToolBtn icon={<Eraser color={drawPaths.length > 0 ? '#fff' : 'rgba(255,255,255,0.3)'} size={20} />} onPress={() => { setDrawPaths([]); setDirty(true); }} />
+                <ToolBtn icon={<ArrowUUpLeft color={drawPaths.length > 0 ? '#fff' : 'rgba(255,255,255,0.3)'} size={ICON_SIZE.md} />} onPress={() => { setDrawPaths(p => p.slice(0, -1)); setDirty(true); }} />
+                <ToolBtn icon={<Eraser color={drawPaths.length > 0 ? '#fff' : 'rgba(255,255,255,0.3)'} size={ICON_SIZE.md} />} onPress={() => { setDrawPaths([]); setDirty(true); }} />
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingHorizontal: 12 }}>
                 {['#FFFFFF', '#000000', '#EF4444', '#22C55E', '#3B82F6', '#F59E0B', '#A855F7', '#EC4899'].map(c => (

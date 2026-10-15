@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet , Clipboard } from 'react-native';
 import { Check, Copy, Trash, CornersIn, CornersOut, Warning, CheckCircle } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -59,14 +60,14 @@ export default function JsonFormatterScreen() {
         onPress={() => setViewMode(v => v === 'formatted' ? 'minified' : 'formatted')}
         style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.md, backgroundColor: colors.inputBg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, flexDirection: 'row', alignItems: 'center', gap: 5 }}
       >
-        {viewMode === 'formatted' ? <CornersIn color={colors.textMuted} size={15} weight="bold" /> : <CornersOut color={colors.textMuted} size={15} weight="bold" />}
+        {viewMode === 'formatted' ? <CornersIn color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" /> : <CornersOut color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />}
         <Text style={{ color: colors.text, fontSize: fontSizes.meta, fontWeight: '600' }}>{viewMode === 'formatted' ? 'Minify' : 'Format'}</Text>
       </Pressable>
       <Pressable
         onPress={copy}
         style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.md, backgroundColor: copied ? colors.success : accent, flexDirection: 'row', alignItems: 'center', gap: 5 }}
       >
-        {copied ? <Check color={colors.bgPure} size={15} weight="bold" /> : <Copy color={colors.bgPure} size={15} weight="bold" />}
+        {copied ? <Check color={colors.bgPure} size={ICON_SIZE.sm} weight="bold" /> : <Copy color={colors.bgPure} size={ICON_SIZE.sm} weight="bold" />}
         <Text style={{ color: colors.bgPure, fontSize: fontSizes.meta, fontWeight: '600' }}>{copied ? 'Done!' : 'Copy'}</Text>
       </Pressable>
     </View>
@@ -93,7 +94,7 @@ export default function JsonFormatterScreen() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1 }}>{ttx("PASTE JSON")}</Text>
             <Pressable onPress={() => { setInput(''); setError(''); setParsed(null); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Trash color={colors.textMuted} size={14} weight="bold" />
+              <Trash color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Clear")}</Text>
             </Pressable>
           </View>
@@ -112,12 +113,12 @@ export default function JsonFormatterScreen() {
           />
           {error ? (
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 8, padding: 12, backgroundColor: colors.danger + '18', borderRadius: radius.md, borderWidth: 1, borderColor: colors.danger + '33' }}>
-              <Warning color={colors.danger} size={16} weight="fill" />
+              <Warning color={colors.danger} size={ICON_SIZE.sm} weight="fill" />
               <Text style={{ color: colors.danger, fontSize: fontSizes.small, flex: 1, fontFamily: 'monospace' }}>{error}</Text>
             </View>
           ) : parsed ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-              <CheckCircle color={colors.success} size={16} weight="fill" />
+              <CheckCircle color={colors.success} size={ICON_SIZE.sm} weight="fill" />
               <Text style={{ color: colors.success, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Valid JSON")}</Text>
               {stats && <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>· {stats.keys} {ttx("keys ·")} {stats.size}</Text>}
             </View>

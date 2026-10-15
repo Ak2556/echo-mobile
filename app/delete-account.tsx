@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { View, Text, Pressable, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
@@ -143,7 +144,7 @@ export default function DeleteAccountScreen() {
             {deleting
               ? <ActivityIndicator color={ON_STATUS} />
               : <>
-                <Trash color={ON_STATUS} size={16} weight="bold" />
+                <Trash color={ON_STATUS} size={ICON_SIZE.sm} weight="bold" />
                 <Text style={{ color: ON_STATUS, fontWeight: '700', fontSize: 15 }}>{ttx("Delete my account")}</Text>
               </>}
           </Pressable>

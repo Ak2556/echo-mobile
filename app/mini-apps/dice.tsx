@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, {
   FadeInDown, useSharedValue, useAnimatedStyle,
@@ -104,7 +105,7 @@ export default function DiceApp() {
 
   const ClearBtn = (
     <AnimatedPressable onPress={() => { setHistory([]); setResult(null); setCoinFace(null); }} scaleValue={0.88} haptic="light">
-      <ArrowClockwise color={colors.textMuted} size={20} />
+      <ArrowClockwise color={colors.textMuted} size={ICON_SIZE.md} />
     </AnimatedPressable>
   );
 
@@ -156,7 +157,7 @@ export default function DiceApp() {
               ? <DieFace value={result} sides={selectedDie.sides} color={selectedDie.color} />
               : (
                 <View style={{ width: 100, height: 100, borderRadius: radius.card, backgroundColor: selectedDie.color + '18', borderWidth: 2.5, borderColor: selectedDie.color + '55', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                  <DiceSix color={selectedDie.color} size={44} weight="duotone" />
+                  <DiceSix color={selectedDie.color} size={ICON_SIZE.hero} weight="duotone" />
                   {result !== null && diceCount > 1 && <Text style={{ color: selectedDie.color, fontSize: 18, fontWeight: '900' }}>{result}</Text>}
                 </View>
               )}

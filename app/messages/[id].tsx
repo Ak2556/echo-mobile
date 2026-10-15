@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import {
   View, Text, KeyboardAvoidingView, Platform, ScrollView,
@@ -305,7 +306,7 @@ function EchoShareCard({ title, preview, author }: { title: string; preview: str
       marginTop: 4,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <Quotes color={colors.accent} size={14} />
+        <Quotes color={colors.accent} size={ICON_SIZE.xs} />
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.small }} numberOfLines={1}>{title}</Text>
       </View>
       <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 19 }} numberOfLines={3}>{preview}</Text>
@@ -323,7 +324,7 @@ function LinkShareCard({ url, title, subtitle }: { url: string; title?: string |
       marginTop: 4, minWidth: 210,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <LinkSimple color={colors.accent} size={15} weight="bold" />
+        <LinkSimple color={colors.accent} size={ICON_SIZE.sm} weight="bold" />
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.small, flex: 1 }} numberOfLines={1}>
           {title || urlHost(url)}
         </Text>
@@ -358,7 +359,7 @@ function ContactShareCard({
           @{username}
         </Text>
       </View>
-      <UserCircle color={colors.accent} size={20} weight="bold" />
+      <UserCircle color={colors.accent} size={ICON_SIZE.md} weight="bold" />
     </View>
   );
 }
@@ -517,12 +518,12 @@ function PinnedMessageBanner({
         borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
       }}
     >
-      <PushPin color={colors.accent} size={13} weight="fill" />
+      <PushPin color={colors.accent} size={ICON_SIZE.xs} weight="fill" />
       <Text style={{ flex: 1, color: colors.textSecondary, fontSize: fontSizes.meta }} numberOfLines={1}>
         <Text style={{ fontWeight: '700', color: colors.text }}>{ttx("Pinned:")} </Text>{label}
       </Text>
       <Pressable onPress={onUnpin} hitSlop={10}>
-        <X color={colors.textMuted} size={14} />
+        <X color={colors.textMuted} size={ICON_SIZE.xs} />
       </Pressable>
     </Animated.View>
   );
@@ -622,8 +623,8 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress, sessionToke
           }}
         >
           {playing
-            ? <Pause color={fg} size={15} weight="fill" />
-            : <Play color={isMe ? colors.onAccent : colors.accent} size={15} weight="fill" />}
+            ? <Pause color={fg} size={ICON_SIZE.sm} weight="fill" />
+            : <Play color={isMe ? colors.onAccent : colors.accent} size={ICON_SIZE.sm} weight="fill" />}
         </Pressable>
         <View style={{ flex: 1, gap: 5 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', height: 22, gap: 2 }}>
@@ -641,7 +642,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress, sessionToke
             <Text style={{ color: isMe ? colors.onAccent : colors.accent, fontSize: fontSizes.caption, fontWeight: '800' }}>{speed}×</Text>
           </Pressable>
         ) : (
-          <Microphone color={isMe ? 'rgba(255,255,255,0.7)' : colors.textMuted} size={14} weight="fill" />
+          <Microphone color={isMe ? 'rgba(255,255,255,0.7)' : colors.textMuted} size={ICON_SIZE.xs} weight="fill" />
         )}
       </View>
     </Pressable>
@@ -897,7 +898,7 @@ function DMBubble({
                 />
               )}
               <View style={{ width: 46, height: 46, borderRadius: radius.xl, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-                <Images color={colors.textMuted} size={23} weight="bold" />
+                <Images color={colors.textMuted} size={ICON_SIZE.lg} weight="bold" />
               </View>
               <Text style={{ color: isMe ? colors.accent : colors.text, fontSize: fontSizes.label, fontWeight: '900', textAlign: 'center' }}>
                 {ttx("Image unavailable")}
@@ -1006,7 +1007,7 @@ function DMBubble({
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: unlocked ? 6 : 0 }}>
-            <Hourglass color={colors.accent} size={15} weight="bold" />
+            <Hourglass color={colors.accent} size={ICON_SIZE.sm} weight="bold" />
             <Text style={{ color: colors.accent, fontSize: fontSizes.meta, fontWeight: '800' }}>
               {unlocked ? 'Time Capsule' : 'Sealed'}
             </Text>
@@ -1173,7 +1174,7 @@ function DMBubble({
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-                <Translate color={colors.accent} size={12} weight="bold" />
+                <Translate color={colors.accent} size={ICON_SIZE.xs} weight="bold" />
                 <Text style={{ color: colors.accent, fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6 }}>{ttx("TRANSLATION")}</Text>
               </View>
               <Text style={{ color: colors.textSecondary, fontSize: textSize - 1, lineHeight: (textSize - 1) * 1.35 }}>
@@ -1196,7 +1197,7 @@ function DMBubble({
       {isFailed ? (
         <Pressable onPress={onRetry} hitSlop={8}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3, marginHorizontal: 2 }}>
-            <WarningCircle color={colors.danger} size={12} weight="fill" />
+            <WarningCircle color={colors.danger} size={ICON_SIZE.xs} weight="fill" />
             <Text style={{ color: colors.danger, fontSize: fontSizes.caption, fontWeight: '700' }}>{ttx("Failed to send. Tap to retry")}</Text>
           </View>
         </Pressable>
@@ -1215,10 +1216,10 @@ function DMBubble({
           {/* Delivery ticks: sending → delivered (grey ✓✓) → read (accent ✓✓). */}
           {isMe && !isDeleted && (
             message.id.startsWith('pending-')
-              ? <Check color={colors.textMuted} size={12} weight="bold" />
+              ? <Check color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
               : (showReadReceipt && message.isRead)
-                ? <Checks color={colors.accent} size={13} weight="bold" />
-                : <Checks color={colors.textMuted} size={13} weight="regular" />
+                ? <Checks color={colors.accent} size={ICON_SIZE.xs} weight="bold" />
+                : <Checks color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
           )}
         </View>
       )}
@@ -1254,7 +1255,7 @@ function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?
               borderWidth: 1, borderColor: `${colors.accent}55`,
             }}
           >
-            {loading ? <ActivityIndicator size="small" color={colors.accent} /> : <Waveform color={colors.accent} size={13} weight="fill" />}
+            {loading ? <ActivityIndicator size="small" color={colors.accent} /> : <Waveform color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
             <Text style={{ color: colors.accent, fontSize: 12.5, fontWeight: '800' }}>
               {ttx("Catch me up on")} {count} {ttx("message")}{count === 1 ? '' : 's'}
             </Text>
@@ -1318,13 +1319,13 @@ function StickerSheet({ visible, onSelect, onClose }: {
       >
         <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
-            <Waveform color={colors.accent} size={16} weight="fill" />
+            <Waveform color={colors.accent} size={ICON_SIZE.sm} weight="fill" />
             <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Emoji & Stickers")}</Text>
-            <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
+            <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={ICON_SIZE.md} /></Pressable>
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, height: 40, borderRadius: 12, backgroundColor: colors.inputBg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.inputBorder }}>
-            <MagnifyingGlass color={colors.textMuted} size={16} />
+            <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.sm} />
             <RNTextInput
               value={query}
               onChangeText={setQuery}
@@ -1334,7 +1335,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
               autoCapitalize="none"
               autoCorrect={false}
             />
-            {query.length > 0 && <Pressable onPress={() => setQuery('')} hitSlop={8}><X color={colors.textMuted} size={15} /></Pressable>}
+            {query.length > 0 && <Pressable onPress={() => setQuery('')} hitSlop={8}><X color={colors.textMuted} size={ICON_SIZE.sm} /></Pressable>}
           </View>
 
           <FlashList 
@@ -1442,7 +1443,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
                   url={item.isGroup ? undefined : item.otherAvatarUrl}
                   size={40}
                 >
-                  {item.isGroup ? <Users color={ON_MEDIA} size={17} weight="fill" /> : undefined}
+                  {item.isGroup ? <Users color={ON_MEDIA} size={ICON_SIZE.sm} weight="fill" /> : undefined}
                 </Avatar>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
@@ -1452,7 +1453,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
                     @{item.otherUsername}
                   </Text>
                 </View>
-                <ShareFat color={colors.accent} size={17} weight="fill" />
+                <ShareFat color={colors.accent} size={ICON_SIZE.sm} weight="fill" />
               </Pressable>
             )}
           />
@@ -1582,64 +1583,64 @@ function MessageActionSheet({
     !isDeleted ? {
       key: 'reply',
       label: 'Reply',
-      icon: <ArrowBendUpLeft color={colors.text} size={17} weight="bold" />,
+      icon: <ArrowBendUpLeft color={colors.text} size={ICON_SIZE.sm} weight="bold" />,
       onPress: onReply,
     } : null,
     isText ? {
       key: 'copy',
       label: 'Copy',
-      icon: <Copy color={colors.text} size={17} weight="bold" />,
+      icon: <Copy color={colors.text} size={ICON_SIZE.sm} weight="bold" />,
       onPress: onCopy,
     } : null,
     (isText && isTtsAvailable()) ? {
       key: 'speak',
       label: 'Read aloud',
-      icon: <SpeakerHigh color={colors.text} size={17} weight="bold" />,
+      icon: <SpeakerHigh color={colors.text} size={ICON_SIZE.sm} weight="bold" />,
       onPress: () => { speak(message.content ?? '', { id: `dm:${message.id}` }); onClose(); },
     } : null,
     !isDeleted && !isPending ? {
       key: 'forward',
       label: 'Forward',
-      icon: <ShareFat color={colors.text} size={17} weight="bold" />,
+      icon: <ShareFat color={colors.text} size={ICON_SIZE.sm} weight="bold" />,
       onPress: onForward,
     } : null,
     !isDeleted ? {
       key: 'select',
       label: 'Select',
-      icon: <Checks color={colors.text} size={17} weight="bold" />,
+      icon: <Checks color={colors.text} size={ICON_SIZE.sm} weight="bold" />,
       onPress: onSelect,
     } : null,
     isText && isOwn ? {
       key: 'edit',
       label: 'Edit',
-      icon: <PencilSimple color={colors.text} size={17} weight="bold" />,
+      icon: <PencilSimple color={colors.text} size={ICON_SIZE.sm} weight="bold" />,
       onPress: onEdit,
     } : null,
     isText ? {
       key: 'save',
       label: isSaved ? 'Unsave' : 'Save',
-      icon: <BookmarkSimple color={isSaved ? colors.accent : colors.text} size={17} weight={isSaved ? 'fill' : 'bold'} />,
+      icon: <BookmarkSimple color={isSaved ? colors.accent : colors.text} size={ICON_SIZE.sm} weight={isSaved ? 'fill' : 'bold'} />,
       onPress: onSave,
       accent: isSaved,
     } : null,
     !isDeleted ? {
       key: 'pin',
       label: isPinned ? 'Unpin' : 'Pin',
-      icon: <PushPin color={isPinned ? colors.accent : colors.text} size={17} weight={isPinned ? 'fill' : 'bold'} />,
+      icon: <PushPin color={isPinned ? colors.accent : colors.text} size={ICON_SIZE.sm} weight={isPinned ? 'fill' : 'bold'} />,
       onPress: onPin,
       accent: isPinned,
     } : null,
     !isOwn && !isDeleted ? {
       key: 'report',
       label: 'Report',
-      icon: <Flag color={colors.danger} size={17} weight="bold" />,
+      icon: <Flag color={colors.danger} size={ICON_SIZE.sm} weight="bold" />,
       onPress: onReport,
       destructive: true,
     } : null,
     isOwn && !isDeleted ? {
       key: 'delete',
       label: 'Delete',
-      icon: <Trash color={colors.danger} size={17} weight="bold" />,
+      icon: <Trash color={colors.danger} size={ICON_SIZE.sm} weight="bold" />,
       onPress: onDelete,
       destructive: true,
     } : null,
@@ -1703,12 +1704,12 @@ function MessageActionSheet({
                 backgroundColor: colors.accentMuted,
               }}>
                 {isText
-                  ? <ChatCircleText color={colors.accent} size={20} weight="fill" />
+                  ? <ChatCircleText color={colors.accent} size={ICON_SIZE.md} weight="fill" />
                   : message.kind === 'image'
-                    ? <Images color={colors.accent} size={20} weight="bold" />
+                    ? <Images color={colors.accent} size={ICON_SIZE.md} weight="bold" />
                     : message.kind === 'voice'
-                      ? <Microphone color={colors.accent} size={20} weight="fill" />
-                      : <Waveform color={colors.accent} size={20} weight="fill" />
+                      ? <Microphone color={colors.accent} size={ICON_SIZE.md} weight="fill" />
+                      : <Waveform color={colors.accent} size={ICON_SIZE.md} weight="fill" />
                 }
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -1734,7 +1735,7 @@ function MessageActionSheet({
                   opacity: pressed ? 0.65 : 1,
                 })}
               >
-                <X color={colors.textMuted} size={17} weight="bold" />
+                <X color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />
               </Pressable>
             </View>
 
@@ -2861,7 +2862,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         ListFooterComponent={partnerIsTyping ? <TypingDots /> : null}
         ListEmptyComponent={searchTerm ? (
           <View style={{ alignItems: 'center', paddingVertical: 42, paddingHorizontal: 24 }}>
-            <MagnifyingGlass color={colors.textMuted} size={28} />
+            <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.xl} />
             <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700', marginTop: 12 }}>
               {ttx("No messages found")}
             </Text>
@@ -2998,7 +2999,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               size={40}
               online={online}
             >
-              {conversation.isGroup ? <Users color={ON_MEDIA} size={17} weight="fill" /> : undefined}
+              {conversation.isGroup ? <Users color={ON_MEDIA} size={ICON_SIZE.sm} weight="fill" /> : undefined}
             </Avatar>
           </View>
 
@@ -3007,10 +3008,10 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }} numberOfLines={1}>
                 {(convPrefs && conversation.userId ? convPrefs.nicknames[conversation.userId] : undefined) || conversation.displayName}
               </Text>
-              {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+              {conversation.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
               {conversationSealed && !conversation.isGroup && (
                 <Pressable onPress={explainEncryption} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx('End-to-end encrypted')}>
-                  <LockSimple color={colors.textMuted} size={13} weight="fill" />
+                  <LockSimple color={colors.textMuted} size={ICON_SIZE.xs} weight="fill" />
                 </Pressable>
               )}
               {streak >= 2 && (
@@ -3057,7 +3058,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             borderWidth: 1,
             borderColor: colors.inputBorder,
           }}>
-            <MagnifyingGlass color={colors.textMuted} size={16} />
+            <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.sm} />
             <RNTextInput
               ref={searchInputRef}
               value={searchQuery}
@@ -3097,7 +3098,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             flexDirection: 'row', alignItems: 'center', gap: 8,
           }}
         >
-          <Waveform color={colors.accent} size={14} weight="fill" />
+          <Waveform color={colors.accent} size={ICON_SIZE.xs} weight="fill" />
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, flex: 1 }} numberOfLines={1}>
             <Text style={{ fontWeight: '700', color: colors.text }}>{ttx("Echo:")} </Text>
             {echoTitle}
@@ -3139,7 +3140,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                 shadowColor: SHADOW, shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
               }}
             >
-              <ArrowFatLinesUp color={colors.onAccent} size={16} weight="fill" style={{ transform: [{ rotate: '180deg' }] }} />
+              <ArrowFatLinesUp color={colors.onAccent} size={ICON_SIZE.sm} weight="fill" style={{ transform: [{ rotate: '180deg' }] }} />
               {newAwayCount > 0 && (
                 <Text style={{ color: colors.onAccent, fontSize: 12.5, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
                   {newAwayCount} {ttx("new")}
@@ -3161,14 +3162,14 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             }}
           >
             {editingMessage
-              ? <PencilSimple color={colors.accent} size={15} weight="fill" />
-              : <ArrowBendUpLeft color={colors.accent} size={15} weight="fill" />
+              ? <PencilSimple color={colors.accent} size={ICON_SIZE.sm} weight="fill" />
+              : <ArrowBendUpLeft color={colors.accent} size={ICON_SIZE.sm} weight="fill" />
             }
             <Text style={{ flex: 1, color: colors.textSecondary, fontSize: fontSizes.small }} numberOfLines={1}>
               {editingMessage ? 'Editing message' : (replyingTo?.content?.slice(0, 60) ?? 'Message')}
             </Text>
             <Pressable onPress={cancelComposerExtra} hitSlop={10}>
-              <X color={colors.textMuted} size={16} />
+              <X color={colors.textMuted} size={ICON_SIZE.sm} />
             </Pressable>
           </Animated.View>
         )}
@@ -3220,7 +3221,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   >
                     {busy
                       ? <ActivityIndicator size="small" color={colors.accent} />
-                      : <Waveform color={colors.textMuted} size={12} weight="fill" />}
+                      : <Waveform color={colors.textMuted} size={ICON_SIZE.xs} weight="fill" />}
                     <Text style={{ color: colors.textSecondary, fontSize: fontSizes.meta, fontWeight: '600' }} numberOfLines={1}>{t.label}</Text>
                   </AnimatedPressable>
                 );
@@ -3256,7 +3257,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   >
                     {busy
                       ? <ActivityIndicator size="small" color={colors.accent} />
-                      : <Waveform color={quickAction === key ? colors.accent : colors.textMuted} size={12} weight="fill" />
+                      : <Waveform color={quickAction === key ? colors.accent : colors.textMuted} size={ICON_SIZE.xs} weight="fill" />
                     }
                     <Text style={{
                       color: quickAction === key ? colors.accent : colors.textSecondary,
@@ -3291,12 +3292,12 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               borderColor: colors.border,
             }}>
               {[
-                { key: 'stickers', label: 'Stickers', icon: <Waveform color={colors.accent} size={17} weight="fill" />, onPress: () => { setAttachmentMenuOpen(false); setStickerOpen(true); } },
-                { key: 'camera', label: 'Camera', icon: <Camera color={colors.accent} size={17} weight="bold" />, onPress: handleTakePhoto },
-                { key: 'gallery', label: 'Gallery', icon: <Images color={colors.accent} size={17} weight="bold" />, onPress: handlePickImage },
-                ...(!conversation?.isGroup ? [{ key: 'contact', label: 'Contact', icon: <UserCircle color={colors.accent} size={17} weight="bold" />, onPress: handleShareContact }] : []),
-                { key: 'link', label: 'Link', icon: <LinkSimple color={colors.accent} size={17} weight="bold" />, onPress: handleSendLinkFromComposer },
-                { key: 'capsule', label: 'Time Capsule', icon: <Hourglass color={colors.accent} size={17} weight="bold" />, onPress: () => { setAttachmentMenuOpen(false); setCapsuleModalOpen(true); } },
+                { key: 'stickers', label: 'Stickers', icon: <Waveform color={colors.accent} size={ICON_SIZE.sm} weight="fill" />, onPress: () => { setAttachmentMenuOpen(false); setStickerOpen(true); } },
+                { key: 'camera', label: 'Camera', icon: <Camera color={colors.accent} size={ICON_SIZE.sm} weight="bold" />, onPress: handleTakePhoto },
+                { key: 'gallery', label: 'Gallery', icon: <Images color={colors.accent} size={ICON_SIZE.sm} weight="bold" />, onPress: handlePickImage },
+                ...(!conversation?.isGroup ? [{ key: 'contact', label: 'Contact', icon: <UserCircle color={colors.accent} size={ICON_SIZE.sm} weight="bold" />, onPress: handleShareContact }] : []),
+                { key: 'link', label: 'Link', icon: <LinkSimple color={colors.accent} size={ICON_SIZE.sm} weight="bold" />, onPress: handleSendLinkFromComposer },
+                { key: 'capsule', label: 'Time Capsule', icon: <Hourglass color={colors.accent} size={ICON_SIZE.sm} weight="bold" />, onPress: () => { setAttachmentMenuOpen(false); setCapsuleModalOpen(true); } },
               ].map(action => (
                 <Pressable
                   key={action.key}
@@ -3425,14 +3426,14 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   multiline
                   maxLength={2000}
                 />
-                <Smiley color={colors.textMuted} size={22} weight="regular" style={{ marginLeft: 8 }} />
+                <Smiley color={colors.textMuted} size={22} weight="bold" style={{ marginLeft: 8 }} />
               </View>
 
               {/* Empty composer in a remote thread → Camera & Mic; else send. */}
               {!canSend && remote && !editingMessage ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginLeft: 4 }}>
                   <AnimatedPressable onPress={() => void handleTakePhoto()} scaleValue={0.9} style={{ alignItems: 'center', justifyContent: 'center' }}>
-                    <Camera color={colors.textSecondary} size={24} weight="regular" />
+                    <Camera color={colors.textSecondary} size={ICON_SIZE.lg} weight="bold" />
                   </AnimatedPressable>
                   <Animated.View key="mic" entering={ZoomIn.springify().damping(14).stiffness(220)}>
                     <AnimatedPressable
@@ -3442,7 +3443,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                       style={{ alignItems: 'center', justifyContent: 'center' }}
                       accessibilityLabel={ttx("Record voice message")}
                     >
-                      <Microphone color={colors.textSecondary} size={24} weight="regular" />
+                      <Microphone color={colors.textSecondary} size={ICON_SIZE.lg} weight="bold" />
                     </AnimatedPressable>
                   </Animated.View>
                 </View>
@@ -3461,8 +3462,8 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                     }}
                   >
                     {editingMessage
-                      ? <PencilSimple color={colors.onAccent} size={16} weight="fill" />
-                      : <PaperPlaneTilt color={colors.onAccent} size={16} weight="fill" />
+                      ? <PencilSimple color={colors.onAccent} size={ICON_SIZE.sm} weight="fill" />
+                      : <PaperPlaneTilt color={colors.onAccent} size={ICON_SIZE.sm} weight="fill" />
                     }
                   </AnimatedPressable>
                 </Animated.View>
@@ -3503,7 +3504,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
-                <X color={ON_MEDIA} size={20} weight="bold" />
+                <X color={ON_MEDIA} size={ICON_SIZE.md} weight="bold" />
               </Pressable>
             </View>
             {imagePreviewUrl ? (
@@ -3579,9 +3580,9 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         >
           <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 14, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 14 }}>
-              <PaintBrush color={colors.accent} size={16} weight="bold" />
+              <PaintBrush color={colors.accent} size={ICON_SIZE.sm} weight="bold" />
               <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Chat wallpaper")}</Text>
-              <Pressable onPress={() => setShowWallpaper(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
+              <Pressable onPress={() => setShowWallpaper(false)} hitSlop={10}><X color={colors.textMuted} size={ICON_SIZE.md} /></Pressable>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16 }}>
               {WALLPAPERS.map(w => {
@@ -3622,9 +3623,9 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         >
           <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, maxHeight: '70%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
-              <BookmarkSimple color={colors.accent} size={16} weight="fill" />
+              <BookmarkSimple color={colors.accent} size={ICON_SIZE.sm} weight="fill" />
               <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Saved messages")}</Text>
-              <Pressable onPress={() => setShowSaved(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
+              <Pressable onPress={() => setShowSaved(false)} hitSlop={10}><X color={colors.textMuted} size={ICON_SIZE.md} /></Pressable>
             </View>
             <FlashList 
               data={conversationSaved}
@@ -3666,7 +3667,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               <Waveform color={colors.accent} size={18} weight="fill" />
               <Text style={{ color: colors.text, fontSize: 17, ...font.displayBlack }}>{ttx("Caught up")}</Text>
               <View style={{ flex: 1 }} />
-              <Pressable onPress={() => setCatchup(null)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
+              <Pressable onPress={() => setCatchup(null)} hitSlop={10}><X color={colors.textMuted} size={ICON_SIZE.md} /></Pressable>
             </View>
             {catchupLoading && !catchup ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }}>
@@ -3700,7 +3701,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 24, shadowColor: SHADOW, shadowOpacity: 0.2, shadowRadius: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
-              <Hourglass color={colors.accent} size={24} weight="bold" />
+              <Hourglass color={colors.accent} size={ICON_SIZE.lg} weight="bold" />
               <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>Time Capsule</Text>
             </View>
             <Text style={{ color: colors.textSecondary, fontSize: fontSizes.label, textAlign: 'center', marginBottom: 20 }}>

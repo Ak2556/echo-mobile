@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, TextInput, StyleSheet, Platform } from 'react-native';
 import { ArrowUp, Stop } from 'phosphor-react-native';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
@@ -159,7 +160,7 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
               {isStop ? (
                 <Stop color="#fff" size={18} weight="fill" />
               ) : (
-                <ArrowUp color={canSend ? '#fff' : colors.textMuted} size={20} weight="bold" />
+                <ArrowUp color={canSend ? '#fff' : colors.textMuted} size={ICON_SIZE.md} weight="bold" />
               )}
             </View>
           </AnimatedPressable>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SealCheck } from 'phosphor-react-native';
@@ -99,7 +100,7 @@ export function UserRow({
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, letterSpacing: -0.2 }} numberOfLines={1}>{personName(user)}</Text>
-          {user.isVerified && <SealCheck color={colors.accent} size={16} weight="fill" />}
+          {user.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.sm} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }} numberOfLines={1}>@{user.username}</Text>
         {followsYou && showFollowsYouBadge && (

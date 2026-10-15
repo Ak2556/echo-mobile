@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, AppState } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -113,7 +114,7 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, ec
           backgroundColor: 'rgba(255,255,255,0.15)',
           alignItems: 'center', justifyContent: 'center',
         }}>
-          <Play color="#fff" size={24} weight="fill" />
+          <Play color="#fff" size={ICON_SIZE.lg} weight="fill" />
         </View>
       </LinearGradient>
 
@@ -124,7 +125,7 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, ec
           paddingHorizontal: 8, paddingVertical: 4,
           borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)',
         }}>
-          <Eye size={13} color="#fff" />
+          <Eye size={ICON_SIZE.xs} color="#fff" />
           <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{formatViewCount(viewCount)}</Text>
         </View>
       )}
@@ -355,7 +356,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
         // attached instead; the upload does not depend on the preview.
         <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#141210' }}>
           <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}>
-            <Play color="#fff" size={24} weight="fill" />
+            <Play color="#fff" size={ICON_SIZE.lg} weight="fill" />
           </View>
           <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>{ttx("Preview unavailable. The video will still post.")}</Text>
         </View>
@@ -399,7 +400,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
 
       {viewCount !== undefined && (
         <View pointerEvents="none" style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)' }}>
-          <Eye size={13} color="#fff" />
+          <Eye size={ICON_SIZE.xs} color="#fff" />
           <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{formatViewCount(viewCount)}</Text>
         </View>
       )}
@@ -409,7 +410,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
           {userPaused && (
             <View pointerEvents="none" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }}>
               <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
-                <Play color="#fff" size={24} weight="fill" />
+                <Play color="#fff" size={ICON_SIZE.lg} weight="fill" />
               </View>
             </View>
           )}
@@ -494,12 +495,12 @@ function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCo
         end={{ x: 1, y: 1 }}
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}
       >
-        <WifiSlash color="rgba(255,255,255,0.5)" size={24} />
+        <WifiSlash color="rgba(255,255,255,0.5)" size={ICON_SIZE.lg} />
         <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '500' }}>{ttx("Video paused, Data Saver on")}</Text>
       </LinearGradient>
       {viewCount !== undefined && (
         <View style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)' }}>
-          <Eye size={13} color="#fff" />
+          <Eye size={ICON_SIZE.xs} color="#fff" />
           <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{viewCount >= 1000 ? `${(viewCount / 1000).toFixed(1)}K` : `${viewCount}`}</Text>
         </View>
       )}

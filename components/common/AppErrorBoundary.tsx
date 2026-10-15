@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Warning, ArrowClockwise, CaretDown, CaretUp } from 'phosphor-react-native';
@@ -74,7 +75,7 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
               opacity: pressed ? 0.85 : 1,
             })}
           >
-            <ArrowClockwise color="#fff" size={16} weight="bold" />
+            <ArrowClockwise color="#fff" size={ICON_SIZE.sm} weight="bold" />
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{ttx("Try again")}</Text>
           </Pressable>
         </View>
@@ -84,7 +85,7 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
           style={{ marginTop: 22, flexDirection: 'row', alignItems: 'center', gap: 4 }}
         >
           <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Show details")}</Text>
-          {showDetails ? <CaretUp color={colors.textMuted} size={12} /> : <CaretDown color={colors.textMuted} size={12} />}
+          {showDetails ? <CaretUp color={colors.textMuted} size={ICON_SIZE.xs} /> : <CaretDown color={colors.textMuted} size={ICON_SIZE.xs} />}
         </Pressable>
 
         {showDetails && (

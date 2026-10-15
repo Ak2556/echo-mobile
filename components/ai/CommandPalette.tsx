@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   Modal,
   View,
@@ -46,12 +47,12 @@ export function CommandPalette() {
   const conversationIdRef = useRef<string | null>(null);
   const inputRef = useRef<TextInput>(null);
   const shortcuts: { key: string; label: string; href: Href; icon: React.ReactNode }[] = [
-    { key: 'create', label: 'New Echo', href: '/create-post', icon: <PencilSimple color={colors.accent} size={16} /> },
-    { key: 'search', label: 'Explore', href: '/(tabs)/explore', icon: <MagnifyingGlass color={colors.accent} size={16} /> },
-    { key: 'messages', label: 'Messages', href: '/messages', icon: <Envelope color={colors.accent} size={16} /> },
-    { key: 'apps', label: 'Tools', href: '/(tabs)/apps', icon: <SquaresFour color={colors.accent} size={16} /> },
-    { key: 'partners', label: 'Thinking partners', href: '/thinking-partners', icon: <Brain color={colors.accent} size={16} /> },
-    { key: 'settings', label: 'Settings', href: '/settings', icon: <GearSix color={colors.accent} size={16} /> },
+    { key: 'create', label: 'New Echo', href: '/create-post', icon: <PencilSimple color={colors.accent} size={ICON_SIZE.sm} /> },
+    { key: 'search', label: 'Explore', href: '/(tabs)/explore', icon: <MagnifyingGlass color={colors.accent} size={ICON_SIZE.sm} /> },
+    { key: 'messages', label: 'Messages', href: '/messages', icon: <Envelope color={colors.accent} size={ICON_SIZE.sm} /> },
+    { key: 'apps', label: 'Tools', href: '/(tabs)/apps', icon: <SquaresFour color={colors.accent} size={ICON_SIZE.sm} /> },
+    { key: 'partners', label: 'Thinking partners', href: '/thinking-partners', icon: <Brain color={colors.accent} size={ICON_SIZE.sm} /> },
+    { key: 'settings', label: 'Settings', href: '/settings', icon: <GearSix color={colors.accent} size={ICON_SIZE.sm} /> },
   ];
 
   useEffect(() => {
@@ -283,7 +284,7 @@ export function CommandPalette() {
                     borderBottomColor: colors.glassBorder,
                   }}
                 >
-                  <Lightning color={colors.accent} size={20} weight="fill" />
+                  <Lightning color={colors.accent} size={ICON_SIZE.md} weight="fill" />
                   <AnimatedPressable
                     onPress={() => setShowActionCenter(true)}
                     performanceMode="overlay"
@@ -297,7 +298,7 @@ export function CommandPalette() {
                     }}
                     haptic="light"
                   >
-                    <Question size={16} color={colors.textSecondary} />
+                    <Question size={ICON_SIZE.sm} color={colors.textSecondary} />
                   </AnimatedPressable>
                   <TextInput
                     ref={inputRef}
@@ -327,7 +328,7 @@ export function CommandPalette() {
                     {input.trim() ? (
                       <ArrowUp size={18} color="#fff" weight="bold" />
                     ) : (
-                      <X size={16} color={colors.textSecondary} />
+                      <X size={ICON_SIZE.sm} color={colors.textSecondary} />
                     )}
                   </AnimatedPressable>
                 </View>

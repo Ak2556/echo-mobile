@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, RefreshControl } from 'react-native';
@@ -126,11 +127,11 @@ function SalonCard({ salon, onToggle }: { salon: Salon; onToggle: (join: boolean
       ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <UsersThree color={colors.textMuted} size={13} />
+          <UsersThree color={colors.textMuted} size={ICON_SIZE.xs} />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{salon.member_count}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Hash color={colors.textMuted} size={13} />
+          <Hash color={colors.textMuted} size={ICON_SIZE.xs} />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{salon.echo_count} {ttx("echoes")}</Text>
         </View>
       </View>

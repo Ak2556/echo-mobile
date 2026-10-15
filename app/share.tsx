@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { View, Text, Pressable, Alert, ScrollView , ActivityIndicator } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -262,7 +263,7 @@ export default function ShareScreen() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {isRemix && (
           <View style={{ padding: 14, marginBottom: 14, borderRadius: radius.card, backgroundColor: colors.accentMuted, borderWidth: 1, borderColor: colors.accent, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <GitBranch color={colors.accent} size={20} />
+            <GitBranch color={colors.accent} size={ICON_SIZE.md} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.label }}>
                 {ttx("Adding")} {perspectiveLabel.toLowerCase()} {ttx("perspective to @")}{pendingCtx?.parentAuthorUsername ?? 'their'} {ttx("Echo")}
@@ -321,7 +322,7 @@ export default function ShareScreen() {
                   >
                     {running
                       ? <ActivityIndicator size="small" color={colors.accent} />
-                      : <MagicWand color={colors.accent} size={14} />}
+                      : <MagicWand color={colors.accent} size={ICON_SIZE.xs} />}
                     <Text style={{ color: colors.text, fontSize: fontSizes.small, fontWeight: '600' }}>{action.label}</Text>
                   </Pressable>
                 );

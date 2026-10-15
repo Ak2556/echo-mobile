@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
@@ -105,7 +106,7 @@ function CreateStoryScreenInner() {
       <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <BackButton />
         <View className="flex-row items-center gap-2">
-          <Broadcast color={colors.accent} size={16} />
+          <Broadcast color={colors.accent} size={ICON_SIZE.sm} />
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{ttx("New Story")}</Text>
         </View>
         <Button label={ttx("Share")} onPress={handlePublish} size="compact" disabled={!canPublish} loading={publishing} leftIcon={PaperPlaneTilt} />
@@ -156,7 +157,7 @@ function CreateStoryScreenInner() {
 
           <Animated.View entering={animation(FadeInDown.delay(150).duration(220))}>
             <View className="flex-row items-center mb-2 ml-1 gap-1.5">
-              <Lightning color={colors.accent} size={12} />
+              <Lightning color={colors.accent} size={ICON_SIZE.xs} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }}>{ttx("Echo")}</Text>
             </View>
             <View
@@ -193,7 +194,7 @@ function CreateStoryScreenInner() {
                 borderLeftColor: colors.accent,
               }}
             >
-              <Broadcast color={colors.accent} size={14} />
+              <Broadcast color={colors.accent} size={ICON_SIZE.xs} />
               <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, flex: 1 }}>
                 {ttx("Stories appear in the home feed circles and disappear after 24 hours.")}
               </Text>

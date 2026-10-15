@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { CloudSlash, WarningOctagon, Globe, ArrowsClockwise } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
@@ -21,10 +22,10 @@ const COPY: Record<ErrorKind, { title: string; message: string }> = {
 };
 
 const ICON: Record<ErrorKind, React.ReactNode> = {
-  offline: <CloudSlash color="#94A3B8" size={28} />,
-  timeout: <Globe color="#F59E0B" size={28} />,
-  server: <WarningOctagon color="#EF4444" size={28} />,
-  unknown: <WarningOctagon color="#94A3B8" size={28} />,
+  offline: <CloudSlash color="#94A3B8" size={ICON_SIZE.xl} />,
+  timeout: <Globe color="#F59E0B" size={ICON_SIZE.xl} />,
+  server: <WarningOctagon color="#EF4444" size={ICON_SIZE.xl} />,
+  unknown: <WarningOctagon color="#94A3B8" size={ICON_SIZE.xl} />,
 };
 
 export function classifyError(err: unknown): ErrorKind {
@@ -64,7 +65,7 @@ export function ErrorState({ kind = 'unknown', title, message, onRetry }: ErrorS
             backgroundColor: colors.accent,
           }}
         >
-          <ArrowsClockwise color="#fff" size={14} />
+          <ArrowsClockwise color="#fff" size={ICON_SIZE.xs} />
           <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{ttx("Try again")}</Text>
         </Pressable>
       )}

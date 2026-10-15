@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, Keyboard, Modal, ScrollView, Platform } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Bell, CheckCircle, CircleDashed, Flag, Plus, Trash, Tag, NotePencil, X, WarningCircle } from 'phosphor-react-native';
@@ -295,15 +296,15 @@ export default function TasksScreen() {
                 <GlassPanel variant="light" borderRadius={radius.xl} contentStyle={{ padding: 14 }}>
                   <Pressable onPress={() => openDetail(task)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <Pressable onPress={() => toggle(task)} hitSlop={8}>
-                      {task.done ? <CheckCircle color={accent} size={24} weight="fill" /> : <CircleDashed color={colors.textMuted} size={24} />}
+                      {task.done ? <CheckCircle color={accent} size={ICON_SIZE.lg} weight="fill" /> : <CircleDashed color={colors.textMuted} size={ICON_SIZE.lg} />}
                     </Pressable>
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={{ color: task.done ? colors.textMuted : colors.text, fontSize: 15, fontWeight: '800', textDecorationLine: task.done ? 'line-through' : 'none' }} numberOfLines={1}>
                         {task.title}
                       </Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4, flexWrap: 'wrap' }}>
-                        {task.reminderId && !task.done && <Bell color={accent} size={12} weight="fill" />}
-                        {task.priority === 'urgent' && <WarningCircle color={pColor} size={12} weight="bold" />}
+                        {task.reminderId && !task.done && <Bell color={accent} size={ICON_SIZE.xs} weight="fill" />}
+                        {task.priority === 'urgent' && <WarningCircle color={pColor} size={ICON_SIZE.xs} weight="bold" />}
                         <Text style={{ color: task.priority === 'urgent' ? pColor : colors.textMuted, fontSize: fontSizes.meta, fontWeight: task.priority === 'urgent' ? '700' : '500' }}>
                           {task.due ? new Date(`${task.due}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) : tt('No due date')}
                         </Text>
@@ -322,9 +323,9 @@ export default function TasksScreen() {
                         )}
                       </View>
                     </View>
-                    <Flag color={pColor} size={17} weight={task.priority === 'low' ? 'regular' : 'fill'} />
+                    <Flag color={pColor} size={ICON_SIZE.sm} weight={task.priority === 'low' ? 'regular' : 'fill'} />
                     <Pressable onPress={() => remove(task)} hitSlop={8}>
-                      <Trash color={colors.textMuted} size={17} />
+                      <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
                     </Pressable>
                   </Pressable>
                 </GlassPanel>
@@ -370,7 +371,7 @@ export default function TasksScreen() {
                     <Text style={{ fontSize: fontSizes.small, color: colors.textMuted, marginTop: 4 }}>Created {new Date(detailTask.createdAt).toLocaleDateString()}</Text>
                   </View>
                   <Pressable onPress={closeDetail} style={{ backgroundColor: colors.surfaceHover, padding: 8, borderRadius: radius.card }}>
-                    <X color={colors.text} size={20} weight="bold" />
+                    <X color={colors.text} size={ICON_SIZE.md} weight="bold" />
                   </Pressable>
                 </View>
 
@@ -400,7 +401,7 @@ export default function TasksScreen() {
                         return (
                           <Pressable key={p.id} onPress={() => updateTask(detailTask.id, { priority: p.id })}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: detailTask.priority === p.id ? pColor : colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.md }}>
-                              <Flag color={detailTask.priority === p.id ? colors.bg : pColor} size={14} weight="fill" />
+                              <Flag color={detailTask.priority === p.id ? colors.bg : pColor} size={ICON_SIZE.xs} weight="fill" />
                               <Text style={{ color: detailTask.priority === p.id ? colors.bg : colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700' }}>{p.label}</Text>
                             </View>
                           </Pressable>
@@ -422,7 +423,7 @@ export default function TasksScreen() {
                         <View style={{ flexDirection: 'row', gap: 8 }}>
                           {detailAlarm && (
                             <Pressable onPress={() => { setDetailAlarm(null); setShowAlarmPicker(false); updateTask(detailTask.id, { due: undefined }); }} style={{ padding: 6, backgroundColor: colors.surface, borderRadius: radius.sm }}>
-                              <Trash color={colors.textMuted} size={16} />
+                              <Trash color={colors.textMuted} size={ICON_SIZE.sm} />
                             </Pressable>
                           )}
                           <Pressable onPress={() => {
@@ -451,13 +452,13 @@ export default function TasksScreen() {
                       {detailTask.subtasks?.map(st => (
                         <Animated.View key={st.id} entering={FadeIn} layout={Layout.springify()} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surfaceHover, padding: 12, borderRadius: radius.md }}>
                           <Pressable onPress={() => toggleSubtask(st.id)}>
-                            {st.done ? <CheckCircle color={accent} size={20} weight="fill" /> : <CircleDashed color={colors.textMuted} size={20} />}
+                            {st.done ? <CheckCircle color={accent} size={ICON_SIZE.md} weight="fill" /> : <CircleDashed color={colors.textMuted} size={ICON_SIZE.md} />}
                           </Pressable>
                           <Text style={{ flex: 1, color: st.done ? colors.textMuted : colors.text, fontSize: 15, textDecorationLine: st.done ? 'line-through' : 'none' }}>
                             {st.title}
                           </Text>
                           <Pressable onPress={() => deleteSubtask(st.id)}>
-                            <X color={colors.textMuted} size={16} />
+                            <X color={colors.textMuted} size={ICON_SIZE.sm} />
                           </Pressable>
                         </Animated.View>
                       ))}
@@ -471,7 +472,7 @@ export default function TasksScreen() {
                           onSubmitEditing={addSubtask}
                         />
                         <Pressable onPress={addSubtask} style={{ backgroundColor: accent, padding: 12, borderRadius: radius.md }}>
-                          <Plus color={colors.bg} size={16} weight="bold" />
+                          <Plus color={colors.bg} size={ICON_SIZE.sm} weight="bold" />
                         </Pressable>
                       </View>
                     </View>
@@ -506,7 +507,7 @@ export default function TasksScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text }}>Set Alarm</Text>
                 <Pressable onPress={() => setShowAlarmPicker(false)} style={{ backgroundColor: colors.surfaceHover, padding: 8, borderRadius: radius.card }}>
-                  <X color={colors.text} size={20} weight="bold" />
+                  <X color={colors.text} size={ICON_SIZE.md} weight="bold" />
                 </Pressable>
               </View>
               
@@ -578,7 +579,7 @@ export default function TasksScreen() {
           setShowAddPicker(!showAddPicker);
         }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: alarmTime ? accent : colors.surfaceHover, borderWidth: alarmTime ? 0 : 1, borderColor: colors.border }}>
-            <Bell color={alarmTime ? colors.bg : colors.textSecondary} size={16} weight={alarmTime ? "fill" : "regular"} />
+            <Bell color={alarmTime ? colors.bg : colors.textSecondary} size={ICON_SIZE.sm} weight={alarmTime ? "fill" : "regular"} />
             <Text style={{ color: alarmTime ? colors.bg : colors.textSecondary, fontSize: fontSizes.label, fontWeight: '800' }}>
               {alarmTime ? `Scheduled: ${formatAlarmTime(alarmTime)}` : tt('Set Schedule...')}
             </Text>
@@ -587,7 +588,7 @@ export default function TasksScreen() {
         {alarmTime && (
           <Pressable onPress={() => { setAlarmTime(null); setShowAddPicker(false); }}>
             <View style={{ borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }}>
-              <X color={colors.textSecondary} size={16} weight="bold" />
+              <X color={colors.textSecondary} size={ICON_SIZE.sm} weight="bold" />
             </View>
           </Pressable>
         )}
@@ -607,7 +608,7 @@ export default function TasksScreen() {
 
       <Pressable onPress={() => { add(); setShowAddSheet(false); }}>
         <View style={{ height: 56, borderRadius: radius.xl, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, elevation: 5 }}>
-          <Plus color={colors.bg} size={20} weight="bold" />
+          <Plus color={colors.bg} size={ICON_SIZE.md} weight="bold" />
           <Text style={{ color: colors.bg, fontSize: 17, fontWeight: '900' }}>{tt('Create Task')}</Text>
         </View>
       </Pressable>

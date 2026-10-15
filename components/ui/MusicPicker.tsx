@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Modal, Pressable, FlatList, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
 import { X, MagnifyingGlass, MusicNote, WarningCircle } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
@@ -69,12 +70,12 @@ export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProp
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>{ttx("Search by Spotify")}</Text>
             </View>
             <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={ttx("Close")}>
-              <X color={colors.textSecondary} size={20} />
+              <X color={colors.textSecondary} size={ICON_SIZE.md} />
             </Pressable>
           </View>
 
           <View style={[styles.searchContainer, { backgroundColor: colors.surfaceHover, borderColor: colors.border }]}>
-            <MagnifyingGlass color={colors.textMuted} size={20} />
+            <MagnifyingGlass color={colors.textMuted} size={ICON_SIZE.md} />
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -92,7 +93,7 @@ export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProp
             </View>
           ) : error ? (
             <View style={{ paddingVertical: 36, paddingHorizontal: 24, alignItems: 'center', gap: 10 }}>
-              <WarningCircle color={colors.textMuted} size={28} />
+              <WarningCircle color={colors.textMuted} size={ICON_SIZE.xl} />
               <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: fontSizes.small, lineHeight: 20 }}>{error}</Text>
             </View>
           ) : query.trim() && tracks.length === 0 ? (
@@ -118,7 +119,7 @@ export function MusicPickerModal({ visible, onClose, onSelect }: MusicPickerProp
                     {item.coverArt ? (
                       <Image source={{ uri: item.coverArt }} style={{ width: '100%', height: '100%', borderRadius: 8 }} />
                     ) : (
-                      <MusicNote color={colors.accent} size={20} weight="fill" />
+                      <MusicNote color={colors.accent} size={ICON_SIZE.md} weight="fill" />
                     )}
                   </View>
                   <View style={styles.songTextContainer}>

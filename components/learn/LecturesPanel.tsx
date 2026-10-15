@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, ActivityIndicator, Modal, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -139,7 +140,7 @@ export function LecturesPanel() {
             borderRadius: radius.card, backgroundColor: colors.accent,
             opacity: uploadPct !== null ? 0.6 : 1,
           }}>
-            <Plus size={16} weight="bold" color={colors.bg} />
+            <Plus size={ICON_SIZE.sm} weight="bold" color={colors.bg} />
             <Text style={[font.bodyBold, { color: colors.bg, fontSize: 14 }]}>
               {uploadPct === null ? 'Upload video' : `${Math.round(uploadPct * 100)}%`}
             </Text>
@@ -152,7 +153,7 @@ export function LecturesPanel() {
             paddingVertical: 12, paddingHorizontal: 16,
             borderRadius: radius.card, backgroundColor: colors.surface,
           }}>
-            <LinkSimple size={16} weight="bold" color={colors.text} />
+            <LinkSimple size={ICON_SIZE.sm} weight="bold" color={colors.text} />
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>Add link</Text>
           </View>
         </Pressable>
@@ -176,8 +177,8 @@ export function LecturesPanel() {
               padding: 14, borderRadius: radius.card, backgroundColor: colors.surface,
             }}>
               {lecture.source === 'upload'
-                ? <FilmSlate size={20} weight="fill" color={colors.accent} />
-                : <LinkSimple size={20} weight="bold" color={colors.accent} />}
+                ? <FilmSlate size={ICON_SIZE.md} weight="fill" color={colors.accent} />
+                : <LinkSimple size={ICON_SIZE.md} weight="bold" color={colors.accent} />}
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text numberOfLines={1} style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>
                   {lecture.title}
@@ -281,7 +282,7 @@ function LectureViewer({ lecture, onClose }: { lecture: Lecture; onClose: () => 
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
           <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
-            <View style={{ padding: 8 }}><X size={20} weight="bold" color={colors.text} /></View>
+            <View style={{ padding: 8 }}><X size={ICON_SIZE.md} weight="bold" color={colors.text} /></View>
           </Pressable>
           <Text numberOfLines={1} style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>
             {lecture.title}

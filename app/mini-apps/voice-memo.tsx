@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   View, Text, Pressable, Alert, TextInput,
 } from 'react-native';
@@ -275,7 +276,7 @@ export default function VoiceMemoApp() {
             }}
           >
             {isRecording
-              ? <Stop color={colors.bgPure} size={28} weight="fill" />
+              ? <Stop color={colors.bgPure} size={ICON_SIZE.xl} weight="fill" />
               : <Microphone color={colors.bgPure} size={32} weight="fill" />}
           </AnimatedPressable>
         </Animated.View>
@@ -316,8 +317,8 @@ export default function VoiceMemoApp() {
                 }}
               >
                 {playingId === memo.id
-                  ? <Pause color={colors.bgPure} size={20} weight="fill" />
-                  : <Play color={accent} size={20} weight="fill" />}
+                  ? <Pause color={colors.bgPure} size={ICON_SIZE.md} weight="fill" />
+                  : <Play color={accent} size={ICON_SIZE.md} weight="fill" />}
               </AnimatedPressable>
 
               {/* Info */}

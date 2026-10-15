@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -268,7 +269,7 @@ export default function SearchScreen() {
             {remote && (
               <View style={{ paddingHorizontal: layout.gutter, marginBottom: 30 }}>
                 <ActionRow
-                  icon={<Brain color={colors.accent} size={20} weight="regular" />}
+                  icon={<Brain color={colors.accent} size={ICON_SIZE.md} weight="bold" />}
                   title={t('explore.thinkingPartners')}
                   subtitle={t('explore.thinkingPartnersSub')}
                   onPress={() => router.push('/thinking-partners' as Href)}
@@ -588,7 +589,7 @@ function ActionRow({ icon, title, subtitle, onPress }: { icon: React.ReactNode; 
           <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]} numberOfLines={1}>{title}</Text>
           <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>{subtitle}</Text>
         </View>
-        <CaretRight color={colors.textMuted} size={15} />
+        <CaretRight color={colors.textMuted} size={ICON_SIZE.sm} />
       </View>
     </AnimatedPressable>
   );
@@ -651,7 +652,7 @@ function ExploreVideoTile({ item, width, height, colors }: { item: any; width: n
             backgroundColor: 'rgba(0,0,0,0.45)',
           }}
         >
-          <Play size={20} color={ON_MEDIA} weight="fill" />
+          <Play size={ICON_SIZE.md} color={ON_MEDIA} weight="fill" />
         </View>
       </View>
     </View>

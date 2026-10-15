@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { ICON_SIZE } from '../../lib/ui/icons';
 import { Share, Alert, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Link, ShareNetwork, PaperPlaneTilt, Image as ImageIcon } from 'phosphor-react-native';
@@ -39,13 +40,13 @@ export function ShareSheet({ visible, onClose, echo }: ShareSheetProps) {
     {
       key: 'image',
       label: 'Share as image',
-      icon: <ImageIcon color={colors.accent} size={20} weight="duotone" />,
+      icon: <ImageIcon color={colors.accent} size={ICON_SIZE.md} weight="duotone" />,
       onPress: () => shareEchoAsImage(cardRef, echo.id),
     },
     {
       key: 'copy',
       label: 'Copy link',
-      icon: <Link color={colors.text} size={20} />,
+      icon: <Link color={colors.text} size={ICON_SIZE.md} />,
       onPress: async () => {
         const ok = await copyText(url);
         tap('success');
@@ -56,7 +57,7 @@ export function ShareSheet({ visible, onClose, echo }: ShareSheetProps) {
     {
       key: 'system',
       label: 'Share via…',
-      icon: <ShareNetwork color={colors.text} size={20} />,
+      icon: <ShareNetwork color={colors.text} size={ICON_SIZE.md} />,
       onPress: async () => {
         try {
           await Share.share({ message: url, url });
@@ -67,7 +68,7 @@ export function ShareSheet({ visible, onClose, echo }: ShareSheetProps) {
     {
       key: 'dm',
       label: 'Send to a chat',
-      icon: <PaperPlaneTilt color={colors.text} size={20} />,
+      icon: <PaperPlaneTilt color={colors.text} size={ICON_SIZE.md} />,
       onPress: () => router.push({ pathname: '/messages', params: { share: echo.id } }),
     },
   ];

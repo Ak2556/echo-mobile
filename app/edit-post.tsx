@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
@@ -200,7 +201,7 @@ export default function EditPostScreen() {
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/280</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
-                <Lightning color={colors.accent} size={12} />
+                <Lightning color={colors.accent} size={ICON_SIZE.xs} />
                 <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Answer / Insight")}</Text>
               </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
@@ -214,13 +215,13 @@ export default function EditPostScreen() {
             <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>{ttx("Image URLs (up to 4)")}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-                <Link color={colors.textMuted} size={12} />
+                <Link color={colors.textMuted} size={ICON_SIZE.xs} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Paste direct image links")}</Text>
               </View>
               {imageUrls.map((url, idx) => (
                 <View key={idx} style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 4, marginBottom: 8 }]}>
                   <TextInput value={url} onChangeText={v => updateImageUrl(idx, v)} placeholder={`https://... (image ${idx + 1})`} placeholderTextColor={colors.textMuted} autoCapitalize="none" autoCorrect={false} style={{ flex: 1, color: colors.text, fontSize: fontSizes.small, paddingVertical: 12 }} />
-                  {imageUrls.length > 1 && <Pressable onPress={() => removeImageUrl(idx)} style={{ padding: 4 }}><X color={colors.textMuted} size={16} /></Pressable>}
+                  {imageUrls.length > 1 && <Pressable onPress={() => removeImageUrl(idx)} style={{ padding: 4 }}><X color={colors.textMuted} size={ICON_SIZE.sm} /></Pressable>}
                 </View>
               ))}
               {validImages.length > 0 && (
@@ -234,7 +235,7 @@ export default function EditPostScreen() {
               )}
               {imageUrls.length < 4 && (
                 <TouchableOpacity onPress={addImageUrl} style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 14, gap: 6, borderStyle: 'dashed' }]}>
-                  <Plus color={colors.textMuted} size={16} />
+                  <Plus color={colors.textMuted} size={ICON_SIZE.sm} />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{ttx("Add image URL")}</Text>
                 </TouchableOpacity>
               )}
@@ -249,7 +250,7 @@ export default function EditPostScreen() {
             <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>{ttx("Video URL")}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-                <Link color={colors.textMuted} size={12} />
+                <Link color={colors.textMuted} size={ICON_SIZE.xs} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Paste a direct .mp4 or video link")}</Text>
               </View>
               <View style={[s.surface, { paddingHorizontal: 14, paddingVertical: 4, marginBottom: 14 }]}>
@@ -278,19 +279,19 @@ export default function EditPostScreen() {
               {pollOptions.map((opt, idx) => (
                 <View key={idx} style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 2, marginBottom: 8 }]}>
                   <TextInput value={opt} onChangeText={t => updatePollOption(idx, t)} placeholder={`Option ${idx + 1}`} placeholderTextColor={colors.textMuted} maxLength={80} style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 12 }} />
-                  {pollOptions.length > 2 && <Pressable onPress={() => removePollOption(idx)} style={{ padding: 4 }}><X color={colors.textMuted} size={16} /></Pressable>}
+                  {pollOptions.length > 2 && <Pressable onPress={() => removePollOption(idx)} style={{ padding: 4 }}><X color={colors.textMuted} size={ICON_SIZE.sm} /></Pressable>}
                 </View>
               ))}
               {pollOptions.length < 4 && (
                 <TouchableOpacity onPress={addPollOption} style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 16, gap: 6, borderStyle: 'dashed' }]}>
-                  <Plus color={colors.textMuted} size={16} />
+                  <Plus color={colors.textMuted} size={ICON_SIZE.sm} />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{ttx("Add option")}</Text>
                 </TouchableOpacity>
               )}
               {!echo.poll?.endsAt && (
                 <>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-                    <Clock color={colors.textMuted} size={13} />
+                    <Clock color={colors.textMuted} size={ICON_SIZE.xs} />
                     <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Duration")}</Text>
                   </View>
                   <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
@@ -310,7 +311,7 @@ export default function EditPostScreen() {
 
           <Animated.View entering={animation(FadeInDown.delay(50).duration(220))}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-              <Hash color={colors.textMuted} size={13} />
+              <Hash color={colors.textMuted} size={ICON_SIZE.xs} />
               <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Tags")}</Text>
             </View>
             <View style={[s.surface, { padding: 12, marginBottom: 16 }]}>
