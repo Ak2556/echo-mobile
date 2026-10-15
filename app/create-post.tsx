@@ -23,7 +23,7 @@ import {
 } from 'phosphor-react-native';
 import { ActionSheet } from '../components/common/ActionSheet';
 import { composerMediaAspect, formatClipDuration, parseTags } from '../lib/media/composerMedia';
-import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
 import { warmAvatarColor } from '../lib/social/avatarPalette';
@@ -736,13 +736,7 @@ export default function CreatePostScreen() {
       <ScreenHeader
         title={t('nav.newEcho')}
         right={
-          <AnimatedPressable
-            onPress={() => { void handlePublish(); }} disabled={!canPublish} scaleValue={0.92} haptic="medium"
-            style={{ minWidth: 82, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: canPublish ? colors.accent : colors.surfaceHover, opacity: canPublish ? 1 : 0.5 }}
-          >
-            <PaperPlaneTilt color={colors.onAccent} size={14} />
-            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{publishing ? 'Posting…' : 'Post'}</Text>
-          </AnimatedPressable>
+          <Button label={ttx("Post")} onPress={() => { void handlePublish(); }} size="compact" disabled={!canPublish} loading={publishing} leftIcon={PaperPlaneTilt} />
         }
       />
 

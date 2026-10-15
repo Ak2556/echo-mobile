@@ -1,17 +1,6 @@
 import React, { useState } from 'react';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
@@ -20,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Camera, Plus, X } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/ui/theme';
-import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Button } from '../components/ui/Button';
 import { showToast } from '../components/ui/Toast';
 import { CURRENCIES, CurrencyCode, formatPrice, getCurrencySymbol } from '../lib/mini-apps/currency';
 import {
@@ -214,19 +203,7 @@ export default function CreateListingScreen() {
         title={ttx("Sell something")}
         safeTop
         right={
-          <AnimatedPressable onPress={handleSubmit} disabled={!canSubmit} fadeOnPress style={{ marginRight: 6 }}>
-            <View style={{
-              backgroundColor: canSubmit ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'),
-              paddingHorizontal: 18,
-              paddingVertical: 9,
-              borderRadius: 999,
-            }}>
-              {saving
-                ? <ActivityIndicator size="small" color={colors.onAccent} />
-                : <Text style={{ color: canSubmit ? colors.onAccent : colors.textMuted, ...font.bodySemibold, fontSize: 14 }}>{ttx("Post")}</Text>
-              }
-            </View>
-          </AnimatedPressable>
+          <Button label={ttx("Post")} onPress={handleSubmit} size="compact" disabled={!canSubmit} loading={saving} style={{ marginRight: 6 }} />
         }
       />
 

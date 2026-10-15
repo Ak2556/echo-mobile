@@ -13,6 +13,9 @@ const read = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8');
 const MIGRATED = [
   'app/welcome.tsx', 'app/appeal.tsx', 'app/report.tsx', 'app/get-verified.tsx',
   'app/edit-profile.tsx', 'app/persona.tsx', 'app/onboarding.tsx',
+  // batch 2: the forms that publish something
+  'app/create-post.tsx', 'app/edit-post.tsx', 'app/share.tsx', 'app/create-story.tsx',
+  'app/create-listing.tsx', 'app/create-salon.tsx', 'app/create-office-hour.tsx',
 ];
 
 describe('Button', () => {
