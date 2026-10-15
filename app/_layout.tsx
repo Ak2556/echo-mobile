@@ -28,6 +28,7 @@ import { QueryClient, MutationCache } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { mmkvPersister } from '../lib/core/queryPersister';
 import { ToastProvider, showToast } from '../components/ui/Toast';
+import { ConfirmHost } from '../components/common/ConfirmSheet';
 import { friendlyWriteError, isAuthSessionError } from '../lib/core/mutationErrors';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { useCommandPalette } from '../lib/ui/commandPalette';
@@ -539,6 +540,7 @@ function RootLayout() {
         <NowReadingBar />
         <TutorialOverlay />
         <ToastProvider />
+        <ConfirmHost />
         <ConsentBanner />
         {/* One-time birthday card for accounts created before the age step. */}
         <AgeConfirmGate />

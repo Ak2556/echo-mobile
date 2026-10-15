@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -25,6 +25,7 @@ import { useAppStore } from '../store/useAppStore';
 import { track } from '../lib/core/analytics';
 import { ttx } from '../lib/i18n/i18n';
 import { SWITCH_THUMB } from '../lib/ui/fixedColors';
+import { confirmAction } from '../lib/ui/confirm';
 
 function stageLabel(stage: PersonaStatus['stage']): string {
   switch (stage) {
@@ -103,21 +104,20 @@ export default function PersonaScreen() {
   };
 
   const reset = () => {
-    Alert.alert('Reset persona?', 'This clears the learned persona on this device and starts learning again from future chats.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Reset',
-        style: 'destructive',
-        onPress: () => {
-          const next = resetPersonaProfile(accountUserId);
-          setProfile(next);
-          setNote('');
-          setPersonaLearningEnabled(true);
-          track('persona_snapshot_reset');
-          showToast('Persona reset');
-        },
-      },
-    ]);
+    void confirmAction({
+      title: 'Reset persona?',
+      message: 'This clears the learned persona on this device and starts learning again from future chats.',
+      confirmLabel: 'Reset',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      const next = resetPersonaProfile(accountUserId);
+            setProfile(next);
+            setNote('');
+            setPersonaLearningEnabled(true);
+            track('persona_snapshot_reset');
+            showToast('Persona reset');
+    });
   };
 
   return (

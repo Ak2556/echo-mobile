@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, ScrollView, Switch, ActivityIndicator,
-} from 'react-native';
+import { View, Text, TextInput, Pressable, Modal, StyleSheet, ScrollView, Switch, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -34,6 +32,7 @@ import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercise
 import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods, foodById } from '../../lib/mini-apps/foodDatabase';
 import { searchOnlineFoods } from '../../lib/mini-apps/foodApi';
 import { ttx } from '../../lib/i18n/i18n';
+import { confirmAction } from '../../lib/ui/confirm';
 
 type Tab = 'meals' | 'workouts' | 'progress' | 'library';
 
@@ -909,10 +908,15 @@ export default function FitnessApp() {
   const update = (next: FitnessDoc) => { setDoc(next); saveFitness(next); };
 
   const removeItem = (label: string, apply: () => FitnessDoc) => {
-    Alert.alert(`Delete ${label}?`, undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => update(apply()) },
-    ]);
+    void confirmAction({
+      title: `Delete ${label}?`,
+      message: undefined,
+      confirmLabel: 'Delete',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      update(apply());
+    });
   };
 
   const AddBtn = (tab === 'meals' || tab === 'workouts') ? (

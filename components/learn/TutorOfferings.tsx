@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, TextInput, Alert } from 'react-native';
+import { View, Text, Pressable, TextInput } from 'react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../ui/Toast';
 import { Disclosure } from './Disclosure';
@@ -16,6 +16,7 @@ import {
   type TutorPackage,
   type TutorSlot,
 } from '../../lib/mini-apps/learnApi';
+import { confirmAction } from '../../lib/ui/confirm';
 
 /**
  * What a tutor sells, and when they are free.
@@ -112,22 +113,18 @@ export function TutorOfferings({ tutorId }: { tutorId: string }) {
   };
 
   const removePackage = (p: TutorPackage) =>
-    Alert.alert('Remove package?', p.title, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: async () => {
-        try { await deletePackage(p.id); setPackages(prev => prev.filter(x => x.id !== p.id)); }
-        catch { showToast('Could not remove that', 'Error'); }
-      } },
-    ]);
+    void confirmAction({ title: 'Remove package?', message: p.title, confirmLabel: 'Remove', destructive: true }).then(async (confirmed) => {
+      if (!confirmed) return;
+      try { await deletePackage(p.id); setPackages(prev => prev.filter(x => x.id !== p.id)); }
+      catch { showToast('Could not remove that', 'Error'); }
+    });
 
   const removeSlot = (s: TutorSlot) =>
-    Alert.alert('Remove this time?', `${DAYS[s.weekday]} ${formatTimeOfDay(s.startMinute)}`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: async () => {
-        try { await deleteSlot(s.id); setSlots(prev => prev.filter(x => x.id !== s.id)); }
-        catch { showToast('Could not remove that', 'Error'); }
-      } },
-    ]);
+    void confirmAction({ title: 'Remove this time?', message: `${DAYS[s.weekday]} ${formatTimeOfDay(s.startMinute)}`, confirmLabel: 'Remove', destructive: true }).then(async (confirmed) => {
+      if (!confirmed) return;
+      try { await deleteSlot(s.id); setSlots(prev => prev.filter(x => x.id !== s.id)); }
+      catch { showToast('Could not remove that', 'Error'); }
+    });
 
   const field = {
     color: colors.text, fontSize: 13, backgroundColor: colors.bg,

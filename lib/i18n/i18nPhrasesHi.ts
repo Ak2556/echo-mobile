@@ -1170,4 +1170,11 @@ export const HI_BULK: Record<string, string> = {
   'Reminder set for': 'रिमाइंडर लगा:',
   'Tomorrow': 'कल',
   'Today': 'आज',
+  // Confirmation sheet labels. HI: native review needed.
+  'Delete': 'हटाएँ',
+  'Clear All': 'सब साफ़ करें',
+  'Remove': 'हटाएँ',
+  'Leave': 'छोड़ें',
+  'Block': 'ब्लॉक करें',
+  'Cancel': 'रद्द करें',
 };

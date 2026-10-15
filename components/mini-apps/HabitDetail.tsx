@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Archive, CaretLeft, CaretRight, PencilSimple, Trash, X, Clock } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
@@ -10,6 +10,7 @@ import {
 } from '../../lib/mini-apps/habits';
 import { ttx } from '../../lib/i18n/i18n';
 import { HabitMarkerIcon } from './HabitMarkerIcon';
+import { confirmAction } from '../../lib/ui/confirm';
 
 function monthDays(year: number, month: number): (string | null)[] {
   const first = new Date(year, month, 1);
@@ -58,10 +59,15 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
     .slice(0, 12);
 
   const confirmDelete = () => {
-    Alert.alert('Delete habit?', 'Its whole history goes with it.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: onDelete },
-    ]);
+    void confirmAction({
+      title: 'Delete habit?',
+      message: 'Its whole history goes with it.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      onDelete();
+    });
   };
 
   return (

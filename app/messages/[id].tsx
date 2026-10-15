@@ -83,6 +83,7 @@ import { ttx } from '../../lib/i18n/i18n';
 import { playbackEnded } from '../../lib/mini-apps/audioPlayback';
 import { BackButton } from '../../components/ui/BackButton';
 import { WARM, BRAND, ON_MEDIA, ON_STATUS, SHADOW } from '../../lib/ui/fixedColors';
+import { confirmAction } from '../../lib/ui/confirm';
 
 /**
  * A failed 1:1 send. "Try again" is wrong when the recipient has no device to
@@ -2607,10 +2608,15 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
     if (!remote) { exitSelection(); return; }
     const own = messages.filter(m => selectedIds.includes(m.id) && m.senderId === myId && !m.deletedAt);
     if (!own.length) { exitSelection(); return; }
-    Alert.alert(`Delete ${own.length} message${own.length === 1 ? '' : 's'}?`, 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { own.forEach(m => deleteMessage.mutate(m.id)); exitSelection(); } },
-    ]);
+    void confirmAction({
+      title: `Delete ${own.length} message${own.length === 1 ? '' : 's'}?`,
+      message: 'This cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      own.forEach(m => deleteMessage.mutate(m.id)); exitSelection();
+    });
   }, [remote, messages, selectedIds, myId, deleteMessage, exitSelection]);
 
   const handleCopy = useCallback(() => {
