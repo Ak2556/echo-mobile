@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BackButton } from '../ui/BackButton';
 import { useTheme, GLASS_INTENSITY } from '../../lib/ui/theme';
+import { noteScroll } from '../../lib/ui/scrollActivity';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { miniAppByRoute } from '../../lib/mini-apps/miniAppCatalog';
 import { useMiniAppEmbedded } from '../../lib/mini-apps/miniAppEmbed';
@@ -80,6 +81,8 @@ export function MiniAppShell({
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          onScroll={noteScroll}
+          scrollEventThrottle={64}
         >
           <View style={contentStyle}>
             {children}

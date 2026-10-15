@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BUBBLE_SIZE, EDGE_MARGIN, cornerY, liftedY, restingX, restingY, shouldPersistDrag } from './floatingBubblePlacement';
+import { BUBBLE_RECEDED_OPACITY, BUBBLE_REST_OPACITY, bubbleOpacity, BUBBLE_SIZE, EDGE_MARGIN, cornerY, liftedY, restingX, restingY, shouldPersistDrag } from './floatingBubblePlacement';
 
 // The audit device: 1344x2992 px at 3x = 448x997 pt.
 const H = 997;
@@ -80,4 +80,18 @@ describe('FloatingMiniApp uses it', () => {
   it('still renders on every signed-in screen (it is the voice trigger)', () => {
     expect(src).not.toMatch(/bubbleAllowed|mode === 'bubble' && !/);
   });
+});
+
+describe('bubbleOpacity', () => {
+  const idle = { scrolling: false, keyboardOpen: false, dragging: false };
+  it('rests at 55%', () => { expect(bubbleOpacity(idle)).toBe(BUBBLE_REST_OPACITY); });
+  it('recedes while the page scrolls or the keyboard is up', () => {
+    expect(bubbleOpacity({ ...idle, scrolling: true })).toBe(BUBBLE_RECEDED_OPACITY);
+    expect(bubbleOpacity({ ...idle, keyboardOpen: true })).toBe(BUBBLE_RECEDED_OPACITY);
+  });
+  it('is fully visible when held or listening, even mid-scroll', () => {
+    expect(bubbleOpacity({ ...idle, dragging: true, scrolling: true })).toBe(1);
+    expect(bubbleOpacity({ ...idle, listening: true, keyboardOpen: true })).toBe(1);
+  });
+  it('keeps the bubble at 44 pt', () => { expect(BUBBLE_SIZE).toBe(44); });
 });

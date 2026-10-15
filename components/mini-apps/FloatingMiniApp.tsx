@@ -1,12 +1,13 @@
-import React, { Suspense, useEffect } from 'react';
-import { View, Text, useWindowDimensions, Pressable, ScrollView } from 'react-native';
+import React, { Suspense, useEffect, useState } from 'react';
+import { View, Text, useWindowDimensions, Pressable, ScrollView, Keyboard, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring, withTiming, Easing, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
 import { usePathname } from 'expo-router';
-import { restingX, restingY, shouldPersistDrag } from '../../lib/ui/floatingBubblePlacement';
+import { BUBBLE_SIZE, bubbleOpacity, restingX, restingY, shouldPersistDrag } from '../../lib/ui/floatingBubblePlacement';
+import { useScrollActivity } from '../../lib/ui/scrollActivity';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Waveform, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
@@ -30,7 +31,7 @@ const CATALOG_BY_ID = new Map<string, (typeof MINI_APP_CATALOG)[number]>(
   MINI_APP_CATALOG.map(a => [a.id, a]),
 );
 
-const BUBBLE = 54;
+const BUBBLE = BUBBLE_SIZE;
 /** No overshoot: the bubble moves and stops (see the position effect below). */
 const BUBBLE_GLIDE = { duration: 220, easing: Easing.out(Easing.cubic) };
 
@@ -103,6 +104,22 @@ function Bubble({ pathname }: { pathname: string }) {
   const offX = useSharedValue(0);
   const offY = useSharedValue(0);
 
+  // How visible the bubble is: faint while the page scrolls or the keyboard is up, full while
+  // it is held or listening (lib/ui/floatingBubblePlacement.bubbleOpacity).
+  const scrolling = useScrollActivity(st => st.scrolling);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardOpen(true));
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardOpen(false));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+  const opacity = useSharedValue(0.55);
+  const targetOpacity = bubbleOpacity({ scrolling, keyboardOpen, dragging, listening });
+  useEffect(() => {
+    opacity.value = withTiming(targetOpacity, { duration: 160 });
+  }, [targetOpacity, opacity]);
+
   // Publish the bubble's resting rect to the coach-mark tour. We register the
   // known position directly (not measureInWindow) because the bubble is placed
   // by a Reanimated transform, which the shadow-tree measure ignores.
@@ -114,11 +131,12 @@ function Bubble({ pathname }: { pathname: string }) {
   const open = () => (meta ? openApp(meta.id) : openPicker());
 
   const pan = Gesture.Pan()
-    .onStart(() => { offX.value = tx.value; offY.value = ty.value; })
+    .onStart(() => { offX.value = tx.value; offY.value = ty.value; runOnJS(setDragging)(true); })
     .onUpdate((e) => {
       tx.value = Math.max(6, Math.min(SCREEN_W - BUBBLE - 6, offX.value + e.translationX));
       ty.value = Math.max(60, Math.min(SCREEN_H - BUBBLE - 90, offY.value + e.translationY));
     })
+    .onFinalize(() => { runOnJS(setDragging)(false); })
     .onEnd(() => {
       // Snap to the nearest side edge.
       const snapX = tx.value + BUBBLE / 2 < SCREEN_W / 2 ? 6 : SCREEN_W - BUBBLE - 6;
@@ -138,7 +156,7 @@ function Bubble({ pathname }: { pathname: string }) {
   const tap = Gesture.Tap().maxDistance(8).onEnd(() => runOnJS(open)());
   const gesture = Gesture.Exclusive(pan, longPress, tap);
 
-  const style = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }, { translateY: ty.value }] }));
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }, { translateY: ty.value }], opacity: opacity.value }));
 
   return (
     <GestureDetector gesture={gesture}>
@@ -156,8 +174,8 @@ function Bubble({ pathname }: { pathname: string }) {
         accessibilityHint={t('voice.holdToTalk')}
       >
         {listening
-          ? <Microphone color={colors.bgPure} size={24} weight="fill" />
-          : meta ? <MiniAppGlyph id={meta.id} color={colors.bgPure} size={24} /> : <Waveform color={colors.bgPure} size={24} weight="fill" />}
+          ? <Microphone color={colors.bgPure} size={20} weight="fill" />
+          : meta ? <MiniAppGlyph id={meta.id} color={colors.bgPure} size={20} /> : <Waveform color={colors.bgPure} size={20} weight="fill" />}
       </Animated.View>
     </GestureDetector>
   );

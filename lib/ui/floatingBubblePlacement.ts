@@ -13,7 +13,7 @@
  * position is kept for the tab screens only; a drag on a lifted screen lasts
  * for that visit, so it cannot pull the tab position into a control.
  */
-export const BUBBLE_SIZE = 54;
+export const BUBBLE_SIZE = 44;
 
 /** Tab screens whose bottom-right corner is free (Flow is not: Share lives there). */
 const CORNER_FREE = new Set(['/', '/home', '/explore', '/apps', '/you', '/notifications']);
@@ -64,4 +64,23 @@ export function restingX(pathname: string, screenW: number, savedX: number): num
 /** A finished drag is remembered only where the corner is free. */
 export function shouldPersistDrag(pathname: string): boolean {
   return cornerIsFree(pathname);
+}
+
+/** What the bubble is doing, for how visible it should be. */
+export interface BubbleActivity { scrolling: boolean; keyboardOpen: boolean; dragging: boolean; listening?: boolean }
+
+/** Opacity at rest. Present, but it does not shout over the page. */
+export const BUBBLE_REST_OPACITY = 0.55;
+/** Opacity while something under it is moving or someone is typing. */
+export const BUBBLE_RECEDED_OPACITY = 0.2;
+
+/**
+ * How visible the voice bubble is. Full while someone is holding it or it is listening, so
+ * it reads as the live microphone; faint while the page scrolls or the keyboard is up, so it
+ * never covers what is being read or typed; otherwise a resting 55%.
+ */
+export function bubbleOpacity(a: BubbleActivity): number {
+  if (a.dragging || a.listening) return 1;
+  if (a.scrolling || a.keyboardOpen) return BUBBLE_RECEDED_OPACITY;
+  return BUBBLE_REST_OPACITY;
 }
