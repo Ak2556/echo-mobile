@@ -1245,4 +1245,6 @@ export const HI_BULK: Record<string, string> = {
   'Frequent Items': 'बार-बार लिए जाने वाले आइटम',
   'Join': 'जुड़ें',
   'Est. Total': 'अनुमानित कुल',
+  // Chat details sidebar. HI: native review needed.
+  'Notifications muted': 'सूचनाएं म्यूट हैं',
 };

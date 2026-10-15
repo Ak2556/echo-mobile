@@ -980,6 +980,8 @@ export default function MessagesListScreen() {
     </SafeAreaView>
   );
 
+  const selectedConversation = selectedId ? conversations.find(c => c.id === selectedId) : undefined;
+
   if (twoPane) {
     return (
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
@@ -999,13 +1001,26 @@ export default function MessagesListScreen() {
             </View>
           )}
         </View>
-        {threePane && selectedId && (
+        {threePane && selectedId && selectedConversation && (
           <ChatDetailsSidebar
             recipient={{
-              name: selectedId, 
-              handle: selectedId.toLowerCase().replace(' ', ''),
-              avatar: 'https://i.pravatar.cc/150' // Mocks for now, this would normally be fetched
+              name: selectedConversation.displayName || selectedConversation.username,
+              handle: selectedConversation.isGroup ? undefined : selectedConversation.username,
+              subtitle: selectedConversation.isGroup ? `${selectedConversation.memberCount ?? 1} ${ttx('members')}` : undefined,
+              avatarUrl: selectedConversation.isGroup ? undefined : selectedConversation.avatarUrl,
+              avatarColor: selectedConversation.avatarColor,
             }}
+            muted={!!selectedConversation.muted}
+            onMute={() => router.push(`/chat-details/${selectedId}`)}
+            onSharedMedia={() => router.push(`/chat-media/${selectedId}`)}
+            onBlockOrReport={() => router.push({
+              pathname: '/report',
+              params: {
+                targetType: selectedConversation.isGroup ? 'group' : 'user',
+                targetId: selectedConversation.isGroup ? selectedId : selectedConversation.userId,
+                targetName: selectedConversation.displayName || selectedConversation.username,
+              },
+            })}
             colors={colors}
           />
         )}
