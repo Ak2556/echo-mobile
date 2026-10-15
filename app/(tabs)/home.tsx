@@ -32,6 +32,7 @@ import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, us
 import { useFollow } from '../../hooks/queries/useFollow';
 import { EvolutionGroup, FeedItem } from '../../types';
 import { useTheme } from '../../lib/ui/theme';
+import { noteScroll } from '../../lib/ui/scrollActivity';
 import { useAppStore } from '../../store/useAppStore';
 import { FollowingEmptyState } from '../../components/feed/FollowingEmptyState';
 import { getDeviceTier } from '../../lib/ui/deviceTier';
@@ -515,6 +516,7 @@ export default function DiscoverScreen() {
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = event.nativeEvent.contentOffset.y;
     scrollY.value = y;
+    noteScroll();
     const pinned = railYRef.current != null && y > railYRef.current;
     if (pinned !== railPinnedRef.current) {
       railPinnedRef.current = pinned;

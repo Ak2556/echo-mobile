@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { noteScroll } from '../ui/scrollActivity';
 
 /**
  * A scrollable list that voice can move by a screenful.
@@ -26,6 +27,7 @@ export function useVoiceScrollTarget<T = unknown>() {
 
   const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     offset.current = e.nativeEvent.contentOffset.y;
+    noteScroll();
   }, []);
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {

@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Pulse, Target, MagnifyingGlass, CaretRight } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
+import { noteScroll } from '../../lib/ui/scrollActivity';
 import { getTodayProductivity, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/core/localSearch';
 import { formatMoney } from '../../lib/mini-apps/expenses';
 import { MOTION } from '../../lib/ui/motion';
@@ -235,6 +236,7 @@ export default function AppsScreen() {
   );
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollY.value = event.nativeEvent.contentOffset.y;
+    noteScroll();
   }, [scrollY]);
 
   const appById = useMemo(() => new Map<string, MiniApp>(APPS.map(app => [app.id, app])), []);
