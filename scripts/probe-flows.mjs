@@ -372,11 +372,16 @@ await step('anon can only read: no INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES 
   if (skipSql) return 'skipped (no PROBE_DB_URL)';
   const rows = sql(`select distinct table_name||':'||privilege_type from information_schema.role_table_grants where table_schema='public' and grantee='anon' and privilege_type <> 'SELECT' order by 1`).split('\n').filter(Boolean);
   must(rows.length === 0, `anon still holds ${rows.length}: ${rows.slice(0, 6).join(', ')}`);
+  // information_schema does not list Postgres 17's MAINTAIN (VACUUM, REINDEX, LOCK TABLE, ...)
+  const maintain = Number(sql(`select count(*) from pg_class c where c.relnamespace='public'::regnamespace and c.relkind in ('r','p','v','m') and has_table_privilege('anon', c.oid, 'MAINTAIN')`));
+  must(maintain === 0, `anon holds MAINTAIN on ${maintain} relations`);
 });
 await step('signed-in users cannot TRUNCATE (RLS does not cover it) or add triggers to any table', async () => {
   if (skipSql) return 'skipped (no PROBE_DB_URL)';
   const rows = sql(`select distinct table_name||':'||privilege_type from information_schema.role_table_grants where table_schema='public' and grantee='authenticated' and privilege_type in ('TRUNCATE','REFERENCES','TRIGGER') order by 1`).split('\n').filter(Boolean);
   must(rows.length === 0, `authenticated still holds ${rows.length}: ${rows.slice(0, 6).join(', ')}`);
+  const maintain = Number(sql(`select count(*) from pg_class c where c.relnamespace='public'::regnamespace and c.relkind in ('r','p','v','m') and has_table_privilege('authenticated', c.oid, 'MAINTAIN')`));
+  must(maintain === 0, `authenticated holds MAINTAIN on ${maintain} relations`);
 });
 await step('public views are read-only for client roles', async () => {
   if (skipSql) return 'skipped (no PROBE_DB_URL)';
@@ -390,6 +395,7 @@ await step('a table created later starts with the same limited privileges', asyn
     const anonP = sql(`select coalesce(string_agg(privilege_type, ',' order by privilege_type), 'none') from information_schema.role_table_grants where table_name='_probe_new_table' and grantee='anon'`);
     const authP = sql(`select coalesce(string_agg(privilege_type, ',' order by privilege_type), 'none') from information_schema.role_table_grants where table_name='_probe_new_table' and grantee='authenticated'`);
     must(anonP === 'SELECT', `a new table gives anon: ${anonP}`);
+    must(sql(`select has_table_privilege('anon','public._probe_new_table','MAINTAIN') or has_table_privilege('authenticated','public._probe_new_table','MAINTAIN')`) === 'f', 'a new table gives a client role MAINTAIN');
     must(authP === 'DELETE,INSERT,SELECT,UPDATE', `a new table gives authenticated: ${authP}`);
   } finally { sql(`drop table public._probe_new_table`); }
 });
