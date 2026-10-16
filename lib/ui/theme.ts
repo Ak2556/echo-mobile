@@ -1,7 +1,7 @@
 import { useColorScheme } from 'react-native';
 import { resolveIsDark } from './appearance';
 import { useAppStore } from '../../store/useAppStore';
-import { usePresenceStore } from '../social/presence';
+import { usePresenceStore } from '../social/presenceCore';
 import { buildFontPreset } from './fontPresets';
 
 
@@ -400,7 +400,7 @@ export function useTheme() {
   const showAvatars = useAppStore(s => s.showAvatars);
   const roundedCorners = useAppStore(s => s.roundedCorners);
   const onlineStatus = useAppStore(s => s.onlineStatus);
-  const presenceIds = usePresenceStore(s => s.onlineIds);
+  const presenceByUser = usePresenceStore(s => s.byUser);
 
   const base = getPairedTheme(themeName, darkMode);
 
@@ -458,7 +458,7 @@ export function useTheme() {
   const switchTrack = { false: colors.surfaceHover, true: colors.accent };
 
   const isUserOnline = (userId: string): boolean => {
-    return onlineStatus && presenceIds.has(userId);
+    return onlineStatus && presenceByUser[userId]?.online === true;
   };
 
   const font = buildFontPreset(fontStyle);

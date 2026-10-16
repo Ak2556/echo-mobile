@@ -92,6 +92,7 @@ const ALLOWED_VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'm4v', 'webm']);
 const ALLOWED_VIDEO_CONTENT_TYPES = new Set(['video/mp4', 'video/quicktime', 'video/x-m4v', 'video/webm']);
 const DM_MEDIA_BUCKET = 'dm-media';
 import { NOTIFICATIONS_PAGE_SIZE } from './notifications/paging';
+import type { PresenceRow } from './social/presenceCore';
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -4067,6 +4068,23 @@ export async function markMessagesRead(conversationId: string): Promise<void> {
   const { error } = await supabase.rpc('mark_messages_read', { p_conversation_id: conversationId });
   
   if (error) captureException(error, { tags: { fn: 'markMessagesRead' } });
+}
+
+/** Heartbeat. Tells the server this person is active now; the server decides whether to store it. */
+export async function pingPresence(): Promise<void> {
+  const { error } = await supabase.rpc('ping_presence');
+  if (error) throw error;
+}
+
+/**
+ * Presence for up to 50 people. The server answers for mutual follows only; everyone else comes back
+ * offline and quiet, so the answer cannot be used to learn who follows or blocks whom.
+ */
+export async function fetchPresence(ids: string[]): Promise<PresenceRow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.rpc('get_presence', { p_user_ids: ids });
+  if (error) throw error;
+  return (data ?? []) as PresenceRow[];
 }
 
 /** Soft-delete a message (sender only). */
