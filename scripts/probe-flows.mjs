@@ -520,7 +520,79 @@ await step('deleting an account removes its presence row', async () => {
   must(Number(sql(`select count(*) from public.user_presence where user_id = '${K.id}'`)) === 0, 'row survived account deletion');
 });
 
-console.log('\n[15] Cleanup');
+console.log('\n[16] Read receipts keep their promise (docs/superpowers/specs/2026-10-16-presence-design.md, section 8)');
+let P, Q, R, S2, convP;
+const convIdOf = (c) => (typeof c === 'string' ? c : (c.id ?? c.conversation_id));
+const unreadOf = async (u, cid) => {
+  const list = ok(await u.client.rpc('get_dm_conversations'), 'get_dm_conversations');
+  const row = list.find(r => r.id === cid);
+  must(row, 'the conversation is missing from the list');
+  return Number(row.unread_count);
+};
+const say = async (from, cid, text) => ok(await from.client.from('direct_messages').insert({ id: randomUUID(), conversation_id: cid, sender_id: from.id, kind: 'text', text }), 'send');
+const readAts = async (cid, senderId) => ok(await admin.from('direct_messages').select('read_at').eq('conversation_id', cid).eq('sender_id', senderId).order('created_at'), 'read_at').map(r => r.read_at);
+await step('two users open a conversation; three messages arrive unread for the receiver only', async () => {
+  P = await mk('rp'); Q = await mk('rq'); R = await mk('rr'); created.push(P.id, Q.id, R.id);
+  convP = convIdOf(ok(await Q.client.rpc('get_or_create_dm_conversation', { p_recipient_id: P.id }), 'conversation'));
+  for (const t of ['one', 'two', 'three']) await say(Q, convP, t);
+  must(await unreadOf(P, convP) === 3, 'P should have 3 unread');
+  must(await unreadOf(Q, convP) === 0, 'Q should have 0 unread');
+});
+await step('with receipts on, reading clears the count AND sets the receipt the sender sees', async () => {
+  ok(await P.client.rpc('mark_messages_read', { p_conversation_id: convP }), 'mark');
+  must(await unreadOf(P, convP) === 0, 'unread should be 0 after reading');
+  const ats = await readAts(convP, Q.id);
+  must(ats.length === 3 && ats.every(Boolean), `receipts: ${JSON.stringify(ats)}`);
+  const marker = ok(await P.client.rpc('get_my_read_marker', { p_conversation_id: convP }), 'marker');
+  must(marker, 'no private marker after reading');
+});
+await step('with receipts OFF, reading clears the count but the sender sees nothing', async () => {
+  ok(await P.client.from('profiles').update({ read_receipts: false }).eq('id', P.id), 'receipts off');
+  await say(Q, convP, 'four'); await say(Q, convP, 'five');
+  must(await unreadOf(P, convP) === 2, 'P should have 2 unread');
+  ok(await P.client.rpc('mark_messages_read', { p_conversation_id: convP }), 'mark');
+  must(await unreadOf(P, convP) === 0, 'unread should be 0 after reading with receipts off');
+  const ats = await readAts(convP, Q.id);
+  must(ats.slice(3).every(a => a === null), `the sender can see receipts for messages read with receipts off: ${JSON.stringify(ats)}`);
+});
+await step('turning receipts back on does not reveal what was read while they were off', async () => {
+  ok(await P.client.from('profiles').update({ read_receipts: true }).eq('id', P.id), 'receipts on');
+  ok(await P.client.rpc('mark_messages_read', { p_conversation_id: convP }), 'mark again');
+  const ats = await readAts(convP, Q.id);
+  must(ats.slice(3).every(a => a === null), 'earlier private reads became visible');
+  await say(Q, convP, 'six');
+  ok(await P.client.rpc('mark_messages_read', { p_conversation_id: convP }), 'mark six');
+  must((await readAts(convP, Q.id))[5] !== null, 'a new message read with receipts on should show a receipt');
+});
+await step('replying counts as having read (the existing rule is kept)', async () => {
+  await say(Q, convP, 'seven');
+  await say(P, convP, 'reply from P');
+  must(await unreadOf(P, convP) === 0, 'a message before my own reply should not count as unread');
+});
+await step('a stranger can neither read the marker nor mark someone else\'s conversation', async () => {
+  const m = ok(await R.client.rpc('get_my_read_marker', { p_conversation_id: convP }), 'marker as stranger');
+  must(m === null, 'a stranger got a marker');
+  await say(Q, convP, 'eight');
+  ok(await R.client.rpc('mark_messages_read', { p_conversation_id: convP }), 'stranger mark');
+  const last = (await readAts(convP, Q.id)).slice(-1)[0];
+  must(last === null, 'a stranger set a receipt on a conversation they are not in');
+});
+await step('nobody can read dm_read_state directly', async () => {
+  const t = await P.client.from('dm_read_state').select('user_id');
+  must(t.error || (t.data ?? []).length === 0, `P read ${t.data?.length} rows`);
+});
+await step('deleting an account removes its read markers', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  S2 = await mk('rs'); created.push(S2.id);
+  const cid = convIdOf(ok(await S2.client.rpc('get_or_create_dm_conversation', { p_recipient_id: P.id }), 'conv'));
+  await say(P, cid, 'hello S');
+  ok(await S2.client.rpc('mark_messages_read', { p_conversation_id: cid }), 'mark');
+  must(Number(sql(`select count(*) from public.dm_read_state where user_id = '${S2.id}'`)) === 1, 'S has no marker to delete');
+  ok(await S2.client.rpc('delete_account'), 'delete_account');
+  must(Number(sql(`select count(*) from public.dm_read_state where user_id = '${S2.id}'`)) === 0, 'marker survived account deletion');
+});
+
+console.log('\n[17] Cleanup');
 await step('delete the throwaway users', async () => { await cleanup(); });
 
 console.log(`\n${passed} passed, ${failed} failed\n`);
