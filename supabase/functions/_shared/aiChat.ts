@@ -27,6 +27,14 @@ export interface ChatMessageOut {
   tool_calls?: ChatToolCall[];
 }
 
+/**
+ * The longest one provider attempt may take. Gemini normally answers in a few seconds; without a
+ * limit a stalled connection holds the request open until the platform's own ceiling, and an agent
+ * turn can chain several model calls. Each attempt gets its own budget, so a Gemini timeout falls
+ * through to OpenRouter instead of failing the turn.
+ */
+export const PROVIDER_TIMEOUT_MS = 25_000;
+
 export interface ChatRequest {
   /** OpenRouter-style id, e.g. "google/gemini-2.5-flash". */
   model: string;
@@ -35,9 +43,24 @@ export interface ChatRequest {
   temperature?: number;
   max_tokens?: number;
   response_format?: { type: "json_object" };
+  /** The caller's own abort (a client that went away). Rethrown, never retried on the other provider. */
   signal?: AbortSignal;
+  /** Per-attempt limit; defaults to PROVIDER_TIMEOUT_MS. */
+  timeoutMs?: number;
   /** Sent to OpenRouter as X-Title. */
   title: string;
+}
+
+function attemptSignal(req: ChatRequest): AbortSignal {
+  const limit = AbortSignal.timeout(req.timeoutMs ?? PROVIDER_TIMEOUT_MS);
+  return req.signal ? AbortSignal.any([req.signal, limit]) : limit;
+}
+
+function describeFailure(provider: string, e: unknown, req: ChatRequest): string {
+  if (e instanceof Error && e.name === "TimeoutError") {
+    return `${provider}: no answer within ${(req.timeoutMs ?? PROVIDER_TIMEOUT_MS) / 1000}s`;
+  }
+  return `${provider}: ${e instanceof Error ? e.message : String(e)}`;
 }
 
 export function hasChatProvider(): boolean {
@@ -70,29 +93,36 @@ export async function chatCompletion(req: ChatRequest): Promise<ChatMessageOut> 
         method: "POST",
         headers: { Authorization: `Bearer ${geminiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({ ...common, model: geminiModelId(req.model) }),
-        signal: req.signal,
+        signal: attemptSignal(req),
       });
       if (res.ok) return readMessage(await res.json(), "Gemini");
       geminiError = `Gemini ${res.status}: ${(await res.text()).slice(0, 500)}`;
     } catch (e) {
       if (req.signal?.aborted) throw e;
-      geminiError = `Gemini: ${e instanceof Error ? e.message : String(e)}`;
+      geminiError = describeFailure("Gemini", e, req);
     }
     if (!openRouterKey) throw new Error(geminiError);
     console.warn(`[aiChat] ${req.title}: falling back to OpenRouter after ${geminiError}`);
   }
 
-  const res = await guardedFetch("openrouter", OPENROUTER_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${openRouterKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-      "X-Title": req.title,
-    },
-    body: JSON.stringify({ ...common, model: req.model, provider: { only: ["google-ai-studio"] } }),
-    signal: req.signal,
-  });
+  let res: Response;
+  try {
+    res = await guardedFetch("openrouter", OPENROUTER_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${openRouterKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
+        "X-Title": req.title,
+      },
+      body: JSON.stringify({ ...common, model: req.model, provider: { only: ["google-ai-studio"] } }),
+      signal: attemptSignal(req),
+    });
+  } catch (e) {
+    if (req.signal?.aborted) throw e;
+    const detail = describeFailure("OpenRouter", e, req);
+    throw new Error(geminiError ? `${geminiError}; ${detail}` : detail);
+  }
   if (!res.ok) {
     const detail = `OpenRouter ${res.status}: ${(await res.text()).slice(0, 500)}`;
     throw new Error(geminiError ? `${geminiError}; ${detail}` : detail);
