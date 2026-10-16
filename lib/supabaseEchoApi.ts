@@ -4023,12 +4023,12 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
   const otherId: string = (conv.user_a as string) === uid ? (conv.user_b as string) : (conv.user_a as string);
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, username, display_name, avatar_color, avatar_url, last_seen_at')
+    .select('id, username, display_name, avatar_color, avatar_url')
     .eq('id', otherId)
     .single();
   // A failure here is invisible in the UI — the fallbacks below just render
-  // "User / @unknown" in the chat header. That is how a missing column grant on
-  // last_seen_at (42501 fails the whole select) went unnoticed, so report it.
+  // "User / @unknown" in the chat header. A failing select (a missing column grant
+  // fails the whole thing with 42501) went unnoticed once, so report it.
   if (profileError) {
     captureException(profileError, {
       tags: { module: 'supabaseEchoApi', fn: 'fetchConversationById', op: 'profile' },
@@ -4044,7 +4044,7 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
     otherDisplayName: (profile?.display_name as string | null) ?? (profile?.username as string | null) ?? 'User',
     otherAvatarColor: (profile?.avatar_color as string | null) ?? '#C65F3F',
     otherAvatarUrl: (profile?.avatar_url as string | null) ?? null,
-    otherLastSeenAt: (profile?.last_seen_at as string | null) ?? null,
+    otherLastSeenAt: null, // presence now comes from get_presence; the field stays until the cleanup migration
     isGroup: false,
     groupTitle: null,
     groupAvatarColor: null,

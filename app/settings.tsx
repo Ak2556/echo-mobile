@@ -1023,9 +1023,9 @@ export default function SettingsScreen() {
         {showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Privacy & Safety")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Eye} label={ttx("Activity Status")} subtitle={ttx("Show when you're online")} right={SwitchEl(s.activityStatus, handleActivityStatus)} />
+            <SettingsRow theme={theme} icon={Eye} label={ttx("Last active")} subtitle={ttx("Show roughly when you were last active, like 'Active today', to people who follow you back")} right={SwitchEl(s.activityStatus, handleActivityStatus)} />
             {divider}
-            <SettingsRow theme={theme} icon={EyeSlash} label={ttx("Online Status")} subtitle={ttx("Let others see your online indicator")} right={SwitchEl(s.onlineStatus, handleOnlineStatus)} />
+            <SettingsRow theme={theme} icon={EyeSlash} label={ttx("Online status")} subtitle={ttx("Show a green dot to people who follow you back")} right={SwitchEl(s.onlineStatus, handleOnlineStatus)} />
             {divider}
             <SettingsRow
               theme={theme}
