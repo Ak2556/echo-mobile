@@ -1,96 +1,59 @@
 import { useEffect } from 'react';
-import { create } from 'zustand';
-import { supabase } from '../supabase';
+import { AppState } from 'react-native';
+import { fetchPresence, pingPresence } from '../supabaseEchoApi';
 import { useAppStore } from '../../store/useAppStore';
+import {
+  createHeartbeat, presenceIdKey, startPresencePolling, usePresenceStore, type PresenceRow,
+} from './presenceCore';
 
-// Real online presence over Supabase Realtime. One shared topic; every
-// signed-in client tracks itself keyed by user id, and everyone derives the
-// online set from presence sync events. Entries drop automatically on
-// disconnect, so "online" here means "app open right now".
-//
-// The channel is a MODULE-LEVEL SINGLETON with ref-counting: supabase-js
-// returns the same channel instance for a topic, so a second mount calling
-// .on('presence') after the first subscribe() throws ("cannot add callbacks
-// after subscribe"). Inbox and thread screens are stacked simultaneously —
-// they must share one subscription, not race to create two.
-//
-// The `onlineStatus` privacy setting gates BOTH directions: when off, this
-// client neither broadcasts its presence nor renders anyone else's
-// (see isUserOnline in lib/theme.ts).
+// Presence over the database, not a Realtime channel. The old design put every signed-in client on one
+// public channel that handed everyone the whole online list and was enforced only in this file.
+// Now the server decides who may see whom (get_presence), and the client asks only about the people on
+// screen. See docs/superpowers/specs/2026-10-16-presence-design.md.
 
-interface PresenceState {
-  onlineIds: Set<string>;
-  setOnlineIds: (ids: Set<string>) => void;
-}
+/**
+ * Mount once, in the root layout. Pings once a minute while the app is in the foreground, and clears the
+ * store on sign-out. If the person shares nothing (both toggles off) it sends one last ping so the server
+ * deletes whatever it stored, then stays quiet.
+ */
+export function usePresenceHeartbeat(userId: string | undefined) {
+  const sharesAnything = useAppStore(s => s.onlineStatus || s.activityStatus);
 
-export const usePresenceStore = create<PresenceState>(set => ({
-  onlineIds: new Set(),
-  setOnlineIds: onlineIds => set({ onlineIds }),
-}));
+  useEffect(() => () => usePresenceStore.getState().clear(), [userId]);
 
-let activeChannel: ReturnType<typeof supabase.channel> | null = null;
-let activeUid: string | null = null;
-let subscribed = false;
-let refs = 0;
-
-function teardown() {
-  if (activeChannel) void supabase.removeChannel(activeChannel);
-  activeChannel = null;
-  activeUid = null;
-  subscribed = false;
-  usePresenceStore.getState().setOnlineIds(new Set());
-}
-
-function ensureChannel(uid: string, share: boolean) {
-  if (activeChannel && activeUid === uid) {
-    // Already live — just reconcile whether we announce ourselves.
-    if (subscribed) {
-      if (share) void activeChannel.track({ at: Date.now() }).catch(() => {});
-      else void activeChannel.untrack().catch(() => {});
+  useEffect(() => {
+    if (!userId || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
+    if (!sharesAnything) {
+      void pingPresence().catch(() => {});
+      return;
     }
-    return;
-  }
-
-  if (activeChannel) teardown();
-
-  activeUid = uid;
-  const channel = supabase.channel('online-users', {
-    config: { presence: { key: uid } },
-  });
-  channel
-    .on('presence', { event: 'sync' }, () => {
-      usePresenceStore.getState().setOnlineIds(new Set(Object.keys(channel.presenceState())));
-    })
-    .subscribe(status => {
-      if (status === 'SUBSCRIBED') {
-        subscribed = true;
-        if (share) void channel.track({ at: Date.now() }).catch(() => {});
-      }
-    });
-  activeChannel = channel;
+    const heartbeat = createHeartbeat(pingPresence);
+    if (AppState.currentState === 'active') heartbeat.start();
+    const sub = AppState.addEventListener('change', state => (state === 'active' ? heartbeat.start() : heartbeat.stop()));
+    return () => { sub.remove(); heartbeat.stop(); };
+  }, [userId, sharesAnything]);
 }
 
 /**
- * Subscribe to the shared presence topic and (if allowed) announce this user.
- * Safe to mount from multiple screens at once — all mounts share the single
- * underlying channel; the last unmount tears it down.
+ * Keeps presence fresh for the people on this screen: asks now and every 45 seconds while the app is in the
+ * foreground. Read the answers with `usePresenceStore` or `isUserOnline(id)`. Safe to call from several
+ * screens at once; each asks only about its own ids.
  */
-export function usePresenceTracking(myUserId: string | undefined) {
-  const shareOnlineStatus = useAppStore(s => s.onlineStatus);
+export function usePresence(ids: (string | null | undefined)[]) {
+  const me = useAppStore(s => s.userId);
+  const key = presenceIdKey(ids, me);
 
   useEffect(() => {
-    if (!myUserId || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
-
-    refs++;
-    ensureChannel(myUserId, shareOnlineStatus);
-
-    return () => {
-      refs--;
-      // Defer so push-navigation (unmount+mount in one frame) doesn't churn
-      // the socket; only tear down when nobody is left after the frame.
-      setTimeout(() => {
-        if (refs <= 0 && activeChannel) teardown();
-      }, 50);
-    };
-  }, [myUserId, shareOnlineStatus]);
+    if (!me || !key || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
+    const list = key.split(',');
+    const apply = (rows: PresenceRow[]) => usePresenceStore.getState().apply(rows);
+    let stop: (() => void) | null = null;
+    const begin = () => { stop?.(); stop = startPresencePolling(list, fetchPresence, apply); };
+    if (AppState.currentState === 'active') begin();
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') begin();
+      else { stop?.(); stop = null; }
+    });
+    return () => { sub.remove(); stop?.(); };
+  }, [me, key]);
 }

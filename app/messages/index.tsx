@@ -24,7 +24,7 @@ import { useTheme } from '../../lib/ui/theme';
 import { Conversation } from '../../types';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useCreateGroupConversation, useRemoteConversations, useSetDMPref } from '../../hooks/queries/useDMs';
-import { usePresenceTracking } from '../../lib/social/presence';
+import { usePresence } from '../../lib/social/presence';
 import { ConversationSkeleton } from '../../components/ui/Skeleton';
 import { RemoteConversation, searchRemoteUsers, UserSearchHit, fetchNetworkAuras, publishAura } from '../../lib/supabaseEchoApi';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -679,7 +679,6 @@ export function AurasRow() {
 }
 
 export default function MessagesListScreen() {
-  usePresenceTracking(useAppStore(s => s.userId) ?? undefined);
   const router = useRouter();
   const { conversations: localConversations } = useAppStore();
   const { colors, fontSizes, radius } = useTheme();
@@ -731,6 +730,7 @@ export default function MessagesListScreen() {
         memberCount: rc.memberCount,
       }))
     : localConversations;
+  usePresence(conversations.map(c => (c.isGroup ? null : c.userId)));
 
   // Pinned conversations live locally (no backend field needed) and always
   // sort to the top, like every top messaging app.

@@ -1247,4 +1247,13 @@ export const HI_BULK: Record<string, string> = {
   'Est. Total': 'अनुमानित कुल',
   // Chat details sidebar. HI: native review needed.
   'Notifications muted': 'सूचनाएं म्यूट हैं',
+  // Presence. HI: native review needed.
+  'Active recently': 'हाल ही में सक्रिय',
+  'Active today': 'आज सक्रिय',
+  'Active yesterday': 'कल सक्रिय',
+  'Active this week': 'इस हफ़्ते सक्रिय',
+  'Online status': 'ऑनलाइन स्थिति',
+  'Last active': 'आख़िरी बार सक्रिय',
+  'Show a green dot to people who follow you back': 'जो लोग आपको वापस फ़ॉलो करते हैं, उन्हें हरा बिंदु दिखाएं',
+  "Show roughly when you were last active, like 'Active today', to people who follow you back": "जो लोग आपको वापस फ़ॉलो करते हैं, उन्हें मोटे तौर पर दिखाएं कि आप आख़िरी बार कब सक्रिय थे, जैसे 'आज सक्रिय'",
 };
