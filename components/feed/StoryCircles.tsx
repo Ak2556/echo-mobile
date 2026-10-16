@@ -8,6 +8,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Avatar } from '../ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
+import { usePresence } from '../../lib/social/presence';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 
 export function StoryCircles() {
@@ -15,6 +16,7 @@ export function StoryCircles() {
   const { getActiveStories, username, avatarColor, avatarUrl } = useAppStore();
   const { colors, animation, isUserOnline } = useTheme();
   const stories = getActiveStories();
+  usePresence(stories.map(s => s.userId));
   const remote = isSupabaseRemote();
 
   const userStories = stories.reduce((acc, story) => {

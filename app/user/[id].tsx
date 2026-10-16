@@ -25,6 +25,8 @@ import { ProfilePhotoPreview } from '../../components/ui/ProfilePhotoPreview';
 import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
+import { usePresence } from '../../lib/social/presence';
+import { presencePhrase, usePresenceStore } from '../../lib/social/presenceCore';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { useFeed } from '../../hooks/useFeed';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
@@ -124,6 +126,8 @@ function ProfileSections({ section, onChange, counts, colors }: any) {
 function ProfileHeader({ user, echoeCount, following, requested, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId, section, onSectionChange, sectionCounts }: any) {
   const { colors, radius, animation, isUserOnline, fontSizes } = useTheme();
   const online = isUserOnline(user.id);
+  usePresence(isSelf ? [] : [user.id]);
+  const presenceText = presencePhrase(usePresenceStore(s => s.byUser[user.id]));
   const primaryTopic = creatorProfile?.topics?.[0];
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
   const followScale = useSharedValue(1);
@@ -220,7 +224,9 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
         <View style={{ marginTop: -4, marginBottom: 8 }}>
           <ProfileRank userId={user.id} />
         </View>
-        {online && <Text style={{ color: colors.success, fontSize: fontSizes.meta, marginBottom: 8 }}>{ttx("Active now")}</Text>}
+        {!isSelf && presenceText && (
+          <Text style={{ color: online ? colors.success : colors.textMuted, fontSize: fontSizes.meta, marginBottom: 8 }}>{ttx(presenceText)}</Text>
+        )}
         {user.bio ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16, paddingHorizontal: 20 }}>
             <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: fontSizes.label, flexShrink: 1 }}>{user.bio}</Text>

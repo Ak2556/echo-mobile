@@ -38,7 +38,7 @@ import { useAppStore } from '../store/useAppStore';
 import { ServiceWorkerRegistrar } from '../components/pwa/ServiceWorkerRegistrar';
 import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
 import { database } from '../lib/database';
-import { usePresenceTracking } from '../lib/social/presence';
+import { usePresenceHeartbeat } from '../lib/social/presence';
 import { persistGet, persistSet, persistDelete, storageHydrate } from '../store/persist';
 import { parseEchoUniversalLink } from '../lib/routing/urlSafety';
 import { handleNotificationReply } from '../lib/notifications/handleReplyResponse';
@@ -300,7 +300,7 @@ let lastHandledPushTap: string | null = null;
 
 function RootLayout() {
   const userId = useAppStore(s => s.userId);
-  usePresenceTracking(userId ?? undefined);
+  usePresenceHeartbeat(userId ?? undefined);
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);
   const router = useRouter();
 

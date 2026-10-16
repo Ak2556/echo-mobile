@@ -77,7 +77,8 @@ import {
 } from '../../hooks/queries/useDMs';
 import { markMessagesRead, dismissConversationNotifications, fetchGroupMembers, fetchConversationPrefs, setDMPref, type GroupMember, type RemoteMessageReaction, type ConversationPrefs } from '../../lib/supabaseEchoApi';
 import { supabase } from '../../lib/supabase';
-import { usePresenceTracking } from '../../lib/social/presence';
+import { usePresence } from '../../lib/social/presence';
+import { presencePhrase, usePresenceStore } from '../../lib/social/presenceCore';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/routing/echoUrl';
 import { ttx } from '../../lib/i18n/i18n';
@@ -166,7 +167,6 @@ interface NormalizedMessage {
 type ChatConversation = Conversation & {
   isGroup?: boolean;
   memberCount?: number;
-  otherLastSeenAt?: string | null;
 };
 
 function tryParsePayload(content: string | null): Record<string, unknown> | null {
@@ -277,22 +277,6 @@ function messageSearchText(message: NormalizedMessage): string {
     message.kind === 'link' ? 'link url website' : '',
     message.kind === 'contact' ? 'contact profile user' : '',
   ].filter(Boolean).join(' ').toLowerCase();
-}
-
-function formatLastSeen(dateStr: string | null): string {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return 'Active just now';
-  if (diffMins < 60) return `Active ${diffMins}m ago`;
-  const diffHrs = Math.floor(diffMins / 60);
-  if (diffHrs < 24) return `Active ${diffHrs}h ago`;
-  const diffDays = Math.floor(diffHrs / 24);
-  if (diffDays === 1) return 'Active yesterday';
-  if (diffDays < 7) return `Active ${diffDays}d ago`;
-  return `Active on ${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
 }
 
 // ─── EchoShareCard ────────────────────────────────────────────────────────────
@@ -2026,7 +2010,6 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
 
   const remote = isSupabaseRemote();
   const myId = userId ?? 'me';
-  usePresenceTracking(remote ? (userId ?? undefined) : undefined);
 
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   useEffect(() => {
@@ -2081,7 +2064,6 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         displayName: remoteConvData.otherDisplayName,
         avatarColor: remoteConvData.otherAvatarColor,
         avatarUrl: remoteConvData.otherAvatarUrl ?? undefined,
-        otherLastSeenAt: remoteConvData.otherLastSeenAt,
         isGroup: remoteConvData.isGroup,
         memberCount: remoteConvData.memberCount,
         isVerified: false,
@@ -2226,6 +2208,9 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
     );
   }, []);
 
+  usePresence(conversation && !conversation.isGroup ? [conversation.userId] : []);
+  const presence = usePresenceStore(s => (conversation && !conversation.isGroup ? s.byUser[conversation.userId] : undefined));
+  const presenceText = presencePhrase(presence);
   const online = conversation && !conversation.isGroup && conversation.userId ? isUserOnline(conversation.userId) : false;
   const streak = useMemo(
     () => (conversation && !conversation.isGroup ? conversationStreak(messages, myId) : 0),
@@ -3028,7 +3013,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             }}>
               {conversation.isGroup
                 ? (partnerIsTyping ? 'someone is typing…' : `${conversation.memberCount ?? 1} members · tap to manage`)
-                : partnerIsTyping ? 'typing…' : online ? 'Active now' : conversation.otherLastSeenAt ? formatLastSeen(conversation.otherLastSeenAt) : `@${conversation.username}`}
+                : partnerIsTyping ? 'typing…' : presenceText ? ttx(presenceText) : `@${conversation.username}`}
             </Text>
           </View>
         </Pressable>

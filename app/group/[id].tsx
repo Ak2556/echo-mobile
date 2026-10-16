@@ -8,6 +8,7 @@ import {
 } from 'phosphor-react-native';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { useTheme } from '../../lib/ui/theme';
+import { usePresence } from '../../lib/social/presence';
 import { Avatar } from '../../components/ui/Avatar';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -51,6 +52,7 @@ export default function GroupInfoScreen() {
 
   const [conv, setConv] = useState<RemoteConversation | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
+  usePresence(members.map(m => m.userId));
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(WARM.terracotta);
