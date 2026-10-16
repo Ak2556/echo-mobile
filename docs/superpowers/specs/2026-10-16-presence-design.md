@@ -97,7 +97,7 @@ Reciprocity matches today's client behaviour ("`onlineStatus` gates BOTH directi
 Problem: `mark_messages_read` always sets `read_at`, which the sender reads, so the toggle protects nothing.
 
 - Add a private marker, `dm_conversation_members.last_read_at` (per member), used for unread counts and badges. Backfill from each member's latest `read_at` (or the conversation's creation time).
-- `mark_messages_read` updates `last_read_at` always, and sets `direct_messages.read_at` **only when the reader's `read_receipts` is on**.
+- `mark_messages_read` updates `last_read_at` always, and sets `direct_messages.read_at` **only when the reader's `read_receipts` is on, and only for messages that were unread at that moment** (newer than the previous marker). Without that second condition, switching receipts back on would turn every message read privately while they were off into a visible receipt. The probe suite caught this while the plan was being written.
 - The unread-count paths change from `read_at is null` to `created_at > last_read_at`: `get_dm_conversations`, the conversation-list index migration's query, and the client's unread logic.
 - Hiding other people's ticks on your own screen stays client-side; it is your own display, not a privacy boundary.
 - Receipts are one-to-one only (`read_at` is a single timestamp); groups are out of scope.
