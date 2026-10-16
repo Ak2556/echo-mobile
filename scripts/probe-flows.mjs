@@ -367,7 +367,39 @@ await step('the tasks blob (carries alarm times) is last-write-wins across two w
   must(other.length === 0, 'B read A\'s blob');
 });
 
-console.log('\n[12] Cleanup');
+console.log('\n[12] Table privileges (RLS is not the only wall)');
+await step('anon can only read: no INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES or TRIGGER on any public table or view', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  const rows = sql(`select distinct table_name||':'||privilege_type from information_schema.role_table_grants where table_schema='public' and grantee='anon' and privilege_type <> 'SELECT' order by 1`).split('\n').filter(Boolean);
+  must(rows.length === 0, `anon still holds ${rows.length}: ${rows.slice(0, 6).join(', ')}`);
+});
+await step('signed-in users cannot TRUNCATE (RLS does not cover it) or add triggers to any table', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  const rows = sql(`select distinct table_name||':'||privilege_type from information_schema.role_table_grants where table_schema='public' and grantee='authenticated' and privilege_type in ('TRUNCATE','REFERENCES','TRIGGER') order by 1`).split('\n').filter(Boolean);
+  must(rows.length === 0, `authenticated still holds ${rows.length}: ${rows.slice(0, 6).join(', ')}`);
+});
+await step('public views are read-only for client roles', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  const rows = sql(`select distinct g.table_name||':'||g.privilege_type from information_schema.role_table_grants g join pg_class c on c.relname=g.table_name and c.relnamespace='public'::regnamespace where c.relkind='v' and g.table_schema='public' and g.grantee in ('anon','authenticated') and g.privilege_type <> 'SELECT'`).split('\n').filter(Boolean);
+  must(rows.length === 0, `a view is writable: ${rows.join(', ')}`);
+});
+await step('a table created later starts with the same limited privileges', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  sql(`create table public._probe_new_table (id int)`);
+  try {
+    const anonP = sql(`select coalesce(string_agg(privilege_type, ',' order by privilege_type), 'none') from information_schema.role_table_grants where table_name='_probe_new_table' and grantee='anon'`);
+    const authP = sql(`select coalesce(string_agg(privilege_type, ',' order by privilege_type), 'none') from information_schema.role_table_grants where table_name='_probe_new_table' and grantee='authenticated'`);
+    must(anonP === 'SELECT', `a new table gives anon: ${anonP}`);
+    must(authP === 'DELETE,INSERT,SELECT,UPDATE', `a new table gives authenticated: ${authP}`);
+  } finally { sql(`drop table public._probe_new_table`); }
+});
+await step('a signed-in user can still write their own row (RLS, not a blanket ban)', async () => {
+  ok(await A.client.from('profiles').update({ bio: 'still works' }).eq('id', A.id), 'own update');
+  const r = ok(await admin.from('profiles').select('bio').eq('id', A.id).single(), 'read');
+  must(r.bio === 'still works', 'the update did not land');
+});
+
+console.log('\n[13] Cleanup');
 await step('delete the throwaway users', async () => { await cleanup(); });
 
 console.log(`\n${passed} passed, ${failed} failed\n`);
