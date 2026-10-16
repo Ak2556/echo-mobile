@@ -405,7 +405,122 @@ await step('a signed-in user can still write their own row (RLS, not a blanket b
   must(r.bio === 'still works', 'the update did not land');
 });
 
-console.log('\n[13] Cleanup');
+console.log('\n[14] Presence: mutual follows only (docs/superpowers/specs/2026-10-16-presence-design.md)');
+let E, F, G, H, I, K;
+const presenceOf = async (viewer, ids) => ok(await viewer.client.rpc('get_presence', { p_user_ids: ids }), 'get_presence');
+const rowFor = (rows, id) => rows.find(r => r.user_id === id);
+const follow = async (a, b) => ok(await a.client.from('follows').insert({ follower_id: a.id, following_id: b.id }), `follow ${a.username}->${b.username}`);
+const setAge = (id, age) => sql(`update public.user_presence set last_seen_at = now() - interval '${age}' where user_id = '${id}'`);
+const setToggles = async (u, patch) => ok(await u.client.from('profiles').update(patch).eq('id', u.id), 'toggle');
+await step('five users: E and F follow each other; G follows E only; H and E follow each other but E blocks H; I follows E back but shares nothing', async () => {
+  E = await mk('pe'); F = await mk('pf'); G = await mk('pg'); H = await mk('ph'); I = await mk('pi'); created.push(E.id, F.id, G.id, H.id, I.id);
+  await follow(E, F); await follow(F, E);
+  await follow(G, E);
+  await follow(E, H); await follow(H, E);
+  await follow(E, I); await follow(I, E);
+  await setToggles(I, { online_status: false, activity_status: false });
+  ok(await E.client.from('user_blocks').insert({ blocker_id: E.id, blocked_id: H.id }), 'E blocks H');
+});
+await step('a mutual follow sees the dot after a heartbeat, and no phrase while online', async () => {
+  ok(await E.client.rpc('ping_presence'), 'ping');
+  const r = rowFor(await presenceOf(F, [E.id]), E.id);
+  must(r && r.online === true && r.last_active == null, `got ${JSON.stringify(r)}`);
+});
+await step('the profile\'s old last_seen_at is never written (old builds keep selecting it)', async () => {
+  const p = ok(await admin.from('profiles').select('last_seen_at').eq('id', E.id).single(), 'profile');
+  must(p.last_seen_at === null, `last_seen_at=${p.last_seen_at}`);
+});
+await step('a one-way follower, a stranger, a blocked user and an opted-out user all look like "offline and quiet"', async () => {
+  const hidden = { user_id: E.id, online: false, last_active: null };
+  for (const [name, viewer] of [['one-way follower G', G], ['stranger B', B], ['blocked H', H]]) {
+    const r = rowFor(await presenceOf(viewer, [E.id]), E.id);
+    must(r && r.online === false && r.last_active == null, `${name} got ${JSON.stringify(r)}`);
+  }
+  ok(await I.client.rpc('ping_presence'), 'ping I');
+  const ri = rowFor(await presenceOf(E, [I.id]), I.id);
+  must(ri && ri.online === false && ri.last_active == null, `opted-out I got ${JSON.stringify(ri)}`);
+  return `${hidden.online}`;
+});
+await step('every requested id gets a row, including ids that are not users at all', async () => {
+  const ghost = randomUUID();
+  const rows = await presenceOf(F, [E.id, ghost, ghost]);
+  must(rows.length === 2, `${rows.length} rows`);
+  const g = rowFor(rows, ghost);
+  must(g && g.online === false && g.last_active == null, `ghost row ${JSON.stringify(g)}`);
+});
+await step('reciprocity: with my own online status off, I see nobody\'s dot', async () => {
+  await setToggles(F, { online_status: false });
+  const r = rowFor(await presenceOf(F, [E.id]), E.id);
+  await setToggles(F, { online_status: true });
+  must(r.online === false, 'F saw E\'s dot while hiding their own');
+});
+await step('an opted-out person writes nothing, and a stored row is deleted when both toggles go off', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  must(Number(sql(`select count(*) from public.user_presence where user_id = '${I.id}'`)) === 0, 'I has a presence row');
+  await setToggles(E, { online_status: false, activity_status: false });
+  ok(await E.client.rpc('ping_presence'), 'ping E');
+  const gone = Number(sql(`select count(*) from public.user_presence where user_id = '${E.id}'`));
+  await setToggles(E, { online_status: true, activity_status: true });
+  ok(await E.client.rpc('ping_presence'), 'ping E again');
+  must(gone === 0, 'E\'s row survived turning both toggles off');
+});
+await step('last-active phrases follow the age, with the edges at 1h, 24h, 48h and 7d', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  const table = [['80 seconds', true, null], ['100 seconds', false, 'recent'], ['59 minutes', false, 'recent'], ['61 minutes', false, 'today'],
+    ['23 hours', false, 'today'], ['25 hours', false, 'yesterday'], ['47 hours', false, 'yesterday'], ['49 hours', false, 'this_week'],
+    ['6 days', false, 'this_week'], ['8 days', false, null]];
+  for (const [age, online, phrase] of table) {
+    setAge(E.id, age);
+    const r = rowFor(await presenceOf(F, [E.id]), E.id);
+    must(r.online === online && (r.last_active ?? null) === phrase, `${age}: expected ${online}/${phrase}, got ${r.online}/${r.last_active}`);
+  }
+});
+await step('"Last active" off hides the phrase; "Online status" off with it on shows the phrase while actually online', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  setAge(E.id, '5 minutes');
+  await setToggles(E, { activity_status: false });
+  const off = rowFor(await presenceOf(F, [E.id]), E.id);
+  await setToggles(E, { activity_status: true, online_status: false });
+  ok(await E.client.rpc('ping_presence'), 'ping');
+  setAge(E.id, '0 seconds');
+  const dotOff = rowFor(await presenceOf(F, [E.id]), E.id);
+  await setToggles(E, { online_status: true });
+  must(off.last_active == null, `phrase shown with Last active off: ${off.last_active}`);
+  must(dotOff.online === false && dotOff.last_active === 'recent', `online-off got ${JSON.stringify(dotOff)}`);
+});
+await step('heartbeats closer than 20 seconds do not rewrite the row', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  setAge(E.id, '10 seconds');
+  ok(await E.client.rpc('ping_presence'), 'early ping');
+  const early = Number(sql(`select extract(epoch from now() - last_seen_at) from public.user_presence where user_id = '${E.id}'`));
+  setAge(E.id, '30 seconds');
+  ok(await E.client.rpc('ping_presence'), 'late ping');
+  const late = Number(sql(`select extract(epoch from now() - last_seen_at) from public.user_presence where user_id = '${E.id}'`));
+  must(early >= 9, `a ping inside 20 s moved the row (${early}s old)`);
+  must(late < 5, `a ping after 30 s did not refresh the row (${late}s old)`);
+});
+await step('at most 50 ids are answered', async () => {
+  const ids = Array.from({ length: 60 }, () => randomUUID());
+  const rows = await presenceOf(F, ids);
+  must(rows.length === 50, `${rows.length} rows for 60 ids`);
+});
+await step('anon cannot call either function, and nobody can read the table', async () => {
+  const a1 = await anon.rpc('get_presence', { p_user_ids: [E.id] });
+  const a2 = await anon.rpc('ping_presence');
+  must(a1.error && a2.error, 'anon could call a presence function');
+  const t = await F.client.from('user_presence').select('user_id');
+  must(t.error || (t.data ?? []).length === 0, `F read ${t.data?.length} presence rows`);
+});
+await step('deleting an account removes its presence row', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  K = await mk('pk'); created.push(K.id);
+  ok(await K.client.rpc('ping_presence'), 'ping K');
+  must(Number(sql(`select count(*) from public.user_presence where user_id = '${K.id}'`)) === 1, 'K has no row to delete');
+  ok(await K.client.rpc('delete_account'), 'delete_account');
+  must(Number(sql(`select count(*) from public.user_presence where user_id = '${K.id}'`)) === 0, 'row survived account deletion');
+});
+
+console.log('\n[15] Cleanup');
 await step('delete the throwaway users', async () => { await cleanup(); });
 
 console.log(`\n${passed} passed, ${failed} failed\n`);
