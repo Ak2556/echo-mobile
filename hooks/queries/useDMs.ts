@@ -26,6 +26,7 @@ import {
   getOrCreateRemoteConversation,
   createRemoteGroupConversation,
   markMessagesRead,
+  fetchMyReadMarker,
   setDMPref,
   forwardDMMessage,
   deleteRemoteMessage,
@@ -730,7 +731,18 @@ export function useMarkRead() {
     onSuccess: (_data, conversationId) => {
       qc.invalidateQueries({ queryKey: ['conversations'] });
       qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+      qc.invalidateQueries({ queryKey: ['read-marker', conversationId] });
     },
+  });
+}
+
+/** My private read marker for a conversation; see isReadForViewer. */
+export function useMyReadMarker(conversationId: string | undefined) {
+  return useQuery({
+    queryKey: ['read-marker', conversationId],
+    enabled: !!conversationId && isSupabaseRemote(),
+    staleTime: 0,
+    queryFn: () => fetchMyReadMarker(conversationId!),
   });
 }
 

@@ -4070,6 +4070,17 @@ export async function markMessagesRead(conversationId: string): Promise<void> {
   if (error) captureException(error, { tags: { fn: 'markMessagesRead' } });
 }
 
+/**
+ * The time I last opened this conversation, kept privately on the server. Null when there is none yet, or
+ * when the server does not have the function (before the read-receipts migration): callers then fall back
+ * to receipts alone, which is how the app behaved before.
+ */
+export async function fetchMyReadMarker(conversationId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('get_my_read_marker', { p_conversation_id: conversationId });
+  if (error) return null;
+  return (data as string | null) ?? null;
+}
+
 /** Heartbeat. Tells the server this person is active now; the server decides whether to store it. */
 export async function pingPresence(): Promise<void> {
   const { error } = await supabase.rpc('ping_presence');
