@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { chatCompletion, geminiModelId } from './aiChat';
+import { PROVIDER_TIMEOUT_MS, chatCompletion, geminiModelId } from './aiChat';
 
 // The breaker keeps its state in Postgres through supabase-js (an esm.sh
 // import vitest cannot load). Here it is a pass-through, so these tests see
@@ -84,5 +84,65 @@ describe('geminiModelId', () => {
   it('drops only the OpenRouter vendor prefix', () => {
     expect(geminiModelId('google/gemini-2.5-flash-lite')).toBe('gemini-2.5-flash-lite');
     expect(geminiModelId('gemini-2.5-pro')).toBe('gemini-2.5-pro');
+  });
+});
+
+// A provider that accepts the connection and never answers; it only ends when its signal fires.
+const hangs = () => vi.fn((_url: string, init: RequestInit) => new Promise<Response>((_res, rej) => {
+  init.signal?.addEventListener('abort', () => rej(init.signal!.reason));
+}));
+
+describe('chatCompletion timeouts', () => {
+  it('gives every attempt a 25 second limit by default', async () => {
+    env.GEMINI_API_KEY = 'g';
+    const fetchMock = vi.fn().mockResolvedValue(ok({ content: 'hi' }));
+    vi.stubGlobal('fetch', fetchMock);
+    await chatCompletion(req);
+    expect(PROVIDER_TIMEOUT_MS).toBe(25_000);
+    expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('falls back to OpenRouter when Google stalls', async () => {
+    env.GEMINI_API_KEY = 'g';
+    env.OPENROUTER_API_KEY = 'o';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const stalled = hangs();
+    const fetchMock = vi.fn((url: string, init: RequestInit) =>
+      url.includes('openrouter.ai') ? Promise.resolve(ok({ content: 'from openrouter' })) : stalled(url, init));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const started = Date.now();
+    await expect(chatCompletion({ ...req, timeoutMs: 30 })).resolves.toMatchObject({ content: 'from openrouter' });
+    expect(Date.now() - started).toBeLessThan(2000);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports both timeouts when neither provider answers, and does so promptly', async () => {
+    env.GEMINI_API_KEY = 'g';
+    env.OPENROUTER_API_KEY = 'o';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubGlobal('fetch', hangs());
+
+    const started = Date.now();
+    await expect(chatCompletion({ ...req, timeoutMs: 30 })).rejects.toThrow(/Gemini: no answer within .*; OpenRouter: no answer within/);
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+
+  it('times out OpenRouter alone when there is no Gemini key', async () => {
+    env.OPENROUTER_API_KEY = 'o';
+    vi.stubGlobal('fetch', hangs());
+    await expect(chatCompletion({ ...req, timeoutMs: 30 })).rejects.toThrow(/^OpenRouter: no answer within/);
+  });
+
+  it('does not retry on the other provider when the caller itself aborts', async () => {
+    env.GEMINI_API_KEY = 'g';
+    env.OPENROUTER_API_KEY = 'o';
+    const stalled = hangs();
+    vi.stubGlobal('fetch', stalled);
+    const caller = new AbortController();
+    const pending = chatCompletion({ ...req, signal: caller.signal, timeoutMs: 5000 });
+    setTimeout(() => caller.abort(), 20);
+    await expect(pending).rejects.toBeTruthy();
+    expect(stalled).toHaveBeenCalledTimes(1);
   });
 });
