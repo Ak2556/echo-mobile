@@ -67,6 +67,7 @@ import {
   usePinMessage,
   useRemoteConversation,
   useMarkRead,
+  useMyReadMarker,
   useDeleteMessage,
   useToggleReaction,
   useTypingIndicator,
@@ -79,6 +80,7 @@ import { markMessagesRead, dismissConversationNotifications, fetchGroupMembers, 
 import { supabase } from '../../lib/supabase';
 import { usePresence } from '../../lib/social/presence';
 import { presencePhrase, usePresenceStore } from '../../lib/social/presenceCore';
+import { isReadForViewer } from '../../lib/social/readState';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/routing/echoUrl';
 import { ttx } from '../../lib/i18n/i18n';
@@ -2101,6 +2103,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   const editMessage = useEditMessage(id);
   const pinMessage = usePinMessage(id);
   const { mutate: doMarkRead } = useMarkRead();
+  const { data: readMarker, isLoading: markerLoading } = useMyReadMarker(remote ? id : undefined);
   const deleteMessage = useDeleteMessage(id);
   const toggleReaction = useToggleReaction(id);
   const forwardMessage = useForwardMessage();
@@ -2129,7 +2132,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                 : 'This message couldn’t be decrypted')
             : payload ? null : m.content,
           createdAt: m.createdAt,
-          isRead: !!m.readAt,
+          isRead: isReadForViewer({ senderId: m.senderId, createdAt: m.createdAt, readAt: m.readAt }, myId, readMarker),
           deletedAt: m.deletedAt,
           editedAt: m.editedAt,
           encrypted: m.encrypted ?? false,
@@ -2292,12 +2295,12 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   const firstUnreadIdRef = useRef<string | null>(null);
   const unreadSnapshotTaken = useRef(false);
   useEffect(() => {
-    if (unreadSnapshotTaken.current || messages.length === 0) return;
+    if (unreadSnapshotTaken.current || messages.length === 0 || markerLoading) return;
     unreadSnapshotTaken.current = true;
     const firstUnread = messages.find(m => !m.isRead && m.senderId !== myId && !m.deletedAt);
     firstUnreadIdRef.current = firstUnread?.id ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length]);
+  }, [messages.length, markerLoading]);
 
   // Effects
   useEffect(() => {
@@ -2306,7 +2309,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
 
   const markingReadRef = useRef(false);
   useEffect(() => {
-    if (!remote || !id || markingReadRef.current) return;
+    if (!remote || !id || markingReadRef.current || markerLoading) return;
     const hasUnread = visibleMessages.some(m => m.senderId !== myId && !m.isRead);
     if (hasUnread) {
       markingReadRef.current = true;
@@ -2316,7 +2319,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         }
       });
     }
-  }, [remote, id, visibleMessages, myId, doMarkRead]);
+  }, [remote, id, visibleMessages, myId, doMarkRead, markerLoading]);
 
   // Echo sharing
   useEffect(() => {
