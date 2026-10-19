@@ -1,0 +1,47 @@
+name: Bug report
+description: Something does not work the way it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. **Security problem?** Do not file it here: see the
+        [security policy](https://github.com/Ak2556/echo-mobile/security/policy).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Android, iOS, Web, Desktop (Mac)]
+    validations:
+      required: true
+  - type: input
+    id: build
+    attributes:
+      label: App version and device
+      description: Settings > About, and the phone model with its OS version.
+  - type: input
+    id: language
+    attributes:
+      label: Interface language
+      description: Many bugs only show in one language or in a right-to-left layout.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, recordings or logs
+      description: Remove anything private first.

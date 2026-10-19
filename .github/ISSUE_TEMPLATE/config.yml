@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Ak2556/echo-mobile/security/policy
+    about: Please do not file security problems as public issues. Follow the security policy.
+  - name: Architecture and how it works
+    url: https://github.com/Ak2556/echo-mobile/tree/main/docs/architecture
+    about: Read how the system is put together before asking how it works.
