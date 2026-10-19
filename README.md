@@ -26,18 +26,16 @@ only the two of you can read.
 
 <table>
 <tr>
-<td align="center"><img src="docs/screenshots/lang-morph.gif" width="165" alt="The Echo interface morphing between English, Hindi and Arabic" /></td>
-<td align="center"><img src="docs/screenshots/home-en.png" width="165" alt="The home feed" /></td>
-<td align="center"><img src="docs/screenshots/daily.png" width="165" alt="The Daily Question" /></td>
-<td align="center"><img src="docs/screenshots/chat.png" width="165" alt="The AI assistant" /></td>
-<td align="center"><img src="docs/screenshots/tools.png" width="165" alt="The mini-app shelf" /></td>
+<td align="center"><img src="docs/screenshots/ipad-home.jpg" height="340" alt="The home feed, with the For You, Trending, Following and Latest tabs" /></td>
+<td align="center"><img src="docs/screenshots/ipad-assistant.jpg" height="340" alt="The Echo assistant, with suggested actions and a Do mode" /></td>
+<td align="center"><img src="docs/screenshots/ipad-tools.jpg" height="340" alt="The tools shelf: tasks, habits, fitness, notes, pomodoro, money and more" /></td>
+<td align="center"><img src="docs/screenshots/ipad-settings.jpg" height="340" alt="Settings, with the presence and read-receipt privacy toggles" /></td>
 </tr>
 <tr>
-<td align="center"><sub><b>One build.</b><br />English, हिन्दी, العربية</sub></td>
 <td align="center"><sub>Home</sub></td>
-<td align="center"><sub>The Daily Question</sub></td>
 <td align="center"><sub>The assistant</sub></td>
 <td align="center"><sub>Everyday tools</sub></td>
+<td align="center"><sub>Privacy controls</sub></td>
 </tr>
 </table>
 
@@ -59,12 +57,13 @@ only the two of you can read.
 | **Media** | Cloudflare R2 behind a Worker that signs uploads and gates reads |
 | **AI** | Gemini 2.5 directly, OpenRouter as the fallback |
 | **Languages** | 26 (13 Indian, 13 global), including right-to-left layouts |
+| **Design** | Glass surfaces: Apple's native Liquid Glass on iOS 26, glassmorphism elsewhere, within a performance budget |
 | **Status** | Private beta; polish and store submission; India first |
 | **Licence** | MIT |
 
 ## Contents
 
-[Why Echo exists](#why-echo-exists) · [What it does](#what-it-does) · **[System design](#system-design)**
+[Why Echo exists](#why-echo-exists) · [What it does](#what-it-does) · [Design language](#design-language-glass-with-a-budget) · **[System design](#system-design)**
 ([overview](#overview) · [principles](#design-principles) · [stack](#technology-stack) ·
 [trust boundaries](#trust-boundaries) · [data model](#data-model) · [data flow](#data-flow) ·
 [reliability](#reliability-when-things-fail) · [delivery](#delivery-pipeline) ·
@@ -119,6 +118,28 @@ Plus a shelf of everyday tools for the days you have nothing to post.
 </tr>
 </table>
 
+<div align="center">
+
+<img src="docs/screenshots/lang-morph.gif" width="200" alt="The Echo interface morphing between English, Hindi and Arabic" />
+
+<sub><b>One build.</b> The whole interface follows the reader: English, हिन्दी, العربية.</sub>
+
+</div>
+
+<details>
+<summary><b>More screens</b></summary>
+
+<div align="center">
+
+<img src="docs/screenshots/ipad-profile.jpg" height="320" alt="A profile: stats, a rank with a progress bar, and a grid of posts" />
+<img src="docs/screenshots/ipad-mini-apps.jpg" height="320" alt="The floating mini-app panel with calculator, notes, converter, tasks and more" />
+
+<sub>A profile with its rank · the floating mini-app panel</sub>
+
+</div>
+
+</details>
+
 ## What it does
 
 | | |
@@ -130,6 +151,61 @@ Plus a shelf of everyday tools for the days you have nothing to post.
 | **Mini-apps** | Habits, tasks, notes, planner, expenses, fitness, pomodoro and more, synced across devices |
 | **Trust and safety** | Text *and* uploaded images are judged before anything reaches the feed; reports, a moderator role, statements of reasons and a six-month appeals window |
 | **Accessibility** | Accessibility labels and roles in 99 screens and components, and a reduced-motion setting wired into the theme's animation helper |
+
+## Design language: glass, with a budget
+
+Echo's surfaces are glass: translucent panels that let the content beneath show through, with a lit rim. It uses
+**Apple's native Liquid Glass** where the device has it and a hand-built **glassmorphism** everywhere else, and it
+treats the effect as something with a performance budget, not decoration. Glass is used across 56 screens and
+components.
+
+<div align="center">
+
+<img src="docs/screenshots/ipad-glass.jpg" width="560" alt="The glass tab bar over a post grid: the posts blur through it, with ghosted text visible behind the bar" />
+
+<sub>The tab bar is a glass surface: the post grid blurs through it.</sub>
+
+</div>
+
+| Surface | What it is | When it is used |
+|---|---|---|
+| **Liquid Glass** (iOS 26) | Apple's real glass (`UIGlassEffect`, through `expo-glass-effect`), which genuinely refracts what is behind it. Adjacent panes **merge like liquid**, the way Apple's own grouped controls do | Wherever iOS 26 and a binary that includes the native module are present. It replaces the two tiers below |
+| **Shader glass** | The blur and tinted fill below, plus a Skia shader that draws the refractive rim: edge refraction, colour dispersion, and a dark contact line that separates glass from a decal | High-end devices, on surfaces that are not re-rendered mid-scroll, with motion allowed |
+| **Blur glass** | Glassmorphism: a blur, a tinted translucent fill, a bevel border and a top highlight | Anything else that can afford a blur |
+| **Solid** | An opaque surface: no blur, no per-frame work | Data saver, the OS Reduce Transparency setting, low-end devices, or a theme that is not a glass theme |
+
+```mermaid
+flowchart TB
+    S["A surface asks for glass"] --> LIM("<b>Allowed to be glass at all?</b><br/>not data saver, not Reduce Transparency,<br/>not a low-end device, a glass theme")
+    LIM -->|"no"| SOLID["<b>Solid</b><br/>no blur, no per-frame work"]
+    LIM -->|"yes"| NAT("<b>Native glass available?</b><br/>iOS 26 and the module is in this binary")
+    NAT -->|"yes"| NATIVE["<b>Native Liquid Glass</b><br/>real refraction · panes merge"]
+    NAT -->|"no"| HIGH("<b>Can it afford the shader?</b><br/>high-end device · not a scrolling surface<br/>motion allowed")
+    HIGH -->|"yes"| SHADER["<b>Shader glass</b><br/>blur + refractive rim"]
+    HIGH -->|"no"| BLUR["<b>Blur glass</b><br/>glassmorphism"]
+
+    classDef q fill:#fff4e0,stroke:#d9892b,color:#1a1a1a
+    classDef a fill:#e8eefc,stroke:#4a6fd0,color:#1a1a1a
+    classDef b fill:#e8f5e9,stroke:#4c9a5b,color:#1a1a1a
+    classDef c fill:#f1f1f1,stroke:#8a8a8a,color:#1a1a1a
+    class S,LIM,NAT,HIGH q
+    class SHADER,BLUR a
+    class NATIVE b
+    class SOLID c
+```
+
+Why it is built this way:
+
+- **Honest about what a shader can do.** A Skia effect cannot sample the React Native views behind it, so it cannot
+  truly refract them. The blur underneath does the obscuring and the shader supplies the light response. Real
+  refraction comes only from the native glass, and the code says so rather than pretending otherwise.
+- **Accessibility comes first.** The OS Reduce Transparency and Reduce Motion settings, and data saver, are
+  applied before anything else, and the animated shader never runs when motion is reduced.
+- **Performance beats effect.** Surfaces re-rendered per row during a scroll never get the shader, because a live blur
+  over scrolling content was measured at about 6 ms of GPU per frame. When an effect and the frame rate conflict, the
+  effect loses.
+- **Safe to ship over the air.** Both native modules are loaded lazily and guarded, so a JavaScript update that
+  reaches an older binary falls back to blur instead of crashing at launch.
 
 ---
 

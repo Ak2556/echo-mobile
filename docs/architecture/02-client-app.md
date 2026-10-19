@@ -219,6 +219,25 @@ The full threat model, including what this does **not** protect against, is in
 - Source-reading tests in `test/` keep the system uniform (for example, that nothing hard-codes a
   colour and that user-visible text goes through the i18n layer).
 
+## Glass surfaces
+
+The interface is glass: translucent panels over the content, with a performance budget. Four looks, chosen per
+surface at render time:
+
+| Look | What it is | Chosen when |
+|---|---|---|
+| **Native Liquid Glass** | iOS 26's `UIGlassEffect` through `expo-glass-effect`; adjacent panes merge | The tier is not solid, iOS 26 supports it and the binary includes the module |
+| **Shader** | Blur plus a Skia shader that draws the refractive rim (refraction, dispersion, a contact line) | A high-end device, a non-`hot` surface, motion allowed, and Skia present |
+| **Blur** | `GlassPanel`: blur, tinted fill, bevel and highlight | Everything else that can afford it |
+| **Solid** | An opaque surface | A non-glass theme, data saver, OS Reduce Transparency, or a low-end device |
+
+The decision lives in `lib/ui/performance.ts` (`resolvePerformanceProfile`, which applies the accessibility and
+device limits) and `components/ui/liquidGlassTier.ts` (`resolveSurface`, which applies a per-call-site ceiling and
+checks that Skia is really in this binary). A shader cannot sample the React Native views behind it, so it cannot
+truly refract them; the blur does the obscuring. Native glass is the only tier with real refraction. Both native
+modules are required lazily inside a `try`, because JavaScript updates reach binaries that predate the dependency and
+a bare import there would crash at launch rather than lose an effect.
+
 ## Performance rules
 
 Performance is a stated priority, ahead of visual effects.
