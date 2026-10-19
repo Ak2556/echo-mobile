@@ -137,7 +137,7 @@ service-role key, a platform compromise, a legal demand served on Echo.
 
 ## Dependencies and the supply chain
 
-- Edge functions import their dependencies by URL; most pin an exact version.
+- Edge functions import their dependencies by URL or npm specifier, and every one pins an exact version (a test fails on a floating range), so a deploy cannot silently pull in an untested release.
 - `npm audit` findings are in build and test tooling (Metro, Jest, Tailwind, the Expo CLI), and the
   vulnerable packages were checked against the shipped bundle's source map and are not in it.
   `npm audit fix --force` must not be run: it downgrades the router to a different major version.

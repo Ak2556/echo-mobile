@@ -6,8 +6,8 @@
 // Verifies the requesting user is caller or callee on the calls row,
 // then mints a LiveKit access token signed with the server-side API secret.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { AccessToken } from 'npm:livekit-server-sdk@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { AccessToken } from 'npm:livekit-server-sdk@2.18.0';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
