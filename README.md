@@ -104,41 +104,36 @@ Plus a shelf of everyday tools for the days you have nothing to post.
 
 ## How it works
 
+### System design
+
 ```mermaid
-flowchart LR
-    U(["Person"]) --> APP
+flowchart TB
+    U(["Person"]) --> APP["<b>Echo app</b><br/>iOS · Android · Web · Mac<br/>screens · voice · E2EE · cache · outbox"]
 
-    subgraph Device["One React Native codebase"]
-        APP["Echo app<br/>iOS · Android · Web · Mac"]
-        LOCAL[("On-device state<br/>cached server data<br/>outbox of pending writes")]
-    end
+    APP -->|"JWT: reads, writes, RPC"| API["<b>Supabase API</b><br/>Auth · PostgREST + RPC · Realtime<br/>(Realtime pushes changes back)"]
+    APP -->|"signed upload, media reads"| WK["<b>Media worker</b><br/>Cloudflare<br/>signs uploads · gates reads"]
 
-    subgraph SB["Supabase (Tokyo)"]
-        API["PostgREST + RPC · Auth · Realtime"]
-        PG[("Postgres<br/>row-level security")]
-        JOBS["Job queues<br/>pgmq + pg_cron"]
-        FN["24 edge functions"]
-    end
+    API --> PG[("<b>Postgres</b> · Tokyo<br/>row-level security · triggers · functions<br/>pgmq queues · pg_cron")]
+    WK --> R2[("<b>R2</b><br/>media")]
 
-    subgraph CF["Cloudflare"]
-        W["Media worker"]
-        R2[("R2")]
-    end
+    PG -->|"enqueue, then kick"| FN["<b>Edge functions</b><br/>worker · AI · voice · webhooks<br/>(write back as the service role)"]
+    APP -.->|"invoke"| FN
 
-    subgraph EXT["Third parties"]
-        AI["Gemini<br/>(OpenRouter fallback)"]
-        PUSH["Expo push"]
-    end
+    FN --> AI["Gemini<br/>OpenRouter fallback"]
+    FN --> PUSH["Expo push<br/>to the device"]
+    PAY["Razorpay<br/>RevenueCat"] -->|"signed webhooks"| FN
 
-    APP <--> LOCAL
-    APP -->|"JWT: reads, writes, RPC"| API --> PG
-    APP -->|"invoke"| FN
-    APP -->|"signed upload"| W --> R2
-    PG -->|"enqueue"| JOBS -->|"kick"| FN
-    FN --> PG
-    FN --> AI
-    FN --> PUSH
+    classDef client fill:#fff4e0,stroke:#d9892b,color:#1a1a1a
+    classDef edge fill:#e8f5e9,stroke:#4c9a5b,color:#1a1a1a
+    classDef sb fill:#e8eefc,stroke:#4a6fd0,color:#1a1a1a
+    classDef ext fill:#f1f1f1,stroke:#8a8a8a,color:#1a1a1a
+    class APP,U client
+    class WK,R2 edge
+    class API,PG,FN sb
+    class AI,PUSH,PAY ext
 ```
+
+<sub>**Orange** the device · **blue** Supabase · **green** Cloudflare · **grey** third parties</sub>
 
 Three ideas explain most of the design:
 
@@ -150,9 +145,145 @@ Three ideas explain most of the design:
 3. **The device works without the network.** Writes that must survive go through an outbox, and server data
    is cached for seven days.
 
-**[Read the architecture →](docs/architecture/README.md)** Seven short pages: components and trust boundaries,
-the client, the backend, twelve key flows as sequence diagrams, security, operations, and a log of every
-major decision and what it cost.
+### Data flow
+
+Where data goes, what travels with it, and where it is readable. Read the labels as the *content* of each arrow.
+
+```mermaid
+flowchart TB
+    P(["Person"]) -->|"voice · text · media"| APP["<b>Echo app</b> · the device is untrusted<br/>keys · session · decrypted DMs live only here"]
+
+    APP -->|"rows · RPC arguments<br/>DMs as ciphertext only"| LOGIC["<b>Triggers + RPC</b><br/>limits · guards · consequences"]
+    APP -->|"bytes, to a URL the worker signed"| R2[("<b>R2</b><br/>media")]
+
+    LOGIC <-->|"allowed by RLS"| T[("<b>Tables</b><br/>RLS on all 95")]
+    LOGIC -->|"enqueue work"| JQ[("<b>Job queues</b>")]
+    JQ --> WRK["<b>Worker</b><br/>server code"]
+    WRK -->|"text and images to judge"| AI["Gemini"]
+    WRK -->|"notification payload"| EXPO["Expo push"]
+    WRK -->|"verdicts · notifications"| T
+
+    classDef client fill:#fff4e0,stroke:#d9892b,color:#1a1a1a
+    classDef edge fill:#e8f5e9,stroke:#4c9a5b,color:#1a1a1a
+    classDef sb fill:#e8eefc,stroke:#4a6fd0,color:#1a1a1a
+    classDef ext fill:#f1f1f1,stroke:#8a8a8a,color:#1a1a1a
+    class P,APP client
+    class R2 edge
+    class LOGIC,T,JQ,WRK sb
+    class AI,EXPO ext
+```
+
+| What | Where it is readable |
+|---|---|
+| **Posts, comments, profiles** | By anyone the database's row-level security allows, including signed-out visitors for public content |
+| **One-to-one text messages** | **Only on the two devices**, when the recipient has published a key (otherwise the conversation shows no lock). The server stores ciphertext and the keys never leave the device |
+| **Media** | In R2. Public buckets are cached; direct-message media is readable only by members of that conversation |
+| **Prompts and transcripts** | Sent to Gemini (OpenRouter as fallback) in the United States to be judged or answered |
+| **Date of birth and push tokens** | Never selectable by a client; only the owner can write them |
+
+### Four flows in detail
+
+<details open>
+<summary><b>Publishing a post:</b> hidden until moderation approves it, and nobody is notified until then</summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as App
+    participant DB as Postgres
+    participant Q as pgmq
+    participant W as worker
+    participant M as Gemini
+
+    C->>DB: insert post, check_content false
+    Note over DB: write guards and rate limits run first
+    DB->>Q: enqueue moderation
+    DB-->>C: saved, invisible to everyone else
+    W->>Q: claim the moderation job
+    W->>M: judge the text and images
+    alt passed
+        W->>DB: verdict, check_content true, embedding
+        Note over DB: visible now, and the approval itself<br/>queues the follower fan-out
+        W->>DB: notify followers, 500 at a time
+    else failed
+        W->>DB: record the decision with reasons
+        Note over DB: stays hidden, the author can appeal
+    else model unavailable
+        W->>Q: retry with backoff, up to six times
+        Note over DB: stays hidden meanwhile
+    end
+```
+
+</details>
+
+<details>
+<summary><b>Sending a direct message:</b> sealed on the device, ciphertext on the server</summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant S as Sender app
+    participant DB as Postgres
+    participant R as Recipient app
+
+    S->>S: encrypt with a fresh key, wrap it for each recipient device
+    S->>DB: send_encrypted_dm(ciphertext, wrapped keys)
+    Note over DB: blocks, rate limits, conversation update, push
+    DB-->>R: realtime event (members only, by RLS)
+    R->>DB: fetch the message and its own wrapped key
+    R->>R: unwrap, decrypt
+```
+
+</details>
+
+<details>
+<summary><b>A voice command:</b> the device answers first, the model only when it must</summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as Person
+    participant D as Device
+    participant E as voice-command
+    participant M as Gemini
+
+    U->>D: hold to talk
+    D->>D: match rules and the destination table
+    alt recognised on the device
+        D->>D: act now: no network, nothing to fail
+    else not recognised
+        D->>E: transcript, with the user's token
+        E->>M: one call: transcript, intent, spoken reply
+        M-->>E: result
+        E-->>D: intent and reply
+    end
+    Note over D: dictation fills a field and never submits
+```
+
+</details>
+
+<details>
+<summary><b>Uploading media:</b> straight to object storage, through a worker that decides who may</summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as App
+    participant W as Media worker
+    participant R as R2
+
+    C->>W: request an upload URL, with the user's token
+    W->>W: check the token and the bucket policy
+    W-->>C: short-lived signed URL
+    C->>R: PUT the bytes directly
+    Note over C,R: the bytes never touch the app backend
+```
+
+</details>
+
+**[Read the architecture →](docs/architecture/README.md)** covers the other eight flows (sign-in, the feed algorithm,
+push, presence, read receipts, private-account follows, account deletion, the daily question), plus components and
+trust boundaries, the client, the backend, security, operations, and a log of every major decision and what it cost.
 
 ## Engineering you can verify
 
