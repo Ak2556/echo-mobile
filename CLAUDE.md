@@ -43,7 +43,7 @@ E2E is Maestro (`e2e/*.yaml`, `.github/workflows/maestro-e2e.yml`), not part of 
 
 ### Routing
 
-Expo Router, file-based, `app/`. `app/_layout.tsx` is a large root that composes the whole runtime: `PersistQueryClientProvider` (TanStack Query persisted to MMKV via `lib/queryPersister`), WatermelonDB `DatabaseProvider`, `AuthListenerProvider`, `ShareIntentProvider`, plus app-wide overlays (`ToastProvider`, `CommandPalette`, `FloatingMiniApp`, `VoiceControl`, `NowReadingBar`, `TutorialOverlay`, `ConsentBanner`).
+Expo Router, file-based, `app/`. `app/_layout.tsx` is a large root that composes the whole runtime: `PersistQueryClientProvider` (TanStack Query persisted to MMKV via `lib/core/queryPersister`), `AuthListenerProvider`, `ShareIntentProvider`, plus app-wide overlays (`ToastProvider`, `CommandPalette`, `FloatingMiniApp`, `VoiceControl`, `NowReadingBar`, `TutorialOverlay`, `ConsentBanner`).
 
 Tabs in `app/(tabs)/`; everything else stack-pushes from the root. Cold-start routing must wait for `useRootNavigationState` before navigating — several past bugs came from routing before the navigator mounted.
 
@@ -61,11 +61,11 @@ Tabs in `app/(tabs)/`; everything else stack-pushes from the root. Cold-start ro
 
 Imports are relative in `app/`; `@/*` maps to the repo root via tsconfig `paths`.
 
-### State: three layers
+### State: two layers and an outbox
 
 1. **Zustand** (`store/useAppStore.ts`) — composed from five slices. Persistence goes through `store/persist.ts`, which prefers MMKV and falls back to AsyncStorage; on the fallback path the store hydrates asynchronously after creation, so early reads can see defaults.
 2. **TanStack Query** — all server data, persisted across restarts through `mmkvPersister`.
-3. **WatermelonDB** (`lib/database`) — offline-first local DB for messaging, synced via `hooks/useDatabaseSync`.
+3. **Outbox** (`store/outbox.ts` + `lib/core/outboxProcessor.ts`) — writes that must survive offline. (`lib/database` is a WatermelonDB layer still imported by the root layout (it constructs the SQLite database at startup) and reset on sign-out, but **unread and unwritten**: the sync that fed it was removed in `49ee25ec`. DM threads are TanStack Query pages, merged in place by `lib/social/messageCache.ts`.)
 
 Writes that must survive offline go through `store/outbox.ts` + `lib/core/outboxProcessor.ts`.
 

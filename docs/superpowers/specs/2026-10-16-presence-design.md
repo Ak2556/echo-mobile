@@ -1,6 +1,6 @@
 # Presence: who is online, who was last active, and who may know
 
-Status: design, awaiting the owner's review. No code written. Feature freeze is on; the owner asked for this design directly (2026-10-16).
+Status: **implemented** (server 2026-10-17, client and read receipts the same week). Written 2026-10-16 at the owner's request during the feature freeze. This is the design as approved; where the code differs, the code is right. Section 8 (read receipts) shipped as its own series.
 
 ## 1. Decisions (owner, 2026-10-16)
 
