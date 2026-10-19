@@ -229,6 +229,12 @@ Realtime pushes row changes to subscribed clients, filtered by the same RLS. The
 deliberately small: **`notifications`, `direct_messages` and `calls`**. The client subscribes to the
 first two for the inbox and the open conversation.
 
+The "N new echoes" pill on Home is **not** realtime either: subscribing to every new post would be a global,
+unfiltered fan-out, so it polls an indexed count once a minute while Home is focused and the app is in the foreground
+([`hooks/useNewEchoes.ts`](../../hooks/useNewEchoes.ts)). A test
+([`test/realtimeTables.test.ts`](../../test/realtimeTables.test.ts)) fails if the client subscribes to a table outside
+the publication, because such a subscription connects and never fires, and a probe checks the real publication.
+
 Presence is *not* a realtime channel. It used to be one public channel that every signed-in client
 joined, which meant an O(users) fan-out on every join and leave and no server-side privacy. It is
 now a heartbeat the client writes and a function it polls (see [key flows](04-key-flows.md#presence)).
