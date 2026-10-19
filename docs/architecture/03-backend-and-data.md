@@ -115,7 +115,7 @@ skipped by a client:
 
 | On | Before the write | After the write |
 |---|---|---|
-| `public_echoes` | `guard_client_writes` (counters and moderation fields are not client-writable), `guard_media_provenance` (media URLs must be from allowed hosts), rate limits (12 per hour, 40 per day) | enqueue moderation, enqueue the follower fan-out, adjust counters |
+| `public_echoes` | `guard_client_writes` (counters and moderation fields are not client-writable), `guard_media_provenance` (media URLs must be from allowed hosts), rate limits (12 per hour, 40 per day) | enqueue moderation and adjust counters. **When the post is approved** (`check_content` turns true): enqueue the follower fan-out and notify the author of a quoted post |
 | `direct_messages` | `enforce_dm_blocks`, rate limits (30 per minute, 500 per day) | update the conversation's last message, create the push notification |
 | `follows` | rate limits (60 per hour, 200 per day) | adjust the follower count, notify |
 | `notifications` | none | enqueue a `push` job |
@@ -156,7 +156,7 @@ flowchart LR
 | `push` | the trigger on `notifications` | Delivers one notification to every device its recipient is signed in on; drops it if it is more than six hours old, since the in-app inbox still has it |
 | `moderation` | the trigger on new or edited echoes | Judges the text and images, records the verdict, and embeds the post if it passed |
 | `media_moderation` | new marketplace listings and avatars | Judges the image; hides a failing listing, clears a failing avatar |
-| `post_fanout` | the trigger on new echoes | Turns a post into `friend_post` notifications for its followers, in batches of 500, re-enqueueing a cursor until done |
+| `post_fanout` | the trigger that fires when an echo is approved | Turns a post into `friend_post` notifications for its followers, in batches of 500, re-enqueueing a cursor until done |
 | `broadcast` | the daily-question cron | Sends today's question to a batch of up to 100 users on every device each has |
 | `entitlements` | the RevenueCat webhook | Reads a user's resolved subscription state and writes `user_entitlements`; safe to run in any order |
 | `verification` | the identity-verification function | Retries a face-verification the model could not judge at submit time |
