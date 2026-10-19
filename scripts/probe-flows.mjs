@@ -632,7 +632,16 @@ await step('a post approved long after publication is not announced', async () =
   must(fanoutJobs([e3]) === 0, `${fanoutJobs([e3])} fan-out job(s) for a post approved 7 hours late`);
 });
 
-console.log('\n[18] Cleanup');
+console.log('\n[18] Realtime only publishes what the client subscribes to (test/realtimeTables.test.ts)');
+await step('the realtime publication holds exactly the tables the client listens to', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  const have = sql(`select tablename from pg_publication_tables where pubname = 'supabase_realtime' order by 1`).split('\n').filter(Boolean);
+  const want = ['calls', 'direct_messages', 'notifications'];
+  must(JSON.stringify(have) === JSON.stringify(want), `publication has ${have.join(', ')}; the client expects ${want.join(', ')}`);
+  return have.join(', ');
+});
+
+console.log('\n[19] Cleanup');
 await step('delete the throwaway users', async () => { await cleanup(); });
 
 console.log(`\n${passed} passed, ${failed} failed\n`);

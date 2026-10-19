@@ -582,7 +582,7 @@ Claims are cheap, so each of these points at the thing that enforces it.
 | **It can be rebuilt** | An empty database rebuilds from the repository in about a second; a nightly dump is restore-tested | [`supabase/recovery/`](supabase/recovery/README.md) · [backups](docs/architecture/06-operations.md#backups-and-recovery) |
 | **Updates reach people safely** | Over-the-air updates keyed to a native fingerprint; the Android bundle is 9.7 MB | [Operations](docs/architecture/06-operations.md#over-the-air-updates-and-the-fingerprint) |
 
-**Tested at three levels:** 2,421 unit tests, 92 flow probes that run real flows against a local Supabase stack
+**Tested at three levels:** 2,437 unit tests, 93 flow probes that run real flows against a local Supabase stack
 with throwaway users, and an end-to-end flow on a real release APK for every pull request that changes app
 code. Several tests exist to stop a class of mistake: a voice phrase for every screen, a grant for every
 selected column, a policy for every upsert, an exact version for every edge-function import. See [testing](docs/testing.md).
@@ -626,7 +626,7 @@ Without Supabase credentials the app starts with remote features switched off, s
 
 ```bash
 npm run typecheck && npm run lint && npm test   # what CI runs
-npm run probe:flows       # 92 outcome checks against a local Supabase stack
+npm run probe:flows       # 93 outcome checks against a local Supabase stack
 npm run audit:backend     # call each production RPC for real
 node scripts/gen-icon-shim.mjs   # after adding or removing a Phosphor icon import
 npm run i18n:generate     # fill translation gaps from English

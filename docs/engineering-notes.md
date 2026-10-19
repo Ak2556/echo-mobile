@@ -65,7 +65,7 @@ npm run android           # native Android build
 npm run typecheck         # tsc --noEmit
 npm run lint
 npm test                  # Vitest
-npm run probe:flows       # 92 outcome checks against a local Supabase stack
+npm run probe:flows       # 93 outcome checks against a local Supabase stack
 npm run audit:backend     # call each production RPC for real
 npm run legal:sbom        # regenerate NOTICE and sbom.json
 npm run i18n:generate     # regenerate machine translations from English

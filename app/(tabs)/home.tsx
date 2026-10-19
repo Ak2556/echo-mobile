@@ -39,7 +39,7 @@ import { FollowingEmptyState } from '../../components/feed/FollowingEmptyState';
 import { getDeviceTier } from '../../lib/ui/deviceTier';
 import { usePerformanceProfile } from '../../lib/ui/performance';
 import { groupDiscovery } from '../../lib/feed/echoUX';
-import { useRealtimeNewEchoes } from '../../lib/core/realtime';
+import { useNewEchoes } from '../../hooks/useNewEchoes';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
@@ -456,7 +456,7 @@ export default function DiscoverScreen() {
   } = useInfiniteFeed();
   const { refreshing: pulling, onRefresh: onPull } = useUserRefresh(refetch);
   const feed = useMemo(() => feedData?.pages.flat() ?? [], [feedData]);
-  const realtime = useRealtimeNewEchoes();
+  const newEchoes = useNewEchoes();
   // Voice contextual actions operate on the post currently in view.
   const remoteLike = useToggleRemoteLike();
   const remoteBm = useToggleRemoteBookmark();
@@ -748,16 +748,16 @@ export default function DiscoverScreen() {
         </View>
       ) : (
         <>
-          {realtime.count > 0 && (
+          {newEchoes.count > 0 && (
             <Pressable
-              onPress={() => { realtime.reset(); refetch(); }}
+              onPress={() => { newEchoes.reset(); refetch(); }}
               style={{
                 position: 'absolute', top: headerHeight + 6, alignSelf: 'center', zIndex: 30,
                 backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full,
               }}
             >
               <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
-                {t('home.newEchoes', { count: realtime.count, noun: realtime.count > 1 ? 'echoes' : 'echo' })}
+                {t('home.newEchoes', { count: newEchoes.count, noun: newEchoes.count > 1 ? 'echoes' : 'echo' })}
               </Text>
             </Pressable>
           )}

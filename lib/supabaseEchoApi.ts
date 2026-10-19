@@ -584,6 +584,24 @@ type RankedFeedRow = SupabaseEchoRow & SupabaseProfileRow & { rank_score: number
 
 export type RankedFeedCursor = { score: number; id: string } | undefined;
 
+/**
+ * How many approved echoes were published after `sinceIso`, other than the viewer's own. Drives the
+ * "N new echoes" pill on Home. A head request with an exact count, so no rows travel; it is served by
+ * idx_public_echoes_check_content (check_content, created_at desc). Row-level security still decides
+ * what the viewer may see, so a private author's posts are not counted for a non-follower.
+ */
+export async function fetchNewEchoCount(sinceIso: string, excludeAuthorId?: string): Promise<number> {
+  let q = supabase
+    .from('public_echoes')
+    .select('id', { count: 'exact', head: true })
+    .eq('check_content', true)
+    .gt('created_at', sinceIso);
+  if (excludeAuthorId) q = q.neq('author_id', excludeAuthorId);
+  const { count, error } = await q;
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function fetchRankedFeed(options: {
   limit?: number;
   gravity?: number;
