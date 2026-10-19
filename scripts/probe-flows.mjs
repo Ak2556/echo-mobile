@@ -592,7 +592,47 @@ await step('deleting an account removes its read markers', async () => {
   must(Number(sql(`select count(*) from public.dm_read_state where user_id = '${S2.id}'`)) === 0, 'marker survived account deletion');
 });
 
-console.log('\n[17] Cleanup');
+console.log('\n[17] Notifications wait for moderation (supabase/migrations/20261019120000_notify_after_moderation.sql)');
+// A post is inserted hidden. Its text (the 140-character preview in a follower's notification, or in the
+// "someone quoted you" notification) must not leave the database until the post is approved.
+let WR, RD, QA, e1, e2, e3, qEcho;
+const fanoutJobs = (ids) => Number(sql(`select count(*) from (select message from pgmq.q_post_fanout union all select message from pgmq.a_post_fanout) q where message->>'echo_id' in (${ids.map(i => `'${i}'`).join(',')})`));
+const quoteNotifs = (target) => Number(sql(`select count(*) from public.notifications where type = 'quote' and target_id = '${target}'`));
+await step('setup: R follows writer W; Q has an echo that W will quote', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  WR = await mk('nw'); RD = await mk('nr'); QA = await mk('nq'); created.push(WR.id, RD.id, QA.id);
+  ok(await RD.client.from('follows').insert({ follower_id: RD.id, following_id: WR.id }), 'R follows W');
+  qEcho = ok(await QA.client.from('public_echoes').insert({ author_id: QA.id, title: 'orig', prompt: 'original', response: 'original body' }).select('id').single(), 'Q posts').id;
+});
+await step('inserting a post and a quote queues no fan-out and sends no quote notification', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  e1 = ok(await WR.client.from('public_echoes').insert({ author_id: WR.id, title: 'p1', prompt: 'a preview that must not leak yet', response: 'r' }).select('id').single(), 'post').id;
+  e2 = ok(await WR.client.from('public_echoes').insert({ author_id: WR.id, title: 'p2', prompt: 'a quote that must not leak yet', response: 'r', quoted_echo_id: qEcho }).select('id').single(), 'quote').id;
+  must(fanoutJobs([e1, e2]) === 0, `${fanoutJobs([e1, e2])} fan-out job(s) were queued before approval`);
+  must(quoteNotifs(e2) === 0, 'the quoted author was notified before approval');
+  const mod = Number(sql(`select count(*) from (select message from pgmq.q_moderation union all select message from pgmq.a_moderation) q where message->>'echo_id' in ('${e1}','${e2}')`));
+  must(mod === 2, `expected 2 moderation jobs, found ${mod}`);
+});
+await step('approval queues one fan-out per post and tells the quoted author once', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  ok(await admin.from('public_echoes').update({ check_content: true }).in('id', [e1, e2]), 'approve');
+  must(fanoutJobs([e1]) === 1 && fanoutJobs([e2]) === 1, `fan-out jobs: e1=${fanoutJobs([e1])} e2=${fanoutJobs([e2])}`);
+  must(quoteNotifs(e2) === 1, `quote notifications: ${quoteNotifs(e2)}`);
+});
+await step('an edit hides the post and its re-approval does not notify the quoted author twice', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  ok(await admin.from('public_echoes').update({ check_content: false }).eq('id', e2), 'hide');
+  ok(await admin.from('public_echoes').update({ check_content: true }).eq('id', e2), 're-approve');
+  must(quoteNotifs(e2) === 1, `quote notifications after re-approval: ${quoteNotifs(e2)}`);
+});
+await step('a post approved long after publication is not announced', async () => {
+  if (skipSql) return 'skipped (no PROBE_DB_URL)';
+  e3 = ok(await admin.from('public_echoes').insert({ author_id: WR.id, title: 'old', prompt: 'old post', response: 'r', check_content: false, created_at: new Date(Date.now() - 7 * 3600e3).toISOString() }).select('id').single(), 'old post').id;
+  ok(await admin.from('public_echoes').update({ check_content: true }).eq('id', e3), 'approve late');
+  must(fanoutJobs([e3]) === 0, `${fanoutJobs([e3])} fan-out job(s) for a post approved 7 hours late`);
+});
+
+console.log('\n[18] Cleanup');
 await step('delete the throwaway users', async () => { await cleanup(); });
 
 console.log(`\n${passed} passed, ${failed} failed\n`);

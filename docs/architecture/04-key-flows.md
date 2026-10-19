@@ -63,8 +63,7 @@ sequenceDiagram
     C->>DB: insert public_echoes with check_content false
     Note over DB: before the write: client-writable fields, media hosts, rate limits
     DB->>Q: enqueue moderation (trigger)
-    DB->>Q: enqueue post_fanout (trigger)
-    DB-->>C: saved, but invisible to everyone else
+    DB-->>C: saved, but invisible to everyone else, and nothing is sent to anyone
     DB->>W: pg_net kick after commit
     W->>Q: claim a moderation job
     W->>M: judge the text and any images
@@ -72,6 +71,10 @@ sequenceDiagram
         M-->>W: pass
         W->>DB: record the verdict, set check_content true, store the embedding
         Note over DB: the post is now visible
+        DB->>Q: the approval itself enqueues post_fanout (trigger)
+        W->>Q: claim a post_fanout job
+        W->>DB: fanout_friend_post_batch, 500 followers at a time
+        Note over DB: follower notifications are created,<br/>each one queues a push
     else failed
         M-->>W: fail
         W->>DB: record the decision with its reasons
@@ -80,16 +83,19 @@ sequenceDiagram
         W->>Q: retry with backoff, up to six attempts
         Note over DB: stays hidden meanwhile
     end
-    W->>Q: claim a post_fanout job
-    W->>DB: fanout_friend_post_batch, 500 followers at a time
-    Note over DB: follower notifications are created,<br/>each one queues a push
 ```
 
 - **Publishing is fail-closed.** The row is created hidden (`check_content = false`) and only a
   passing verdict makes it visible. A throttled or unfunded AI key does not quietly weaken
   moderation: it stops publishing. That is the intended failure direction, and worth knowing before
   debugging "posts are not appearing".
-- **A post costs the same to publish for 12 followers or 12 million.** The post queues exactly one
+- **Nothing about a post leaves the database before it is approved.** A follower's notification
+  carries the first 140 characters of the post, and so does the notice to the author of a quoted
+  post, so both are sent when `check_content` turns true, not when the row is inserted. Otherwise
+  text the classifier had not yet judged, or went on to reject, would reach lock screens. A post that
+  is approved more than six hours after it was written (an overturned appeal, a dismissed report) is
+  not announced, and an edit that is re-approved does not notify anyone twice.
+- **A post costs the same to publish for 12 followers or 12 million.** Approval queues exactly one
   fan-out job, and the worker expands it in keyset batches of 500; the unique `(user, echo)` key
   makes a retried batch a no-op.
 - Offline, the insert goes through the device's [outbox](02-client-app.md#state-two-layers-and-an-outbox)

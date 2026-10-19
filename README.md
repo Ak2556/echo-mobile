@@ -168,7 +168,7 @@ Claims are cheap, so each of these points at the thing that enforces it.
 | **It can be rebuilt** | An empty database rebuilds from the repository in about a second; a nightly dump is restore-tested | [`supabase/recovery/`](supabase/recovery/README.md) · [backups](docs/architecture/06-operations.md#backups-and-recovery) |
 | **Updates reach people safely** | Over-the-air updates keyed to a native fingerprint; the Android bundle is 9.7 MB | [Operations](docs/architecture/06-operations.md#over-the-air-updates-and-the-fingerprint) |
 
-**Tested at three levels:** 2,413 unit tests, 87 flow probes that run real flows against a local Supabase stack
+**Tested at three levels:** 2,413 unit tests, 92 flow probes that run real flows against a local Supabase stack
 with throwaway users, and an end-to-end flow on a real release APK for every pull request that changes app
 code. Several tests exist to stop a class of mistake: a voice phrase for every screen, a grant for every
 selected column, a policy for every upsert. See [testing](docs/testing.md).
