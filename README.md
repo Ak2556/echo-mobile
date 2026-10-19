@@ -12,7 +12,7 @@ Built for India · 26 languages · one codebase for iOS, Android, web and deskto
 
 <p>
 <img src="https://img.shields.io/github/actions/workflow/status/Ak2556/echo-mobile/ci.yml?branch=main&label=CI&style=flat-square" alt="CI" />
-<img src="https://img.shields.io/badge/tests-1%2C267-brightgreen?style=flat-square" alt="1,267 tests" />
+<img src="https://img.shields.io/badge/tests-2%2C413-brightgreen?style=flat-square" alt="2,413 tests" />
 <img src="https://img.shields.io/badge/Expo-SDK%2054-000000?style=flat-square&logo=expo&logoColor=white" alt="Expo SDK 54" />
 <img src="https://img.shields.io/badge/React%20Native-0.81-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React Native 0.81" />
 <img src="https://img.shields.io/badge/languages-26-4C7A34?style=flat-square" alt="26 languages" />
@@ -99,28 +99,29 @@ Plus a shelf of everyday tools, for the days you have nothing to post.
 
 | | |
 |---|---|
-| Screens | 92 — every one reachable by voice, enforced by a test |
-| Database tables | 68 — row-level security on all 68, across 201 policies |
-| Edge functions | 23 |
-| Migrations | 187 |
+| Screens | 93 route files — every one reachable by voice, enforced by a test |
+| Database tables | 95 — row-level security on all 95, across 220 policies |
+| Edge functions | 24 |
+| Migrations | 223 |
 | Mini-apps | 22 in the catalog, 23 routes in the tree |
 | Languages | 26 — 13 Indian, 13 global |
-| First-party TypeScript | ~111,100 lines |
-| Unit tests | 1,267 across 124 files, Vitest |
+| First-party TypeScript | ~115,000 lines, excluding tests and generated translations |
+| Unit tests | 2,413 across 270 files, Vitest |
+| Flow probes | 87 outcome checks against a local Supabase stack — see [Testing](#testing) |
 
-Counts are derived from the tree and the live database rather than maintained by hand. Re-derive them before quoting them anywhere; the table and policy counts need a live database to check.
+Counts were re-derived from the tree and the live database on 2026-10-19 rather than maintained by hand. Re-derive them before quoting them anywhere; the table and policy counts need a live database to check.
 
 ### Feature surface
 
 | Area | What ships |
 |---|---|
-| **Social** | Posts with image and video, comments, reactions, reposts, follows, bookmarks, blocks, mutes, notifications |
-| **Messaging** | One-to-one and group DMs with media, reactions, read state and presence |
+| **Social** | Posts with image and video, comments, reactions, reposts, follows, bookmarks, blocks, mutes, notifications. **Private accounts**: following one needs approval, and the rule is enforced by the database, not the app |
+| **Messaging** | One-to-one and group DMs with media and reactions. One-to-one text is end-to-end encrypted on the device. **Read receipts keep their promise**: what you have read lives in a private marker, and the sender sees a receipt only if you left receipts on. **Presence** is a green dot and a coarse "last active" ("today", "this week" — never a timestamp), shown only between people who follow each other, with two independent toggles, all enforced in SQL |
 | **Voice** | Hold to talk; speech, intent and reply resolved in one model round trip, mapped onto 19 intents. Every screen reachable, 17 long-form fields accepting dictation, lists scrolling a page at a time. Dictation fills the field and never submits — a mis-transcription should not be able to publish, or reply to someone, on its own |
 | **AI** | Assistant chat with tool-calling, runtime interface translation, embeddings-based recommendation |
 | **Daily Question** | A seeded, self-healing question bank with reactions and divergent-view discovery |
 | **Mini-apps** | Habits, tasks, notes, planner, expenses, fitness, pomodoro and more, syncing across devices |
-| **Community & commerce** | Salons, office hours, a peer marketplace, first-party in-feed advertising |
+| **Community & commerce** | A peer marketplace and first-party in-feed advertising. Salons, office hours, stories, quests, badges, Year in Echo and live audio are built but **switched off in production** by remote feature flags (on today: daily question, mini-apps, end-to-end-encrypted DMs) |
 | **Trust & safety** | An LLM moderation gate on text *and* uploaded images before anything reaches the feed; reports queue, moderator role, statement-of-reasons, six-month appeals window |
 
 ---
@@ -139,7 +140,7 @@ Counts are derived from the tree and the live database rather than maintained by
    (Hono · aws4fetch)             · Postgres + row-level security
    · signed R2 uploads            · Auth — email/phone OTP, Google, Apple
    · DM media access control      · Realtime
-          │                       · 23 Deno edge functions
+          │                       · 24 Deno edge functions
           │                           │
    Cloudflare R2                 Google Gemini 2.5
    5 media buckets               direct, OpenRouter as fallback
@@ -167,11 +168,11 @@ flowchart TB
 
     subgraph Edge["Edge"]
         WORKER["Cloudflare Worker<br/>Hono · aws4fetch"]
-        FUNCS["23 Deno edge functions"]
+        FUNCS["24 Deno edge functions"]
     end
 
     subgraph Data["Data"]
-        PG[("Postgres<br/>68 tables · RLS on all")]
+        PG[("Postgres<br/>95 tables · RLS on all")]
         RT["Realtime"]
         AUTH["Auth — OTP, Google, Apple"]
         R2[("Cloudflare R2<br/>5 media buckets")]
@@ -336,7 +337,7 @@ Three cache policies because the objects behave differently. A distributable bui
 
 ### Core data model
 
-The social core, of 68 tables.
+The social core, of 95 tables.
 
 <div align="center">
 
@@ -429,6 +430,10 @@ Writes that must survive a dead connection go through the outbox rather than the
 ### Security posture
 
 - Row-level security on every table in the public schema, with no permissive policy on anything private
+- Table privileges are minimal on top of RLS: `anon` is read-only, and neither client role holds `TRUNCATE`, `REFERENCES`, `TRIGGER` or `MAINTAIN`; default privileges are lowered so a new table does not regain them
+- Privacy rules live in SQL, not in the client: private-account follows, who may see presence, and when a read receipt is written are each enforced where a modified client cannot get around them. Presence is only reachable through one function that returns an identical row for "not allowed" and "offline"
+- One-to-one text DMs are sealed on the device (`lib/e2ee/`); the server holds ciphertext
+- Chat and moderation model calls time out after 25 seconds and fall back to a second provider; AI usage is metered on every branch of the chat function
 - Policies use the `(select auth.uid())` InitPlan form, so the planner evaluates identity once per statement rather than once per row scanned
 - The session is encrypted at rest — AES-256-GCM, key in the Keychain, payload in AsyncStorage
 - PKCE with SHA-256 challenges; a custom-scheme redirect never carries a refresh token
@@ -463,17 +468,24 @@ npm run lint
 npm test                  # Vitest
 npm run legal:sbom        # regenerate NOTICE and sbom.json
 npm run i18n:generate     # regenerate machine translations from English
+npm run probe:flows       # 87 outcome checks against a local Supabase stack
+npm run audit:backend     # call each production RPC for real
+node scripts/gen-icon-shim.mjs   # after adding or removing a Phosphor icon import
 ```
 
 ---
 
 ## Testing
 
-**Unit — 1,267 tests across 124 files, Vitest.** Covers feed filtering and scoring, the engagement model, publish validation, marketplace logic, URL safety, the age gate boundaries, i18n date handling and the voice intent dispatcher.
+**Unit — 2,413 tests across 270 files, Vitest.** Covers feed filtering and scoring, the engagement model, publish validation, marketplace logic, URL safety, the age gate boundaries, i18n date handling, the voice intent dispatcher, presence and read-state logic, and source guards that read the code or the migrations.
 
-Several exist to pin bugs that were invisible in review rather than to describe behaviour: that the auth lock actually serializes, that the session on disk is unreadable, that every `profiles` column the client selects is granted, that the DM thread renders through the real bubble renderer, that no screen ships without a way to reach it by voice.
+Several exist to pin bugs that were invisible in review rather than to describe behaviour: that the auth lock actually serializes, that the session on disk is unreadable, that every `profiles` column the client selects is granted, that the DM thread renders through the real bubble renderer, that no screen ships without a way to reach it by voice, that every client `upsert` has an UPDATE policy to land on, that no client opens the old public presence channel, and that the icon shim in the bundle matches the icons the app imports.
 
-**End-to-end — Maestro.** A cold-launch flow runs on every pull request against an Android emulator: first paint, and the Terms and Privacy routes. It first got as far as running the flow on 24 August 2026 — before that it had never built an APK at all, dying in six seconds on a device error, then on Gradle heap during packaging. That first real run failed, and usefully: it caught a bug no unit test could, in that the legal routes were unreachable without an account. The fix landed the same day, so the first fully green run is still ahead of us. Budget ~40 minutes for the job; the release build alone is around 31.
+**End-to-end — Maestro.** A cold-launch flow runs on every pull request against an Android emulator, on a real release APK: first paint, and the Terms and Privacy routes. The last eight pull-request runs are green. Budget ~40 minutes for the job; the release build alone is around 31.
+
+**Flow probes — 87 checks, `npm run probe:flows`.** Not unit tests: they run the real flows against a local Supabase stack with throwaway users and assert outcomes — sign-up, posting, follows and private accounts, DMs including a stranger and a blocked user, the daily question, the privileges a client role actually holds, presence and read receipts (including that a receipt toggle hides what was read), account erasure leaving no row behind, and the edge-function auth gates. The first run found that editing a Daily Question answer had never worked (an upsert with no UPDATE policy). They are not in CI. `npm run audit:backend` is the production counterpart: it calls each RPC for real.
+
+**Recovery drill.** `supabase/recovery/` plus `scripts/rebuild-db.sh` rebuild an empty database from the repository alone in about a second (schema, auth and storage objects, queues, cron, seed content), and the probes pass on the result. See [`supabase/recovery/README.md`](supabase/recovery/README.md). Migrations alone do not replay faithfully, which is why the bundle exists.
 
 The signed-in flows — bottom-tab navigation and DM threads — stay manual, because sign-in is a one-time code sent to a real inbox and CI has no way to receive it. Flows and their prerequisites are documented in [`e2e/`](e2e/).
 
@@ -495,7 +507,7 @@ constants/            legal text, entity facts, age policy
 types/                shared TypeScript types
 assets/  public/      app images and fonts; static web files, including the download page
 
-supabase/             migrations (the schema's source of truth) and Deno edge functions
+supabase/             migrations (the schema's source of truth), Deno edge functions, and recovery/ (rebuild an empty database)
 cloudflare/           the R2 media worker
 services/             encoder service (not yet deployed)
 plugins/              Expo config plugins: all native changes live here, never in android/ or ios/
@@ -504,7 +516,7 @@ desktop/              Electron shell for the Mac app
 test/  e2e/           shared test stubs and suites; Maestro flows
 loadtest/             k6 load tests and security chaos scripts
 scripts/              generators (i18n, SBOM, web assets) and one-off operator tools
-docs/                 runbooks, deployment notes, design specs
+docs/                 runbooks, deployment notes, design specs and plans (docs/superpowers/)
 .github/  .eas/       CI workflows; EAS workflows
 ```
 
@@ -518,8 +530,8 @@ Build output (`dist/`, `release/`, `vendor/`) is ignored too.
 Real, current, and each would otherwise cost you an afternoon.
 
 - **`android/` and `ios/` are generated.** They are prebuild output and gitignored. Change `app.json`, never the native projects.
-- **Write RLS policies as `(select auth.uid())`, never bare `auth.uid()`.** Postgres treats the bare call as volatile and re-runs it per row scanned; the subquery form is evaluated once per statement. All 167 policies that reference it were converted in `20260824160000`; a new one written the old way silently reintroduces the problem on the table it guards.
-- **Adding a column to `profiles`? Grant it.** That table has column-level grants, so a single ungranted column fails the *entire* select with `42501` — one forgotten grant takes out every screen running that query. `lib/profilesColumnGrants.test.ts` fails the build if the client selects something that was never granted. `upsert` needs the INSERT grant too, not just UPDATE: Postgres checks column INSERT privileges on an `INSERT … ON CONFLICT` whichever path runs.
+- **Write RLS policies as `(select auth.uid())`, never bare `auth.uid()`.** Postgres treats the bare call as volatile and re-runs it per row scanned; the subquery form is evaluated once per statement. All 167 policies that referenced it were converted in `20260824160000`; five have drifted back to the bare form since (checked 2026-10-19), and a new one written the old way silently reintroduces the problem on the table it guards.
+- **Adding a column to `profiles`? Grant it.** That table has column-level grants, so a single ungranted column fails the *entire* select with `42501` — one forgotten grant takes out every screen running that query. `test/profilesColumnGrants.test.ts` fails the build if the client selects something that was never granted. `upsert` needs the INSERT grant too, not just UPDATE: Postgres checks column INSERT privileges on an `INSERT … ON CONFLICT` whichever path runs.
 - **Moderation is fail-closed.** A post stays hidden until the classifier passes it. A throttled or unfunded AI key does not degrade moderation — it silently stops publishing.
 - **Offline has two layers.** WatermelonDB backs direct messages; `useDatabaseSync()` runs from `app/_layout.tsx` on mount and on foreground. Everything else relies on TanStack Query persisted to MMKV with a seven-day window, plus AsyncStorage and server sync for mini-apps.
 - **The feed is ranked**, not chronological — follows, engagement and content embeddings. A chronological **Latest** tab is the alternative.
@@ -527,6 +539,13 @@ Real, current, and each would otherwise cost you an afternoon.
 - **The mini-app catalog is the source of truth** for what ships: [`lib/mini-apps/miniAppCatalog.ts`](lib/mini-apps/miniAppCatalog.ts).
 - **Anything you can tap, you should be able to say.** A test walks `app/` and fails if a screen has no voice phrase, or a multiline field no dictation handler. Exclusions live in the test with a written reason each.
 - **Translate from English, and check the output.** `scripts/translate_i18n.py` seeded every language from the *Bengali* block and truncated each value; it now refuses to run. `npm run i18n:generate` is the supported path, and [`lib/i18n/i18nIntegrity.test.ts`](lib/i18n/i18nIntegrity.test.ts) fails the build on those signatures.
+- **Presence and read receipts are server-enforced; do not move them back to the client.** Presence is `ping_presence()` (a heartbeat) and `get_presence(ids)`; nothing exposes a timestamp, and the old public `online-users` channel is gone (a test fails if it returns). What a person has read is `dm_read_state`; `direct_messages.read_at` is written only for a reader who left receipts on, and only for messages unread at that moment.
+- **A new table starts with no client write grants.** Default privileges were lowered, so add the `GRANT` the client needs next to its policies. A client `upsert` needs an INSERT *and* an UPDATE policy: an upsert is an insert that becomes an update under RLS, and `test/upsertPolicies.test.ts` fails the build otherwise.
+- **Never call a function a role cannot execute from a superuser `SET ROLE` session** while testing: it can crash the backend. Check `has_function_privilege` first.
+- **Postgrest builders are lazy.** `void supabase.from(...).update(...)` never sends anything (it is why `last_seen_at` was null on every device); a guard test bans it.
+- **Adding or removing a Phosphor icon import? Run `node scripts/gen-icon-shim.mjs`.** The package barrel would put all 1,512 icons in the bundle; Metro resolves it to a generated file with the 261 the app uses, which cut the Android Hermes bundle from 14.15 to 9.73 MB. A test fails if the file is stale.
+- **Count round trips, not queries.** Measured from the dev machine, every Supabase endpoint — even `/auth/v1/health`, which touches no database — costs about 200 ms on a warm connection, because the project is in Tokyo; edge functions add about 200 ms more. Query time is around 1 ms. A screen is as fast as its number of sequential requests.
+- **Compare bundle sizes only between builds made with the same flags.** `expo export` with and without `--dump-sourcemap` differs by megabytes; OTA updates are built with it.
 - **Do not run `npm audit fix --force`.** It clears four advisories by downgrading `expo-router` from 6.x to 5.1.11, which is a different framework. Of the four, `image-size` reaches the tree only through metro and never ships, and the `decode-uri-component` patch is ESM-only while `query-string` requires it as CommonJS — forcing it breaks deep-link parsing. There is no safe upgrade today, and the audit will keep saying otherwise.
 - **Unresolved legal facts are greppable:** `grep -rn "\[\[" constants/legal/`
 
@@ -538,10 +557,12 @@ Stated plainly, because each is easy to assume the other way.
 
 | Limitation | Detail |
 |---|---|
-| **End-to-end encryption is 1:1 text only, and ships off** | One-to-one text, link, contact and shared-Echo DMs are sealed on the device (`lib/e2ee/`) when the remote flag `e2eeSend` is on and the recipient has a published device key. Photos, voice, groups and older messages are not. The flag ships off; until it is flipped, the DM path writes plaintext. What may and may not be claimed publicly is in `docs/runbook/e2ee-rollout.md`. |
+| **End-to-end encryption is 1:1 text only** | One-to-one text, link, contact and shared-Echo DMs are sealed on the device (`lib/e2ee/`) when the remote flag `e2eeSend` is on (it has been on in production since 2026-09-29) and the recipient has a published device key. Photos, voice, groups and older messages are not. Keys are held on the device, so a restored database backup holds ciphertext nobody can read without them. What may and may not be claimed publicly is in `docs/runbook/e2ee-rollout.md`. |
+| **Several features are built but switched off** | Salons, office hours, stories, quests, badges, Year in Echo and live audio are behind remote flags that are off in production. They are not part of the launch surface. |
+| **Presence and read receipts are not yet checked on two real devices** | The server rules are covered by the flow probes and the client logic by unit tests; what is still owed is two real accounts on two phones confirming the dot, the phrase and the receipt toggle. Hindi text for the new presence strings is a draft awaiting native-speaker review. |
 | **Video is not visually moderated** | Text and still images pass an LLM gate before reaching the feed. A still-image model cannot read an mp4, and no frame is extracted during transcode. |
 | **Subscriptions are not wired** | The RevenueCat webhook and entitlements table exist server-side, but the client ships no purchase SDK and `getCurrentPlan()` returns `free` for everyone. |
-| **Translation data is being regenerated** | The interface localisation works; the strings do not yet. A generator seeded every language from the Bengali block rather than English and dropped the last character of each value — 228 shipped strings end in a bare virama, impossible in every Indic script involved. The pipeline is fixed and validated; the re-run from English is pending. |
+| **Translation data is being regenerated** | The interface localisation works; the strings do not yet. Hindi has been hand-corrected in the places testers reached (tab bar, common labels, profile) and is awaiting native review; the other languages still carry the bad data. A generator seeded every language from the Bengali block rather than English and dropped the last character of each value — 228 shipped strings end in a bare virama, impossible in every Indic script involved. The pipeline is fixed and validated; the re-run from English is pending. |
 | **Licence attribution is provisional** | Copyright is attributed to an individual GitHub handle rather than an operating entity. Under review before launch. |
 
 ---
@@ -554,7 +575,7 @@ Issues and pull requests are welcome. Before opening one:
 2. Run `npm run lint`, `npm run typecheck` and `npm test`. CI runs all three on every push and pull request to `main`; matching them locally is faster than a round trip.
 3. Keep commits focused, and explain *why* in the body rather than restating the diff.
 
-Coverage tests will fail the build if a new screen has no voice phrase, a new multiline field no dictation handler, or a new `profiles` column no grant. These are deliberate: they encode promises the product makes.
+Coverage tests will fail the build if a new screen has no voice phrase, a new multiline field no dictation handler, a new `profiles` column no grant, a client `upsert` no UPDATE policy, or an icon import is missing from the generated shim. These are deliberate: they encode promises the product makes.
 
 ---
 
