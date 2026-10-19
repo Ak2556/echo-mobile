@@ -17,7 +17,7 @@ import Animated, {
 import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { EchoWordmark } from '../../components/ui/EchoWordmark';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowUpRight, At, Bell, Waveform, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope, PlayCircle } from 'phosphor-react-native';
+import { ArrowUpRight, At, Bell, Waveform, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
 import { isAutoUsername } from '../../lib/social/username';
 import { AdCard } from "../../components/feed/AdCard";
 import { useRandomAd } from "../../hooks/useAds";
@@ -369,7 +369,6 @@ function FeedScopeRail({
 }) {
   const { colors, font, fontSizes, radius } = useTheme();
   const layout = useResponsiveLayout();
-  const router = useRouter();
   return (
     <View style={{ marginHorizontal: layout.gutter, marginTop: 2, marginBottom: 14 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -400,28 +399,6 @@ function FeedScopeRail({
             </Pressable>
           );
         })}
-        {/* Reverb is a mode of Home, not a tab: the full-screen video player. It is a way in, never
-            "selected" like the filters, so it carries an icon and opens the player. */}
-        <Pressable
-          onPress={() => { void feedbackHaptic('select'); router.push('/(tabs)/watch'); }}
-          accessibilityRole="button"
-          accessibilityLabel={t('nav.watch')}
-          style={{
-            minHeight: 36,
-            borderRadius: radius.full,
-            backgroundColor: colors.surface,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
-            paddingHorizontal: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}
-        >
-          <PlayCircle size={ICON_SIZE.sm} color={colors.textSecondary} weight="fill" />
-          <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.small }]}>{t('nav.watch')}</Text>
-        </Pressable>
       </ScrollView>
     </View>
   );
