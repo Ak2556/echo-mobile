@@ -1,7 +1,7 @@
 # End-to-end encryption for 1:1 direct messages
 
 **Date:** 2026-09-10
-**Status:** approved design, not yet implemented
+**Status:** implemented. The client (`lib/e2ee/`) and server shipped in September 2026, and the `e2eeSend` flag has been on in production since 2026-09-29. This document is the original design and threat model; where the code differs, the code is right.
 **Scope:** one-to-one conversations only. Group DMs are explicitly out.
 
 ## Why

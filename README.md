@@ -36,7 +36,7 @@ Built for India · 26 languages · one codebase for iOS, Android, web and deskto
 
 **Product** · [The problem](#most-people-dont-type-the-way-they-think) · [Download](#download)
 
-**Engineering** · [What's built](#whats-built) · [Architecture](#architecture) · [Getting started](#getting-started) · [Testing](#testing) · [Repository layout](#repository-layout)
+**Engineering** · [What's built](#whats-built) · [Architecture](#architecture) · [Architecture in depth](docs/architecture/README.md) · [Getting started](#getting-started) · [Testing](#testing) · [Repository layout](#repository-layout)
 
 **Contributing** · [Engineering notes](#engineering-notes) · [Known limitations](#known-limitations) · [Contributing](#contributing) · [Security](#security) · [Legal](#legal-and-compliance) · [Roadmap](#roadmap) · [Licence](#licence)
 
@@ -128,6 +128,11 @@ Counts were re-derived from the tree and the live database on 2026-10-19 rather 
 
 ## Architecture
 
+> **Going deeper?** [`docs/architecture/`](docs/architecture/README.md) explains the whole system in
+> seven short pages: the components and trust boundaries, the client, the backend and data model, the
+> twelve flows that matter (with sequence diagrams), security and privacy, operations, and a log of
+> the decisions and what each one cost. This section is the summary.
+
 ```
         iOS · Android · Web · Electron desktop
                         │
@@ -163,7 +168,7 @@ flowchart TB
 
     subgraph Client_Runtime["Client runtime — one codebase"]
         RN["React Native 0.81 · Expo SDK 54<br/>expo-router"]
-        STATE["TanStack Query + MMKV<br/>Zustand · WatermelonDB"]
+        STATE["TanStack Query + MMKV<br/>Zustand · outbox"]
     end
 
     subgraph Edge["Edge"]
@@ -386,7 +391,7 @@ erDiagram
 
 </div>
 
-### State, in three layers
+### State, in two layers and an outbox
 
 <div align="center">
 
@@ -398,20 +403,16 @@ flowchart LR
     subgraph L2["TanStack Query — server state"]
         Q["persisted to MMKV<br/>7-day window"]
     end
-    subgraph L3["WatermelonDB — offline messaging"]
-        W["SQLite, synced by useDatabaseSync"]
-    end
 
     Z -->|"persist.ts — MMKV, AsyncStorage fallback"| DISK[("device")]
     Q --> DISK
-    W --> DISK
     OUT["outbox.ts + outboxProcessor"] --> NET["server, when reachable"]
     Z -.->|"writes that must survive offline"| OUT
 ```
 
 </div>
 
-Writes that must survive a dead connection go through the outbox rather than the query layer, so a post written on a train is sent when the train arrives rather than lost when the screen closes.
+Writes that must survive a dead connection go through the outbox rather than the query layer, so a post written on a train is sent when the train arrives rather than lost when the screen closes. Direct messages are server state like any other: cached by the query layer, with realtime events merged into the cached pages in place, and an optimistic "pending" bubble until the server confirms. (A WatermelonDB/SQLite layer is still imported by the root layout, which constructs the database at startup, and is reset on sign-out, but nothing reads or writes it; the sync that fed it was removed in `49ee25ec`.)
 
 ### Stack
 
@@ -533,7 +534,7 @@ Real, current, and each would otherwise cost you an afternoon.
 - **Write RLS policies as `(select auth.uid())`, never bare `auth.uid()`.** Postgres treats the bare call as volatile and re-runs it per row scanned; the subquery form is evaluated once per statement. All 167 policies that referenced it were converted in `20260824160000`; five have drifted back to the bare form since (checked 2026-10-19), and a new one written the old way silently reintroduces the problem on the table it guards.
 - **Adding a column to `profiles`? Grant it.** That table has column-level grants, so a single ungranted column fails the *entire* select with `42501` — one forgotten grant takes out every screen running that query. `test/profilesColumnGrants.test.ts` fails the build if the client selects something that was never granted. `upsert` needs the INSERT grant too, not just UPDATE: Postgres checks column INSERT privileges on an `INSERT … ON CONFLICT` whichever path runs.
 - **Moderation is fail-closed.** A post stays hidden until the classifier passes it. A throttled or unfunded AI key does not degrade moderation — it silently stops publishing.
-- **Offline has two layers.** WatermelonDB backs direct messages; `useDatabaseSync()` runs from `app/_layout.tsx` on mount and on foreground. Everything else relies on TanStack Query persisted to MMKV with a seven-day window, plus AsyncStorage and server sync for mini-apps.
+- **Offline is the query cache plus the outbox.** TanStack Query is persisted to MMKV with a seven-day window, so the last-seen feed, profile and conversation list open instantly; the outbox replays writes made offline (likes, follows, posts, comments, daily answers). Direct messages are not queued in the outbox. Mini-apps keep their own AsyncStorage copy and sync to the server.
 - **The feed is ranked**, not chronological — follows, engagement and content embeddings. A chronological **Latest** tab is the alternative.
 - **Account deletion goes through the `delete-account` edge function**, not the `delete_account()` RPC. The RPC only reaches Postgres; media lives in R2 and has to be purged first.
 - **The mini-app catalog is the source of truth** for what ships: [`lib/mini-apps/miniAppCatalog.ts`](lib/mini-apps/miniAppCatalog.ts).

@@ -1,0 +1,10 @@
+# Who is asked to review what. The default owner reviews everything; the paths below are the ones
+# where a mistake is hardest to take back, listed so a change there is never missed.
+*                              @Ak2556
+/supabase/migrations/          @Ak2556
+/supabase/recovery/            @Ak2556
+/supabase/functions/           @Ak2556
+/cloudflare/                   @Ak2556
+/lib/e2ee/                     @Ak2556
+/constants/legal/              @Ak2556
+/.github/workflows/            @Ak2556
