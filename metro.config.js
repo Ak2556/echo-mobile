@@ -7,15 +7,14 @@ const path = require("path");
 
 const config = getSentryExpoConfig(__dirname);
 
-// Use the compiled Phosphor entrypoint to avoid runtime cycles in the package's TypeScript source.
+// Phosphor: the package barrel bundles all 1,512 icons (22% of the Hermes bytecode). Resolve it to a
+// generated file that requires only the icons the app imports, from the compiled CommonJS output
+// (the TypeScript source has runtime cycles). Regenerate with `node scripts/gen-icon-shim.mjs`.
 const originalResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === "phosphor-react-native") {
     return {
-      filePath: path.resolve(
-        __dirname,
-        "node_modules/phosphor-react-native/lib/commonjs/index.js"
-      ),
+      filePath: path.resolve(__dirname, "lib/core/phosphorShim.js"),
       type: "sourceFile",
     };
   }
