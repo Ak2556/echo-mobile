@@ -14,7 +14,7 @@ go in issues or pull requests**: follow the [security policy](SECURITY.md).
 | Run the app | [README, Getting started](README.md#getting-started) |
 | Understand how it fits together | [`docs/architecture/`](docs/architecture/README.md), starting with the overview |
 | Know why something is built the way it is | [`docs/architecture/07-decision-log.md`](docs/architecture/07-decision-log.md) |
-| Avoid the traps that cost the most time | [README, Engineering notes](README.md#engineering-notes) |
+| Avoid the traps that cost the most time | [Engineering notes](docs/engineering-notes.md) |
 
 ## Ground rules
 

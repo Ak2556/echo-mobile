@@ -12,6 +12,8 @@
 
 | Operations | |
 |---|---|
+| [`engineering-notes.md`](engineering-notes.md) | Repository layout, commands and the gotchas that cost an afternoon |
+| [`testing.md`](testing.md) | What is tested, and how |
 | [`runbook/monitoring.md`](runbook/monitoring.md) | Reading the health signals and what to do about each |
 | [`runbook/e2ee-rollout.md`](runbook/e2ee-rollout.md) | The encryption rollout and what may be claimed publicly |
 | [`deployment/android-build.md`](deployment/android-build.md) | Building the Android app locally |
@@ -19,6 +21,6 @@
 
 | Compliance | |
 |---|---|
-| [`compliance/`](compliance/) | Legal and regulatory notes |
+| [`compliance/`](compliance/README.md) | Legal and regulatory notes: terms, privacy policy, age policy |
 
 When a document here disagrees with the code, the code is right: fix the document.
