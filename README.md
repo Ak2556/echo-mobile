@@ -26,18 +26,16 @@ only the two of you can read.
 
 <table>
 <tr>
-<td align="center"><img src="docs/screenshots/lang-morph.gif" width="165" alt="The Echo interface morphing between English, Hindi and Arabic" /></td>
-<td align="center"><img src="docs/screenshots/home-en.png" width="165" alt="The home feed" /></td>
-<td align="center"><img src="docs/screenshots/daily.png" width="165" alt="The Daily Question" /></td>
-<td align="center"><img src="docs/screenshots/chat.png" width="165" alt="The AI assistant" /></td>
-<td align="center"><img src="docs/screenshots/tools.png" width="165" alt="The mini-app shelf" /></td>
+<td align="center"><img src="docs/screenshots/ipad-home.jpg" height="340" alt="The home feed, with the For You, Trending, Following and Latest tabs" /></td>
+<td align="center"><img src="docs/screenshots/ipad-assistant.jpg" height="340" alt="The Echo assistant, with suggested actions and a Do mode" /></td>
+<td align="center"><img src="docs/screenshots/ipad-tools.jpg" height="340" alt="The tools shelf: tasks, habits, fitness, notes, pomodoro, money and more" /></td>
+<td align="center"><img src="docs/screenshots/ipad-settings.jpg" height="340" alt="Settings, with the presence and read-receipt privacy toggles" /></td>
 </tr>
 <tr>
-<td align="center"><sub><b>One build.</b><br />English, हिन्दी, العربية</sub></td>
 <td align="center"><sub>Home</sub></td>
-<td align="center"><sub>The Daily Question</sub></td>
 <td align="center"><sub>The assistant</sub></td>
 <td align="center"><sub>Everyday tools</sub></td>
+<td align="center"><sub>Privacy controls</sub></td>
 </tr>
 </table>
 
@@ -118,6 +116,28 @@ Plus a shelf of everyday tools for the days you have nothing to post.
 </td>
 </tr>
 </table>
+
+<div align="center">
+
+<img src="docs/screenshots/lang-morph.gif" width="200" alt="The Echo interface morphing between English, Hindi and Arabic" />
+
+<sub><b>One build.</b> The whole interface follows the reader: English, हिन्दी, العربية.</sub>
+
+</div>
+
+<details>
+<summary><b>More screens</b></summary>
+
+<div align="center">
+
+<img src="docs/screenshots/ipad-profile.jpg" height="320" alt="A profile: stats, a rank with a progress bar, and a grid of posts" />
+<img src="docs/screenshots/ipad-mini-apps.jpg" height="320" alt="The floating mini-app panel with calculator, notes, converter, tasks and more" />
+
+<sub>A profile with its rank · the floating mini-app panel</sub>
+
+</div>
+
+</details>
 
 ## What it does
 
