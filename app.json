@@ -99,6 +99,8 @@
       ],
       "expo-web-browser",
       "expo-video",
+      "expo-live-activity",
+      "./plugins/withEchoLiveActivityUI",
       [
         "expo-audio",
         {

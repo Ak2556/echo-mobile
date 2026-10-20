@@ -47,6 +47,7 @@ import { altForPublish } from '../lib/media/altText';
 import { PhotoEditor } from '../components/feed/PhotoEditor';
 import { isAppOnline } from '../lib/core/net';
 import { outbox } from '../store/outbox';
+import { beginLiveActivity, endLiveActivity, publishingActivity, type PublishStage } from '../lib/core/liveActivity';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
 import { ON_MEDIA, ON_STATUS, SHADOW, STAGE } from '../lib/ui/fixedColors';
 
@@ -421,6 +422,15 @@ export default function CreatePostScreen() {
     publishingRef.current = true;
     setPublishing(true);
 
+    // Photo and video posts spend real time uploading, so they get a Dynamic Island card that
+    // outlives the screen. Text and poll posts publish before there is anything to show.
+    const liveMedia = postType === 'photo' ? 'photo' : postType === 'video' ? 'video' : null;
+    let liveStage: PublishStage = 'failed';
+    if (liveMedia) {
+      const card = publishingActivity('uploading', liveMedia, ttx);
+      beginLiveActivity('publishing', card.state, card.config);
+    }
+
     try {
       const hashtags = parsedTags;
       const remoteAuthorId = isSupabaseRemote() ? await getSessionUserId() : null;
@@ -569,6 +579,7 @@ export default function CreatePostScreen() {
       const publishedEcho = remoteEchoId ? { ...echo!, id: remoteEchoId } : echo!;
       const isFirst = (publishedEchoes?.length ?? 0) === 0;
       publishEcho(publishedEcho);
+      liveStage = publishedEcho.isPending ? 'queued' : 'posted';
       if (remoteAuthorId) {
         qc.setQueriesData({ queryKey: ['feed'] }, (old: unknown) => prependEchoToFeedCache(old, publishedEcho));
         qc.setQueryData(['profile', remoteAuthorId], (old: unknown) => {
@@ -618,6 +629,7 @@ export default function CreatePostScreen() {
     } catch (e) {
       Alert.alert('Publish failed', (e as Error).message);
     } finally {
+      if (liveMedia) endLiveActivity('publishing', publishingActivity(liveStage, liveMedia, ttx).state, 5000);
       publishingRef.current = false;
       setPublishing(false);
     }

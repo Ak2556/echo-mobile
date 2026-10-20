@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import {
-  View, Text, Pressable, Alert, TextInput,
+  View, Text, Pressable, Alert, TextInput, Platform,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import {
@@ -28,6 +28,7 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../../components/ui/Toast';
+import { beginLiveActivity, endLiveActivity, recordingActivity, recordingSavedState } from '../../lib/core/liveActivity';
 import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/mini-apps/miniAppMedia';
 import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/mini-apps/voiceMemos';
 import { ttx } from '../../lib/i18n/i18n';
@@ -68,6 +69,7 @@ export default function VoiceMemoApp() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordStartRef = useRef(0);
   const playbackSubscriptionRef = useRef<{ remove: () => void } | null>(null);
 
   const pulseScale = useSharedValue(1);
@@ -85,6 +87,7 @@ export default function VoiceMemoApp() {
     playbackSubscriptionRef.current?.remove();
     soundRef.current?.remove();
     if (timerRef.current) clearInterval(timerRef.current);
+    if (recordStartRef.current) endLiveActivity('recording', recordingSavedState(0, ttx));
   }, []);
 
   const startRecording = async () => {
@@ -93,12 +96,22 @@ export default function VoiceMemoApp() {
       Alert.alert('Permission needed', 'Microphone access is required to record voice memos.');
       return;
     }
-    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+    // iOS: keep recording when the user leaves the app (the app already declares the audio
+    // background mode). The Dynamic Island card below says "Recording", so it has to be true.
+    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, allowsBackgroundRecording: Platform.OS === 'ios' });
     await recorder.prepareToRecordAsync();
     recorder.record();
     setIsRecording(true);
     setRecordDuration(0);
-    timerRef.current = setInterval(() => setRecordDuration(d => d + 1), 1000);
+    const startedAt = Date.now();
+    recordStartRef.current = startedAt;
+    const card = recordingActivity(startedAt, ttx);
+    beginLiveActivity('recording', card.state, card.config);
+    // From the clock, not a tick count, so the time stays right if the timer is throttled.
+    timerRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      setRecordDuration(elapsed);
+    }, 1000);
     pulseScale.value = withRepeat(
       withSequence(withTiming(1.18, { duration: 600 }), withTiming(1, { duration: 600 })),
       -1,
@@ -110,16 +123,23 @@ export default function VoiceMemoApp() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     cancelAnimation(pulseScale);
     pulseScale.value = withTiming(1);
+    const elapsed = Math.floor((Date.now() - recordStartRef.current) / 1000);
+    recordStartRef.current = 0;
     await recorder.stop();
     await setAudioModeAsync({ allowsRecording: false });
     const uri = recorder.uri;
     setIsRecording(false);
-    if (!uri) { showToast('Recording failed', 'Error'); return; }
+    if (!uri) {
+      endLiveActivity('recording', recordingSavedState(elapsed, ttx));
+      showToast('Recording failed', 'Error');
+      return;
+    }
+    endLiveActivity('recording', recordingSavedState(elapsed, ttx), 4000);
     const memo: Memo = {
       id: Date.now().toString(),
       title: `Recording ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
       uri,
-      duration: recordDuration,
+      duration: elapsed,
       createdAt: new Date().toISOString(),
     };
     const updated = [memo, ...memos];

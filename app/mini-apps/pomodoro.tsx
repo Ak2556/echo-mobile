@@ -27,11 +27,12 @@ import { CollapsibleSection } from '../../components/mini-apps/CollapsibleSectio
 import { progressSummary, showFocusPresets, showStageRail } from '../../lib/mini-apps/pomodoroView';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
-import { useI18n } from '../../lib/i18n/i18n';
+import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { showToast } from '../../components/ui/Toast';
 import { createFocusBeatPlayer, FOCUS_BEATS, type FocusBeatId } from '../../lib/mini-apps/focusBeats';
 import { schedulePomodoroTimerNotification } from '../../lib/mini-apps/pomodoroRuntime';
+import { beginLiveActivity, endLiveActivity, pomodoroActivity, pomodoroDoneState } from '../../lib/core/liveActivity';
 import {
   ActivePomodoroTimer, PomodoroDoc, PomodoroMode, PomodoroSettings, DEFAULT_POMODORO_SETTINGS,
   clearActivePomodoroTimer, goalStreak, loadActivePomodoroTimer, loadPomodoro,
@@ -665,6 +666,8 @@ export default function PomodoroScreen() {
     setMode(nextMode);
     setSeconds(durationSeconds);
     setRunning(true);
+    const card = pomodoroActivity(nextMode, nextLabel, now, now + durationSeconds * 1000, ttx);
+    beginLiveActivity('pomodoro', card.state, card.config);
   }, [running]);
 
   const stopActiveTimer = useCallback(() => {
@@ -673,6 +676,7 @@ export default function PomodoroScreen() {
     activeRef.current = null;
     cancelTimerNotification(active?.notificationId);
     void clearActivePomodoroTimer();
+    if (active) endLiveActivity('pomodoro', pomodoroDoneState(active.mode, ttx));
   }, [cancelTimerNotification]);
 
   const completeTimer = useCallback(async (completedTimer?: ActivePomodoroTimer | null) => {
@@ -688,6 +692,7 @@ export default function PomodoroScreen() {
       setDraftTotalSecs(null);
       cancelTimerNotification(notificationId);
       await clearActivePomodoroTimer();
+      endLiveActivity('pomodoro', pomodoroDoneState(completedMode, ttx), 8000);
       tap('success');
       if (completedMode === 'focus') {
         const d = docRef.current;
@@ -742,6 +747,8 @@ export default function PomodoroScreen() {
       return true;
     }
     setRunning(true);
+    const card = pomodoroActivity(active.mode, active.label, Date.parse(active.startedAt), Date.parse(active.endAt), ttx);
+    beginLiveActivity('pomodoro', card.state, card.config);
     if (!active.notificationId) {
       const notificationId = await schedulePomodoroTimerNotification(active.mode, remaining);
       const nextActive = { ...active, notificationId };
