@@ -15,6 +15,7 @@ describe('isPublicRoute', () => {
     expect(isPublicRoute('/terms')).toBe(true);
     expect(isPublicRoute('/privacy')).toBe(true);
     expect(isPublicRoute('/legal/eu-rep')).toBe(true);
+    expect(isPublicRoute('/support')).toBe(true);
   });
 
   it('keeps the pre-auth screens reachable', () => {

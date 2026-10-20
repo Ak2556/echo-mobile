@@ -180,6 +180,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[editorial-rewrite]", message);
-    return json(500, { error: message });
+    return json(500, { error: "Rewrite failed" });
   }
 });

@@ -14,12 +14,13 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { randomBytes } from 'node:crypto';
 
 const PROD_REF = 'eyokhisijabitzjiydmz';
 const URL = process.env.SUPABASE_URL?.replace(/\/+$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const COUNT = Number(process.env.COUNT || 500);
-const PASSWORD = process.env.LOADTEST_PASSWORD || 'LoadTest!' + Math.random().toString(36).slice(2, 10);
+const PASSWORD = process.env.LOADTEST_PASSWORD || 'LoadTest!' + randomBytes(6).toString('hex');
 const PROFILES = process.env.PROFILES !== '0'; // best-effort profile rows
 
 if (!URL || !SERVICE_KEY) {
@@ -70,5 +71,5 @@ for (let i = 0; i < COUNT; i++) {
 const outPath = join(dirname(fileURLToPath(import.meta.url)), '..', '.users.json');
 writeFileSync(outPath, JSON.stringify(users, null, 2));
 console.log(`\nDone. ${users.length} users written to ${outPath}`);
-console.log(`Password for this batch: ${PASSWORD}`);
+// Each user's password is in the file above; it is not echoed to the terminal or the CI log.
 console.log('Tear them down afterward with scripts/teardown-users.mjs');

@@ -3,6 +3,7 @@ import type { ProviderResult } from '../types';
 import { withAuthTimeout } from '../timeout';
 import { isValidE164, normalizeE164 } from '../phoneNumber';
 import { friendlyAuthError } from '../friendlyAuthError';
+import { randomInt } from '../../core/randomId';
 
 /**
  * Phone OTP sign-in.
@@ -26,7 +27,7 @@ export async function sendPhoneOtp(phone: string): Promise<ProviderResult & { ph
     return { error: 'Enter a valid mobile number.', phone: e164 };
   }
   // Generate fallback metadata to prevent the "Database error saving new user" trigger crash
-  const username = `user_${e164.replace(/\D/g, '')}_${Math.floor(Math.random() * 10000)}`;
+  const username = `user_${e164.replace(/\D/g, '')}_${randomInt(10000)}`;
 
   const { error } = await withAuthTimeout(
     supabase.auth.signInWithOtp({ 

@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+# Least privilege: these jobs only read the repository; the secrets they use are their own.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
