@@ -276,7 +276,9 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   // covers that case and routes it to the same WebView fallback, which decodes
   // through the system WebView and often succeeds where the native player did
   // not. See firstFrameWatchdog.ts for how this was found.
-  const frameStalled = useFirstFrameWatchdog(loadState === 'ready', sawFirstFrame);
+  // Armed only for the card the viewer is on: a warm neighbour is loaded and paused, and has no
+  // reason to have drawn anything yet.
+  const frameStalled = useFirstFrameWatchdog(loadState === 'ready' && isActive, sawFirstFrame);
   useEffect(() => {
     if (!frameStalled) return;
     setFailReason(`no frame ${FIRST_FRAME_GRACE_MS / 1000}s after ready`);
@@ -517,7 +519,9 @@ export function VideoPreview(props: VideoPreviewProps) {
   // decision to construct a player can be made BEFORE one exists — inside
   // VideoPlayer it is already too late, the useVideoPlayer call has run.
   const isActive = props.echoId ? activeEchoId === props.echoId : !!props.autoplay;
-  const keepMounted = useVideoMountPolicy(isActive);
+  // A neighbour of the active card keeps a loaded, paused player so that reaching it is instant.
+  const isWarm = useActiveVideoStore(s => !!props.echoId && s.warmEchoIds.includes(props.echoId));
+  const keepMounted = useVideoMountPolicy(isActive) || isWarm;
 
   if (dataSaver) return <DataSaverPlaceholder {...props} />;
   if (!ExpoVideoModule) return <VideoFallback {...props} />;
