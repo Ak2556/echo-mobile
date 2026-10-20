@@ -7,6 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchRemoteEchoById } from '../../lib/supabaseEchoApi';
 import { FlowCard } from '../../components/feed/FlowCard';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
+import { warmIdsAround, posterPrefetchIds } from '../../lib/feed/videoWarm';
+import { loadVideoPoster } from '../../lib/media/videoPoster';
+import { getDeviceTier } from '../../lib/ui/deviceTier';
 import { useInfiniteVideoFeed, type FlowSort } from '../../hooks/useFeed';
 import { useI18n } from '../../lib/i18n/i18n';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
@@ -96,6 +99,7 @@ export default function WatchScreen() {
   const layout = useResponsiveLayout();
 
   const setActiveEchoId = useActiveVideoStore(s => s.setActiveEchoId);
+  const setWarmEchoIds = useActiveVideoStore(s => s.setWarmEchoIds);
 
   // Which card was on screen when we left. Needed because focus cannot ask the
   // list what is visible, and the list will not volunteer it again — see below.
@@ -121,11 +125,39 @@ export default function WatchScreen() {
     }, [router]),
   );
 
+  // Get the neighbours ready before the viewer reaches them: warm players for the cards either
+  // side of the active one, and the still frames of the next few, so a swipe lands on a loaded card.
+  // Debounced: a fast fling passes many cards, and warming each one it crosses would build and
+  // drop a player per card. Only the card the viewer settles on is worth preparing around.
+  const prepareTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prepareAround = (activeId: string) => {
+    if (prepareTimerRef.current) clearTimeout(prepareTimerRef.current);
+    prepareTimerRef.current = setTimeout(() => {
+      prepareTimerRef.current = null;
+      const ids = feedRef.current.map(entry => entry.id);
+      const index = ids.indexOf(activeId);
+      let tier: 'high' | 'mid' | 'low' = 'mid';
+      try { tier = getDeviceTier(); } catch { /* unknown device stays on mid */ }
+      setWarmEchoIds(warmIdsAround(ids, index, tier));
+      for (const id of posterPrefetchIds(ids, index)) {
+        const uri = feedRef.current.find(entry => entry.id === id)?.videoUri;
+        if (uri && /^https?:\/\//i.test(uri)) void loadVideoPoster(uri);
+      }
+    }, 120);
+  };
+  useEffect(() => () => { if (prepareTimerRef.current) clearTimeout(prepareTimerRef.current); }, []);
+  // New cards arriving (the next page) change what "next" is for the card on screen.
+  useEffect(() => {
+    if (lastActiveIdRef.current) prepareAround(lastActiveIdRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feed.length]);
+
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: { item?: any }[] }) => {
     const first = viewableItems?.find((v) => v?.item?.id)?.item;
     if (first) {
       lastActiveIdRef.current = first.id;
       setActiveEchoId(first.id);
+      prepareAround(first.id);
     } else {
       setActiveEchoId(null);
     }
@@ -150,8 +182,9 @@ export default function WatchScreen() {
       return () => {
         // Blur: clear active video so it doesn't block other screens.
         setActiveEchoId(null);
+        setWarmEchoIds([]);
       };
-    }, [setActiveEchoId])
+    }, [setActiveEchoId, setWarmEchoIds])
   );
 
   const feedMaxWidth = layout.isDesktop ? layout.wideMaxWidth : layout.contentMaxWidth;
