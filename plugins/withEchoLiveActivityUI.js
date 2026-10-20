@@ -16,8 +16,11 @@ module.exports = function withEchoLiveActivityUI(config) {
     async cfg => {
       const source = path.join(cfg.modRequest.projectRoot, 'plugins', 'live-activity-ui');
       const target = path.join(cfg.modRequest.platformProjectRoot, 'LiveActivity');
+      // The widget's Info.plist has no URL types, so the app's scheme is written into the source.
+      const scheme = [].concat(cfg.scheme ?? [])[0] ?? '';
       for (const file of FILES) {
-        fs.copyFileSync(path.join(source, file), path.join(target, file));
+        const text = fs.readFileSync(path.join(source, file), 'utf8').split('__ECHO_SCHEME__').join(scheme);
+        fs.writeFileSync(path.join(target, file), text);
       }
       return cfg;
     },

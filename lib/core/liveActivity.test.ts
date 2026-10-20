@@ -144,9 +144,11 @@ describe('what the cards say', () => {
     expect(pomodoroActivity('long', '', 1, 5).state.title).toBe('Long break');
   });
 
-  it('recording carries only its start; the widget counts up by itself', () => {
+  it('recording carries its start and the mic level; the widget counts up by itself', () => {
     const { state: s, config } = recordingActivity(1_700_000_000_000);
-    expect(s.progressBar).toEqual({ date: undefined, progress: 1_700_000_000_000 });
+    expect(s.progressBar).toEqual({ date: 0, progress: 1_700_000_000_000 });
+    expect(recordingActivity(1_700_000_000_000, undefined, 0.4).state.progressBar).toEqual({ date: 0.4, progress: 1_700_000_000_000 });
+    expect(recordingActivity(1_700_000_000_000, undefined, 7).state.progressBar).toEqual({ date: 1, progress: 1_700_000_000_000 });
     expect(s.title).toBe('Recording');
     expect(config.deepLinkUrl).toBe('/mini-apps/voice-memo');
   });

@@ -187,12 +187,14 @@ export function formatElapsed(totalSeconds: number): string {
 export function recordingActivity(
   startedAtMs: number,
   t: Translate = identity,
+  /** Microphone level, 0 (silence) to 1 (loud). Carried in the date slot; a recording has no end time. */
+  level = 0,
 ): { state: LiveActivityState; config: LiveActivityConfig } {
   return {
     state: {
       title: t('Recording'),
       subtitle: t('Voice memo'),
-      progressBar: clock(undefined, startedAtMs),
+      progressBar: clock(Math.min(1, Math.max(0, level)), startedAtMs),
       imageName: 'live_mic',
       dynamicIslandImageName: 'live_mic',
     },

@@ -55,7 +55,7 @@ struct LiveActivityWidget: Widget {
           context.attributes.backgroundColor.map { Color(hex: $0) }
         )
         .activitySystemActionForegroundColor(Color.white)
-        .applyWidgetURL(from: context.attributes.deepLinkUrl)
+        .echoWidgetURL(context.attributes.deepLinkUrl)
     } dynamicIsland: { context in
       let state = context.state
       let tint = context.attributes.progressViewTint.map { Color(hex: $0) } ?? Color(hex: "#9DB35F")
@@ -64,7 +64,7 @@ struct LiveActivityWidget: Widget {
       return DynamicIsland {
         DynamicIslandExpandedRegion(.leading, priority: 1) {
           HStack(spacing: 10) {
-            EchoGlyph(name: state.imageName, size: 40)
+            EchoBadge(state: state, size: 40, tint: tint)
             VStack(alignment: .leading, spacing: 1) {
               Text(state.title)
                 .font(.system(size: 16, weight: .semibold))
@@ -97,6 +97,9 @@ struct LiveActivityWidget: Widget {
                 ProgressView(timerInterval: span, countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() })
                   .progressViewStyle(.linear)
                   .tint(tint)
+              } else if state.kind == .recording {
+                EchoBars(level: state.level, tint: tint)
+                Spacer(minLength: 0)
               } else {
                 Spacer(minLength: 0)
               }
@@ -115,8 +118,9 @@ struct LiveActivityWidget: Widget {
             .frame(width: 50, alignment: .trailing)
         }
       } minimal: {
-        EchoGlyph(name: state.dynamicIslandImageName ?? state.imageName, size: 22)
+        EchoBadge(state: state, size: 24, tint: tint)
       }
+      .widgetURL(echoURL(context.attributes.deepLinkUrl))
     }
   }
 }

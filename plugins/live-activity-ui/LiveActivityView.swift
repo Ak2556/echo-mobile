@@ -42,6 +42,9 @@ import WidgetKit
       return Date(timeIntervalSince1970: progress / 1000)
     }
 
+    /// Voice memo only: the microphone level, 0...1, carried in the date slot (a recording has no end).
+    var level: Double { min(1, max(0, timerEndDateInMilliseconds ?? 0)) }
+
     /// The span a ring or bar fills over. Falls back to "from now" when the start was not sent.
     var span: ClosedRange<Date>? {
       guard let end = endDate else { return nil }
@@ -50,21 +53,29 @@ import WidgetKit
     }
   }
 
-  private let echoScheme: String? = {
-    guard
-      let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]],
-      let schemes = urlTypes.first?["CFBundleURLSchemes"] as? [String]
-    else { return nil }
-    return schemes.first
-  }()
+  /// The app's URL scheme, written in by plugins/withEchoLiveActivityUI.js from app.json. The widget
+  /// extension's own Info.plist has no URL types, so reading Bundle.main finds nothing here (which
+  /// is also why the library's tap-to-open never did anything).
+  private let echoScheme: String? = "__ECHO_SCHEME__"
+
+  func echoURL(_ base: String?, query: String? = nil) -> URL? {
+    guard let base, let scheme = echoScheme, !scheme.isEmpty else { return nil }
+    let path = base.hasPrefix("/") ? String(base.dropFirst()) : base
+    return URL(string: "\(scheme)://\(path)" + (query.map { "?" + $0 } ?? ""))
+  }
+
+  extension View {
+    /// Tapping the card opens the screen it belongs to.
+    @ViewBuilder
+    func echoWidgetURL(_ base: String?) -> some View {
+      if let url = echoURL(base) { widgetURL(url) } else { self }
+    }
+  }
 
   /// A deep link back into the screen the card belongs to, carrying an action the screen performs
   /// once (liveAction) and a token (lt) so the same action can be sent again later.
   func echoActionURL(_ base: String?, _ action: String) -> URL? {
-    guard let base, let scheme = echoScheme else { return nil }
-    let path = base.hasPrefix("/") ? String(base.dropFirst()) : base
-    let token = Int(Date().timeIntervalSince1970)
-    return URL(string: "\(scheme)://\(path)?liveAction=\(action)&lt=\(token)")
+    echoURL(base, query: "liveAction=\(action)&lt=\(Int(Date().timeIntervalSince1970))")
   }
 
   /// Stop (a Pomodoro) or Stop & save (a recording). A Link opens Echo on that screen, which
@@ -102,6 +113,67 @@ import WidgetKit
           .resizable()
           .scaledToFit()
           .frame(width: size, height: size)
+      }
+    }
+  }
+
+  /// A small equalizer for the voice memo. Its height follows the microphone level the app sends
+  /// about once a second; the bars ease between levels, they do not loop on their own (iOS does not
+  /// run continuous animation in a Live Activity).
+  struct EchoBars: View {
+    let level: Double
+    let tint: Color
+    private let shape: [Double] = [0.55, 0.9, 0.7, 1.0, 0.6, 0.85, 0.5]
+
+    var body: some View {
+      HStack(alignment: .center, spacing: 3) {
+        ForEach(shape.indices, id: \.self) { i in
+          Capsule()
+            .fill(tint)
+            .frame(width: 4, height: 5 + CGFloat(level) * 19 * CGFloat(shape[i]))
+        }
+      }
+      .frame(height: 24)
+      .animation(.easeOut(duration: 0.35), value: level)
+    }
+  }
+
+  /// The glyph for a card. A Pomodoro wears a ring that drains by itself as the time runs down; a
+  /// finished card shows a check that bounces in when the state changes to it.
+  struct EchoBadge: View {
+    let state: LiveActivityAttributes.ContentState
+    let size: CGFloat
+    let tint: Color
+
+    var body: some View {
+      switch state.kind {
+      case .timer:
+        if let span = state.span {
+          ZStack {
+            ProgressView(timerInterval: span, countsDown: true, label: { EmptyView() }, currentValueLabel: { EmptyView() })
+              .progressViewStyle(.circular)
+              .tint(tint)
+              .frame(width: size, height: size)
+            EchoGlyph(name: state.imageName, size: size * 0.6)
+          }
+        } else {
+          EchoGlyph(name: state.imageName, size: size)
+        }
+      case .done:
+        done
+      default:
+        EchoGlyph(name: state.imageName, size: size)
+      }
+    }
+
+    @ViewBuilder private var done: some View {
+      let check = Image(systemName: "checkmark.circle.fill")
+        .font(.system(size: size * 0.95))
+        .foregroundStyle(tint)
+      if #available(iOS 17.0, *) {
+        check.symbolEffect(.bounce, options: .nonRepeating, value: state.title)
+      } else {
+        check
       }
     }
   }
@@ -149,18 +221,20 @@ import WidgetKit
     var body: some View {
       VStack(alignment: .leading, spacing: 12) {
         HStack(spacing: 14) {
-          EchoGlyph(name: contentState.imageName, size: 46)
+          EchoBadge(state: contentState, size: 46, tint: tint)
 
           VStack(alignment: .leading, spacing: 2) {
             Text(contentState.title)
               .font(.system(size: 17, weight: .semibold))
               .foregroundStyle(attributes.titleColor.map { Color(hex: $0) } ?? .white)
               .lineLimit(1)
+              .contentTransition(.numericText())
             if let subtitle = contentState.subtitle {
               Text(subtitle)
                 .font(.system(size: 14))
                 .foregroundStyle(attributes.subtitleColor.map { Color(hex: $0) } ?? .white.opacity(0.7))
                 .lineLimit(1)
+                .contentTransition(.numericText())
             }
           }
 
@@ -179,6 +253,9 @@ import WidgetKit
               ProgressView(timerInterval: span, countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() })
                 .progressViewStyle(.linear)
                 .tint(tint)
+            } else if contentState.kind == .recording {
+              EchoBars(level: contentState.level, tint: tint)
+              Spacer(minLength: 0)
             } else {
               Spacer(minLength: 0)
             }
