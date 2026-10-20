@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege: these jobs only read the repository; the secrets they use are their own.
+permissions:
+  contents: read
+
 jobs:
   quality:
     runs-on: ubuntu-latest

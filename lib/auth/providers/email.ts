@@ -2,6 +2,7 @@ import { supabase } from '../../supabase';
 import type { ProviderResult } from '../types';
 import { withAuthTimeout } from '../timeout';
 import { friendlyAuthError } from '../friendlyAuthError';
+import { randomInt } from '../../core/randomId';
 
 /**
  * Email OTP sign-in.
@@ -25,7 +26,7 @@ export async function sendEmailOtp(email: string): Promise<ProviderResult> {
   // Generate fallback metadata to prevent the "Database error saving new user"
   // trigger crash caused by public.profiles NOT NULL constraints.
   const emailPrefix = trimmed.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '');
-  const username = `user_${emailPrefix}_${Math.floor(Math.random() * 100000)}`;
+  const username = `user_${emailPrefix}_${randomInt(100000)}`;
 
   const { error } = await withAuthTimeout(
     supabase.auth.signInWithOtp({

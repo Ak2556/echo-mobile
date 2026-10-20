@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import Markdown from 'react-native-markdown-display';
 import { ScreenHeader } from '../ui/ScreenHeader';
 import { useTheme } from '../../lib/ui/theme';
@@ -66,6 +67,7 @@ function stripLeadingTitle(md: string): string {
  */
 export function LegalDocScreen({ title, updated, markdown }: LegalDocScreenProps) {
   const { colors } = useTheme();
+  const router = useRouter();
   const styles = buildLegalStyles(colors);
   const body = stripLeadingTitle(markdown);
   return (
@@ -75,7 +77,19 @@ export function LegalDocScreen({ title, updated, markdown }: LegalDocScreenProps
         contentContainerStyle={{ padding: 18, paddingBottom: 48, width: '100%', maxWidth: 720, alignSelf: 'center' }}
         showsVerticalScrollIndicator
       >
-        <Markdown style={styles}>{body}</Markdown>
+        <Markdown
+          style={styles}
+          // A link to another page of the app ("/privacy") is a route, not a URL the system can open.
+          onLinkPress={(url: string) => {
+            if (url.startsWith('/')) {
+              router.push(url as never);
+              return false;
+            }
+            return true;
+          }}
+        >
+          {body}
+        </Markdown>
         <View style={{ height: 8 }} />
       </ScrollView>
     </SafeAreaView>

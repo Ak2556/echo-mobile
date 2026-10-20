@@ -1,5 +1,6 @@
 import { ChatMessage, ChatSession } from '../../types';
 import { persistGet, persistSet } from '../persist';
+import { randomBase36 } from '../../lib/core/randomId';
 
 export interface ChatSlice {
   // ── Chat Sessions ──
@@ -30,7 +31,7 @@ export function createChatSlice(set: (partial: object) => void, get: () => ChatS
     currentSessionId: persistGet<string | null>('currentSessionId', null),
     conversationIdBySession: persistGet<Record<string, string>>('conversationIdBySession', {}),
     createSession: (title) => {
-      const id = Date.now().toString() + Math.random().toString(36).slice(2, 6);
+      const id = Date.now().toString() + randomBase36(4);
       const now = new Date().toISOString();
       const session: ChatSession = { id, title: title || 'New Chat', lastMessage: '', messageCount: 0, createdAt: now, updatedAt: now };
       const sessions = [session, ...get().sessions];
@@ -75,7 +76,7 @@ export function createChatSlice(set: (partial: object) => void, get: () => ChatS
       const prevMessages = get().messagesBySession[fromSessionId] || [];
       const idx = prevMessages.findIndex(m => m.id === throughMessageId);
       const slice = idx >= 0 ? prevMessages.slice(0, idx + 1) : prevMessages.slice();
-      const id = Date.now().toString() + Math.random().toString(36).slice(2, 6);
+      const id = Date.now().toString() + randomBase36(4);
       const now = new Date().toISOString();
       const fromSession = get().sessions.find(s => s.id === fromSessionId);
       const session: ChatSession = {
