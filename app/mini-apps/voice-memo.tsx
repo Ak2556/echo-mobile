@@ -3,7 +3,7 @@ import { ICON_SIZE } from '../../lib/ui/icons';
 import {
   View, Text, Pressable, Alert, TextInput, Platform,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   createAudioPlayer,
   RecordingPresets,
@@ -62,6 +62,10 @@ export default function VoiceMemoApp() {
     }, []),
   );
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  // The "Stop & save" button on the Dynamic Island card opens this screen with ?liveAction=stop&lt=<token>.
+  const { liveAction, lt: liveToken } = useLocalSearchParams<{ liveAction?: string; lt?: string }>();
+  const router = useRouter();
+  const liveHandledRef = useRef<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -157,6 +161,15 @@ export default function VoiceMemoApp() {
       showToast('Saved on this device. Cloud audio sync will retry after another edit.', 'Voice Memo');
     }
   };
+
+  useEffect(() => {
+    if (liveAction !== 'stop' || !liveToken || liveHandledRef.current === liveToken) return;
+    liveHandledRef.current = liveToken;
+    router.setParams({ liveAction: undefined, lt: undefined });
+    // Nothing to stop if the recording is already over (a stale card): just drop the params.
+    if (isRecording) void stopRecording();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveAction, liveToken]);
 
   const playMemo = async (memo: Memo) => {
     if (playingId === memo.id) {

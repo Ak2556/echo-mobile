@@ -110,6 +110,7 @@ const ACTIVITY_BG = '#1B1A17';
 const ACTIVITY_TEXT = '#FFFFFF';
 const ACTIVITY_SUBTEXT = '#C9C4B8';
 const ACTIVITY_TINT = '#9DB35F';
+const ACTIVITY_BREAK_TINT = '#7FB3D5';
 
 const BASE_CONFIG: LiveActivityConfig = {
   backgroundColor: ACTIVITY_BG,
@@ -147,16 +148,19 @@ export function pomodoroActivity(
   endAtMs: number,
   t: Translate = identity,
 ): { state: LiveActivityState; config: LiveActivityConfig } {
-  const title = phase === 'focus' ? t('Focus') : phase === 'short' ? t('Short break') : t('Long break');
+  const focus = phase === 'focus';
+  const title = focus ? t('Focus') : phase === 'short' ? t('Short break') : t('Long break');
+  const glyph = focus ? 'live_timer' : 'live_break';
   return {
     state: {
       title,
-      subtitle: label.trim() || (phase === 'focus' ? t('Stay with it') : t('Step away')),
+      subtitle: label.trim() || (focus ? t('Stay with it') : t('Step away')),
       progressBar: clock(endAtMs, startAtMs),
-      imageName: 'live_timer',
-      dynamicIslandImageName: 'live_timer',
+      imageName: glyph,
+      dynamicIslandImageName: glyph,
     },
-    config: { ...BASE_CONFIG, deepLinkUrl: '/mini-apps/pomodoro' },
+    // A break reads differently at a glance: cooler tint on the bar and ring, and a cup for the glyph.
+    config: { ...BASE_CONFIG, progressViewTint: focus ? ACTIVITY_TINT : ACTIVITY_BREAK_TINT, deepLinkUrl: '/mini-apps/pomodoro' },
   };
 }
 

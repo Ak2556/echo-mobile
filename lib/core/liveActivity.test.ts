@@ -151,6 +151,14 @@ describe('what the cards say', () => {
     expect(config.deepLinkUrl).toBe('/mini-apps/voice-memo');
   });
 
+  it('a break has its own glyph and a cooler tint, so it reads differently from a focus session', () => {
+    const focus = pomodoroActivity('focus', '', 1, 2);
+    const brk = pomodoroActivity('short', '', 1, 2);
+    expect(focus.state.imageName).toBe('live_timer');
+    expect(brk.state.imageName).toBe('live_break');
+    expect(brk.config.progressViewTint).not.toBe(focus.config.progressViewTint);
+  });
+
   it('publishing has a state for each stage', () => {
     expect(publishingActivity('uploading', 'video').state.subtitle).toBe('Uploading video…');
     expect(publishingActivity('uploading', 'photo').state.subtitle).toBe('Uploading photos…');
@@ -164,6 +172,7 @@ describe('what the cards say', () => {
     const shipped = new Set(readdirSync('assets/liveActivity').map(f => f.replace(/\.png$/, '')));
     const all = [
       pomodoroActivity('focus', '', 1, 2).state,
+      pomodoroActivity('long', '', 1, 2).state,
       recordingActivity(1).state,
       publishingActivity('uploading', 'video').state,
       publishingActivity('posted', 'video').state,
@@ -173,6 +182,20 @@ describe('what the cards say', () => {
     for (const s of all) {
       expect(shipped.has(s.imageName!)).toBe(true);
       expect(shipped.has(s.dynamicIslandImageName!)).toBe(true);
+    }
+  });
+});
+
+describe('the Stop button', () => {
+  it('opens the screen with an action the screen handles once', async () => {
+    const { readFileSync } = await import('node:fs');
+    const swift = readFileSync('plugins/live-activity-ui/LiveActivityView.swift', 'utf8');
+    expect(swift).toMatch(/liveAction=\\\(action\)&lt=/);
+    for (const screen of ['app/mini-apps/pomodoro.tsx', 'app/mini-apps/voice-memo.tsx']) {
+      const src = readFileSync(screen, 'utf8');
+      expect(src).toMatch(/liveAction/);
+      expect(src).toMatch(/lt: liveToken/);
+      expect(src).toMatch(/router\.setParams\(\{ liveAction: undefined, lt: undefined \}\)/);
     }
   });
 });

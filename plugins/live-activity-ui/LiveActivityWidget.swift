@@ -91,12 +91,19 @@ struct LiveActivityWidget: Widget {
           }
         }
         DynamicIslandExpandedRegion(.bottom) {
-          if state.kind == .timer, let span = state.span {
-            ProgressView(timerInterval: span, countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() })
-              .progressViewStyle(.linear)
-              .tint(tint)
-              .padding(.horizontal, 4)
-              .padding(.top, 4)
+          if hasClock {
+            HStack(spacing: 12) {
+              if state.kind == .timer, let span = state.span {
+                ProgressView(timerInterval: span, countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() })
+                  .progressViewStyle(.linear)
+                  .tint(tint)
+              } else {
+                Spacer(minLength: 0)
+              }
+              EchoStopLink(attributes: context.attributes, state: state)
+            }
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
           }
         }
       } compactLeading: {

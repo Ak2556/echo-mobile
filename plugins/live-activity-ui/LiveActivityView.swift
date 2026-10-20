@@ -20,7 +20,7 @@ import WidgetKit
 
     init(_ state: LiveActivityAttributes.ContentState) {
       switch state.imageName {
-      case "live_timer": self = .timer
+      case "live_timer", "live_break": self = .timer
       case "live_mic": self = .recording
       case "live_post": self = .publishing
       case "live_done": self = .done
@@ -47,6 +47,48 @@ import WidgetKit
       guard let end = endDate else { return nil }
       let start = startDate ?? Date()
       return start ... max(start, end)
+    }
+  }
+
+  private let echoScheme: String? = {
+    guard
+      let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]],
+      let schemes = urlTypes.first?["CFBundleURLSchemes"] as? [String]
+    else { return nil }
+    return schemes.first
+  }()
+
+  /// A deep link back into the screen the card belongs to, carrying an action the screen performs
+  /// once (liveAction) and a token (lt) so the same action can be sent again later.
+  func echoActionURL(_ base: String?, _ action: String) -> URL? {
+    guard let base, let scheme = echoScheme else { return nil }
+    let path = base.hasPrefix("/") ? String(base.dropFirst()) : base
+    let token = Int(Date().timeIntervalSince1970)
+    return URL(string: "\(scheme)://\(path)?liveAction=\(action)&lt=\(token)")
+  }
+
+  /// Stop (a Pomodoro) or Stop & save (a recording). A Link opens Echo on that screen, which
+  /// does the work: a Live Activity button cannot run the app's JavaScript by itself.
+  struct EchoStopLink: View {
+    let attributes: LiveActivityAttributes
+    let state: LiveActivityAttributes.ContentState
+
+    var body: some View {
+      if state.kind == .timer || state.kind == .recording,
+        let url = echoActionURL(attributes.deepLinkUrl, "stop")
+      {
+        Link(destination: url) {
+          HStack(spacing: 6) {
+            Image(systemName: "stop.fill").font(.system(size: 11, weight: .bold))
+            Text(state.kind == .recording ? "Stop & save" : "Stop")
+              .font(.system(size: 13, weight: .semibold))
+          }
+          .foregroundStyle(.white)
+          .padding(.horizontal, 14)
+          .padding(.vertical, 7)
+          .background(Capsule().fill(Color.white.opacity(0.16)))
+        }
+      }
     }
   }
 
@@ -131,10 +173,17 @@ import WidgetKit
           }
         }
 
-        if contentState.kind == .timer, let span = contentState.span {
-          ProgressView(timerInterval: span, countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() })
-            .progressViewStyle(.linear)
-            .tint(tint)
+        if hasClock {
+          HStack(spacing: 14) {
+            if contentState.kind == .timer, let span = contentState.span {
+              ProgressView(timerInterval: span, countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() })
+                .progressViewStyle(.linear)
+                .tint(tint)
+            } else {
+              Spacer(minLength: 0)
+            }
+            EchoStopLink(attributes: attributes, state: contentState)
+          }
         }
       }
       .padding(.horizontal, 18)

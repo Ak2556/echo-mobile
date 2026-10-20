@@ -5,7 +5,7 @@ import { type AudioPlayer } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
 import { AppState, View, Text, TextInput, Pressable, StyleSheet, Modal, ScrollView, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Play, Pause, ArrowCounterClockwise, GearSix, Fire, Minus, Plus, X, Lightning, TreeEvergreen, MusicNote, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import Animated, {
   cancelAnimation,
@@ -563,6 +563,10 @@ export default function PomodoroScreen() {
   const [running, setRunning] = useState(false);
   const [label, setLabel] = useState('');
   const voiceAction = useLocalSearchParams<{ vAction?: string }>().vAction;
+  // The Stop button on the Dynamic Island card opens this screen with ?liveAction=stop&lt=<token>.
+  const { liveAction, lt: liveToken } = useLocalSearchParams<{ liveAction?: string; lt?: string }>();
+  const router = useRouter();
+  const liveHandledRef = useRef<string | null>(null);
   const didVoiceRef = useRef(false);
   const [showSettings, setShowSettings] = useState(false);
   const [draftTotalSecs, setDraftTotalSecs] = useState<number | null>(null);
@@ -834,6 +838,15 @@ export default function PomodoroScreen() {
     if ((a === 'start' || a === 'begin') && !running) startTimer();
     else if ((a === 'stop' || a === 'pause') && running) stopActiveTimer();
   }, [voiceAction, running, startTimer, stopActiveTimer]);
+
+  // From the card's Stop button. Waits for `running` so a cold start (the timer is restored from
+  // storage first) still gets stopped, and clears the params so they are never replayed.
+  useEffect(() => {
+    if (liveAction !== 'stop' || !liveToken || liveHandledRef.current === liveToken || !running) return;
+    liveHandledRef.current = liveToken;
+    stopActiveTimer();
+    router.setParams({ liveAction: undefined, lt: undefined });
+  }, [liveAction, liveToken, running, stopActiveTimer, router]);
 
   const switchMode = (m: Mode) => {
     stopActiveTimer();
