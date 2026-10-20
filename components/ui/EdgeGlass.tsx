@@ -56,7 +56,9 @@ function withAlpha(hex: string, alpha: number): string {
  */
 export function glassWash(edge: 'top' | 'bottom', blurred: boolean, isDark: boolean): number {
   if (!blurred) return 0.96;
-  if (edge === 'top') return isDark ? 0.62 : 0.72;
+  // Scrolled content has to go out of sight under the header, not sit readable behind the
+  // wordmark: at 0.72 a post's name row and kicker still showed through it (owner, 2026-10-19).
+  if (edge === 'top') return isDark ? 0.9 : 0.94;
   return isDark ? 0.45 : 0.55;
 }
 
