@@ -122,7 +122,8 @@ Deno.serve(async (req: Request) => {
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       });
     } catch (e) {
-      return new Response(JSON.stringify({ ok: false, model, dims, error: e instanceof Error ? e.message : String(e) }), {
+      console.error("[backfill-embeddings] probe failed", e instanceof Error ? e.message : String(e));
+      return new Response(JSON.stringify({ ok: false, model, dims, error: "embedding failed (see function logs)" }), {
         status: 200,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       });
@@ -137,7 +138,8 @@ Deno.serve(async (req: Request) => {
     .is("embedding", null)
     .limit(limit);
   if (fetchErr) {
-    return new Response(JSON.stringify({ error: fetchErr.message }), {
+    console.error("[backfill-embeddings] fetch failed", fetchErr.message);
+    return new Response(JSON.stringify({ error: "could not read rows (see function logs)" }), {
       status: 500,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
@@ -163,10 +165,11 @@ Deno.serve(async (req: Request) => {
           thoughtfulness_score: computeThoughtfulness(row),
         })
         .eq("id", row.id);
-      if (updErr) failures.push({ id: row.id, error: updErr.message });
+      if (updErr) { console.error("[backfill-embeddings] update failed", row.id, updErr.message); failures.push({ id: row.id, error: "update failed" }); }
       else processed++;
     } catch (e) {
-      failures.push({ id: row.id, error: e instanceof Error ? e.message : String(e) });
+      console.error("[backfill-embeddings] row failed", row.id, e instanceof Error ? e.message : String(e));
+      failures.push({ id: row.id, error: "embedding failed" });
     }
   }
 

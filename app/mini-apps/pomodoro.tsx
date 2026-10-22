@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { tap } from '../../lib/ui/haptics';
-import { type AudioPlayer } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
 import { AppState, View, Text, TextInput, Pressable, StyleSheet, Modal, ScrollView, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Play, Pause, ArrowCounterClockwise, GearSix, Fire, Minus, Plus, X, Lightning, TreeEvergreen, MusicNote, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
+import { Play, Pause, ArrowCounterClockwise, GearSix, Fire, Minus, Plus, X, Lightning, TreeEvergreen } from 'phosphor-react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -30,7 +29,6 @@ import { useTheme } from '../../lib/ui/theme';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { showToast } from '../../components/ui/Toast';
-import { createFocusBeatPlayer, FOCUS_BEATS, type FocusBeatId } from '../../lib/mini-apps/focusBeats';
 import { schedulePomodoroTimerNotification } from '../../lib/mini-apps/pomodoroRuntime';
 import { beginLiveActivity, endLiveActivity, pomodoroActivity, pomodoroDoneState } from '../../lib/core/liveActivity';
 import {
@@ -418,89 +416,6 @@ function FocusGarden({
   );
 }
 
-function FocusBeatsPanel({
-  accent,
-  playingBeat,
-  paused,
-  onToggle,
-  onTogglePause,
-  onStop,
-}: {
-  accent: string;
-  playingBeat: FocusBeatId | null;
-  paused: boolean;
-  onToggle: (beat: FocusBeatId) => void;
-  onTogglePause: () => void;
-  onStop: () => void;
-}) {
-  const { colors, radius } = useTheme();
-  const { tt } = useI18n();
-  return (
-    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 40, height: 40, borderRadius: radius.card, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
-          {playingBeat && !paused ? <SpeakerHigh color={accent} size={ICON_SIZE.md} weight="fill" /> : playingBeat ? <SpeakerSlash color={accent} size={ICON_SIZE.md} weight="fill" /> : <MusicNote color={accent} size={ICON_SIZE.md} weight="bold" />}
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{tt('Focus beats')}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>
-            {playingBeat ? (paused ? `${tt('Paused')} · ${FOCUS_BEATS[playingBeat].name}` : `${FOCUS_BEATS[playingBeat].name} ${tt('playing')}`) : tt('Relax while focusing')}
-          </Text>
-        </View>
-        {playingBeat ? (
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <AnimatedPressable
-              onPress={onTogglePause}
-              haptic="light"
-              accessibilityRole="button"
-              accessibilityLabel={paused ? tt('Resume') : tt('Pause')}
-              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}
-            >
-              {paused ? <Play color={colors.bgPure} size={18} weight="fill" /> : <Pause color={colors.bgPure} size={18} weight="fill" />}
-            </AnimatedPressable>
-            <AnimatedPressable
-              onPress={onStop}
-              haptic="light"
-              accessibilityRole="button"
-              accessibilityLabel={tt('Stop')}
-              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}
-            >
-              <X color={colors.textMuted} size={18} weight="bold" />
-            </AnimatedPressable>
-          </View>
-        ) : null}
-      </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {(Object.keys(FOCUS_BEATS) as FocusBeatId[]).map(beat => {
-          const selected = playingBeat === beat;
-          const item = FOCUS_BEATS[beat];
-          return (
-            <AnimatedPressable
-              key={beat}
-              onPress={() => onToggle(beat)}
-              scaleValue={0.95}
-              haptic="light"
-              style={{
-                width: '48.5%',
-                minHeight: 62,
-                borderRadius: radius.card,
-                paddingHorizontal: 13,
-                justifyContent: 'center',
-                backgroundColor: selected ? accent : colors.surface,
-                borderWidth: 1,
-                borderColor: selected ? `${accent}AA` : colors.glassBorder,
-              }}
-            >
-              <Text style={{ color: selected ? colors.bgPure : colors.text, fontSize: 14.5, fontWeight: '900' }}>{item.name}</Text>
-              <Text style={{ color: selected ? 'rgba(255,255,255,0.76)' : colors.textMuted, fontSize: 11.5, fontWeight: '700', marginTop: 3 }}>{item.detail}</Text>
-            </AnimatedPressable>
-          );
-        })}
-      </View>
-    </GlassPanel>
-  );
-}
-
 function FocusMomentumStrip({
   accent,
   pct,
@@ -570,11 +485,8 @@ export default function PomodoroScreen() {
   const didVoiceRef = useRef(false);
   const [showSettings, setShowSettings] = useState(false);
   const [draftTotalSecs, setDraftTotalSecs] = useState<number | null>(null);
-  const [playingBeat, setPlayingBeat] = useState<FocusBeatId | null>(null);
-  const [beatPaused, setBeatPaused] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeRef = useRef<ActivePomodoroTimer | null>(null);
-  const beatPlayerRef = useRef<AudioPlayer | null>(null);
   const finishingRef = useRef(false);
   const notifIdRef = useRef<string | null>(null);
   const docRef = useRef(doc);
@@ -869,51 +781,11 @@ export default function PomodoroScreen() {
     showToast(`${minutes}${tt('m loaded')}`, tt('Focus'));
   };
 
-  const stopFocusBeat = () => {
-    beatPlayerRef.current?.pause();
-    beatPlayerRef.current?.remove();
-    beatPlayerRef.current = null;
-    setPlayingBeat(null);
-    setBeatPaused(false);
-  };
-
-  // Pause keeps the player and its place; stop (or tapping the playing beat
-  // again) discards it.
-  const toggleBeatPause = () => {
-    const player = beatPlayerRef.current;
-    if (!player || !playingBeat) return;
-    if (beatPaused) player.play();
-    else player.pause();
-    setBeatPaused(!beatPaused);
-  };
-
-  const toggleFocusBeat = async (beat: FocusBeatId) => {
-    if (playingBeat === beat) {
-      stopFocusBeat();
-      return;
-    }
-    try {
-      beatPlayerRef.current?.pause();
-      beatPlayerRef.current?.remove();
-      const player = await createFocusBeatPlayer(beat);
-      beatPlayerRef.current = player;
-      player.play();
-      setPlayingBeat(beat);
-      setBeatPaused(false);
-    } catch {
-      setPlayingBeat(null);
-      setBeatPaused(false);
-      showToast(tt('Beat could not start on this device'), tt('Pomodoro'));
-    }
-  };
-
   useEffect(() => () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    beatPlayerRef.current?.remove();
-    beatPlayerRef.current = null;
   }, []);
 
   const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -1120,15 +992,6 @@ export default function PomodoroScreen() {
           <Text style={{ color: streak > 0 ? colors.warning : colors.textMuted, fontSize: 10, fontWeight: '800' }}>{streak}d</Text>
         </View>
       </View>
-
-      <FocusBeatsPanel
-        accent={accent}
-        playingBeat={playingBeat}
-        paused={beatPaused}
-        onToggle={beat => { void toggleFocusBeat(beat); }}
-        onTogglePause={toggleBeatPause}
-        onStop={stopFocusBeat}
-      />
 
       {/* The analytics, folded: the same day count and streak are on the header, the controls and the
           share panel, so this opens on request and says what it holds while closed. */}

@@ -16,6 +16,8 @@ const PUBLIC_ROUTES = new Set([
   '/onboarding',
   '/terms',
   '/privacy',
+  // The Support URL on the store listings, and the place to ask for deletion without the app.
+  '/support',
 ]);
 
 /** Everything under these, plus the prefix itself. */

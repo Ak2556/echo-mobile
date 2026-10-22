@@ -143,6 +143,8 @@ Deno.serve(async (req) => {
     if (!coaching) return json({ error: "Empty response" }, 502);
     return json({ app, coaching, summary });
   } catch (e) {
-    return json({ error: "AI request failed", detail: String(e) }, 502);
+    // The cause goes to the log, not to the caller: an error string can carry provider detail.
+    console.error("[mini-app-coach]", e instanceof Error ? e.message : String(e));
+    return json({ error: "AI request failed" }, 502);
   }
 });

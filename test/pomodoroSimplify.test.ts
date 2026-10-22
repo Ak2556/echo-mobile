@@ -35,7 +35,7 @@ describe('pomodoro screen order', () => {
   });
 
   it('keeps every feature: the panels, the log, the settings and the share panel', () => {
-    for (const thing of ['<FocusMomentumStrip', '<FocusGarden', '<FocusBeatsPanel', '<FocusIntelligencePanel', 'LAST 7 DAYS', "tt('TODAY')", '<SettingsSheet', '<EdgeFeaturePanel', '<StageRail', '<FocusPresetRail']) {
+    for (const thing of ['<FocusMomentumStrip', '<FocusGarden', '<FocusIntelligencePanel', 'LAST 7 DAYS', "tt('TODAY')", '<SettingsSheet', '<EdgeFeaturePanel', '<StageRail', '<FocusPresetRail']) {
       expect(screen, thing).toContain(thing);
     }
   });

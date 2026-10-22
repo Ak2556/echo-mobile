@@ -108,6 +108,7 @@ const DESTINATIONS = {
   'terms': '/terms', 'terms of service': '/terms',
   'rules': '/legal/rules', 'community rules': '/legal/rules',
   'child safety': '/legal/child-safety',
+  'support': '/support', 'help': '/support', 'contact support': '/support',
   'eu representative': '/legal/eu-rep',
   // Hindi for the ones people will actually ask for by voice.
   'प्रोफाइल एडिट': '/edit-profile', 'प्रोफ़ाइल बदलो': '/edit-profile',

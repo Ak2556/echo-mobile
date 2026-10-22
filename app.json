@@ -16,7 +16,7 @@
         "applinks:downloadecho.com"
       ],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
+        "ITSAppUsesNonExemptEncryption": true,
         "NSMicrophoneUsageDescription": "Echo uses your microphone when you give a voice command, send a voice message, or record a voice memo.",
         "NSCameraUsageDescription": "Echo uses your camera to take photos for your profile and marketplace listings.",
         "NSPhotoLibraryUsageDescription": "Echo accesses your photo library so you can upload photos to your profile, marketplace listings, and send images in direct messages.",

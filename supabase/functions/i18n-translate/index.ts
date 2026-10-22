@@ -144,6 +144,8 @@ Deno.serve(async (req) => {
     for (const k of keys) if (typeof translations[k] === "string") filtered[k] = translations[k];
     return json({ translations: filtered });
   } catch (e) {
-    return json({ error: "Translation failed", detail: String(e) }, 502);
+    // The cause goes to the log, not to the caller: an error string can carry provider detail.
+    console.error("[i18n-translate]", e instanceof Error ? e.message : String(e));
+    return json({ error: "Translation failed" }, 502);
   }
 });
