@@ -29,7 +29,7 @@ import { useTheme } from '../../lib/ui/theme';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { WARM_AVATAR_COLORS } from '../../lib/social/avatarPalette';
 import { MINIMUM_AGE, checkDateOfBirth, ageRejectionMessage } from '../../constants/legal/ageGate';
-import { APP_LANGUAGES } from '../../lib/i18n/languages';
+import { LAUNCH_LANGUAGES } from '../../lib/i18n/languages';
 import { ttx } from '../../lib/i18n/i18n';
 import { personName } from '../../lib/social/personName';
 import { BackButton } from '../../components/ui/BackButton';
@@ -767,7 +767,7 @@ export default function SignupWizard() {
                   contentContainerStyle={{ gap: 8, paddingRight: 8 }}
                   style={{ marginBottom: 22, flexGrow: 0 }}
                 >
-                  {APP_LANGUAGES.map(lang => {
+                  {LAUNCH_LANGUAGES.map(lang => {
                     const selected = appLanguage === lang.code;
                     return (
                       <AnimatedPressable

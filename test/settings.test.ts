@@ -96,8 +96,11 @@ describe('Settings State & Mutators', () => {
   });
 
   it('updates Content & Feed settings', () => {
+    getS().setAppLanguage('hi');
+    expect(getS().appLanguage).toBe('hi');
+    // Not offered at launch (its translation is corrupt): falls back to English.
     getS().setAppLanguage('es');
-    expect(getS().appLanguage).toBe('es');
+    expect(getS().appLanguage).toBe('en');
 
     getS().setContentLanguage('French');
     expect(getS().contentLanguage).toBe('French');

@@ -7,7 +7,7 @@
 ### Speak. Echo does the rest.
 
 **A voice-first social network for India.** One recording becomes a post, a search, or an action, in the
-language you speak. 26 languages, one codebase for iOS, Android, web and Mac, and one-to-one text messages
+language you speak. English and Hindi at launch, one codebase for iOS, Android, web and Mac, and one-to-one text messages
 only the two of you can read.
 
 <p>
@@ -16,7 +16,7 @@ only the two of you can read.
 <img src="https://img.shields.io/badge/Expo-SDK%2054-000000?style=flat-square&logo=expo&logoColor=white" alt="Expo SDK 54" />
 <img src="https://img.shields.io/badge/React%20Native-0.81-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React Native 0.81" />
 <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5.9" />
-<img src="https://img.shields.io/badge/languages-26-4C7A34?style=flat-square" alt="26 languages" />
+<img src="https://img.shields.io/badge/languages-English%20%2B%20Hindi-4C7A34?style=flat-square" alt="English and Hindi at launch" />
 <a href="LICENSE"><img src="https://img.shields.io/github/license/Ak2556/echo-mobile?style=flat-square" alt="MIT licence" /></a>
 </p>
 
@@ -56,7 +56,7 @@ only the two of you can read.
 | **Backend** | Supabase: Postgres 17 with row-level security, Auth, Realtime, 24 Deno edge functions |
 | **Media** | Cloudflare R2 behind a Worker that signs uploads and gates reads |
 | **AI** | Gemini 2.5 directly, OpenRouter as the fallback |
-| **Languages** | 26 (13 Indian, 13 global), including right-to-left layouts |
+| **Languages** | English and Hindi at launch; 26 in the code (13 Indian, 13 global), including right-to-left layouts, switched on as each is properly translated |
 | **Design** | Glass surfaces: Apple's native Liquid Glass on iOS 26, glassmorphism elsewhere, within a performance budget |
 | **Status** | Private beta; polish and store submission; India first |
 | **Licence** | MIT |
@@ -99,10 +99,10 @@ searches it, opens the tool you asked for, or dictates into the field you are lo
 
 ### The interface is localised, not just the content
 
-Greeting, tabs, prompts and layout direction all follow the reader. The same build renders left to right
-in Hindi and right to left in Arabic.
+Greeting, tabs, prompts and layout direction all follow the reader. English and Hindi are offered at
+launch; the layout already handles right-to-left languages such as Arabic for when they are switched on.
 
-26 languages: 13 Indian, 13 global.
+English and Hindi are offered at launch (`LAUNCH_LANGUAGE_CODES` in `lib/i18n/languages.ts`). The code carries 26 languages, 13 Indian and 13 global, but the other 24 translations are corrupt and stay switched off until they are re-translated.
 
 </td>
 <td width="33%" valign="top">
@@ -595,7 +595,7 @@ selected column, a policy for every upsert, an exact version for every edge-func
 | Database | 95 tables, all with row-level security, 220 policies, 223 migrations |
 | Backend | 24 edge functions, 10 job queues, 9 scheduled jobs |
 | Mini-apps | 22 in the catalog |
-| Languages | 26: 13 Indian, 13 global |
+| Languages | English and Hindi offered; 26 in the code |
 | Code | ~115,000 lines of first-party TypeScript |
 
 <sub>Re-derived from the tree and the live database on 2026-10-19. Re-derive before quoting.</sub>

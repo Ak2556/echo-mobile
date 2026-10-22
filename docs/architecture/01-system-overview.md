@@ -8,7 +8,7 @@ The product shapes the architecture more than any technology choice does:
 
 | Product fact | What it forces |
 |---|---|
-| **Voice is the main input**, in 26 languages | One recording must become a transcript, an intent and a reply in a single model round trip, and common commands must resolve on the device with no network at all |
+| **Voice is the main input**, in English and Hindi at launch | One recording must become a transcript, an intent and a reply in a single model round trip, and common commands must resolve on the device with no network at all |
 | **The interface itself is localised**, including right-to-left | Layout and strings follow the reader, not only the content |
 | **Built for India first**, on phones with uneven connectivity | Writes survive a dead connection; messages work offline; media goes straight to object storage |
 | **It is a social network with private messages** | Privacy rules must hold even against a modified client, so they live in the database |
