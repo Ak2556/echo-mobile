@@ -65,6 +65,19 @@ export const APP_LANGUAGES: LanguageOption[] = [
   { code: 'vi', englishName: 'Vietnamese', nativeName: 'Tiếng Việt', region: 'Global' },
 ];
 
+/**
+ * The languages the interface is offered in at launch (owner decision, 2026-10-22).
+ *
+ * The other 24 translations are corrupt (translated from Bengali, last character dropped; see
+ * docs/engineering-notes.md), so showing them would put broken text in front of people. They stay
+ * in the code for a proper re-translation run; adding a code here is what turns one back on.
+ * Everything that picks an interface language goes through this list: the pickers, a stored
+ * choice, and the device-language default.
+ */
+export const LAUNCH_LANGUAGE_CODES: readonly AppLanguageCode[] = ['en', 'hi'];
+
+export const LAUNCH_LANGUAGES: LanguageOption[] = APP_LANGUAGES.filter(language => LAUNCH_LANGUAGE_CODES.includes(language.code));
+
 export const CONTENT_LANGUAGE_OPTIONS = APP_LANGUAGES.map(language => ({
   label: `${language.englishName} (${language.nativeName})`,
   value: language.englishName,
@@ -72,7 +85,8 @@ export const CONTENT_LANGUAGE_OPTIONS = APP_LANGUAGES.map(language => ({
 }));
 
 export function normalizeAppLanguage(value: unknown): AppLanguageCode {
-  return APP_LANGUAGES.some(language => language.code === value)
+  // A stored choice from before the launch list (say 'es') falls back to English.
+  return LAUNCH_LANGUAGES.some(language => language.code === value)
     ? value as AppLanguageCode
     : DEFAULT_APP_LANGUAGE;
 }
@@ -87,7 +101,7 @@ export function detectDeviceLanguage(): AppLanguageCode {
   try {
     const locale = (Intl.DateTimeFormat().resolvedOptions().locale || 'en').toLowerCase();
     const primary = locale.split('-')[0];
-    const match = APP_LANGUAGES.find(l => l.code === primary);
+    const match = LAUNCH_LANGUAGES.find(l => l.code === primary);
     return match ? match.code : DEFAULT_APP_LANGUAGE;
   } catch {
     return DEFAULT_APP_LANGUAGE;

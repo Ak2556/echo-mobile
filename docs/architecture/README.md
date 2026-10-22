@@ -6,7 +6,7 @@ jump to the one you need.
 
 > **What Echo is.** A voice-first social app. You speak; one model call turns the recording into a
 > transcript, an intent and a spoken reply, and the app acts on it. The whole interface is
-> localised into 26 languages, including right-to-left layouts. One codebase ships to iOS, Android,
+> localised (English and Hindi at launch; 26 languages in the code), including right-to-left layouts. One codebase ships to iOS, Android,
 > web and a Mac desktop shell, backed by Supabase.
 
 ## The system on one page

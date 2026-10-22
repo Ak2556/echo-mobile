@@ -147,7 +147,7 @@ office hours, stories, quests, badges, Year in Echo and live audio are built but
 ## Internationalisation
 
 - `lib/i18n/i18n.ts` is the source: `BASE_TRANSLATIONS` (English) plus a map per language, with
-  `ttx(text)` for strings written inline in code. 26 languages: 13 Indian, 13 global.
+  `ttx(text)` for strings written inline in code. 26 languages in the code (13 Indian, 13 global), of which only English and Hindi are offered at launch (`LAUNCH_LANGUAGE_CODES`); the rest wait for a re-translation run.
 - `npm run i18n:generate` machine-translates the gaps into `lib/i18n/i18nGenerated.ts`, the only
   generated file. Hand-written strings win at runtime. Hindi has a hand-written set
   (`i18nPhrasesHi.ts`) that is marked for native-speaker review.

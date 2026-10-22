@@ -42,7 +42,7 @@ import { track } from '../lib/core/analytics';
 import { isSafeExternalUrl } from '../lib/routing/urlSafety';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { FONT_STYLE_OPTIONS, fontStyleLabel } from '../lib/ui/fontPresets';
-import { APP_LANGUAGES, CONTENT_LANGUAGE_OPTIONS, languageLabel, type AppLanguageCode } from '../lib/i18n/languages';
+import { LAUNCH_LANGUAGES, CONTENT_LANGUAGE_OPTIONS, languageLabel, type AppLanguageCode } from '../lib/i18n/languages';
 import { useI18n , ttx } from '../lib/i18n/i18n';
 import { speak } from '../lib/mini-apps/tts';
 import { useAiConsent } from '../lib/privacy/aiConsent';
@@ -1359,7 +1359,7 @@ export default function SettingsScreen() {
         <OptionPicker
           theme={theme}
           title={t('settings.chooseAppLanguage')}
-          options={APP_LANGUAGES.map(language => ({
+          options={LAUNCH_LANGUAGES.map(language => ({
             label: `${language.englishName} (${language.nativeName})`,
             value: language.code,
             desc: language.region === 'India' ? t('common.indianLanguage') : t('common.globalLanguage'),

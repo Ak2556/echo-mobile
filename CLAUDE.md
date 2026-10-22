@@ -88,7 +88,7 @@ audio (expo-audio) → supabase/functions/voice-command
 
 ### i18n
 
-26 languages. `lib/i18n/i18n.ts` is the source: `BASE_TRANSLATIONS` (English) plus per-language maps. Fix English copy there directly. `npm run i18n:generate` fills gaps into `lib/i18n/i18nGenerated.ts` (the only generated file, so don't hand-edit that one), and hand-authored strings win at runtime. Many non-English entries are corrupt (truncated, translated from Bengali); a re-translation run is still owed. Layout must handle RTL (Arabic) and the interface itself is localised, not only content.
+26 languages in the code, **only English and Hindi offered at launch** (`LAUNCH_LANGUAGE_CODES` in `lib/i18n/languages.ts`; the pickers, a stored choice and the device default all go through it). `lib/i18n/i18n.ts` is the source: `BASE_TRANSLATIONS` (English) plus per-language maps. Fix English copy there directly. `npm run i18n:generate` fills gaps into `lib/i18n/i18nGenerated.ts` (the only generated file, so don't hand-edit that one), and hand-authored strings win at runtime. Many non-English entries are corrupt (truncated, translated from Bengali); a re-translation run is still owed. Layout must handle RTL (Arabic) and the interface itself is localised, not only content.
 
 ### Theming
 
