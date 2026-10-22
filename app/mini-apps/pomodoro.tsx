@@ -4,7 +4,7 @@ import { tap } from '../../lib/ui/haptics';
 import * as Notifications from 'expo-notifications';
 import { AppState, View, Text, TextInput, Pressable, StyleSheet, Modal, ScrollView, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Play, Pause, ArrowCounterClockwise, GearSix, Fire, Minus, Plus, X, Lightning, TreeEvergreen } from 'phosphor-react-native';
 import Animated, {
   cancelAnimation,
@@ -26,10 +26,11 @@ import { CollapsibleSection } from '../../components/mini-apps/CollapsibleSectio
 import { progressSummary, showFocusPresets, showStageRail } from '../../lib/mini-apps/pomodoroView';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
-import { useI18n } from '../../lib/i18n/i18n';
+import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { showToast } from '../../components/ui/Toast';
 import { schedulePomodoroTimerNotification } from '../../lib/mini-apps/pomodoroRuntime';
+import { beginLiveActivity, endLiveActivity, pomodoroActivity, pomodoroDoneState } from '../../lib/core/liveActivity';
 import {
   ActivePomodoroTimer, PomodoroDoc, PomodoroMode, PomodoroSettings, DEFAULT_POMODORO_SETTINGS,
   clearActivePomodoroTimer, goalStreak, loadActivePomodoroTimer, loadPomodoro,
@@ -477,6 +478,10 @@ export default function PomodoroScreen() {
   const [running, setRunning] = useState(false);
   const [label, setLabel] = useState('');
   const voiceAction = useLocalSearchParams<{ vAction?: string }>().vAction;
+  // The Stop button on the Dynamic Island card opens this screen with ?liveAction=stop&lt=<token>.
+  const { liveAction, lt: liveToken } = useLocalSearchParams<{ liveAction?: string; lt?: string }>();
+  const router = useRouter();
+  const liveHandledRef = useRef<string | null>(null);
   const didVoiceRef = useRef(false);
   const [showSettings, setShowSettings] = useState(false);
   const [draftTotalSecs, setDraftTotalSecs] = useState<number | null>(null);
@@ -577,6 +582,8 @@ export default function PomodoroScreen() {
     setMode(nextMode);
     setSeconds(durationSeconds);
     setRunning(true);
+    const card = pomodoroActivity(nextMode, nextLabel, now, now + durationSeconds * 1000, ttx);
+    beginLiveActivity('pomodoro', card.state, card.config);
   }, [running]);
 
   const stopActiveTimer = useCallback(() => {
@@ -585,6 +592,7 @@ export default function PomodoroScreen() {
     activeRef.current = null;
     cancelTimerNotification(active?.notificationId);
     void clearActivePomodoroTimer();
+    if (active) endLiveActivity('pomodoro', pomodoroDoneState(active.mode, ttx));
   }, [cancelTimerNotification]);
 
   const completeTimer = useCallback(async (completedTimer?: ActivePomodoroTimer | null) => {
@@ -600,6 +608,7 @@ export default function PomodoroScreen() {
       setDraftTotalSecs(null);
       cancelTimerNotification(notificationId);
       await clearActivePomodoroTimer();
+      endLiveActivity('pomodoro', pomodoroDoneState(completedMode, ttx), 8000);
       tap('success');
       if (completedMode === 'focus') {
         const d = docRef.current;
@@ -654,6 +663,8 @@ export default function PomodoroScreen() {
       return true;
     }
     setRunning(true);
+    const card = pomodoroActivity(active.mode, active.label, Date.parse(active.startedAt), Date.parse(active.endAt), ttx);
+    beginLiveActivity('pomodoro', card.state, card.config);
     if (!active.notificationId) {
       const notificationId = await schedulePomodoroTimerNotification(active.mode, remaining);
       const nextActive = { ...active, notificationId };
@@ -739,6 +750,15 @@ export default function PomodoroScreen() {
     if ((a === 'start' || a === 'begin') && !running) startTimer();
     else if ((a === 'stop' || a === 'pause') && running) stopActiveTimer();
   }, [voiceAction, running, startTimer, stopActiveTimer]);
+
+  // From the card's Stop button. Waits for `running` so a cold start (the timer is restored from
+  // storage first) still gets stopped, and clears the params so they are never replayed.
+  useEffect(() => {
+    if (liveAction !== 'stop' || !liveToken || liveHandledRef.current === liveToken || !running) return;
+    liveHandledRef.current = liveToken;
+    stopActiveTimer();
+    router.setParams({ liveAction: undefined, lt: undefined });
+  }, [liveAction, liveToken, running, stopActiveTimer, router]);
 
   const switchMode = (m: Mode) => {
     stopActiveTimer();

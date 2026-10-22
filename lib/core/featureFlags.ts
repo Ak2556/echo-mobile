@@ -45,6 +45,12 @@ export const FLAGS = {
    * the fetched `false` turns sealing back off.
    */
   e2eeSend: true,
+  /**
+   * Live Activities: the Dynamic Island and lock-screen card for a running Pomodoro, a
+   * voice memo being recorded, and a photo or video post uploading. iOS only. Off stops
+   * new cards starting; one already showing can still end.
+   */
+  liveActivities: true,
 } as const;
 
 export type FeatureFlag = keyof typeof FLAGS;

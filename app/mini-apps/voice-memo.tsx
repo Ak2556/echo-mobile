@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import {
-  View, Text, Pressable, Alert, TextInput,
+  View, Text, Pressable, Alert, TextInput, Platform,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   createAudioPlayer,
   RecordingPresets,
@@ -28,6 +28,7 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../../components/ui/Toast';
+import { beginLiveActivity, endLiveActivity, recordingActivity, recordingSavedState, updateLiveActivity } from '../../lib/core/liveActivity';
 import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/mini-apps/miniAppMedia';
 import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/mini-apps/voiceMemos';
 import { ttx } from '../../lib/i18n/i18n';
@@ -49,6 +50,9 @@ async function playbackCandidates(memo: Memo): Promise<string[]> {
   return Array.from(new Set(candidates));
 }
 
+// Metering is on so the Dynamic Island card can show a live level.
+const RECORDING_OPTIONS = { ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true };
+
 export default function VoiceMemoApp() {
   const { colors, radius, font, fontSizes } = useTheme();
   const accent = colors.accent;
@@ -60,7 +64,11 @@ export default function VoiceMemoApp() {
       loadMemos().then(setMemos);
     }, []),
   );
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder(RECORDING_OPTIONS);
+  // The "Stop & save" button on the Dynamic Island card opens this screen with ?liveAction=stop&lt=<token>.
+  const { liveAction, lt: liveToken } = useLocalSearchParams<{ liveAction?: string; lt?: string }>();
+  const router = useRouter();
+  const liveHandledRef = useRef<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -68,6 +76,8 @@ export default function VoiceMemoApp() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordStartRef = useRef(0);
+  const lastLevelRef = useRef(0);
   const playbackSubscriptionRef = useRef<{ remove: () => void } | null>(null);
 
   const pulseScale = useSharedValue(1);
@@ -85,6 +95,7 @@ export default function VoiceMemoApp() {
     playbackSubscriptionRef.current?.remove();
     soundRef.current?.remove();
     if (timerRef.current) clearInterval(timerRef.current);
+    if (recordStartRef.current) endLiveActivity('recording', recordingSavedState(0, ttx));
   }, []);
 
   const startRecording = async () => {
@@ -93,12 +104,32 @@ export default function VoiceMemoApp() {
       Alert.alert('Permission needed', 'Microphone access is required to record voice memos.');
       return;
     }
-    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+    // iOS: keep recording when the user leaves the app (the app already declares the audio
+    // background mode). The Dynamic Island card below says "Recording", so it has to be true.
+    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, allowsBackgroundRecording: Platform.OS === 'ios' });
     await recorder.prepareToRecordAsync();
     recorder.record();
     setIsRecording(true);
     setRecordDuration(0);
-    timerRef.current = setInterval(() => setRecordDuration(d => d + 1), 1000);
+    const startedAt = Date.now();
+    recordStartRef.current = startedAt;
+    lastLevelRef.current = 0;
+    const card = recordingActivity(startedAt, ttx);
+    beginLiveActivity('recording', card.state, card.config);
+    // From the clock, not a tick count, so the time stays right if the timer is throttled.
+    timerRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      setRecordDuration(elapsed);
+      // The card's equalizer follows the microphone, about once a second.
+      try {
+        const db = recorder.getStatus().metering;
+        const level = typeof db === 'number' ? Math.min(1, Math.max(0, (db + 55) / 55)) : 0;
+        if (Math.abs(level - lastLevelRef.current) >= 0.04) {
+          lastLevelRef.current = level;
+          updateLiveActivity('recording', recordingActivity(startedAt, ttx, level).state);
+        }
+      } catch { /* metering is a nicety */ }
+    }, 1000);
     pulseScale.value = withRepeat(
       withSequence(withTiming(1.18, { duration: 600 }), withTiming(1, { duration: 600 })),
       -1,
@@ -110,16 +141,23 @@ export default function VoiceMemoApp() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     cancelAnimation(pulseScale);
     pulseScale.value = withTiming(1);
+    const elapsed = Math.floor((Date.now() - recordStartRef.current) / 1000);
+    recordStartRef.current = 0;
     await recorder.stop();
     await setAudioModeAsync({ allowsRecording: false });
     const uri = recorder.uri;
     setIsRecording(false);
-    if (!uri) { showToast('Recording failed', 'Error'); return; }
+    if (!uri) {
+      endLiveActivity('recording', recordingSavedState(elapsed, ttx));
+      showToast('Recording failed', 'Error');
+      return;
+    }
+    endLiveActivity('recording', recordingSavedState(elapsed, ttx), 4000);
     const memo: Memo = {
       id: Date.now().toString(),
       title: `Recording ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
       uri,
-      duration: recordDuration,
+      duration: elapsed,
       createdAt: new Date().toISOString(),
     };
     const updated = [memo, ...memos];
@@ -137,6 +175,15 @@ export default function VoiceMemoApp() {
       showToast('Saved on this device. Cloud audio sync will retry after another edit.', 'Voice Memo');
     }
   };
+
+  useEffect(() => {
+    if (liveAction !== 'stop' || !liveToken || liveHandledRef.current === liveToken) return;
+    liveHandledRef.current = liveToken;
+    router.setParams({ liveAction: undefined, lt: undefined });
+    // Nothing to stop if the recording is already over (a stale card): just drop the params.
+    if (isRecording) void stopRecording();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveAction, liveToken]);
 
   const playMemo = async (memo: Memo) => {
     if (playingId === memo.id) {
