@@ -8,7 +8,6 @@
 |---|---|
 | [`design/dm-e2ee.md`](design/dm-e2ee.md) | End-to-end encryption for one-to-one direct messages: design and threat model |
 | [`superpowers/specs/`](superpowers/specs/) | Design specs for individual features (presence and read receipts) |
-| [`superpowers/plans/`](superpowers/plans/) | The implementation plans that went with them |
 
 | Operations | |
 |---|---|

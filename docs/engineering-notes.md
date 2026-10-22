@@ -27,7 +27,7 @@ desktop/              Electron shell for the Mac app
 test/  e2e/           shared test stubs and suites; Maestro flows
 loadtest/             k6 load tests and security chaos scripts
 scripts/              generators (i18n, SBOM, web assets) and one-off operator tools
-docs/                 runbooks, deployment notes, design specs and plans (docs/superpowers/)
+docs/                 runbooks, deployment notes and design specs (docs/superpowers/specs/)
 .github/  .eas/       CI workflows; EAS workflows
 ```
 
