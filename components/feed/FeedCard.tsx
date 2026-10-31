@@ -837,7 +837,10 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
                 <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700', letterSpacing: -0.1 }}>{t('feed.follow')}</Text>
             </AnimatedPressable>
           )}
-          <SpeakButton text={readableText} id={`echo:${item.id}`} size={20} />
+          {/* The speaker had no margin, so it touched the 34px menu button beside it. */}
+          <View style={{ marginRight: 8 }}>
+            <SpeakButton text={readableText} id={`echo:${item.id}`} size={20} />
+          </View>
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
             depth="medium"
