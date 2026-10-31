@@ -837,8 +837,9 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
                 <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700', letterSpacing: -0.1 }}>{t('feed.follow')}</Text>
             </AnimatedPressable>
           )}
-          {/* The speaker had no margin, so it touched the 34px menu button beside it. */}
-          <View style={{ marginRight: 8 }}>
+          {/* The speaker had no margin of its own: on device it sat flush against the 34px
+              menu button, and against the Follow pill despite the pill's marginRight. */}
+          <View style={{ marginHorizontal: 8 }}>
             <SpeakButton text={readableText} id={`echo:${item.id}`} size={20} />
           </View>
           <AnimatedPressable
