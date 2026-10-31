@@ -17,6 +17,12 @@ describe('friendlyAuthError', () => {
     expect(msg).toBe('That code has already been used or has expired. Request a new one.');
   });
 
+  it('calls a rejected password a wrong password, not an expired code', () => {
+    // The reviewer sheet signs in with a password. Supabase answers a bad one
+    // with "Invalid login credentials", which used to match the OTP branch.
+    expect(friendlyAuthError('Invalid login credentials')).toBe('Incorrect email or password.');
+  });
+
   it('handles the offline case', () => {
     expect(friendlyAuthError('Network request failed')).toMatch(/connection/i);
     expect(friendlyAuthError('Authentication timed out. Check your connection and try again.'))
