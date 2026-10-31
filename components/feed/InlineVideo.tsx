@@ -12,6 +12,7 @@ const WebView: any = (() => { try { return require('react-native-webview').WebVi
 import { ArrowsClockwise, CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { videoSourceForUri } from '../../lib/media/videoMedia';
+import { capFeedBuffer } from '../../lib/media/playerBuffer';
 import { videoFallbackHtml } from '../../lib/media/videoHtml';
 import { ttx } from '../../lib/i18n/i18n';
 
@@ -57,7 +58,7 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRe
   const { colors, radius, fontSizes } = useTheme();
   const videoRef = useRef<VideoView>(null);
   const [activeUri, setActiveUri] = useState(uri);
-  const player = useVideoPlayer(videoSourceForUri(activeUri));
+  const player = useVideoPlayer(videoSourceForUri(activeUri), capFeedBuffer);
 
   // THROWAWAY probe (lib/media/devVideoProbe.ts) — remove with it.
   useEffect(() => {
