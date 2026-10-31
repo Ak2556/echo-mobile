@@ -9,6 +9,7 @@ import { probePlayerCreated, probePlayerReleased, probeTrace } from '../../lib/m
 import { useVideoMountPolicy } from '../../lib/feed/videoMountPolicy';
 import { FIRST_FRAME_GRACE_MS, useFirstFrameWatchdog } from '../../lib/feed/firstFrameWatchdog';
 import { videoSourceForUri } from '../../lib/media/videoMedia';
+import { capFeedBuffer } from '../../lib/media/playerBuffer';
 import { useVideoPoster } from '../../lib/media/videoPoster';
 import { MEDIA_FADE_MS } from './mediaPlaceholder';
 import { videoFallbackHtml } from '../../lib/media/videoHtml';
@@ -137,7 +138,7 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, ec
 function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount, echoId, autoplay = false, paused = false, controls = false }: VideoPreviewProps) {
   const { VideoView, useVideoPlayer } = ExpoVideoModule!;
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
-  const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
+  const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; capFeedBuffer(p); });
 
   // THROWAWAY probe (lib/media/devVideoProbe.ts). A player is constructed here on
   // MOUNT, not when the card becomes active — counting them is the whole point
