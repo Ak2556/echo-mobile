@@ -16,6 +16,11 @@ export function friendlyAuthError(message: string | null | undefined): string | 
   if (m.includes('rate limit') || m.includes('too many requests')) {
     return 'Too many codes requested. Wait a few minutes and try again.';
   }
+  if (m.includes('invalid login credentials')) {
+    // Password sign-in only exists for the store reviewers. Without this it fell
+    // into the 'invalid' branch below and told them a code had expired.
+    return 'Incorrect email or password.';
+  }
   if (m.includes('token has expired') || m.includes('otp_expired') || m.includes('invalid')) {
     // Single-use: a second attempt with the same code hits this even though
     // the first one worked. Say which code to use rather than implying theirs
