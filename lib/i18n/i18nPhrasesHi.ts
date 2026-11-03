@@ -11,7 +11,7 @@ export const HI_BULK: Record<string, string> = {
   '+ New routine': '+ नई दिनचर्या',
   '/month': '/माह',
   '0 = body': '0 = शरीर',
-  '2026 learning library': '2026 लर्निंग लाइब्रेरी',
+  'Learning library': 'लर्निंग लाइब्रेरी',
   '3 quick questions to find your intellectual style. It shapes how Echo introduces you.': 'आपकी बौद्धिक शैली जानने के लिए 3 त्वरित सवाल। यह तय करता है कि Echo आपका परिचय कैसे देता है।',
   '30 high-demand topics curated with free online material, Echo proof projects, notes, practice, and code-alongs where useful.': '30 उच्च-मांग वाले विषय, मुफ़्त ऑनलाइन सामग्री, Echo प्रूफ़ प्रोजेक्ट, नोट्स, अभ्यास, और जहां उपयोगी हो कोड-अलॉन्ग के साथ।',
   'A daily nudge to track what you ate': 'आपने क्या खाया, यह ट्रैक करने की रोज़ की याद',

@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { ChatCircleText, ShareNetwork, Target, UsersThree, SquaresFour , CheckCircle, Barbell, Wallet, ListChecks } from 'phosphor-react-native';
+import { useFeature } from '../hooks/useFeature';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/ui/theme';
 import { useResponsiveLayout } from '../lib/ui/responsive';
@@ -19,6 +20,7 @@ import { WARM } from '../lib/ui/fixedColors';
 
 export default function TargetProgressScreen() {
   const router = useRouter();
+  const salonsEnabled = useFeature('salons');
   const { colors, radius, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
   const targetCategory = useAppStore(s => s.targetCategory);
@@ -130,12 +132,14 @@ export default function TargetProgressScreen() {
                 caption={ttx("Invite a partner from messages and keep each other accountable.")}
                 onPress={() => router.push('/messages' as Href)}
               />
-              <ActionButton
-                icon={<UsersThree color={colors.accent} size={18} weight="bold" />}
-                label={ttx("Start a group")}
-                caption={ttx("Use a salon for group tasks, weekly check-ins, and comparison.")}
-                onPress={() => router.push('/salons' as Href)}
-              />
+              {salonsEnabled && (
+                <ActionButton
+                  icon={<UsersThree color={colors.accent} size={18} weight="bold" />}
+                  label={ttx("Start a group")}
+                  caption={ttx("Use a salon for group tasks, weekly check-ins, and comparison.")}
+                  onPress={() => router.push('/salons' as Href)}
+                />
+              )}
             </View>
 
             <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 16 }}>

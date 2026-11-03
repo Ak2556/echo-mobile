@@ -51,6 +51,7 @@ import { deleteRemoteFitness } from '../lib/mini-apps/fitnessRemote';
 import { BackButton } from '../components/ui/BackButton';
 import { WARM, ON_MEDIA, ON_STATUS, SWITCH_THUMB } from '../lib/ui/fixedColors';
 import { confirmAction } from '../lib/ui/confirm';
+import Constants from 'expo-constants';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@downloadecho.com';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@downloadecho.com';
@@ -1261,7 +1262,7 @@ export default function SettingsScreen() {
         </Animated.View>}
         </View>
 
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 32 }}>{ttx("Echo v1.0.0")}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 32 }}>{`Echo v${Constants.expoConfig?.version ?? '1.0.0'}`}</Text>
       </ScrollView>
 
       {}

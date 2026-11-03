@@ -399,7 +399,7 @@ export default function AppsScreen() {
 
             {/* Tools grid */}
             <View style={{ gap: GAP }}>
-              <Eyebrow>{lane === 'all' ? `Premium essentials · ${APPS.length}` : `${TOOL_LANES.find(l => l.id === lane)?.label} suite · ${laneApps.length}`}</Eyebrow>
+              <Eyebrow>{lane === 'all' ? `All tools · ${APPS.length}` : `${TOOL_LANES.find(l => l.id === lane)?.label} suite · ${laneApps.length}`}</Eyebrow>
               {renderGrid(laneApps)}
             </View>
 
