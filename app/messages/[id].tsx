@@ -4,7 +4,7 @@ import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import {
   View, Text, KeyboardAvoidingView, Platform, ScrollView,
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
-  ActivityIndicator, Alert, Linking, Dimensions, AppState,
+  ActivityIndicator, Alert, Dimensions, AppState,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
@@ -83,6 +83,7 @@ import { presencePhrase, usePresenceStore } from '../../lib/social/presenceCore'
 import { isReadForViewer } from '../../lib/social/readState';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/routing/echoUrl';
+import { openExternalUrl } from '../../lib/routing/openExternalUrl';
 import { ttx } from '../../lib/i18n/i18n';
 import { playbackEnded } from '../../lib/mini-apps/audioPlayback';
 import { BackButton } from '../../components/ui/BackButton';
@@ -1043,7 +1044,7 @@ function DMBubble({
     if (message.kind === 'link' && message.linkUrl) {
       return (
         <Pressable
-          onPress={() => void Linking.openURL(message.linkUrl!)}
+          onPress={() => void openExternalUrl(message.linkUrl)}
           onLongPress={onLongPress}
           delayLongPress={350}
         >
