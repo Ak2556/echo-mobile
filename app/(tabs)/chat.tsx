@@ -664,7 +664,7 @@ export default function ChatScreen() {
           upsertText(
             `err-${Date.now()}`,
             'assistant',
-            "You've reached your current Echo tier's AI limit. Try again when the window resets, or open Tiers for more capacity.",
+            "You've reached the hourly limit for the assistant. It resets within the hour, so try again in a little while.",
           );
           track('chat_rate_limited');
         } else {
