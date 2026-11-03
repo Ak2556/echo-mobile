@@ -35,6 +35,27 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # The update runtime this APK carries must be the one `eas update` computes from a
+      # clean checkout, or no over-the-air fix ever reaches it: the CI-built website APK
+      # carried a different runtime on every build (fa067f43, 6926afc8, b2c8b19e), none of
+      # them the one a clean checkout computes. expo-updates lets the build take its runtime
+      # from EXPO_UPDATES_FINGERPRINT_OVERRIDE instead of computing it again inside Gradle,
+      # so it is computed here, before prebuild, and handed on. Every input is printed so a
+      # difference from a local `npx expo-updates fingerprint:generate --platform android`
+      # can be found by diffing the two. Fails closed: a build that cannot state its runtime
+      # would be unreachable again.
+      - name: Pin the update runtime to the clean-checkout fingerprint
+        run: |
+          npx expo-updates fingerprint:generate --platform android > "$RUNNER_TEMP/fingerprint.json"
+          hash=$(node -p "JSON.parse(require('fs').readFileSync(process.env.RUNNER_TEMP + '/fingerprint.json', 'utf8')).hash")
+          if ! echo "$hash" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Could not compute the update fingerprint (got '$hash'). An APK without a known runtime cannot receive updates."
+            exit 1
+          fi
+          node -e "for (const s of JSON.parse(require('fs').readFileSync(process.env.RUNNER_TEMP + '/fingerprint.json', 'utf8')).sources) console.log((s.hash || '').slice(0, 10), s.type, s.id || s.filePath || s.name || '')"
+          echo "EXPO_UPDATES_FINGERPRINT_OVERRIDE=$hash" >> "$GITHUB_ENV"
+          echo "Update runtime pinned to $hash"
+
       - name: Expo Prebuild
         run: npx expo prebuild --platform android
 
@@ -110,6 +131,18 @@ jobs:
       # the fingerprint live in the script.
       - name: Refuse to publish a debug-signed APK
         run: ./scripts/verify-apk-signer.sh android/app/build/outputs/apk/release/app-release.apk
+
+      # Judges the finished artifact, like the signer check: the override above only works if
+      # Gradle actually received it, and nothing else would notice if it did not.
+      - name: Check the APK carries the pinned update runtime
+        run: |
+          embedded=$(unzip -p android/app/build/outputs/apk/release/app-release.apk assets/fingerprint)
+          echo "embedded: $embedded"
+          echo "pinned:   $EXPO_UPDATES_FINGERPRINT_OVERRIDE"
+          if [ "$embedded" != "$EXPO_UPDATES_FINGERPRINT_OVERRIDE" ]; then
+            echo "::error::The APK carries runtime '$embedded', not the pinned '$EXPO_UPDATES_FINGERPRINT_OVERRIDE'. Over-the-air updates would not reach it."
+            exit 1
+          fi
 
       - name: Distribute to Firebase
         working-directory: android
