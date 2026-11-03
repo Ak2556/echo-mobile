@@ -25,9 +25,11 @@
 // minutes, is throttled to every three to five hours, and reports by opening
 // an issue nobody is paged by.
 //
-// Called by pg_cron with x-ops-probe-secret. Deploy with --no-verify-jwt is not
-// needed: the cron sends the Vault service key as Authorization for the gateway,
-// exactly as push-fanout does, and this function trusts only the secret.
+// Called by pg_cron with x-ops-probe-secret, and deployed with verify_jwt off
+// (supabase/config.toml). This function trusts only the secret. It used to rely
+// on the gateway accepting the Vault service key as a bearer token; Supabase
+// began answering 401 "Legacy API keys are disabled" to that key on 2026-11-02,
+// and the probe stopped running without anything noticing.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { timingSafeEqual } from "../_shared/timingSafeEqual.ts";
