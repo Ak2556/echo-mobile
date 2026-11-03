@@ -62,3 +62,56 @@ describe('Hindi shared strings', () => {
     expect(bad).toEqual([]);
   });
 });
+
+/**
+ * The login screen is the first thing a Hindi user sees, and its strings had been cut by
+ * one to several characters ("फो", "त्रुट", "ईमेल से साइन इ") with the final nasal of every
+ * polite verb dropped ("जारी रखे"). Every auth key is pinned so a truncation cannot return.
+ */
+describe('Hindi sign-in strings', () => {
+  const expected = {
+    'auth.loginQuestionLabel': 'संभाल कर रखने लायक सवाल',
+    'auth.continueGoogle': 'Google से जारी रखें',
+    'auth.signingIn': 'साइन इन हो रहा है...',
+    'auth.continueEmail': 'ईमेल से जारी रखें',
+    'auth.continuePhone': 'फ़ोन से जारी रखें',
+    'auth.orSignInWith': 'या साइन इन करें',
+    'auth.phone': 'फ़ोन',
+    'auth.termsPrefix': 'जारी रखकर आप इनसे सहमत हैं:',
+    'auth.terms': 'शर्तें',
+    'auth.privacy': 'प्राइवेसी',
+    'auth.appReview': 'ऐप रिव्यू',
+    'auth.openDemo': 'डेमो अकाउंट खोलें',
+    'auth.demoUnavailable': 'डेमो साइन-इन उपलब्ध नहीं है',
+    'auth.error': 'त्रुटि',
+    'auth.emailTitle': 'ईमेल से साइन इन करें',
+    'auth.emailBody': 'हम आपके इनबॉक्स में 6 अंकों का कोड भेजेंगे',
+    'auth.phoneTitle': 'फ़ोन से साइन इन करें',
+    'auth.phoneBody': 'हम आपको 6 अंकों का कोड भेजेंगे। देश कोड शामिल करें',
+    'auth.sendCode': 'कोड भेजें',
+    'auth.enterCode': 'कोड डालें',
+    'auth.sentTo': 'भेजा गया:',
+    'auth.verify': 'वेरिफ़ाई करें',
+    'auth.verifyCode': 'कोड वेरिफ़ाई करें',
+    'auth.resendCode': 'कोड फिर भेजें',
+    'auth.resendIn': '{count}s में फिर भेजें',
+    'auth.resendInSeconds': '{count} सेकंड में फिर भेजें',
+  } as const;
+
+  for (const [key, value] of Object.entries(expected)) {
+    it(`${key} reads ${value}`, () => {
+      expect(translate(key as Parameters<typeof translate>[0], 'hi')).toBe(value);
+    });
+  }
+
+  it('every English auth key has a Hindi value, and none ends in a bare virama', () => {
+    const src = readFileSync(join(process.cwd(), 'lib/i18n/i18n.ts'), 'utf8');
+    const en = [...src.slice(0, src.indexOf('const AUTH_TRANSLATIONS')).matchAll(/^\s*'(auth\.[^']+)':/gm)].map(m => m[1]);
+    const start = src.indexOf('const AUTH_TRANSLATIONS');
+    const hi = src.indexOf('  hi: {', start);
+    const end = src.indexOf('\n  },', hi);
+    const values = new Map([...src.slice(hi, end).matchAll(/^\s*'([^']+)':\s*"((?:[^"\\]|\\.)*)"/gm)].map(m => [m[1], m[2]]));
+    expect(en.filter(k => !values.has(k))).toEqual([]);
+    expect([...values].filter(([, v]) => /्$/.test(v)).map(([k]) => k)).toEqual([]);
+  });
+});
