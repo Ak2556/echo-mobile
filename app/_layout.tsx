@@ -27,6 +27,7 @@ import { Fraunces_400Regular, Fraunces_400Regular_Italic, Fraunces_500Medium, Fr
 import { QueryClient, MutationCache } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { mmkvPersister } from '../lib/core/queryPersister';
+import { PERSIST_BUSTER, shouldPersistQuery } from '../lib/core/persistPolicy';
 import { ToastProvider, showToast } from '../components/ui/Toast';
 import { ConfirmHost } from '../components/common/ConfirmSheet';
 import { friendlyWriteError, isAuthSessionError } from '../lib/core/mutationErrors';
@@ -459,7 +460,17 @@ function RootLayout() {
     // launched the process, so the provider has to exist before anything else
     // mounts.
     <ShareIntentProvider options={{ resetOnBackground: false }}>
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: mmkvPersister, maxAge: 1000 * 60 * 60 * 24 * 7 }}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister: mmkvPersister,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+        // DM threads hold decrypted text; they are never written to disk, and
+        // the buster drops what earlier versions already wrote (persistPolicy.ts).
+        buster: PERSIST_BUSTER,
+        dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+      }}
+    >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthListenerProvider />
         <AuthGuard />
