@@ -58,6 +58,13 @@ describe('recovery bundle', () => {
     for (const fn of calls) expect(schema, `public.${fn} is not in schema.sql`).toMatch(new RegExp(`FUNCTION "public"\\."${fn}"\\(`));
   });
 
+  it('no cron job sends the Vault service key as a bearer token', () => {
+    // Supabase answers a disabled legacy key with 401 before the function runs, even with verify_jwt
+    // off. ops-probe went dark on 2026-11-02 that way: the cron "succeeded" while every call failed.
+    // Cron-called functions authenticate with their own x-*-secret header instead.
+    expect(bootstrap).not.toMatch(/'Authorization'\s*,[^)]{0,120}service_role_key/s);
+  });
+
   it('holds no secret material', () => {
     for (const f of ['schema.sql', 'auth-storage.sql', 'bootstrap.sql', 'seed-content.sql', 'README.md']) {
       const text = read(`supabase/recovery/${f}`);
