@@ -453,6 +453,11 @@ verify_jwt = false
 #   revenuecat-webhook  RevenueCat, HMAC signature over the body
 #   razorpay-webhook    Razorpay, HMAC signature over the body
 #   og-redirect         link-preview crawlers, public data only
+#   ops-probe           pg_cron every 30 min, x-ops-probe-secret. The gateway
+#                       JWT check made it depend on the Vault service key, a
+#                       legacy key Supabase started rejecting on 2026-11-02
+#                       23:30 UTC (401 "Legacy API keys are disabled"), which
+#                       silenced the monitor itself.
 [functions.worker]
 verify_jwt = false
 
@@ -463,4 +468,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.og-redirect]
+verify_jwt = false
+
+[functions.ops-probe]
 verify_jwt = false
