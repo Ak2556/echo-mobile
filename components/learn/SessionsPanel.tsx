@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ttx } from '../../lib/i18n/i18n';
 import { ICON_SIZE } from '../../lib/ui/icons';
-import { View, Text, Pressable, ActivityIndicator, Linking, TextInput, Share } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, TextInput, Share } from 'react-native';
+import { openExternalUrl } from '../../lib/routing/openExternalUrl';
 import { CalendarBlank, ShareNetwork, VideoCamera } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { showToast } from '../ui/Toast';
@@ -194,7 +195,7 @@ export function SessionsPanel() {
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {joinable && (
                     <Pressable
-                      onPress={() => void Linking.openURL(booking.meetingLink!)}
+                      onPress={() => void openExternalUrl(booking.meetingLink)}
                       accessibilityRole="button"
                       style={{ flex: 1 }}
                     >

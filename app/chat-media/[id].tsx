@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, Linking, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import { openExternalUrl } from '../../lib/routing/openExternalUrl';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
@@ -71,7 +72,7 @@ export default function ChatMediaScreen() {
         ) : (
           <ScrollView contentContainerStyle={{ padding: 12, gap: 8 }}>
             {media.links.map(l => (
-              <Pressable key={l.id} onPress={() => void Linking.openURL(l.url)} accessibilityRole="button"
+              <Pressable key={l.id} onPress={() => void openExternalUrl(l.url)} accessibilityRole="button"
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 12 }}>
                 <LinkSimple color={colors.accent} size={18} />
                 <Text style={{ flex: 1, color: colors.text, fontSize: fontSizes.small }} numberOfLines={1}>{l.url}</Text>
