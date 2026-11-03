@@ -8,6 +8,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { AccessToken } from 'npm:livekit-server-sdk@2.18.0';
+import { spendActionBudget } from '../_shared/actionLimit.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -39,6 +40,18 @@ Deno.serve(async (req: Request) => {
 
   const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
   if (authError || !user) return new Response('Unauthorized', { status: 401 });
+
+  // Each token is a billable LiveKit session for up to an hour. A person joins a
+  // handful of calls an hour at most.
+  const budget = await spendActionBudget(user.id, [
+    { action: 'livekit_token_hour', limit: 60, windowSeconds: 3600 },
+  ]);
+  if (!budget.ok) {
+    return new Response(budget.status === 429 ? 'Too many call requests' : 'Calls are unavailable', {
+      status: budget.status,
+      headers: budget.retryAfterSeconds ? { 'Retry-After': String(budget.retryAfterSeconds) } : undefined,
+    });
+  }
 
   let body: { callId: string };
   try {

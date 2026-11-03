@@ -12,6 +12,7 @@
 // so a retried request can never create a second charge.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { spendActionBudget } from '../_shared/actionLimit.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -45,6 +46,21 @@ Deno.serve(async (req: Request) => {
   });
   const { data: { user } } = await asUser.auth.getUser();
   if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  // Each call can create a Razorpay order. The order is idempotent per ad, so a
+  // retry costs nothing; this stops one account minting orders in a loop.
+  const limit = await spendActionBudget(user.id, [
+    { action: 'razorpay_order_hour', limit: 10, windowSeconds: 3600 },
+  ]);
+  if (!limit.ok) {
+    return json(
+      {
+        error: limit.status === 429 ? 'Too many payment attempts. Try again later.' : 'Payments are unavailable right now',
+        retryAfter: limit.retryAfterSeconds,
+      },
+      limit.status,
+    );
+  }
 
   let adId = '';
   let budget = NaN;

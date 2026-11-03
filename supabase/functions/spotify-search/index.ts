@@ -12,13 +12,16 @@
 // The client no longer sees the credentials at all. It sends a query and gets
 // back the same shape it always did.
 //
-// Abuse protection here is authentication, and nothing more: any signed-in user
-// can search. It deliberately does NOT use _shared/rateLimit.ts, because that
-// limiter spends the caller's hourly AI budget, and a music search is not an AI
-// request — charging it there would make the chat quota disappear for reasons a
-// user could never work out.
+// Abuse protection is authentication plus a per-user hourly budget. It
+// deliberately does NOT use _shared/rateLimit.ts, because that limiter spends the
+// caller's hourly AI budget, and a music search is not an AI request — charging
+// it there would make the chat quota disappear for reasons a user could never
+// work out. The budget here is its own counter (spotify_search_hour). Every
+// search spends the one Spotify client-credentials quota the whole app shares,
+// so a single scripted account could otherwise lock music search for everyone.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { spendActionBudget } from '../_shared/actionLimit.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -91,6 +94,20 @@ Deno.serve(async (req: Request) => {
 
   const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
   if (authError || !user) return json({ error: 'Unauthorized' }, 401);
+
+  // Generous: the composer searches as you type, so one sitting is many calls.
+  const budget = await spendActionBudget(user.id, [
+    { action: 'spotify_search_hour', limit: 240, windowSeconds: 3600 },
+  ]);
+  if (!budget.ok) {
+    return json(
+      {
+        error: budget.status === 429 ? 'Too many music searches. Try again shortly.' : 'Music search is unavailable',
+        retryAfter: budget.retryAfterSeconds,
+      },
+      budget.status,
+    );
+  }
 
   let body: { query?: unknown };
   try {
