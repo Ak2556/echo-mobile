@@ -677,7 +677,7 @@ export default function ChatScreen() {
         setStreamingMsgId(null);
       }
     },
-    [aiModel, buildEchoContext, currentSessionId, runLocalTool, setConvId, startFlush, stopFlush, updateSessionLastMessage, upsertText, upsertTool],
+    [aiMode, aiModel, buildEchoContext, currentSessionId, runLocalTool, setConvId, startFlush, stopFlush, updateSessionLastMessage, upsertText, upsertTool],
   );
 
   const handleStop = useCallback(() => {
