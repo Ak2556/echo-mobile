@@ -940,7 +940,7 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <IconBadge color={colors.accent} size={44} radius={15}><Waveform color={colors.bgPure} size={21} weight="bold" /></IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("2026 learning library")}</Text>
+            <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("Learning library")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, lineHeight: 18, marginTop: 2 }]}>
               {ttx("30 high-demand topics curated with free online material, Echo proof projects, notes, practice, and code-alongs where useful.")}
             </Text>
