@@ -12,6 +12,6 @@ The Terms and Privacy Policy live in code, so the app and any web mirror can nev
 
 `NOTICE` and `sbom.json` record third-party attribution and licence elections, and regenerate with `npm run legal:sbom`.
 
-**Age policy:** minimum age 16. Under 18, Echo serves no advertising and performs no behavioural profiling — enforced in Postgres, not on the device, and it fails closed on unknown age.
+**Age policy:** minimum age 18 (decided 2026-09-22; see `ageGate.ts`). Under 18, Echo serves no advertising and performs no behavioural profiling — enforced in Postgres, not on the device, and it fails closed on unknown age.
 
 See also [`launch-and-first-year.md`](launch-and-first-year.md).
