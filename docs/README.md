@@ -11,6 +11,7 @@
 
 | Operations | |
 |---|---|
+| [`development.md`](development.md) | Setting up, configuring and debugging Echo locally |
 | [`engineering-notes.md`](engineering-notes.md) | Repository layout, commands and the gotchas that cost an afternoon |
 | [`testing.md`](testing.md) | What is tested, and how |
 | [`runbook/monitoring.md`](runbook/monitoring.md) | Reading the health signals and what to do about each |
