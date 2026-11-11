@@ -29,6 +29,7 @@ import { syncPersonalNudges, recordAppOpen } from '../../lib/ai/personalNudges';
 import { markCheckinSeen } from '../../lib/ai/proactiveCheckin';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
+import { useTracking } from '../../lib/ui/tracking';
 import { Avatar } from '../../components/ui/Avatar';
 import { wantsToPost } from '../../lib/ai/postIntent';
 import { Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
@@ -140,6 +141,7 @@ function ChatEmptyLaunchpad({
   onSend?: (value: string) => void;
   showPrivacy: boolean;
 }) {
+  const tracking = useTracking();
   const { colors, font, radius, fontSizes } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
@@ -187,12 +189,12 @@ function ChatEmptyLaunchpad({
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               {opener ? (
-                <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 28 : 34, lineHeight: layout.isPhone ? 34 : 40, letterSpacing: -0.5 }]}>
+                <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 28 : 34, lineHeight: layout.isPhone ? 34 : 40, letterSpacing: tracking(-0.5) }]}>
                   {opener.message}
                 </Text>
               ) : (
                 <>
-                  <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]}>
+                  <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: tracking(-0.5) }]}>
                     {t('chat.emptyTitle')}
                   </Text>
                   <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.label, lineHeight: 22, marginTop: 8 }]} numberOfLines={2}>

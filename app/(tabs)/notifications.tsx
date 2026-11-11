@@ -20,6 +20,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
+import { useTracking } from '../../lib/ui/tracking';
 import { useI18n } from '../../lib/i18n/i18n';
 import { setReadableNotifications } from '../../lib/voice/readNotifications';
 import { Notification } from '../../types';
@@ -80,6 +81,7 @@ function groupNotifications(notifications: Notification[], columns: number): Lis
 }
 
 export default function NotificationsScreen() {
+  const tracking = useTracking();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { notifications: storeNotifications, markAllNotificationsRead, markNotificationRead: storeMarkRead, unreadNotificationCount, mutedIds } = useAppStore();
@@ -181,7 +183,7 @@ export default function NotificationsScreen() {
       return (
         <View style={listContentStyle}>
           <View style={{ paddingHorizontal: 16, paddingTop: 22, paddingBottom: 10 }}>
-            <Text style={{ fontSize: fontSizes.meta, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
+            <Text style={{ fontSize: fontSizes.meta, ...font.bodySemibold, letterSpacing: tracking(1.4), textTransform: 'uppercase', color: colors.textMuted }}>
               {item.label === 'Today' ? t('notif.today') : item.label === 'This Week' ? t('notif.thisWeek') : t('notif.earlier')}
             </Text>
           </View>
@@ -345,7 +347,7 @@ export default function NotificationsScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Text style={[font.displayBlack, { color: colors.text, fontSize: fontSizes.heading, letterSpacing: -0.5, marginTop: 2 }]}>{t('notif.title')}</Text>
+                <Text style={[font.displayBlack, { color: colors.text, fontSize: fontSizes.heading, letterSpacing: tracking(-0.5), marginTop: 2 }]}>{t('notif.title')}</Text>
                 {unreadCount > 0 && (
                   <View
                     style={{
