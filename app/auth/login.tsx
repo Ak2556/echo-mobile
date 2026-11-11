@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { AppleLogo, EnvelopeSimple, GoogleLogo } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
+import { useTracking } from '../../lib/ui/tracking';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import * as Haptics from 'expo-haptics';
 import {
@@ -41,6 +42,7 @@ const ROTATING_PROMPT_KEYS: TranslationKey[] = [
 ];
 
 export default function LoginScreen() {
+  const tracking = useTracking();
   const router = useRouter();
   const { colors, radius, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
@@ -48,7 +50,7 @@ export default function LoginScreen() {
   // the same call, so both sides agree on the layout.
   const { width: windowWidth } = useWindowDimensions();
   const showLanding = Platform.OS === 'web' && windowWidth >= 1000;
-  const { t, textDirection, languageCode } = useI18n();
+  const { t, textDirection } = useI18n();
   const isDark = colors.isDark;
 
   const [reviewerOpen, setReviewerOpen] = useState(false);
@@ -227,12 +229,12 @@ export default function LoginScreen() {
                   textAlign: 'center',
                   writingDirection: textDirection.writingDirection,
                   lineHeight: 28,
-                  letterSpacing: 0.2,
+                  letterSpacing: tracking(0.2),
                 }]}
               >
                 {`"${t(ROTATING_PROMPT_KEYS[promptIdx])}"`}
               </Animated.Text>
-              <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 14, letterSpacing: languageCode === 'hi' ? 0 : 1.6 }]}>
+              <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 14, letterSpacing: tracking(1.6) }]}>
                 {t('auth.loginQuestionLabel').toUpperCase()}
               </Text>
             </View>
@@ -312,7 +314,7 @@ export default function LoginScreen() {
 
 
             <Animated.View entering={FadeInDown.delay(260).duration(400)} style={{ alignItems: 'center', marginTop: 8 }}>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', lineHeight: 16, letterSpacing: 0.1 }]}>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', lineHeight: 16, letterSpacing: tracking(0.1) }]}>
                 {t('auth.termsPrefix')}{' '}
                 <Text
                   style={[font.bodySemibold, { color: colors.textSecondary, textDecorationLine: 'underline' }]}
@@ -347,6 +349,7 @@ function PrimaryButton({
   icon: React.ReactNode; label: string; onPress: () => void;
   bg: string; fg: string; radius: number; font: object; glow?: boolean;
 }) {
+  const tracking = useTracking();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -386,7 +389,7 @@ function PrimaryButton({
         }}
       >
         {icon}
-        <Text style={[font, { color: fg, fontSize: 17, letterSpacing: -0.2 }]}>{label}</Text>
+        <Text style={[font, { color: fg, fontSize: 17, letterSpacing: tracking(-0.2) }]}>{label}</Text>
       </Pressable>
     </Animated.View>
   );

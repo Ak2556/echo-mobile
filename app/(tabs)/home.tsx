@@ -33,6 +33,7 @@ import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, us
 import { useFollow } from '../../hooks/queries/useFollow';
 import { EvolutionGroup, FeedItem } from '../../types';
 import { useTheme } from '../../lib/ui/theme';
+import { useTracking } from '../../lib/ui/tracking';
 import { noteScroll } from '../../lib/ui/scrollActivity';
 import { useAppStore } from '../../store/useAppStore';
 import { FollowingEmptyState } from '../../components/feed/FollowingEmptyState';
@@ -73,6 +74,7 @@ const SENSITIVE_TAGS = new Set(['nsfw', 'adult', 'explicit', 'mature', '18+', '1
 const VOICE_VIEWABILITY = { itemVisiblePercentThreshold: 60 };
 
 function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: React.ReactNode }) {
+  const tracking = useTracking();
   const { colors, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
   return (
@@ -86,7 +88,7 @@ function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: Rea
         gap: 8,
       }}
     >
-      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{label}</Text>
+      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: tracking(1.4), textTransform: 'uppercase' }]}>{label}</Text>
       {sub && (
         <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta }]}>
           · {sub}
@@ -107,6 +109,7 @@ function HomeHero({
   scrollY: SharedValue<number>;
   reduceMotion: boolean;
 }) {
+  const tracking = useTracking();
   const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
 
@@ -151,7 +154,7 @@ function HomeHero({
             color: colors.text,
             fontSize: layout.isPhone ? 46 : 60,
             lineHeight: layout.isPhone ? 46 : 60,
-            letterSpacing: layout.isPhone ? -1.6 : -2.1,
+            letterSpacing: tracking(layout.isPhone ? -1.6 : -2.1),
           },
         ]}
         numberOfLines={2}
@@ -170,6 +173,7 @@ function HomeHero({
  * stays stable across re-renders and restarts.
  */
 function DailyThought() {
+  const tracking = useTracking();
   const { colors, font, fontSizes } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
@@ -223,7 +227,7 @@ function DailyThought() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <Waveform color={colors.accent} size={ICON_SIZE.xs} weight="fill" />
-              <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption, letterSpacing: 1.3, textTransform: 'uppercase' }]}>
+              <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption, letterSpacing: tracking(1.3), textTransform: 'uppercase' }]}>
                 {t('home.thoughtForToday')}
               </Text>
             </View>
@@ -405,6 +409,7 @@ function FeedScopeRail({
 }
 
 export default function DiscoverScreen() {
+  const tracking = useTracking();
   // Read through the hook, not the compiled map: these re-render when a flag
   // is flipped remotely, which is the point of the kill switch.
   const dailyQuestionEnabled = useFeature('dailyQuestion');
@@ -828,7 +833,7 @@ export default function DiscoverScreen() {
               always on screen, and it used to be the word alone. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 2 }}>
             <EchoWordmark height={22} />
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: fontSizes.heading, letterSpacing: -0.5 }]}>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: fontSizes.heading, letterSpacing: tracking(-0.5) }]}>
               Echo
             </Text>
           </View>

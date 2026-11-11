@@ -28,6 +28,7 @@ import { FeedCard } from '../../components/feed/FeedCard';
 import { ThinkingFingerprintCard } from '../../components/feed/ThinkingFingerprintCard';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
+import { useTracking } from '../../lib/ui/tracking';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { signOut } from '../../lib/auth';
 import { FeedItem } from '../../types';
@@ -94,6 +95,7 @@ type ProfileRadius = ReturnType<typeof useTheme>['radius'];
 type ProfileFont = ReturnType<typeof useTheme>['font'];
 
 export default function ProfileScreen() {
+  const tracking = useTracking();
   const { t } = useI18n();
   const router = useRouter();
   const { colors, radius, font, fontSizes } = useTheme();
@@ -245,14 +247,14 @@ export default function ProfileScreen() {
             
             <View style={{ marginTop: 24, alignItems: 'center', paddingHorizontal: 16 }}>
               <Text
-                style={[font.displayBlack, { color: colors.text, fontSize: 32, textAlign: 'center', lineHeight: 36, letterSpacing: -0.5 }]}
+                style={[font.displayBlack, { color: colors.text, fontSize: 32, textAlign: 'center', lineHeight: 36, letterSpacing: tracking(-0.5) }]}
                 numberOfLines={2}
                 maxFontSizeMultiplier={TITLE_TEXT_SCALE}
               >
                 {displayLabel}
               </Text>
               <Text
-                style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.body, marginTop: 4, letterSpacing: 0.2 }]}
+                style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.body, marginTop: 4, letterSpacing: tracking(0.2) }]}
                 numberOfLines={1}
                 maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
               >
@@ -656,11 +658,12 @@ function SectionLabel({
   font: ProfileFont;
   icon?: React.ReactNode;
 }) {
+  const tracking = useTracking();
   return (
     <View style={styles.sectionLabelRow}>
       {icon}
       <Text
-        style={[font.bodySemibold, styles.sectionLabel, { color: colors.textMuted, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 12 }]}
+        style={[font.bodySemibold, styles.sectionLabel, { color: colors.textMuted, letterSpacing: tracking(1.4), textTransform: 'uppercase', fontSize: 12 }]}
         numberOfLines={1}
         maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
       >

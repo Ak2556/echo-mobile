@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Pulse, Target, MagnifyingGlass, CaretRight } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
+import { useTracking } from '../../lib/ui/tracking';
 import { noteScroll } from '../../lib/ui/scrollActivity';
 import { getTodayProductivity, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/core/localSearch';
 import { formatMoney } from '../../lib/mini-apps/expenses';
@@ -49,10 +50,11 @@ const APPS: MiniApp[] = MINI_APP_CATALOG.filter(a =>
 
 /** Eyebrow section label — quiet, letterspaced, the app's editorial voice. */
 function Eyebrow({ children, trailing }: { children: React.ReactNode; trailing?: React.ReactNode }) {
+  const tracking = useTracking();
   const { colors, font, fontSizes } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-      <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }}>
+      <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, ...font.bodySemibold, letterSpacing: tracking(1.4), textTransform: 'uppercase', flex: 1 }}>
         {children}
       </Text>
       {trailing}
@@ -138,6 +140,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
   targetLabel: string;
   onOpen: (app: MiniApp) => void;
 }) {
+  const tracking = useTracking();
   const { colors, font, radius, fontSizes } = useTheme();
   const accent = primary?.color ?? colors.accent;
 
@@ -147,7 +150,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
       <View style={{ padding: 16, gap: 14 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11.5, ...font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            <Text style={{ color: colors.textMuted, fontSize: 11.5, ...font.bodyBold, letterSpacing: tracking(1.2), textTransform: 'uppercase' }}>
               {ttx("Smart start")}
             </Text>
             <Text style={{ color: colors.text, fontSize: fontSizes.title, lineHeight: 25, ...font.displayBlack, marginTop: 3 }} numberOfLines={1}>

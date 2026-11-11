@@ -18,6 +18,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
+import { useTracking } from '../../lib/ui/tracking';
 import { useI18n } from '../../lib/i18n/i18n';
 import { useFeed } from '../../hooks/useFeed';
 import { buildSearchBuckets, deriveTopicFeed, groupDiscovery } from '../../lib/feed/echoUX';
@@ -551,10 +552,11 @@ function TopicTile({
 
 
 function SectionHeader({ label, actionLabel, onAction }: { label: string; actionLabel?: string; onAction?: () => void }) {
+  const tracking = useTracking();
   const { colors, font, fontSizes } = useTheme();
   return (
     <View style={{ paddingHorizontal: 16, marginTop: 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center' }}>
-      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }]}>
+      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: tracking(1.4), textTransform: 'uppercase', flex: 1 }]}>
         {label}
       </Text>
       {actionLabel && onAction ? (
