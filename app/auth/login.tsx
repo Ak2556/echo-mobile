@@ -28,7 +28,7 @@ import { GetTheAppBanner } from '../../components/pwa/GetTheAppBanner';
 import { WebLandingPanel } from '../../components/pwa/WebLandingPanel';
 import { showToast } from '../../components/ui/Toast';
 import { ReviewerSignInSheet } from '../../components/auth/ReviewerSignInSheet';
-import { useI18n, type TranslationKey } from '../../lib/i18n/i18n';
+import { useI18n, ttx, type TranslationKey } from '../../lib/i18n/i18n';
 import { BRAND, ON_MEDIA } from '../../lib/ui/fixedColors';
 
 const ROTATING_PROMPT_KEYS: TranslationKey[] = [
@@ -245,7 +245,7 @@ export default function LoginScreen() {
                   icon={appleLoading
                     ? null
                     : <AppleLogo color={isDark ? BRAND.ink : ON_MEDIA} size={22} weight="fill" />}
-                  label={appleLoading ? t('auth.signingIn') : (authMode === 'signup' ? 'Sign up with Apple' : 'Log in with Apple')}
+                  label={appleLoading ? t('auth.signingIn') : (authMode === 'signup' ? ttx('Sign up with Apple') : ttx('Log in with Apple'))}
                   onPress={handleApple}
                   bg={isDark ? ON_MEDIA : BRAND.ink}
                   fg={isDark ? BRAND.ink : ON_MEDIA}
@@ -261,7 +261,7 @@ export default function LoginScreen() {
                 icon={googleLoading
                   ? null
                   : <GoogleLogo color={isDark ? BRAND.ink : ON_MEDIA} size={22} weight="fill" />}
-                label={googleLoading ? t('auth.signingIn') : (authMode === 'signup' ? 'Sign up with Google' : 'Log in with Google')}
+                label={googleLoading ? t('auth.signingIn') : (authMode === 'signup' ? ttx('Sign up with Google') : ttx('Log in with Google'))}
                 onPress={handleGoogle}
                 bg={isDark ? ON_MEDIA : BRAND.ink}
                 fg={isDark ? BRAND.ink : ON_MEDIA}
@@ -274,7 +274,7 @@ export default function LoginScreen() {
             <Animated.View entering={FadeInDown.delay(160).duration(400).springify().mass(0.7)}>
               <PrimaryButton
                 icon={<EnvelopeSimple color={colors.onAccent} size={22} weight="fill" />}
-                label={authMode === 'signup' ? 'Sign up with Email' : 'Log in with Email'}
+                label={authMode === 'signup' ? ttx('Sign up with Email') : ttx('Log in with Email')}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   if (authMode === 'signup') {
@@ -301,9 +301,9 @@ export default function LoginScreen() {
                 style={{ paddingVertical: 10, paddingHorizontal: 16 }}
               >
                 <Text style={[font.bodyMedium, { color: colors.textSecondary, fontSize: 15 }]}>
-                  {authMode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
+                  {authMode === 'signup' ? ttx('Already have an account?') : ttx("Don't have an account?")}{' '}
                   <Text style={[font.bodyBold, { color: colors.text }]}>
-                    {authMode === 'signup' ? 'Log in' : 'Sign up'}
+                    {authMode === 'signup' ? ttx('Log in') : ttx('Sign up')}
                   </Text>
                 </Text>
               </Pressable>
