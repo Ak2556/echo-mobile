@@ -5,6 +5,16 @@
  * on any overlap. Offline — no AI, no quota, no build step.
  */
 export const HI_BULK: Record<string, string> = {
+  'Sign up with Apple': 'Apple से साइन अप करें',
+  'Sign up with Google': 'Google से साइन अप करें',
+  'Sign up with Email': 'ईमेल से साइन अप करें',
+  'Log in with Apple': 'Apple से लॉग इन करें',
+  'Log in with Google': 'Google से लॉग इन करें',
+  'Log in with Email': 'ईमेल से लॉग इन करें',
+  'Already have an account?': 'पहले से खाता है?',
+  "Don't have an account?": 'खाता नहीं है?',
+  'Log in': 'लॉग इन करें',
+  'Sign up': 'साइन अप करें',
   '% calibrated': '% कैलिब्रेटेड',
   "'s Echo": 'का Echo',
   '+ Log': '+ लॉग',
