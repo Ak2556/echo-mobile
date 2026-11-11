@@ -16,7 +16,7 @@ a post, a search, or an action.
 <a href="LICENSE"><img src="https://img.shields.io/github/license/Ak2556/echo-mobile?style=flat-square" alt="MIT licence" /></a>
 </p>
 
-**[Get Echo](https://downloadecho.com)** · **[Privacy](https://downloadecho.com/privacy)** · **[Terms](https://downloadecho.com/terms)** · **[Support](https://downloadecho.com)**
+**[Get Echo](https://downloadecho.com)** · [How it works](#how-it-works) · [Privacy](#your-privacy) · [FAQ](#faq) · [For developers](#for-developers-and-contributors)
 
 <br />
 
@@ -24,13 +24,11 @@ a post, a search, or an action.
 <tr>
 <td align="center"><img src="docs/screenshots/ipad-home.jpg" height="340" alt="The home feed, with the For You, Trending, Following and Latest tabs" /></td>
 <td align="center"><img src="docs/screenshots/ipad-assistant.jpg" height="340" alt="The Echo assistant, with suggested actions and a Do mode" /></td>
-<td align="center"><img src="docs/screenshots/ipad-tools.jpg" height="340" alt="The tools shelf: tasks, habits, fitness, notes, pomodoro, money and more" /></td>
 <td align="center"><img src="docs/screenshots/ipad-settings.jpg" height="340" alt="Settings, with the presence and read-receipt privacy toggles" /></td>
 </tr>
 <tr>
 <td align="center"><sub>Home</sub></td>
 <td align="center"><sub>The assistant</sub></td>
-<td align="center"><sub>Everyday tools</sub></td>
 <td align="center"><sub>Privacy controls</sub></td>
 </tr>
 </table>
@@ -49,7 +47,16 @@ Writing a full thought in Devanagari or Tamil on a phone is slow enough that mos
 gets shortened, or never posted. And apps that *do* translate usually translate the content while leaving an English
 interface around it, so the product never feels made for you.
 
-Echo starts from the other end: **you talk, it understands, and the whole app speaks your language.**
+Echo starts from the other end: **you talk, it understands, and the whole app speaks your language.** It is built for
+people in India who would rather say it than type it, in English or Hindi first.
+
+## How it works
+
+| | | |
+|---|---|---|
+| **1. Speak** | Hold the mic and say it the way you would to a friend, in English or Hindi. | Hold to talk, release to send |
+| **2. Echo understands** | One request turns your words into a transcript, what you meant, and a spoken reply. Common commands such as opening a screen are handled on the phone with no network at all | Navigation never waits on a model |
+| **3. It happens** | Echo posts, searches, opens the screen or tool, or fills the box you are in. Anything significant asks you to confirm first | Dictation never sends on its own |
 
 ## What you can do
 
@@ -124,6 +131,24 @@ Posts and images are checked by an automated moderator before they appear in any
 doesn't go out while it waits for review. You can report any post or person, block and mute, and if a decision about
 your own content looks wrong, you get the reason in writing and **six months to appeal**.
 
+## FAQ
+
+**Is it free?** Yes. Everyone is on the free plan at launch.
+
+**Which languages?** English and Hindi at launch. The whole interface switches, not only the posts.
+
+**Does it work without internet?** You can read what you have already loaded, and what you write while offline is saved
+and sent when the connection returns. Voice commands that need the assistant need a connection.
+
+**Who can see my messages?** In a one-to-one chat, only you and the other person. See [Your privacy](#your-privacy)
+for what that does and does not cover.
+
+**Which devices?** iPhone, iPad, Android and the web, from one account.
+
+**Can I delete everything?** Yes: *Settings → Delete account* removes your data, not just your profile.
+
+**Is the code open?** Yes, MIT-licensed, in this repository.
+
 ## Help
 
 - **Questions or problems:** [downloadecho.com](https://downloadecho.com) or `support@downloadecho.com`.
@@ -142,6 +167,17 @@ Echo is open source (MIT). One TypeScript codebase ships to iOS, Android, web an
 | **Media** | Cloudflare R2 behind a Worker |
 | **AI** | Gemini 2.5, with OpenRouter as the fallback |
 
+```mermaid
+flowchart LR
+    APP["<b>Echo app</b><br/>iOS · Android · Web"] -->|"user's JWT"| SB["<b>Supabase</b><br/>Postgres + row-level security<br/>Auth · Realtime · queues"]
+    APP -->|"signed uploads"| WK["<b>Media worker</b><br/>Cloudflare + R2"]
+    SB --> FN["<b>Edge functions</b><br/>moderation · voice · push"]
+    FN --> AI["Gemini<br/>OpenRouter fallback"]
+```
+
+The database enforces the rules (who can read or write what), slow work runs as retried queue jobs, and a post stays
+hidden until moderation passes it. Details in the [architecture](docs/architecture/README.md).
+
 ```bash
 git clone https://github.com/Ak2556/echo-mobile.git && cd echo-mobile
 npm ci && cp .env.example .env     # add your Supabase URL and anon key
@@ -157,6 +193,13 @@ Without Supabase credentials the app starts with remote features switched off, s
 | **[Contributing](CONTRIBUTING.md)** | The rules a pull request follows. Read this before opening one |
 | **[Testing](docs/testing.md)** | What is tested and how |
 | **[Documentation index](docs/README.md)** | Everything else, including runbooks and design notes |
+
+## Status and roadmap
+
+Echo is feature-complete for launch and in a polish-and-submit phase. After launch, in this order: subscriptions once
+the free tier retains people, regional advertising, deeper OS integration (Siri and Shortcuts, widgets), and more
+languages once each is properly translated. Some built features (salons, stories, quests, badges) are switched off
+until they are ready.
 
 ## Licence
 
