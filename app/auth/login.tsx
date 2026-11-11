@@ -48,7 +48,7 @@ export default function LoginScreen() {
   // the same call, so both sides agree on the layout.
   const { width: windowWidth } = useWindowDimensions();
   const showLanding = Platform.OS === 'web' && windowWidth >= 1000;
-  const { t, textDirection } = useI18n();
+  const { t, textDirection, languageCode } = useI18n();
   const isDark = colors.isDark;
 
   const [reviewerOpen, setReviewerOpen] = useState(false);
@@ -232,7 +232,7 @@ export default function LoginScreen() {
               >
                 {`"${t(ROTATING_PROMPT_KEYS[promptIdx])}"`}
               </Animated.Text>
-              <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 14, letterSpacing: 1.6 }]}>
+              <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 14, letterSpacing: languageCode === 'hi' ? 0 : 1.6 }]}>
                 {t('auth.loginQuestionLabel').toUpperCase()}
               </Text>
             </View>
