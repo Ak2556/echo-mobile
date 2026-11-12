@@ -33,7 +33,7 @@ import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, us
 import { useFollow } from '../../hooks/queries/useFollow';
 import { EvolutionGroup, FeedItem } from '../../types';
 import { useTheme } from '../../lib/ui/theme';
-import { useTracking } from '../../lib/ui/tracking';
+import { useLeading, useTracking } from '../../lib/ui/tracking';
 import { noteScroll } from '../../lib/ui/scrollActivity';
 import { useAppStore } from '../../store/useAppStore';
 import { FollowingEmptyState } from '../../components/feed/FollowingEmptyState';
@@ -110,6 +110,7 @@ function HomeHero({
   reduceMotion: boolean;
 }) {
   const tracking = useTracking();
+  const leading = useLeading();
   const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
 
@@ -153,7 +154,7 @@ function HomeHero({
           {
             color: colors.text,
             fontSize: layout.isPhone ? 46 : 60,
-            lineHeight: layout.isPhone ? 46 : 60,
+            lineHeight: leading(layout.isPhone ? 46 : 60, layout.isPhone ? 46 : 60),
             letterSpacing: tracking(layout.isPhone ? -1.6 : -2.1),
           },
         ]}

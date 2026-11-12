@@ -18,3 +18,18 @@ export function useTracking(): (value: number) => number {
   const language = useAppStore(s => normalizeAppLanguage(s.appLanguage));
   return useCallback((value: number) => trackingFor(language, value), [language]);
 }
+
+/**
+ * Devanagari carries marks above and below the line (ी, ै, ु). A line height at
+ * or under the font size clips them: the Home welcome rendered "वापसी पर स्वागत
+ * है" as "वापसा पर स्वागत ह". Latin keeps its tight leading; other scripts get
+ * at least 1.4x the font size.
+ */
+export function leadingFor(language: AppLanguageCode, fontSize: number, latinLineHeight: number): number {
+  return LATIN_SCRIPT.has(language) ? latinLineHeight : Math.max(latinLineHeight, Math.round(fontSize * 1.4));
+}
+
+export function useLeading(): (fontSize: number, latinLineHeight: number) => number {
+  const language = useAppStore(s => normalizeAppLanguage(s.appLanguage));
+  return useCallback((fontSize: number, latinLineHeight: number) => leadingFor(language, fontSize, latinLineHeight), [language]);
+}

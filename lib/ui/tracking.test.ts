@@ -41,3 +41,12 @@ describe('tracking is applied on the main screens', () => {
     expect(raw).toEqual([]);
   });
 });
+
+describe('leadingFor', () => {
+  it('keeps tight leading for Latin and opens it up for Devanagari', async () => {
+    const { leadingFor } = await import('./tracking');
+    expect(leadingFor('en', 46, 46)).toBe(46);
+    expect(leadingFor('hi', 46, 46)).toBe(64);
+    expect(leadingFor('hi', 20, 32)).toBe(32);
+  });
+});
