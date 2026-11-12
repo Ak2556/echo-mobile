@@ -52,9 +52,9 @@ export function ErrorState({ kind = 'unknown', title, message, onRetry }: ErrorS
       }}>
         {ICON[kind]}
       </View>
-      <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{title || copy.title}</Text>
+      <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{title || ttx(copy.title)}</Text>
       <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', maxWidth: 280, lineHeight: 19 }}>
-        {message || copy.message}
+        {message || ttx(copy.message)}
       </Text>
       {onRetry && (
         <Pressable

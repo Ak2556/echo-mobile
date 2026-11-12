@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { translate } from './i18n';
+import { translate, ttRaw } from './i18n';
 
 /**
  * The static Hindi strings were each cut by one character ("हो", "चै", "से" for Save,
@@ -114,4 +114,35 @@ describe('Hindi sign-in strings', () => {
     expect(en.filter(k => !values.has(k))).toEqual([]);
     expect([...values].filter(([, v]) => /्$/.test(v)).map(([k]) => k)).toEqual([]);
   });
+});
+
+/**
+ * The feed error screen, the Explore topic tiles and the You stats were showing English on
+ * a Hindi phone. These are the phrases they ask for, pinned so a rename of the English
+ * source text cannot silently drop them back to English.
+ */
+describe('Hindi phrases on the error state, Explore and You', () => {
+  const phrases = [
+    'Something went wrong',
+    'An unexpected error occurred. Pull to refresh or try again.',
+    "You're offline",
+    'Reconnect to a network and try again.',
+    'Took too long',
+    'The request timed out. Try again in a moment.',
+    'Our servers are having trouble. Try again shortly.',
+    'Followers',
+    'Following',
+    'day streak',
+    'Design',
+    'Productivity',
+    'Startups',
+  ];
+
+  for (const text of phrases) {
+    it(`"${text}" has a Hindi translation`, () => {
+      const hi = ttRaw(text, 'hi');
+      expect(hi).not.toBe(text);
+      expect(hi).toMatch(/[ऀ-ॿ]/);
+    });
+  }
 });
