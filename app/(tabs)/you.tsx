@@ -272,9 +272,9 @@ export default function ProfileScreen() {
             ) : null}
             
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 28, gap: 32 }}>
-              <StatButton value={profileEchoes.length} label="Echoes" colors={colors} font={font} />
-              <StatButton value={followerCount} label="Followers" colors={colors} font={font} onPress={() => openFollowers('followers')} />
-              <StatButton value={followingCount} label="Following" colors={colors} font={font} onPress={() => openFollowers('following')} />
+              <StatButton value={profileEchoes.length} label={ttx('Echoes')} colors={colors} font={font} />
+              <StatButton value={followerCount} label={ttx('Followers')} colors={colors} font={font} onPress={() => openFollowers('followers')} />
+              <StatButton value={followingCount} label={ttx('Following')} colors={colors} font={font} onPress={() => openFollowers('following')} />
             </View>
             
             {/*

@@ -19,7 +19,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
 import { useTracking } from '../../lib/ui/tracking';
-import { useI18n } from '../../lib/i18n/i18n';
+import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { useFeed } from '../../hooks/useFeed';
 import { buildSearchBuckets, deriveTopicFeed, groupDiscovery } from '../../lib/feed/echoUX';
 import { useRemoteSearch } from '../../hooks/queries/useSearch';
@@ -505,6 +505,10 @@ function TopicTile({
   onPress: () => void;
 }) {
   const { colors, font, fontSizes } = useTheme();
+  const { t } = useI18n();
+  // Only the four built-in names are translated: other labels are real topics
+  // people wrote, which must show as written.
+  const shownLabel = CATEGORY_FALLBACKS.includes(label) ? ttx(label) : label;
   return (
     <Pressable onPress={onPress} style={{ width }}>
       {/* A background and a border: the tile used to be a tint fading to
@@ -539,10 +543,10 @@ function TopicTile({
         </View>
         <View style={{ marginTop: 14 }}>
           <Text style={[font.display, { color: colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>
-            {label}
+            {shownLabel}
           </Text>
           <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 3 }]}>
-            {count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : 'Start exploring'}
+            {count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : t('explore.startExploring')}
           </Text>
         </View>
       </View>

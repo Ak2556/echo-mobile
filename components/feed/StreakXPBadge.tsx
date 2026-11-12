@@ -2,6 +2,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import { useRetention } from '../../lib/retention/retention';
 import { useTheme } from '../../lib/ui/theme';
+import { ttx } from '../../lib/i18n/i18n';
 
 const COMPACT_TEXT_SCALE = 1.15;
 
@@ -15,7 +16,7 @@ export function StreakXPBadge() {
   // ("Level 3" and "Contributor") would only confuse. The streak stays.
   if (streakDays === 0) return null;
 
-  const parts: string[] = [`🔥 ${streakDays} day streak`];
+  const parts: string[] = [`🔥 ${streakDays} ${ttx('day streak')}`];
 
   return (
     <Text
