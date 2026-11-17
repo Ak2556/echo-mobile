@@ -4,6 +4,7 @@ import { outbox } from '../../store/outbox';
 import { isAppOnline, initOnlineManager } from './net';
 import { isDuplicateError, isTransientError } from './mutationErrors';
 import { captureException } from './monitoring';
+import { isTextFilterError } from '../moderation/textFilterCode';
 import { backoffMs, isDue, isExpiredFailure, nextWake } from './outboxPolicy';
 import {
   setRemoteLike,
@@ -129,7 +130,9 @@ export async function drainOutbox(): Promise<void> {
         } else {
           // Permanent (4xx/RLS/constraint) — don't hammer; surface as failed.
           outbox.update(op.id, { status: 'failed', lastError: message });
-          captureException(e, { tags: { outbox: op.type, terminal: 'permanent' } });
+          // A write the text filter refused is the filter working, not a fault: reporting each one would
+          // bury the failures that are.
+          if (!isTextFilterError(e)) captureException(e, { tags: { outbox: op.type, terminal: 'permanent' } });
         }
       }
     }

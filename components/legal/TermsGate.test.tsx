@@ -57,7 +57,9 @@ describe('TermsGate', () => {
     render(<TermsGate />);
     expect(await screen.findByText(AGREE)).toBeTruthy();
     expect(screen.getByText('Read the Terms of Service')).toBeTruthy();
-    expect(useTermsGateStore.getState().open).toBe(true);
+    // Polled, not read once: the store is updated by an effect, which can flush after the modal is
+    // already in the DOM. Reading it straight after findByText failed once on a slow CI runner.
+    await waitFor(() => expect(useTermsGateStore.getState().open).toBe(true));
   });
 
   it('says nothing to someone who already agreed to the current versions, and remembers it', async () => {

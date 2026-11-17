@@ -14,6 +14,7 @@ import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useEchoComments, useAddRemoteComment } from '../../hooks/queries/useEchoComments';
 import { useTheme } from '../../lib/ui/theme';
 import { ttx } from '../../lib/i18n/i18n';
+import { writeErrorMessage } from '../../lib/moderation/textFilterError';
 import { useUserRefresh } from '../../hooks/useUserRefresh';
 import { LoadingState } from '../common/LoadingState';
 
@@ -94,7 +95,7 @@ export function CommentsPanel({ echoId, bottomInset = 0, onCountChange }: Props)
         setText('');
         setReplyingTo(null);
       } catch (e) {
-        Alert.alert('Could not post', (e as Error).message);
+        Alert.alert('Could not post', writeErrorMessage(e));
       }
       return;
     }

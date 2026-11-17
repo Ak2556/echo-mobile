@@ -1278,6 +1278,13 @@ export const HI_BULK: Record<string, string> = {
   'Last active': 'आख़िरी बार सक्रिय',
   'Show a green dot to people who follow you back': 'जो लोग आपको वापस फ़ॉलो करते हैं, उन्हें हरा बिंदु दिखाएं',
   "Show roughly when you were last active, like 'Active today', to people who follow you back": "जो लोग आपको वापस फ़ॉलो करते हैं, उन्हें मोटे तौर पर दिखाएं कि आप आख़िरी बार कब सक्रिय थे, जैसे 'आज सक्रिय'",
+  // Text filter refusals (lib/moderation/textFilterError.ts). None names the term.
+  "This comment contains language Echo doesn't allow. Please change it and try again.": 'इस कमेंट में ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलकर फिर कोशिश करें।',
+  "Your answer contains language Echo doesn't allow. Please change it and try again.": 'आपके जवाब में ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलकर फिर कोशिश करें।',
+  "That username isn't allowed. Please choose another.": 'यह यूज़रनेम मान्य नहीं है। कृपया कोई दूसरा चुनें।',
+  "That name isn't allowed. Please choose another.": 'यह नाम मान्य नहीं है। कृपया कोई दूसरा चुनें।',
+  "Your bio contains language Echo doesn't allow. Please change it.": 'आपके बायो में ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलें।',
+  "That contains language Echo doesn't allow. Please change it.": 'इसमें ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलें।',
   // Terms / Privacy agreement gate (components/legal/TermsGate.tsx)
   'Before you continue': 'आगे बढ़ने से पहले',
   'Echo is for people aged 18 and over. Please read and agree to our Terms of Service and Privacy Policy to keep using Echo.': 'Echo 18 वर्ष या उससे अधिक उम्र के लोगों के लिए है। Echo का उपयोग जारी रखने के लिए कृपया हमारी सेवा की शर्तें और गोपनीयता नीति पढ़ें और उनसे सहमत हों।',
