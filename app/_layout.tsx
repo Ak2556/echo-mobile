@@ -17,6 +17,7 @@ import { startOutbox } from '../lib/core/outboxProcessor';
 import { drainMiniLink } from '../lib/minilink/drain';
 import { getAnalyticsConsent } from '../lib/privacy/consent';
 import { ConsentBanner } from '../components/ConsentBanner';
+import { TermsGate } from '../components/legal/TermsGate';
 import { AgeConfirmGate } from '../components/onboarding/AgeConfirmGate';
 import { AiConsentSheet } from '../components/ai/AiConsentSheet';
 import { HealthConsentSheet } from '../components/consent/HealthConsentSheet';
@@ -553,6 +554,8 @@ function RootLayout() {
         <ToastProvider />
         <ConfirmHost />
         <ConsentBanner />
+        {/* Terms / Privacy agreement, once per version. Before the birthday card: see lib/legal/gateStore.ts. */}
+        <TermsGate />
         {/* One-time birthday card for accounts created before the age step. */}
         <AgeConfirmGate />
         <AiConsentSheet />
