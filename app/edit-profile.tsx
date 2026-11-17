@@ -23,6 +23,7 @@ import { cleanUsername, isAutoUsername, isValidUsername, USERNAME_MAX, USERNAME_
 import { supabase } from '../lib/supabase';
 import { useResponsiveLayout } from '../lib/ui/responsive';
 import { ttx } from '../lib/i18n/i18n';
+import { writeErrorMessage } from '../lib/moderation/textFilterError';
 import { PhotoEditor } from '../components/feed/PhotoEditor';
 import { ON_MEDIA } from '../lib/ui/fixedColors';
 
@@ -214,7 +215,7 @@ export default function EditProfileScreen() {
       } catch (e) {
         // Someone took the handle between the check and the save.
         const taken = (e as { code?: string }).code === '23505';
-        Alert.alert(ttx('Could not save'), taken ? `@${newUsername} ${ttx('is taken')}` : (e as Error).message);
+        Alert.alert(ttx('Could not save'), taken ? `@${newUsername} ${ttx('is taken')}` : writeErrorMessage(e));
         setSaving(false);
         return;
       }

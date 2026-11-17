@@ -14,6 +14,7 @@ import { submitDailyAnswer, type DailyQuestion } from '../../lib/supabaseEchoApi
 import { isAppOnline } from '../../lib/core/net';
 import { outbox } from '../../store/outbox';
 import { track } from '../../lib/core/analytics';
+import { writeErrorMessage } from '../../lib/moderation/textFilterError';
 
 export const MAX_ANSWER_LENGTH = 600;
 
@@ -80,7 +81,7 @@ export function DailyQuestionComposer({
       showToast(t('daily.answerSaved'));
       onSubmitted?.(answer);
     } catch (e) {
-      Alert.alert(t('daily.submitFailed'), (e as Error).message);
+      Alert.alert(t('daily.submitFailed'), writeErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

@@ -1278,4 +1278,11 @@ export const HI_BULK: Record<string, string> = {
   'Last active': 'आख़िरी बार सक्रिय',
   'Show a green dot to people who follow you back': 'जो लोग आपको वापस फ़ॉलो करते हैं, उन्हें हरा बिंदु दिखाएं',
   "Show roughly when you were last active, like 'Active today', to people who follow you back": "जो लोग आपको वापस फ़ॉलो करते हैं, उन्हें मोटे तौर पर दिखाएं कि आप आख़िरी बार कब सक्रिय थे, जैसे 'आज सक्रिय'",
+  // Text filter refusals (lib/moderation/textFilterError.ts). None names the term.
+  "This comment contains language Echo doesn't allow. Please change it and try again.": 'इस कमेंट में ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलकर फिर कोशिश करें।',
+  "Your answer contains language Echo doesn't allow. Please change it and try again.": 'आपके जवाब में ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलकर फिर कोशिश करें।',
+  "That username isn't allowed. Please choose another.": 'यह यूज़रनेम मान्य नहीं है। कृपया कोई दूसरा चुनें।',
+  "That name isn't allowed. Please choose another.": 'यह नाम मान्य नहीं है। कृपया कोई दूसरा चुनें।',
+  "Your bio contains language Echo doesn't allow. Please change it.": 'आपके बायो में ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलें।',
+  "That contains language Echo doesn't allow. Please change it.": 'इसमें ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलें।',
 };
