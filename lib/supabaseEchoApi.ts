@@ -4116,6 +4116,19 @@ export async function fetchPresence(ids: string[]): Promise<PresenceRow[]> {
   return (data ?? []) as PresenceRow[];
 }
 
+/** Which versions of the Terms and the Privacy Policy the signed-in person has agreed to. */
+export async function fetchMyLegalAcceptance(): Promise<{ kind: string; version: string }[]> {
+  const { data, error } = await supabase.rpc('get_my_legal_acceptance');
+  if (error) throw error;
+  return (data ?? []) as { kind: string; version: string }[];
+}
+
+/** Record that the signed-in person agreed to these versions. Safe to repeat. */
+export async function recordLegalAcceptance(terms: string, privacy: string): Promise<void> {
+  const { error } = await supabase.rpc('record_legal_acceptance', { p_terms: terms, p_privacy: privacy });
+  if (error) throw error;
+}
+
 /** Soft-delete a message (sender only). */
 export async function deleteRemoteMessage(messageId: string): Promise<void> {
   const uid = await getSessionUserId();
