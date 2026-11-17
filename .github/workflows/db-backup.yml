@@ -12,11 +12,25 @@ name: Database Backup
 # Every dump is restored into a throwaway Postgres and checked before it is
 # uploaded. A backup that has never been restored is a hope, not a backup.
 #
+# "Restored" means complete, not merely non-empty: row counts are taken from the live
+# database before the dump and the restored copy must hold (almost) all of them
+# (scripts/check-restored-counts.sh). A dump made by a role that row level security hides
+# rows from restores cleanly with a fraction of the data, and the old check, one profile
+# and one post, passed it.
+#
+# The dump holds every account (auth.users) and every message, so it is encrypted with age
+# before it leaves the runner. Only the encrypted file is uploaded. The private key is NOT in
+# this repository or in GitHub: keep it in two places off this machine (password manager and
+# paper). Without it a backup cannot be restored, so test a restore with only that key.
+#
 # Required repository secrets:
-#   SUPABASE_DB_URL        Project Settings > Database > Connection string (URI)
+#   SUPABASE_DB_URL        The POOLER connection string in SESSION mode (port 5432), not the
+#                          direct one: on the Free plan the direct host is IPv6-only and GitHub
+#                          runners have no IPv6. Transaction mode (6543) cannot run pg_dump.
 #   R2_ACCOUNT_ID          Cloudflare account id
 #   R2_ACCESS_KEY_ID       R2 API token, scoped to the echo-backups bucket only
 #   R2_SECRET_ACCESS_KEY   its secret
+#   BACKUP_AGE_PUBLIC_KEY  the age PUBLIC key (starts with "age1"); `age-keygen` makes the pair
 #
 # SUPABASE_DB_URL is the most powerful secret in this repository. It is here
 # because a solo operator with no backup has no recovery, and that is the larger
@@ -46,6 +60,10 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
+      # For scripts/check-restored-counts.sh. contents: read is all this job holds.
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
       - name: Check configuration
         id: config
         env:
@@ -53,12 +71,20 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          BACKUP_AGE_PUBLIC_KEY: ${{ secrets.BACKUP_AGE_PUBLIC_KEY }}
         run: |
           missing=""
           [ -z "$SUPABASE_DB_URL" ]      && missing="$missing SUPABASE_DB_URL"
           [ -z "$R2_ACCOUNT_ID" ]        && missing="$missing R2_ACCOUNT_ID"
           [ -z "$R2_ACCESS_KEY_ID" ]     && missing="$missing R2_ACCESS_KEY_ID"
           [ -z "$R2_SECRET_ACCESS_KEY" ] && missing="$missing R2_SECRET_ACCESS_KEY"
+          [ -z "$BACKUP_AGE_PUBLIC_KEY" ] && missing="$missing BACKUP_AGE_PUBLIC_KEY"
+          # An age PUBLIC key. A private key (AGE-SECRET-KEY-...) pasted here by mistake would
+          # sit in a secret that every workflow can read, so refuse it.
+          if [ -n "$BACKUP_AGE_PUBLIC_KEY" ] && ! echo "$BACKUP_AGE_PUBLIC_KEY" | grep -Eq '^age1[a-z0-9]{50,}$'; then
+            echo "::error::BACKUP_AGE_PUBLIC_KEY is not an age public key (it must start with age1). Never put the private key in GitHub."
+            exit 1
+          fi
           if [ -n "$missing" ]; then
             echo "::warning::Database backups are NOT running. Missing secrets:$missing"
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -73,7 +99,22 @@ jobs:
           sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-17
+          sudo apt-get install -y -qq postgresql-client-17 age
+
+      # Counted BEFORE the dump, so the restored copy has to hold at least these.
+      - name: Count live rows
+        if: steps.config.outputs.ready == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          : > live-counts.txt
+          for t in public.profiles public.public_echoes public.direct_messages public.notifications \
+                   public.follows public.echo_comments public.daily_answers auth.users; do
+            n=$(psql "$SUPABASE_DB_URL" -tA -c "select count(*) from $t")
+            echo "$t=$n" >> live-counts.txt
+          done
+          cat live-counts.txt
 
       - name: Dump
         if: steps.config.outputs.ready == 'true'
@@ -104,15 +145,35 @@ jobs:
           RESTORE_URL: postgresql://postgres:restore@localhost:5432/postgres
         run: |
           set -euo pipefail
-          gunzip -c "$NAME" | psql "$RESTORE_URL" -q -v ON_ERROR_STOP=0 >/dev/null 2>restore.err || true
-          profiles=$(psql "$RESTORE_URL" -tA -c "select count(*) from public.profiles" 2>/dev/null || echo 0)
-          echoes=$(psql "$RESTORE_URL" -tA -c "select count(*) from public.public_echoes" 2>/dev/null || echo 0)
-          echo "restored: profiles=$profiles public_echoes=$echoes"
-          if [ "$profiles" -lt 1 ] || [ "$echoes" -lt 1 ]; then
-            echo "::error::the dump did not restore: profiles=$profiles public_echoes=$echoes"
+          gunzip -c "$NAME" | psql "$RESTORE_URL" -q -v ON_ERROR_STOP=0 >/dev/null 2>restore.err || {
+            echo "restore reported errors (expected for Supabase-only roles and extensions); judging by row counts"
+          }
+          if ! ./scripts/check-restored-counts.sh live-counts.txt "$RESTORE_URL"; then
+            echo "::error::the dump is not a complete copy of the live database"
             tail -20 restore.err
             exit 1
           fi
+
+      # Encrypted on the runner; only the .age file ever leaves it. The plaintext is deleted so a
+      # later step cannot upload it by accident. The counts file is aggregate numbers, kept in the
+      # clear next to it so a restore can be compared against what was live when it was taken.
+      - name: Encrypt
+        if: steps.config.outputs.ready == 'true'
+        env:
+          BACKUP_AGE_PUBLIC_KEY: ${{ secrets.BACKUP_AGE_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          age -r "$BACKUP_AGE_PUBLIC_KEY" -o "$NAME.age" "$NAME"
+          size=$(stat -c%s "$NAME.age")
+          if [ "$size" -lt 50000 ]; then
+            echo "::error::encrypted dump is only $size bytes"
+            exit 1
+          fi
+          rm -f "$NAME"
+          mv live-counts.txt "${NAME%.sql.gz}.counts.txt"
+          echo "ENCRYPTED=$NAME.age" >> "$GITHUB_ENV"
+          echo "COUNTS=${NAME%.sql.gz}.counts.txt" >> "$GITHUB_ENV"
+          echo "$NAME.age is $size bytes"
 
       - name: Upload to R2 and prune past 30 days
         if: steps.config.outputs.ready == 'true'
@@ -124,12 +185,13 @@ jobs:
         run: |
           set -euo pipefail
           endpoint="https://${ACCOUNT}.r2.cloudflarestorage.com"
-          aws s3 cp "$NAME" "s3://echo-backups/db/$NAME" --endpoint-url "$endpoint"
+          aws s3 cp "$ENCRYPTED" "s3://echo-backups/db/$ENCRYPTED" --endpoint-url "$endpoint"
+          aws s3 cp "$COUNTS" "s3://echo-backups/db/$COUNTS" --endpoint-url "$endpoint"
           # Retention lives here rather than in a bucket lifecycle rule so the
           # policy is visible next to the thing it deletes.
           cutoff=$(date -u -d '30 days ago' +%Y-%m-%d)
           aws s3 ls "s3://echo-backups/db/" --endpoint-url "$endpoint" | awk '{print $4}' | while read -r f; do
-            d=$(echo "$f" | sed -n 's/^echo-\([0-9-]\{10\}\)\.sql\.gz$/\1/p')
+            d=$(echo "$f" | sed -n 's/^echo-\([0-9-]\{10\}\)\.\(sql\.gz\.age\|sql\.gz\|counts\.txt\)$/\1/p')
             if [ -n "$d" ] && [ "$d" \< "$cutoff" ]; then
               aws s3 rm "s3://echo-backups/db/$f" --endpoint-url "$endpoint"
             fi
@@ -144,7 +206,7 @@ jobs:
             const body =
               `The nightly backup is not running: its secrets are missing.\n\n` +
               `Last checked: ${new Date().toISOString()}\n\n` +
-              `Set SUPABASE_DB_URL, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY ` +
+              `Set SUPABASE_DB_URL, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and BACKUP_AGE_PUBLIC_KEY ` +
               `(see the header of .github/workflows/db-backup.yml). This issue closes itself ` +
               `after the first successful backup.`;
             const { data: open } = await github.rest.issues.listForRepo({

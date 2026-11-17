@@ -1285,4 +1285,12 @@ export const HI_BULK: Record<string, string> = {
   "That name isn't allowed. Please choose another.": 'यह नाम मान्य नहीं है। कृपया कोई दूसरा चुनें।',
   "Your bio contains language Echo doesn't allow. Please change it.": 'आपके बायो में ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलें।',
   "That contains language Echo doesn't allow. Please change it.": 'इसमें ऐसी भाषा है जो Echo पर मान्य नहीं है। कृपया इसे बदलें।',
+  // Terms / Privacy agreement gate (components/legal/TermsGate.tsx)
+  'Before you continue': 'आगे बढ़ने से पहले',
+  'Echo is for people aged 18 and over. Please read and agree to our Terms of Service and Privacy Policy to keep using Echo.': 'Echo 18 वर्ष या उससे अधिक उम्र के लोगों के लिए है। Echo का उपयोग जारी रखने के लिए कृपया हमारी सेवा की शर्तें और गोपनीयता नीति पढ़ें और उनसे सहमत हों।',
+  'Read the Terms of Service': 'सेवा की शर्तें पढ़ें',
+  'Read the Privacy Policy': 'गोपनीयता नीति पढ़ें',
+  'Could not save your choice. Check your connection and try again.': 'आपका चुनाव सेव नहीं हो सका। अपना कनेक्शन जाँचें और फिर कोशिश करें।',
+  'Agree and continue': 'सहमत हों और आगे बढ़ें',
+  'Decline and sign out': 'मना करें और साइन आउट करें',
 };

@@ -14,6 +14,7 @@ import { syncNotificationProfile } from '../../lib/ai/personalNudges';
 import { useAppStore } from '../../store/useAppStore';
 import { ageRejectionMessage } from '../../constants/legal/ageGate';
 import { parseDobFields, shouldAskForAge } from '../../lib/privacy/ageConfirm';
+import { useTermsGateStore } from '../../lib/legal/gateStore';
 
 /**
  * One-time birthday card for accounts that have no date of birth on file.
@@ -47,7 +48,9 @@ export function AgeConfirmGate() {
   const monthRef = useRef<TextInput>(null);
   const yearRef = useRef<TextInput>(null);
 
-  if (!shouldAskForAge({ signedIn, fetched: isSuccess, age })) return null;
+  // The Terms / Privacy agreement goes first: iOS cannot present two modals at once.
+  const termsGateOpen = useTermsGateStore(s => s.open);
+  if (termsGateOpen || !shouldAskForAge({ signedIn, fetched: isSuccess, age })) return null;
 
   const { check, iso } = parseDobFields(day, month, year);
 

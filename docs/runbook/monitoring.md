@@ -162,17 +162,29 @@ the wrong project.
 
 ## Restoring the database
 
-Backups are at `s3://echo-backups/db/echo-YYYY-MM-DD.sql.gz`, 30 days retained,
-written nightly by `.github/workflows/db-backup.yml`. That workflow is inert
-until `SUPABASE_DB_URL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` and
-`R2_SECRET_ACCESS_KEY` are set — it warns and exits rather than failing every
+Backups are at `s3://echo-backups/db/echo-YYYY-MM-DD.sql.gz.age`, 30 days retained,
+written nightly by `.github/workflows/db-backup.yml`, each with an
+`echo-YYYY-MM-DD.counts.txt` beside it (row counts taken from the live database
+just before the dump). That workflow is inert until `SUPABASE_DB_URL`,
+`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` and
+`BACKUP_AGE_PUBLIC_KEY` are set — it warns and exits rather than failing every
 night, so **check that a backup exists before you need one.**
+
+The dump is encrypted with [age](https://github.com/FiloSottile/age) because it
+holds every account and message. **Restoring needs the age private key**, which
+is deliberately not in GitHub or this repository: it lives in your password
+manager and on paper. Without it the backups cannot be read, so prove you can
+restore with only that key, on a machine that never held it before.
 
 ```bash
 export ENDPOINT="https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com"
 aws s3 ls s3://echo-backups/db/ --endpoint-url "$ENDPOINT"
-aws s3 cp s3://echo-backups/db/echo-2026-09-07.sql.gz . --endpoint-url "$ENDPOINT"
-gunzip -c echo-2026-09-07.sql.gz | psql "$TARGET_DB_URL"
+aws s3 cp s3://echo-backups/db/echo-2026-09-07.sql.gz.age . --endpoint-url "$ENDPOINT"
+aws s3 cp s3://echo-backups/db/echo-2026-09-07.counts.txt . --endpoint-url "$ENDPOINT"
+age -d -i /path/to/age-private-key.txt echo-2026-09-07.sql.gz.age | gunzip | psql "$TARGET_DB_URL"
+# Same completeness check the nightly job runs: the restored copy must hold the rows the
+# live database held when the backup was taken.
+scripts/check-restored-counts.sh echo-2026-09-07.counts.txt "$TARGET_DB_URL"
 ```
 
 **The dump is taken with `--clean --if-exists`, so it DROPS existing objects
