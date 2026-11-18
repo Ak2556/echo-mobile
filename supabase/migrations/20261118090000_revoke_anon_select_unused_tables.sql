@@ -12,7 +12,11 @@
 -- The 30 tables anon legitimately reads (profiles, public_echoes, follows, daily_questions, ...)
 -- are NOT touched; each has an explicit anon-visible policy. The three views are untouched.
 --
--- Cost: an anon request to one of these tables now gets a 404 from PostgREST instead of [].
+-- Cost: an anon request to one of these tables now gets 401 / 42501 (permission denied) instead of [].
+--
+-- Applied to production 2026-11-18 and checked live with the publishable key: profiles, public_echoes,
+-- daily_questions and feature_flags still read; push_tokens, user_entitlements and dm_conversations,
+-- and profiles.date_of_birth, are denied.
 -- Signed-in users use the authenticated role and are unaffected.
 -- Idempotent: REVOKE of a privilege that is not held is a no-op.
 
