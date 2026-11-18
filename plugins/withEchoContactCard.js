@@ -320,7 +320,7 @@ object EchoContactSync {
           ContactsContract.Data.MIMETYPE,
           ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE
         )
-        .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, "Echo")
+        .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, "EchoX")
         .build()
     )
 
@@ -330,8 +330,8 @@ object EchoContactSync {
       ContentProviderOperation.newInsert(syncUri(ContactsContract.Data.CONTENT_URI))
         .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
         .withValue(ContactsContract.Data.MIMETYPE, MIME_PROFILE)
-        .withValue(ContactsContract.Data.DATA1, "Echo")
-        .withValue(ContactsContract.Data.DATA2, "Talk to Echo")
+        .withValue(ContactsContract.Data.DATA1, "EchoX")
+        .withValue(ContactsContract.Data.DATA2, "Talk to EchoX")
         .withValue(ContactsContract.Data.DATA3, "Ask anything, hands free")
         .build()
     )
@@ -353,7 +353,7 @@ object EchoContactSync {
           ContactsContract.CommonDataKinds.Website.TYPE,
           ContactsContract.CommonDataKinds.Website.TYPE_CUSTOM
         )
-        .withValue(ContactsContract.CommonDataKinds.Website.LABEL, "Talk to Echo")
+        .withValue(ContactsContract.CommonDataKinds.Website.LABEL, "Talk to EchoX")
         .build()
     )
 
