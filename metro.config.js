@@ -37,4 +37,16 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
+// Hardened builds (eas.json "preview", ECHO_HARDENED_BUILD=1): drop console.log/info/debug/trace
+// from the shipped bundle, app code and dependencies alike. warn and error stay, so crash
+// reports keep their context. Unset for every other build, so their bundles and the update
+// fingerprint are unchanged.
+if (process.env.ECHO_HARDENED_BUILD === "1") {
+  const mc = config.transformer.minifierConfig ?? {};
+  config.transformer.minifierConfig = {
+    ...mc,
+    compress: { ...mc.compress, drop_console: ["log", "info", "debug", "trace"] },
+  };
+}
+
 module.exports = withNativeWind(config, { input: "./global.css" });
