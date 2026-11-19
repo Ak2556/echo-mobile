@@ -40,7 +40,12 @@ const API_KEY = process.env.OPENROUTER_API_KEY;
 const GEN_SECRET = process.env.I18N_GEN_SECRET;
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eyokhisijabitzjiydmz.supabase.co';
 const EDGE_URL = `${SUPABASE_URL.replace(/\/$/, '')}/functions/v1/i18n-translate`;
-const MODEL = process.env.VOICE_COMMAND_MODEL || process.env.ECHO_AI_MODEL || 'google/gemini-2.5-flash';
+// Same default as the edge functions' chatModel() (supabase/functions/_shared/aiChat.ts).
+// gemini-2.5-flash, the old default, was retired by Google on 2026-11-19.
+const MODEL = process.env.I18N_MODEL || 'google/gemini-3.5-flash-lite';
+// OpenRouter reserves max_tokens up front; unset, it reserves the model's whole
+// output window and answers 402 on a small balance. Matches i18n-translate.
+const MAX_TOKENS = 8192;
 const CHUNK = 55;
 const DRY = process.argv.includes('--dry');
 const EDGE = !API_KEY && !!GEN_SECRET; // prefer direct if both are somehow set
@@ -157,6 +162,7 @@ async function translateChunkDirect(name, code, items) {
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
+      max_tokens: MAX_TOKENS,
       stream: false,
     }),
   });
