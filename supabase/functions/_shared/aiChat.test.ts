@@ -44,6 +44,16 @@ describe('chatCompletion', () => {
     expect(JSON.parse(init.body).provider).toBeUndefined();
   });
 
+  it('tells the caller why Gemini did not answer when OpenRouter did, for monitoring', async () => {
+    env.GEMINI_API_KEY = 'g';
+    env.OPENROUTER_API_KEY = 'o';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response('quota', { status: 429 }))
+      .mockResolvedValueOnce(ok({ content: 'x' })));
+    await expect(chatCompletion(req)).resolves.toMatchObject({ fallbackReason: 'Gemini 429 (gemini-2.5-flash): quota' });
+  });
+
   it('falls back to OpenRouter when Google refuses', async () => {
     env.GEMINI_API_KEY = 'g';
     env.OPENROUTER_API_KEY = 'o';

@@ -27,6 +27,8 @@ export interface ChatMessageOut {
   tool_calls?: ChatToolCall[];
   /** The Gemini model that answered, when it was Gemini. Differs from the request when a stand-in was used. */
   model?: string;
+  /** Why Gemini did not answer, when OpenRouter did. For monitoring, never for users. */
+  fallbackReason?: string;
 }
 
 /**
@@ -190,7 +192,8 @@ export async function chatCompletion(req: ChatRequest): Promise<ChatMessageOut> 
     const detail = `OpenRouter ${res.status}: ${(await res.text()).slice(0, 500)}`;
     throw new Error(geminiError ? `${geminiError}; ${detail}` : detail);
   }
-  return readMessage(await res.json(), "OpenRouter");
+  const message = readMessage(await res.json(), "OpenRouter");
+  return geminiError ? { ...message, fallbackReason: geminiError } : message;
 }
 
 // deno-lint-ignore no-explicit-any

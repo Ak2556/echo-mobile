@@ -324,6 +324,19 @@ describe('chatProbeDue', () => {
     expect(chatProbeDue(new Date(Date.UTC(2026, 10, 19, 6, 30)))).toBe(false);
     expect(chatProbeDue(new Date(Date.UTC(2026, 10, 19, 7, 0)))).toBe(false);
   });
+
+  it('runs every time while the last check was degraded, so a fix shows within 30 minutes', () => {
+    const off = new Date(Date.UTC(2026, 10, 19, 7, 30));
+    expect(chatProbeDue(off, { ok: true, detail: 'answered by OpenRouter in 2537 ms (Gemini did not answer)' })).toBe(true);
+    expect(chatProbeDue(off, { ok: false, detail: 'no answer after 900 ms: x' })).toBe(true);
+    expect(chatProbeDue(off, { ok: true, detail: 'gemini-2.5-flash is retired; stand-in gemini-2.5-flash-lite answered in 800 ms' })).toBe(false);
+    expect(chatProbeDue(off, null)).toBe(false);
+  });
+
+  it('records why Gemini did not answer when OpenRouter did', () => {
+    const r = interpretChat('google/gemini-2.5-flash', { fallbackReason: 'Gemini 429 (gemini-3.8-flash): quota' }, 2537);
+    expect(r.detail).toBe('answered by OpenRouter in 2537 ms (Gemini did not answer: Gemini 429 (gemini-3.8-flash): quota)');
+  });
 });
 
 describe('interpretEmbeddings', () => {
