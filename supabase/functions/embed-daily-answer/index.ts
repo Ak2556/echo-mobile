@@ -6,20 +6,17 @@
 // get_divergent_daily_answers, which ranks the day's answers by how far they
 // sit from the consensus centroid.
 //
-// Embeddings are routed through OpenRouter (Google gemini-embedding-001 reduced
-// to 768-dim), the same key/path used by embed-echo. The account is restricted
-// to the google-ai-studio provider, so the model must be Google's.
+// Embeddings are gemini-embedding-001 reduced to 768 dimensions, the same model
+// and path as embed-echo: Gemini direct, OpenRouter as the fallback (see
+// _shared/embed). Changing the model would put new answers in a different vector
+// space from stored ones.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { embedText } from "../_shared/embed.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 
-const EMBEDDING_MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "google/gemini-embedding-001";
-const EMBEDDING_DIM = 768;
-const EMBEDDING_URL = "https://openrouter.ai/api/v1/embeddings";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -28,26 +25,7 @@ const CORS_HEADERS: Record<string, string> = {
 };
 
 async function generateEmbedding(text: string): Promise<number[]> {
-  if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not configured");
-  const res = await guardedFetch("openrouter", EMBEDDING_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-      "X-Title": "Echo Daily Answer Embeddings",
-    },
-    body: JSON.stringify({ model: EMBEDDING_MODEL, input: text, dimensions: EMBEDDING_DIM }),
-  });
-  if (!res.ok) {
-    throw new Error(`Embedding API ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  }
-  const json = await res.json();
-  const values = json?.data?.[0]?.embedding;
-  if (!Array.isArray(values) || values.length !== EMBEDDING_DIM) {
-    throw new Error(`Unexpected embedding shape (len=${values?.length ?? "n/a"})`);
-  }
-  return values;
+  return await embedText(text, { title: "Echo Daily Answer Embeddings" });
 }
 
 Deno.serve(async (req: Request) => {

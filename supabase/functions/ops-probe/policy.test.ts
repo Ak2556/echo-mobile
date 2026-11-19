@@ -9,7 +9,9 @@ import {
   alertEmail,
   alertRecipients,
   chatProbeDue,
+  EMBEDDING_AGREEMENT_MIN,
   interpretChat,
+  interpretEmbeddings,
   interpretModeration,
   interpretQueues,
   interpretStuck,
@@ -321,5 +323,40 @@ describe('chatProbeDue', () => {
     expect(chatProbeDue(new Date(Date.UTC(2026, 10, 19, 6, 0)))).toBe(true);
     expect(chatProbeDue(new Date(Date.UTC(2026, 10, 19, 6, 30)))).toBe(false);
     expect(chatProbeDue(new Date(Date.UTC(2026, 10, 19, 7, 0)))).toBe(false);
+  });
+});
+
+describe('interpretEmbeddings', () => {
+  const v = [1, 2, 3];
+  const sim = (c: number) => () => c;
+
+  it('passes when the two providers agree', () => {
+    expect(interpretEmbeddings({ vector: v }, { vector: v }, sim(0.99997), 300))
+      .toEqual({ check: 'embeddings', ok: true, detail: 'Gemini and OpenRouter agree (cosine 0.99997) in 300 ms' });
+  });
+
+  it('fails when they disagree, because new vectors would not match stored ones', () => {
+    const r = interpretEmbeddings({ vector: v }, { vector: v }, sim(EMBEDDING_AGREEMENT_MIN - 0.01), 300);
+    expect(r.ok).toBe(false);
+    expect(r.detail).toMatch(/disagree \(cosine 0\.98000\)/);
+  });
+
+  it('treats a NaN similarity (mismatched sizes) as disagreement', () => {
+    expect(interpretEmbeddings({ vector: v }, { vector: [1] }, () => NaN, 1).ok).toBe(false);
+  });
+
+  it('passes on Gemini alone and says it could not compare', () => {
+    expect(interpretEmbeddings({ vector: v }, { error: 'OpenRouter embedding 402' }, sim(1), 200).detail)
+      .toBe('Gemini answered in 200 ms; OpenRouter unavailable to compare');
+  });
+
+  it('passes on the OpenRouter fallback but names the Gemini failure', () => {
+    const r = interpretEmbeddings({ error: 'Gemini embedding 429' }, { vector: v }, sim(1), 200);
+    expect(r).toMatchObject({ ok: true });
+    expect(r.detail).toMatch(/Gemini failed, OpenRouter answered \(Gemini embedding 429\)/);
+  });
+
+  it('fails when nothing answers', () => {
+    expect(interpretEmbeddings({ error: 'a' }, { error: 'b' }, sim(1), 900)).toMatchObject({ ok: false, detail: 'no provider answered after 900 ms: a; b' });
   });
 });

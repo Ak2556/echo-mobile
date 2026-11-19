@@ -72,6 +72,35 @@ export function interpretChat(
   return { check: "chat", ok: true, detail: want + " answered in " + ms + " ms" };
 }
 
+/** Below this, a new embedding no longer lines up with the stored ones closely enough to trust search. */
+export const EMBEDDING_AGREEMENT_MIN = 0.99;
+
+/**
+ * Embeddings are stored from two paths over time (OpenRouter until 2026-11-19,
+ * Gemini direct since). Search compares new vectors with old ones, so the two
+ * must agree. Passes while Gemini answers; fails when nothing answers, or when
+ * both answer and disagree, which would silently break search and the feed.
+ */
+export function interpretEmbeddings(
+  gemini: { vector?: number[]; error?: string },
+  openRouter: { vector?: number[]; error?: string },
+  similarity: (a: number[], b: number[]) => number,
+  ms: number,
+): CheckResult {
+  const fail = (detail: string): CheckResult => ({ check: "embeddings", ok: false, detail });
+  const pass = (detail: string): CheckResult => ({ check: "embeddings", ok: true, detail });
+  if (!gemini.vector && !openRouter.vector) {
+    return fail("no provider answered after " + ms + " ms: " + (gemini.error ?? "") + "; " + (openRouter.error ?? ""));
+  }
+  if (!gemini.vector) return pass("Gemini failed, OpenRouter answered (" + (gemini.error ?? "").slice(0, 200) + ")");
+  if (!openRouter.vector) return pass("Gemini answered in " + ms + " ms; OpenRouter unavailable to compare");
+  const c = similarity(gemini.vector, openRouter.vector);
+  if (!(c >= EMBEDDING_AGREEMENT_MIN)) {
+    return fail("Gemini and OpenRouter disagree (cosine " + c.toFixed(5) + "): new embeddings will not line up with stored ones");
+  }
+  return pass("Gemini and OpenRouter agree (cosine " + c.toFixed(5) + ") in " + ms + " ms");
+}
+
 /** Every third hour, first half-hour: about eight real chat calls a day on a shared quota. */
 export function chatProbeDue(now: Date): boolean {
   return now.getUTCHours() % 3 === 0 && now.getUTCMinutes() < 30;

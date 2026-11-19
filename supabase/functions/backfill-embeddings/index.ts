@@ -3,23 +3,20 @@
 //
 // Processes a batch per invocation and returns how many rows still need
 // embedding, so a caller can loop until { remaining: 0 }. Uses the service
-// role and runs entirely server-side. Embeddings are generated through
-// OpenRouter (same key as chat/moderation/embed-echo), 768-dim to match the
-// vector(768) column.
+// role and runs entirely server-side. Embeddings come from _shared/embed (the
+// same model and path as embed-echo: Gemini direct, OpenRouter as the
+// fallback), 768-dim to match the vector(768) column.
 //
 // POST body: { "limit"?: number }  (default 20, max 50)
 
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { embedText, embeddingModel, hasEmbeddingProvider } from "../_shared/embed.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 
-const EMBEDDING_MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "google/gemini-embedding-001";
 const EMBEDDING_DIM = 768;
-const EMBEDDING_URL = "https://openrouter.ai/api/v1/embeddings";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -56,27 +53,7 @@ function computeThoughtfulness(row: EchoRow): number {
 }
 
 async function generateEmbedding(text: string, model: string, dims: number | null): Promise<number[]> {
-  const body: Record<string, unknown> = { model, input: text };
-  if (dims != null) body.dimensions = dims;
-  const res = await guardedFetch("openrouter", EMBEDDING_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-      "X-Title": "Echo Embeddings Backfill",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    throw new Error(`Embedding API ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  }
-  const json = await res.json();
-  const values = json?.data?.[0]?.embedding;
-  if (!Array.isArray(values)) {
-    throw new Error(`Unexpected embedding shape (len=${values?.length ?? "n/a"})`);
-  }
-  return values;
+  return await embedText(text, { model, dims, title: "Echo Embeddings Backfill" });
 }
 
 const ADMIN_SECRET = Deno.env.get("ADMIN_SECRET") ?? "";
@@ -96,15 +73,15 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  if (!OPENROUTER_API_KEY) {
-    return new Response(JSON.stringify({ error: "OPENROUTER_API_KEY not configured" }), {
+  if (!hasEmbeddingProvider()) {
+    return new Response(JSON.stringify({ error: "no embedding provider configured" }), {
       status: 500,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }
 
   let limit = 20;
-  let model = EMBEDDING_MODEL;
+  let model = embeddingModel();
   let dims: number | null = EMBEDDING_DIM;
   let probe = false;
   const body = await req.json().catch(() => ({} as Record<string, unknown>));

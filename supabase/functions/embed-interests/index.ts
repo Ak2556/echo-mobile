@@ -15,15 +15,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { timingSafeEqual } from "../_shared/timingSafeEqual.ts";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { embedText, hasEmbeddingProvider } from "../_shared/embed.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const PROBE_SECRET = Deno.env.get("OPS_PROBE_SECRET") ?? "";
-const EMBEDDING_MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "google/gemini-embedding-001";
-const EMBEDDING_URL = "https://openrouter.ai/api/v1/embeddings";
-const EMBEDDING_DIM = 768;
 /** One run's ceiling, so a flood of new labels cannot spend the whole quota at once. */
 const MAX_PER_RUN = 40;
 
@@ -49,23 +45,10 @@ function labelToText(label: string): string {
   return `Writing about ${label.replace(/[-_]+/g, " ").trim()}.`;
 }
 
+// Same model and path as post embeddings (_shared/embed), so labels and posts
+// share one vector space.
 async function embed(text: string): Promise<number[]> {
-  const res = await guardedFetch("openrouter", EMBEDDING_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-      "X-Title": "Echo Interest Embeddings",
-    },
-    body: JSON.stringify({ model: EMBEDDING_MODEL, input: text, dimensions: EMBEDDING_DIM }),
-  });
-  if (!res.ok) throw new Error(`Embedding API ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const values = (await res.json())?.data?.[0]?.embedding;
-  if (!Array.isArray(values) || values.length !== EMBEDDING_DIM) {
-    throw new Error(`Unexpected embedding shape (len=${values?.length ?? "n/a"})`);
-  }
-  return values;
+  return await embedText(text, { title: "Echo Interest Embeddings" });
 }
 
 Deno.serve(async (req: Request) => {
@@ -76,7 +59,7 @@ Deno.serve(async (req: Request) => {
   if (!PROBE_SECRET || !provided || !(await timingSafeEqual(provided, PROBE_SECRET))) {
     return json({ error: "forbidden" }, 403);
   }
-  if (!OPENROUTER_API_KEY) return json({ error: "OPENROUTER_API_KEY not configured" }, 500);
+  if (!hasEmbeddingProvider()) return json({ error: "no embedding provider configured" }, 500);
   if (!SERVICE_ROLE_KEY) return json({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, 500);
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
