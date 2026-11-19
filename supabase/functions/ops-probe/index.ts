@@ -46,7 +46,9 @@ import {
   interpretEmbeddings,
   interpretModeration,
   interpretQueues,
+  interpretSignups,
   interpretStuck,
+  signupWindow,
   overallStatus,
   shouldAlert as shouldAlertFrom,
   stuckWindow,
@@ -142,6 +144,18 @@ async function checkStuckPosts(supabase: any): Promise<CheckResult> {
     .gt("created_at", window.since)
     .lt("created_at", window.before);
   return interpretStuck(count ?? null, error ? error.message : null);
+}
+
+// deno-lint-ignore no-explicit-any
+async function checkSignups(supabase: any): Promise<CheckResult> {
+  const window = signupWindow(Date.now());
+  const { data, error } = await supabase.rpc("signup_funnel", {
+    p_since: window.since,
+    p_before: window.before,
+    p_last: window.last,
+  });
+  const row = Array.isArray(data) ? data[0] ?? null : data ?? null;
+  return interpretSignups(row, error ? error.message : null);
 }
 
 // deno-lint-ignore no-explicit-any
@@ -246,6 +260,7 @@ Deno.serve(async (req: Request) => {
   const results: CheckResult[] = [];
   results.push(await checkQueues(supabase));
   results.push(await checkStuckPosts(supabase));
+  results.push(await checkSignups(supabase));
   results.push(await checkModeration());
   results.push(await checkEmbeddings());
   const { data: lastChat } = await supabase.from("probe_runs").select("ok, detail")

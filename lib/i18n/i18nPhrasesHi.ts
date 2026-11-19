@@ -1293,4 +1293,8 @@ export const HI_BULK: Record<string, string> = {
   'Could not save your choice. Check your connection and try again.': 'आपका चुनाव सेव नहीं हो सका। अपना कनेक्शन जाँचें और फिर कोशिश करें।',
   'Agree and continue': 'सहमत हों और आगे बढ़ें',
   'Decline and sign out': 'मना करें और साइन आउट करें',
+  // Signup wizard, final save (lib/auth/signupSaveError.ts).
+  'That username is taken. Please choose another.': 'यह उपयोगकर्ता नाम पहले से लिया जा चुका है। कृपया कोई दूसरा चुनें।',
+  "You're offline. Connect, then tap Continue again.": 'आप ऑफ़लाइन हैं। इंटरनेट से जुड़ें, फिर दोबारा जारी रखें पर टैप करें।',
+  "We couldn't finish setting up your profile. Tap Continue to try again.": 'हम आपकी प्रोफ़ाइल तैयार नहीं कर सके। फिर से कोशिश करने के लिए जारी रखें पर टैप करें।',
 };

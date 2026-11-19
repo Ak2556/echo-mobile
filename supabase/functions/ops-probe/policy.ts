@@ -127,6 +127,50 @@ export function interpretStuck(count: number | null, errorMessage?: string | nul
   };
 }
 
+/**
+ * Sign-ups. From 2026-09-30 to 2026-11-19 no new account could finish (a missing
+ * column grant on the wizard's final save) and nothing noticed for seven weeks.
+ *
+ * Judged on the most recent verified sign-ups, not a time window: Echo gets a
+ * few a month, so no week ever held enough to judge. People who verify their
+ * code almost never quit (all 34 from 2026-08-01 to 2026-09-24 finished), so
+ * the last few all unfinished means the save is failing. On the real history
+ * this would have alerted on 2026-10-06 instead of a tester's video on 11-19.
+ */
+export const SIGNUP_LAST = 3;
+/** A sign-up younger than this may still be in progress. */
+export const SIGNUP_GRACE_HOURS = 2;
+/** Older failures than this are history, not something to wake anyone for. */
+export const SIGNUP_LOOKBACK_DAYS = 60;
+
+export function signupWindow(now: number): { since: string; before: string; last: number } {
+  return {
+    since: new Date(now - SIGNUP_LOOKBACK_DAYS * 86_400_000).toISOString(),
+    before: new Date(now - SIGNUP_GRACE_HOURS * 3600_000).toISOString(),
+    last: SIGNUP_LAST,
+  };
+}
+
+export function interpretSignups(
+  row: { started: number; finished: number } | null,
+  errorMessage: string | null,
+): CheckResult {
+  if (errorMessage) return { check: "signups", ok: false, detail: "query failed: " + errorMessage };
+  if (!row) return { check: "signups", ok: false, detail: "query returned nothing" };
+  const started = Number(row.started) || 0;
+  const finished = Number(row.finished) || 0;
+  if (started < SIGNUP_LAST) {
+    return { check: "signups", ok: true, detail: "too few verified sign-ups to judge (" + started + ")" };
+  }
+  const ok = finished > 0;
+  return {
+    check: "signups",
+    ok,
+    detail: finished + " of the last " + started + " verified sign-ups finished" +
+      (ok ? "" : "; the final profile save may be failing"),
+  };
+}
+
 /** A job waiting longer than this means nothing is draining its queue. */
 export const QUEUE_STALE_MINUTES = 10;
 
