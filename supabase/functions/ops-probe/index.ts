@@ -34,11 +34,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { timingSafeEqual } from "../_shared/timingSafeEqual.ts";
 import { moderateContent } from "../embed-echo/moderation.ts";
+import { chatCompletion } from "../_shared/aiChat.ts";
 import {
   alertBody,
   alertDelivered,
   alertEmail,
   alertRecipients,
+  chatProbeDue,
+  interpretChat,
   interpretModeration,
   interpretQueues,
   interpretStuck,
@@ -83,6 +86,29 @@ async function checkModeration(): Promise<CheckResult> {
     return interpretModeration(verdict, Date.now() - started);
   } catch (e) {
     return { check: "moderation", ok: false, detail: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/**
+ * One real request to the assistant's model. The moderation check above uses
+ * flash-lite, so it stayed green on 2026-11-19 while Google refused the chat
+ * model (gemini-2.5-flash) and every assistant turn failed. Google's model list
+ * still showed the retired model, so only a real request tells.
+ */
+const CHAT_PROBE_MODEL = Deno.env.get("CHAT_PROBE_MODEL") ?? "google/gemini-2.5-flash";
+
+async function checkChat(): Promise<CheckResult> {
+  const started = Date.now();
+  try {
+    const out = await chatCompletion({
+      model: CHAT_PROBE_MODEL,
+      messages: [{ role: "user", content: "Reply with the single word: ok" }],
+      max_tokens: 64,
+      title: "ops-probe",
+    });
+    return interpretChat(CHAT_PROBE_MODEL, { answeredBy: out.model }, Date.now() - started);
+  } catch (e) {
+    return interpretChat(CHAT_PROBE_MODEL, { error: e instanceof Error ? e.message : String(e) }, Date.now() - started);
   }
 }
 
@@ -202,6 +228,7 @@ Deno.serve(async (req: Request) => {
   results.push(await checkQueues(supabase));
   results.push(await checkStuckPosts(supabase));
   results.push(await checkModeration());
+  if (chatProbeDue(new Date()) || new URL(req.url).searchParams.has("chat")) results.push(await checkChat());
 
   const outcome = overallStatus(results);
   const failures = outcome.failures;
