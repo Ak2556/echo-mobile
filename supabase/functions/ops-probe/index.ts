@@ -108,7 +108,7 @@ async function checkChat(): Promise<CheckResult> {
       max_tokens: 64,
       title: "ops-probe",
     });
-    return interpretChat(CHAT_PROBE_MODEL, { answeredBy: out.model }, Date.now() - started);
+    return interpretChat(CHAT_PROBE_MODEL, { answeredBy: out.model, fallbackReason: out.fallbackReason }, Date.now() - started);
   } catch (e) {
     return interpretChat(CHAT_PROBE_MODEL, { error: e instanceof Error ? e.message : String(e) }, Date.now() - started);
   }
@@ -248,7 +248,9 @@ Deno.serve(async (req: Request) => {
   results.push(await checkStuckPosts(supabase));
   results.push(await checkModeration());
   results.push(await checkEmbeddings());
-  if (chatProbeDue(new Date()) || new URL(req.url).searchParams.has("chat")) results.push(await checkChat());
+  const { data: lastChat } = await supabase.from("probe_runs").select("ok, detail")
+    .eq("check_name", "chat").order("ran_at", { ascending: false }).limit(1).maybeSingle();
+  if (chatProbeDue(new Date(), lastChat) || new URL(req.url).searchParams.has("chat")) results.push(await checkChat());
 
   const outcome = overallStatus(results);
   const failures = outcome.failures;

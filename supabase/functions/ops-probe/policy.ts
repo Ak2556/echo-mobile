@@ -59,7 +59,7 @@ export function interpretModeration(
  */
 export function interpretChat(
   requested: string,
-  outcome: { answeredBy?: string; error?: string },
+  outcome: { answeredBy?: string; error?: string; fallbackReason?: string },
   ms: number,
 ): CheckResult {
   if (outcome.error !== undefined) {
@@ -67,7 +67,10 @@ export function interpretChat(
   }
   const want = requested.replace(/^google\//, "");
   const by = outcome.answeredBy;
-  if (!by) return { check: "chat", ok: true, detail: "answered by OpenRouter in " + ms + " ms (Gemini refused " + want + ")" };
+  if (!by) {
+    const why = outcome.fallbackReason ? ": " + outcome.fallbackReason.slice(0, 400) : "";
+    return { check: "chat", ok: true, detail: "answered by OpenRouter in " + ms + " ms (Gemini did not answer" + why + ")" };
+  }
   if (by !== want) return { check: "chat", ok: true, detail: want + " is retired; stand-in " + by + " answered in " + ms + " ms" };
   return { check: "chat", ok: true, detail: want + " answered in " + ms + " ms" };
 }
@@ -101,8 +104,13 @@ export function interpretEmbeddings(
   return pass("Gemini and OpenRouter agree (cosine " + c.toFixed(5) + ") in " + ms + " ms");
 }
 
-/** Every third hour, first half-hour: about eight real chat calls a day on a shared quota. */
-export function chatProbeDue(now: Date): boolean {
+/**
+ * Every third hour, first half-hour: about eight real chat calls a day on a
+ * shared quota. While the last check was degraded (failed, or only OpenRouter
+ * answered) it runs every time, so a fix or a worsening shows within 30 minutes.
+ */
+export function chatProbeDue(now: Date, last?: { ok: boolean; detail: string } | null): boolean {
+  if (last && (!last.ok || last.detail.startsWith("answered by OpenRouter"))) return true;
   return now.getUTCHours() % 3 === 0 && now.getUTCMinutes() < 30;
 }
 

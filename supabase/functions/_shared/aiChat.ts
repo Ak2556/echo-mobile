@@ -27,6 +27,8 @@ export interface ChatMessageOut {
   tool_calls?: ChatToolCall[];
   /** The Gemini model that answered, when it was Gemini. Differs from the request when a stand-in was used. */
   model?: string;
+  /** Why Gemini did not answer, when OpenRouter did. For monitoring, never for users. */
+  fallbackReason?: string;
 }
 
 /**
@@ -81,10 +83,17 @@ export function geminiModelId(model: string): string {
  * gemini-2.5-flash-lite kept working, and every chat request failed because
  * the only fallback was OpenRouter. A 404 is not quota or an outage: asking
  * again with the same id can never succeed, but the same request on a current
- * model can. The list ends on a model ops-probe proves every 30 minutes.
+ * model can.
+ *
+ * The list starts with the model ops-probe proves every 30 minutes
+ * (moderation runs on it). It first started with gemini-3.8-flash, Google's
+ * suggested replacement; on this project that model failed fast at 06:00 UTC
+ * and hung past the 25 s limit at 06:30, and a timeout ends the Gemini
+ * attempts, so the proven model was never reached and every turn went to
+ * OpenRouter. Newer models follow, for the day flash-lite is retired too.
  * Override with GEMINI_STANDIN_MODELS (comma-separated) without a deploy.
  */
-export const DEFAULT_STANDIN_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite"];
+export const DEFAULT_STANDIN_MODELS = ["gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash"];
 
 export function standInModels(requested: string): string[] {
   const configured = (Deno.env.get("GEMINI_STANDIN_MODELS") ?? "")
@@ -144,14 +153,18 @@ export async function chatCompletion(req: ChatRequest): Promise<ChatMessageOut> 
           return { ...readMessage(await res.json(), "Gemini"), model };
         }
         geminiError = `Gemini ${res.status} (${model}): ${(await res.text()).slice(0, 500)}`;
-        // Only "this model is gone" moves on to the next model. Quota, auth and
-        // outages would fail the same way on every model, so they go straight
-        // to OpenRouter as before instead of spending three more requests.
-        if (res.status !== 404) break;
-        retiredModels.add(model);
+        // "This model is gone" (404) and "this model's quota is spent" (429)
+        // move on to the next model: Google's limits are per model, so the next
+        // one may well answer. Auth errors and outages would fail the same way
+        // on every model, so they go straight to OpenRouter. Only a 404 is
+        // remembered; quota comes back.
+        if (res.status === 404) retiredModels.add(model);
+        else if (res.status !== 429) break;
       } catch (e) {
         if (req.signal?.aborted) throw e;
-        geminiError = describeFailure("Gemini", e, req);
+        // A model that does not answer within the limit is not retried on the
+        // next one: the user is already waiting, and OpenRouter is quicker.
+        geminiError = describeFailure(`Gemini (${model})`, e, req);
         break;
       }
     }
@@ -190,7 +203,8 @@ export async function chatCompletion(req: ChatRequest): Promise<ChatMessageOut> 
     const detail = `OpenRouter ${res.status}: ${(await res.text()).slice(0, 500)}`;
     throw new Error(geminiError ? `${geminiError}; ${detail}` : detail);
   }
-  return readMessage(await res.json(), "OpenRouter");
+  const message = readMessage(await res.json(), "OpenRouter");
+  return geminiError ? { ...message, fallbackReason: geminiError } : message;
 }
 
 // deno-lint-ignore no-explicit-any

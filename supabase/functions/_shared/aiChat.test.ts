@@ -44,12 +44,22 @@ describe('chatCompletion', () => {
     expect(JSON.parse(init.body).provider).toBeUndefined();
   });
 
-  it('falls back to OpenRouter when Google refuses', async () => {
+  it('tells the caller why Gemini did not answer when OpenRouter did, for monitoring', async () => {
+    env.GEMINI_API_KEY = 'g';
+    env.OPENROUTER_API_KEY = 'o';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response('down', { status: 503 }))
+      .mockResolvedValueOnce(ok({ content: 'x' })));
+    await expect(chatCompletion(req)).resolves.toMatchObject({ fallbackReason: 'Gemini 503 (gemini-2.5-flash): down' });
+  });
+
+  it('falls back to OpenRouter when Google has an outage', async () => {
     env.GEMINI_API_KEY = 'g';
     env.OPENROUTER_API_KEY = 'o';
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response('quota', { status: 429 }))
+      .mockResolvedValueOnce(new Response('down', { status: 503 }))
       .mockResolvedValueOnce(ok({ content: 'from openrouter' }));
     vi.stubGlobal('fetch', fetchMock);
 
@@ -64,10 +74,10 @@ describe('chatCompletion', () => {
     env.OPENROUTER_API_KEY = 'o';
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce(new Response('quota', { status: 429 }))
+      .mockResolvedValueOnce(new Response('down', { status: 503 }))
       .mockResolvedValueOnce(new Response('no credits', { status: 402 })));
 
-    await expect(chatCompletion(req)).rejects.toThrow(/Gemini 429.*OpenRouter 402/);
+    await expect(chatCompletion(req)).rejects.toThrow(/Gemini 503.*OpenRouter 402/);
   });
 
   it('uses OpenRouter alone when there is no Gemini key', async () => {
@@ -134,7 +144,7 @@ describe('chatCompletion timeouts', () => {
     vi.stubGlobal('fetch', hangs());
 
     const started = Date.now();
-    await expect(chatCompletion({ ...req, timeoutMs: 30 })).rejects.toThrow(/Gemini: no answer within .*; OpenRouter: no answer within/);
+    await expect(chatCompletion({ ...req, timeoutMs: 30 })).rejects.toThrow(/Gemini \(gemini-2\.5-flash\): no answer within .*; OpenRouter: no answer within/);
     expect(Date.now() - started).toBeLessThan(2000);
   });
 
@@ -198,17 +208,37 @@ describe('retired Gemini models', () => {
     expect(bodyOf(fetchMock.mock.calls[2]).model).toBe(DEFAULT_STANDIN_MODELS[0]);
   });
 
-  it('does not spend more requests on other models when the failure is quota, not retirement', async () => {
+  it("moves to the next model when one model's quota is spent, since Google's limits are per model", async () => {
     env.GEMINI_API_KEY = 'g';
     env.OPENROUTER_API_KEY = 'o';
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response('quota', { status: 429 }))
-      .mockResolvedValueOnce(ok({ content: 'or' }));
+      .mockImplementation(() => Promise.resolve(ok({ content: 'lite' })));
     vi.stubGlobal('fetch', fetchMock);
+    await expect(chatCompletion(req)).resolves.toMatchObject({ content: 'lite', model: 'gemini-2.5-flash-lite' });
+    // Quota comes back, so the model is not remembered as retired.
     await chatCompletion(req);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[1][0]).toContain('openrouter.ai');
+    expect(bodyOf(fetchMock.mock.calls[2]).model).toBe('gemini-2.5-flash');
+  });
+
+  it('does not walk the models on an outage or an auth error; those fail the same everywhere', async () => {
+    env.GEMINI_API_KEY = 'g';
+    env.OPENROUTER_API_KEY = 'o';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    for (const status of [503, 401]) {
+      const fetchMock = vi.fn()
+        .mockResolvedValueOnce(new Response('x', { status }))
+        .mockResolvedValueOnce(ok({ content: 'or' }));
+      vi.stubGlobal('fetch', fetchMock);
+      await chatCompletion(req);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[1][0]).toContain('openrouter.ai');
+    }
+  });
+
+  it('tries the proven model first: a hanging stand-in must not stand between users and it', () => {
+    expect(DEFAULT_STANDIN_MODELS[0]).toBe('gemini-2.5-flash-lite');
   });
 
   it('asks OpenRouter for its stand-in and a modest max_tokens once Google has retired the model', async () => {
@@ -234,7 +264,7 @@ describe('retired Gemini models', () => {
   it('names every model it tried when all are retired and there is no fallback', async () => {
     env.GEMINI_API_KEY = 'g';
     vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve(retired())));
-    await expect(chatCompletion(req)).rejects.toThrow(/Gemini 404 \(gemini-2\.5-flash-lite\)/);
+    await expect(chatCompletion(req)).rejects.toThrow(/Gemini 404 \(gemini-3\.8-flash\)/);
   });
 
   it('takes the stand-in list from GEMINI_STANDIN_MODELS without a deploy', () => {
