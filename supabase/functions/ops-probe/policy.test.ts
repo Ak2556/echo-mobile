@@ -8,6 +8,8 @@ import {
   alertDelivered,
   alertEmail,
   alertRecipients,
+  chatProbeDue,
+  interpretChat,
   interpretModeration,
   interpretQueues,
   interpretStuck,
@@ -286,5 +288,38 @@ describe('interpretQueues', () => {
 
   it('fails when no queues come back at all', () => {
     expect(interpretQueues([], null, NOW).ok).toBe(false);
+  });
+});
+
+describe('interpretChat', () => {
+  it('passes quietly when the requested model answers', () => {
+    expect(interpretChat('google/gemini-2.5-flash', { answeredBy: 'gemini-2.5-flash' }, 900))
+      .toEqual({ check: 'chat', ok: true, detail: 'gemini-2.5-flash answered in 900 ms' });
+  });
+
+  it('passes but names the stand-in when the requested model is retired', () => {
+    const r = interpretChat('google/gemini-2.5-flash', { answeredBy: 'gemini-3.8-flash' }, 1200);
+    expect(r.ok).toBe(true);
+    expect(r.detail).toBe('gemini-2.5-flash is retired; stand-in gemini-3.8-flash answered in 1200 ms');
+  });
+
+  it('says when only OpenRouter answered', () => {
+    expect(interpretChat('google/gemini-2.5-flash', {}, 3000).detail).toMatch(/^answered by OpenRouter/);
+  });
+
+  it('fails when nothing answered, which is what users saw on 2026-11-19', () => {
+    const r = interpretChat('google/gemini-2.5-flash', { error: 'Gemini 404 (gemini-2.5-flash): gone; OpenRouter 402: no credits' }, 2100);
+    expect(r).toMatchObject({ check: 'chat', ok: false });
+    expect(r.detail).toMatch(/^no answer after 2100 ms: Gemini 404/);
+  });
+});
+
+describe('chatProbeDue', () => {
+  it('runs in the first half-hour of every third UTC hour, about eight times a day', () => {
+    const due = Array.from({ length: 48 }, (_, i) => chatProbeDue(new Date(Date.UTC(2026, 10, 19, Math.floor(i / 2), (i % 2) * 30))));
+    expect(due.filter(Boolean)).toHaveLength(8);
+    expect(chatProbeDue(new Date(Date.UTC(2026, 10, 19, 6, 0)))).toBe(true);
+    expect(chatProbeDue(new Date(Date.UTC(2026, 10, 19, 6, 30)))).toBe(false);
+    expect(chatProbeDue(new Date(Date.UTC(2026, 10, 19, 7, 0)))).toBe(false);
   });
 });

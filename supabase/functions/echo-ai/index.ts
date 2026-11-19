@@ -12,6 +12,9 @@ import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } fro
 import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
 
 const DEFAULT_ECHO_AI_MODEL = "google/gemini-2.5-flash";
+
+/** What the user sees when a turn fails for any reason they cannot act on. */
+const ASSISTANT_UNAVAILABLE_MESSAGE = "The assistant can't answer right now. Please try again in a minute.";
 const CONFIGURED_ECHO_AI_MODEL = Deno.env.get("ECHO_AI_MODEL") ?? DEFAULT_ECHO_AI_MODEL;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -1202,10 +1205,11 @@ async function handleRequest(req: Request): Promise<Response> {
 
         send({ type: "done" });
       } catch (err) {
-        send({
-          type: "error",
-          message: err instanceof Error ? err.message : String(err),
-        });
+        // The detail is for the logs. It used to go to the user as-is, which on
+        // 2026-11-19 meant a screen of raw Gemini and OpenRouter JSON, model ids
+        // and a billing URL in the chat window.
+        console.error("[echo-ai] turn failed:", err instanceof Error ? err.message : String(err));
+        send({ type: "error", message: ASSISTANT_UNAVAILABLE_MESSAGE });
       } finally {
         controller.close();
       }

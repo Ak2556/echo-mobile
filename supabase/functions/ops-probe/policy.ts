@@ -50,6 +50,33 @@ export function interpretModeration(
   return { check: "moderation", ok: false, detail: "benign text flagged as " + verdict.categories.join(", ") };
 }
 
+/**
+ * What one real chat request says about the assistant's model.
+ *
+ * Passes while anything answers, so a stand-in keeps the probe green, but the
+ * detail names the stand-in: a retired default is a change someone should make,
+ * not an outage. Fails only when nobody answered, which is what users see.
+ */
+export function interpretChat(
+  requested: string,
+  outcome: { answeredBy?: string; error?: string },
+  ms: number,
+): CheckResult {
+  if (outcome.error !== undefined) {
+    return { check: "chat", ok: false, detail: "no answer after " + ms + " ms: " + outcome.error.slice(0, 300) };
+  }
+  const want = requested.replace(/^google\//, "");
+  const by = outcome.answeredBy;
+  if (!by) return { check: "chat", ok: true, detail: "answered by OpenRouter in " + ms + " ms (Gemini refused " + want + ")" };
+  if (by !== want) return { check: "chat", ok: true, detail: want + " is retired; stand-in " + by + " answered in " + ms + " ms" };
+  return { check: "chat", ok: true, detail: want + " answered in " + ms + " ms" };
+}
+
+/** Every third hour, first half-hour: about eight real chat calls a day on a shared quota. */
+export function chatProbeDue(now: Date): boolean {
+  return now.getUTCHours() % 3 === 0 && now.getUTCMinutes() < 30;
+}
+
 /** What the stuck-post count says. A failed count is itself a failure: unknown is not healthy. */
 export function interpretStuck(count: number | null, errorMessage?: string | null): CheckResult {
   if (errorMessage) return { check: "stuck_posts", ok: false, detail: "query failed: " + errorMessage };

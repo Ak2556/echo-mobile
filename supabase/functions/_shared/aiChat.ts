@@ -25,6 +25,8 @@ export interface ChatToolCall {
 export interface ChatMessageOut {
   content: string;
   tool_calls?: ChatToolCall[];
+  /** The Gemini model that answered, when it was Gemini. Differs from the request when a stand-in was used. */
+  model?: string;
 }
 
 /**
@@ -71,6 +73,45 @@ export function geminiModelId(model: string): string {
   return model.replace(/^google\//, "");
 }
 
+/**
+ * Models to try, in order, when Google says the requested one is not found.
+ *
+ * Google retires models on its own schedule. On 2026-11-19 gemini-2.5-flash
+ * began answering 404 "no longer available to new users" while
+ * gemini-2.5-flash-lite kept working, and every chat request failed because
+ * the only fallback was OpenRouter. A 404 is not quota or an outage: asking
+ * again with the same id can never succeed, but the same request on a current
+ * model can. The list ends on a model ops-probe proves every 30 minutes.
+ * Override with GEMINI_STANDIN_MODELS (comma-separated) without a deploy.
+ */
+export const DEFAULT_STANDIN_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite"];
+
+export function standInModels(requested: string): string[] {
+  const configured = (Deno.env.get("GEMINI_STANDIN_MODELS") ?? "")
+    .split(",").map((m) => geminiModelId(m.trim())).filter(Boolean);
+  const list = configured.length ? configured : DEFAULT_STANDIN_MODELS;
+  return list.filter((m) => m !== requested);
+}
+
+/** Model ids Google has answered 404 for, remembered for this isolate's life so later requests skip them. */
+const retiredModels = new Set<string>();
+
+/** For tests. */
+export function forgetRetiredModels(): void {
+  retiredModels.clear();
+}
+
+/**
+ * OpenRouter reserves credit for max_tokens up front and, with none given,
+ * assumes the model's full output length (65,535 for Gemini Flash). A
+ * credit-light account then refuses every request with 402 even though a chat
+ * reply needs a few hundred tokens. Callers that set their own limit keep it.
+ */
+export const OPENROUTER_DEFAULT_MAX_TOKENS = 2048;
+
+/** OpenRouter's id for the stand-in it is known to serve. */
+export const OPENROUTER_STANDIN_MODEL = "google/gemini-2.5-flash-lite";
+
 export async function chatCompletion(req: ChatRequest): Promise<ChatMessageOut> {
   const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
   const openRouterKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
@@ -88,19 +129,33 @@ export async function chatCompletion(req: ChatRequest): Promise<ChatMessageOut> 
 
   let geminiError: string | null = null;
   if (geminiKey) {
-    try {
-      const res = await guardedFetch("gemini", GEMINI_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${geminiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ ...common, model: geminiModelId(req.model) }),
-        signal: attemptSignal(req),
-      });
-      if (res.ok) return readMessage(await res.json(), "Gemini");
-      geminiError = `Gemini ${res.status}: ${(await res.text()).slice(0, 500)}`;
-    } catch (e) {
-      if (req.signal?.aborted) throw e;
-      geminiError = describeFailure("Gemini", e, req);
+    const requested = geminiModelId(req.model);
+    const candidates = [requested, ...standInModels(requested)].filter((m) => !retiredModels.has(m));
+    for (const model of candidates) {
+      try {
+        const res = await guardedFetch("gemini", GEMINI_URL, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${geminiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ ...common, model }),
+          signal: attemptSignal(req),
+        });
+        if (res.ok) {
+          if (model !== requested) console.warn(`[aiChat] ${req.title}: ${requested} is retired; answered by ${model}`);
+          return { ...readMessage(await res.json(), "Gemini"), model };
+        }
+        geminiError = `Gemini ${res.status} (${model}): ${(await res.text()).slice(0, 500)}`;
+        // Only "this model is gone" moves on to the next model. Quota, auth and
+        // outages would fail the same way on every model, so they go straight
+        // to OpenRouter as before instead of spending three more requests.
+        if (res.status !== 404) break;
+        retiredModels.add(model);
+      } catch (e) {
+        if (req.signal?.aborted) throw e;
+        geminiError = describeFailure("Gemini", e, req);
+        break;
+      }
     }
+    geminiError ??= `Gemini: every model is retired (${[requested, ...standInModels(requested)].join(", ")})`;
     if (!openRouterKey) throw new Error(geminiError);
     console.warn(`[aiChat] ${req.title}: falling back to OpenRouter after ${geminiError}`);
   }
@@ -115,7 +170,15 @@ export async function chatCompletion(req: ChatRequest): Promise<ChatMessageOut> 
         "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
         "X-Title": req.title,
       },
-      body: JSON.stringify({ ...common, model: req.model, provider: { only: ["google-ai-studio"] } }),
+      body: JSON.stringify({
+        ...common,
+        max_tokens: req.max_tokens ?? OPENROUTER_DEFAULT_MAX_TOKENS,
+        // OpenRouter reaches the same Google backend, so a model Google has
+        // retired is retired there too: ask for the one stand-in OpenRouter is
+        // known to list instead.
+        model: retiredModels.has(geminiModelId(req.model)) ? OPENROUTER_STANDIN_MODEL : req.model,
+        provider: { only: ["google-ai-studio"] },
+      }),
       signal: attemptSignal(req),
     });
   } catch (e) {
