@@ -11,9 +11,9 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "../_shared/rateLimit.ts";
-import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
+import { chatCompletion, chatModel, hasChatProvider } from "../_shared/aiChat.ts";
 
-const MODEL = Deno.env.get("EDITORIAL_REWRITE_MODEL") ?? "google/gemini-2.5-flash";
+const MODEL = Deno.env.get("EDITORIAL_REWRITE_MODEL") || chatModel();
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";

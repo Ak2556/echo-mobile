@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  DEFAULT_CHAT_MODEL,
   DEFAULT_STANDIN_MODELS,
   OPENROUTER_DEFAULT_MAX_TOKENS,
   OPENROUTER_STANDIN_MODEL,
   PROVIDER_TIMEOUT_MS,
   chatCompletion,
+  chatModel,
   forgetRetiredModels,
   geminiModelId,
   standInModels,
@@ -270,5 +272,21 @@ describe('retired Gemini models', () => {
   it('takes the stand-in list from GEMINI_STANDIN_MODELS without a deploy', () => {
     env.GEMINI_STANDIN_MODELS = ' google/gemini-9-flash , gemini-2.5-flash ';
     expect(standInModels('gemini-2.5-flash')).toEqual(['gemini-9-flash']);
+  });
+});
+
+describe('chatModel', () => {
+  it('defaults to a model Google still serves, under an id OpenRouter also lists', () => {
+    expect(chatModel()).toBe('google/gemini-3.5-flash-lite');
+    expect(DEFAULT_CHAT_MODEL).not.toMatch(/gemini-2\.5-(flash|pro)$/);
+  });
+
+  it('can be changed with the CHAT_MODEL secret, no deploy', () => {
+    env.CHAT_MODEL = 'google/gemini-9-flash';
+    expect(chatModel()).toBe('google/gemini-9-flash');
+  });
+
+  it('puts a different model first in the stand-ins than the default, so a failing default has somewhere to go', () => {
+    expect(DEFAULT_STANDIN_MODELS[0]).not.toBe(geminiModelId(DEFAULT_CHAT_MODEL));
   });
 });

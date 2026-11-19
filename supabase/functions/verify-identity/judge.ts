@@ -4,10 +4,10 @@
 // not judge instead of leaving it for a human who may never look.
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { chatCompletion } from "../_shared/aiChat.ts";
+import { chatCompletion, chatModel } from "../_shared/aiChat.ts";
 import { imageDataUrl } from "../_shared/imageDataUrl.ts";
 
-const VISION_MODEL = Deno.env.get("VERIFY_VISION_MODEL") ?? "google/gemini-2.5-flash";
+const VISION_MODEL = Deno.env.get("VERIFY_VISION_MODEL") || chatModel();
 
 // deno-lint-ignore no-explicit-any
 type Db = SupabaseClient<any, any, any>;

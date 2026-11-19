@@ -15,12 +15,12 @@
 // OpenRouter (OPENROUTER_API_KEY), the same path as chat and moderation.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
+import { chatCompletion, chatModel, hasChatProvider } from "../_shared/aiChat.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const SYNTH_MODEL = Deno.env.get("FINGERPRINT_MODEL") ?? "google/gemini-2.5-flash";
+const SYNTH_MODEL = Deno.env.get("FINGERPRINT_MODEL") || chatModel();
 const SYNTH_TIMEOUT_MS = 15000;
 const MIN_ECHOES = 3;
 const MAX_ECHOES = 24;

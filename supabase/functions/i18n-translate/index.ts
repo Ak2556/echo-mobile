@@ -13,9 +13,9 @@
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { spendActionBudget } from "../_shared/actionLimit.ts";
-import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
+import { chatCompletion, chatModel, hasChatProvider } from "../_shared/aiChat.ts";
 
-const MODEL = Deno.env.get("I18N_TRANSLATE_MODEL") ?? Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash";
+const MODEL = Deno.env.get("I18N_TRANSLATE_MODEL") || chatModel();
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 // Optional shared secret for the offline build-time generator (generate-i18n.mjs).
