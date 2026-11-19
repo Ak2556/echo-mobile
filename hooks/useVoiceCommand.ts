@@ -37,6 +37,8 @@ import {
   SpeechRecognition,
   useSpeechEvent,
   canRecognise,
+  claimSpeech,
+  speechOwnedBy,
 } from '../lib/voice/speechRecognition';
 import { dispatchVoiceIntent } from '../lib/voice/dispatch';
 import { matchLocalIntent } from '../lib/voice/localIntent';
@@ -191,11 +193,23 @@ export function useVoiceCommand() {
     }
   }, [appLanguage]);
 
+  // Answer dictation took the recogniser while a command was listening. Its
+  // words are not a command: drop back to idle instead of dispatching them, and
+  // free busyRef so the next press of the floating button still works.
+  const handOffIfTaken = () => {
+    if (speechOwnedBy('voice')) return false;
+    modeRef.current = null;
+    busyRef.current = false;
+    setState(IDLE);
+    return true;
+  };
+
   // On-device recognition results. `isFinal` matters: interim results stream in
   // while the user is still talking and acting on those would fire commands
   // mid-sentence.
   useSpeechEvent('result', (event: any) => {
     if (modeRef.current !== 'stt') return;
+    if (handOffIfTaken()) return;
     const transcript = event?.results?.[0]?.transcript ?? '';
     if (!event?.isFinal || !transcript.trim()) return;
     modeRef.current = null;
@@ -205,6 +219,7 @@ export function useVoiceCommand() {
 
   useSpeechEvent('error', (event: any) => {
     if (modeRef.current !== 'stt') return;
+    if (handOffIfTaken()) return;
     modeRef.current = null;
     busyRef.current = false;
 
@@ -246,6 +261,7 @@ export function useVoiceCommand() {
         if (perm.granted) {
           busyRef.current = true;
           modeRef.current = 'stt';
+          claimSpeech('voice');
           SpeechRecognition.start({
             // appLanguage is a bare two-letter code; the recogniser needs a
             // BCP-47 tag and answers a bare one with language-not-supported.

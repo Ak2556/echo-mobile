@@ -233,6 +233,8 @@ const BASE_TRANSLATIONS = {
   'daily.yourAnswer': 'Your answer',
   'daily.yourAnswerEdit': 'Your answer (you can edit anytime)',
   'daily.placeholder': 'Distill your take in a sentence or two…',
+  'daily.dictate': 'Speak your answer',
+  'daily.dictateStop': 'Stop listening',
   'daily.answerSaved': 'Your answer is in.',
   'daily.submitFailed': 'Could not submit',
 
@@ -443,6 +445,8 @@ const COMMON_TRANSLATIONS: Record<Exclude<AppLanguageCode, 'en'>, TranslationMap
     'daily.yourAnswer': "आपका जवाब",
     'daily.yourAnswerEdit': "आपका जवाब (कभी भी बदल सकते हैं)",
     'daily.placeholder': "अपनी बात एक-दो वाक्य में कहें…",
+    'daily.dictate': "बोलकर जवाब दें",
+    'daily.dictateStop': "सुनना बंद करें",
     'daily.answerSaved': "आपका जवाब दर्ज हो गया",
     'daily.submitFailed': "भेज नहीं पाए",
     'feed.follow': "फॉलो करें",
