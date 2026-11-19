@@ -44,7 +44,15 @@ const ROOT = join(__dirname, '..');
 const OUT_DIR = join(ROOT, 'constants', 'legal', 'translations');
 
 const API_KEY = process.env.OPENROUTER_API_KEY;
-const MODEL = process.env.LEGAL_TRANSLATE_MODEL || 'google/gemini-2.5-pro';
+// google/gemini-2.5-pro was the default until Google stopped serving the 2.5
+// flash/pro models to this project on 2026-11-19. 3.5 Flash is the current
+// general-availability model nearest it in price (not a preview, not a lite).
+const MODEL = process.env.LEGAL_TRANSLATE_MODEL || 'google/gemini-3.5-flash';
+// OpenRouter reserves max_tokens against the balance up front; unset, it
+// reserves the model's whole output window and answers 402 on a small balance.
+// The longest section is about 2,400 English characters, so 8192 leaves room
+// for scripts that take several tokens per character.
+const MAX_TOKENS = 8192;
 const DRY = process.argv.includes('--dry');
 const FORCE = process.argv.includes('--force');
 const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').split('=')[1];
@@ -100,6 +108,7 @@ async function translateSection(section, lang) {
     body: JSON.stringify({
       model: MODEL,
       temperature: 0,
+      max_tokens: MAX_TOKENS,
       messages: [
         { role: 'system', content: SYSTEM },
         { role: 'user', content: `Translate into ${lang.englishName} (${lang.nativeName}), BCP-47 "${lang.code}".\n\n---\n${section}` },
@@ -108,6 +117,11 @@ async function translateSection(section, lang) {
   });
   if (!res.ok) throw new Error(`${lang.code}: HTTP ${res.status} ${await res.text().catch(() => '')}`);
   const json = await res.json();
+  // A reply the cap cut off ends mid-clause. Fail the language so the run can
+  // be resumed, rather than write half a legal clause as if it were whole.
+  if (json?.choices?.[0]?.finish_reason === 'length') {
+    throw new Error(`${lang.code}: reply cut off at ${MAX_TOKENS} tokens`);
+  }
   const out = json?.choices?.[0]?.message?.content?.trim();
   if (!out) throw new Error(`${lang.code}: empty completion`);
   return out.replace(/^```(?:markdown)?\n?/, '').replace(/\n?```$/, '');
