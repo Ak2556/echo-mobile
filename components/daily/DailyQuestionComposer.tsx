@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
-import { View, Text, Alert } from 'react-native';
+import { View, Text, Alert, Pressable } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Check, Flame } from 'phosphor-react-native';
+import { Check, Flame, Microphone, Stop } from 'phosphor-react-native';
+import { useDictation } from '../../hooks/useDictation';
+import { joinDictation } from '../../lib/voice/dictation';
 import { TextInput } from '../ui/TextInput';
 import { Button } from '../ui/Button';
 import { showToast } from '../ui/Toast';
@@ -56,9 +58,18 @@ export function DailyQuestionComposer({
   const [submitting, setSubmitting] = useState(false);
   const answered = initialAnswer != null;
 
+  // Speaking the answer. The words show in the box as they are heard and are
+  // added to whatever was already typed once the sentence is finished.
+  const [heard, setHeard] = useState('');
+  const dictation = useDictation({
+    onInterim: setHeard,
+    onFinal: (text) => setDraft(d => joinDictation(d, text, MAX_ANSWER_LENGTH)),
+  });
+  const shown = heard ? joinDictation(draft, heard, MAX_ANSWER_LENGTH) : draft;
+
   const canSubmit = useMemo(
-    () => draft.trim().length > 0 && draft.trim().length <= MAX_ANSWER_LENGTH && !submitting,
-    [draft, submitting],
+    () => draft.trim().length > 0 && draft.trim().length <= MAX_ANSWER_LENGTH && !submitting && !dictation.listening,
+    [draft, submitting, dictation.listening],
   );
 
   const handleSubmit = async () => {
@@ -138,24 +149,58 @@ export function DailyQuestionComposer({
           {answered ? t('daily.yourAnswerEdit') : t('daily.yourAnswer')}
         </Text>
         <TextInput
-          value={draft}
+          value={shown}
           onChangeText={(text) => setDraft(text.slice(0, MAX_ANSWER_LENGTH))}
           placeholder={t('daily.placeholder')}
+          // Read-only while listening, so typed and spoken words cannot collide.
+          editable={!dictation.listening}
           multiline
           numberOfLines={4}
         />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-            {draft.length}/{MAX_ANSWER_LENGTH}
-          </Text>
-          <Button
-            label={answered ? (submitUpdateLabel ?? t('daily.update')) : (submitFirstLabel ?? t('daily.submit'))}
-            onPress={() => void handleSubmit()}
-            size="compact"
-            disabled={!canSubmit}
-            loading={submitting}
-            leftIcon={Check}
-          />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, gap: 10 }}>
+          {dictation.listening ? (
+            <Text style={{ flexShrink: 1, color: colors.accent, fontSize: fontSizes.caption, fontWeight: '600' }} accessibilityLiveRegion="polite">
+              {t('voice.listening')} {t('voice.tapToStop')}
+            </Text>
+          ) : (
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
+              {shown.length}/{MAX_ANSWER_LENGTH}
+            </Text>
+          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {dictation.available && (
+              <Pressable
+                onPress={dictation.toggle}
+                disabled={submitting}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={dictation.listening ? t('daily.dictateStop') : t('daily.dictate')}
+                accessibilityState={{ selected: dictation.listening }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: dictation.listening ? colors.accent : colors.surfaceHover,
+                  borderWidth: 1,
+                  borderColor: dictation.listening ? colors.accent : colors.border,
+                }}
+              >
+                {dictation.listening
+                  ? <Stop color={colors.onAccent} size={ICON_SIZE.md} weight="fill" />
+                  : <Microphone color={colors.text} size={ICON_SIZE.md} weight="bold" />}
+              </Pressable>
+            )}
+            <Button
+              label={answered ? (submitUpdateLabel ?? t('daily.update')) : (submitFirstLabel ?? t('daily.submit'))}
+              onPress={() => void handleSubmit()}
+              size="compact"
+              disabled={!canSubmit}
+              loading={submitting}
+              leftIcon={Check}
+            />
+          </View>
         </View>
       </Animated.View>
     </>

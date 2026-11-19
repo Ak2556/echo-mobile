@@ -47,6 +47,27 @@ const noopEvent = (_event: string, _handler: (e: never) => void): void => {};
 export const useSpeechEvent: (event: string, handler: (e: never) => void) => void =
   (SPEECH_AVAILABLE && mod?.useSpeechRecognitionEvent) || noopEvent;
 
+/**
+ * Who started the recogniser.
+ *
+ * There is one recogniser and its events go to every listener in the app. Voice
+ * commands (the floating button) and answer dictation (the daily question) both
+ * use it, so a listener that only checked "did I start something?" would also
+ * act on the other one's words: a dictated answer dispatched as a command, or a
+ * command typed into the answer. Whoever starts it claims it here, and each
+ * listener acts only while it is still the owner.
+ */
+export type SpeechOwner = 'voice' | 'dictation';
+let owner: SpeechOwner | null = null;
+
+export function claimSpeech(next: SpeechOwner): void {
+  owner = next;
+}
+
+export function speechOwnedBy(who: SpeechOwner): boolean {
+  return owner === who;
+}
+
 /** Availability plus a working recognition service on the device. */
 export function canRecognise(): boolean {
   if (!SpeechRecognition) return false;
