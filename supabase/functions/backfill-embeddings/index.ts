@@ -113,6 +113,10 @@ Deno.serve(async (req: Request) => {
     .from("public_echoes")
     .select("id, title, prompt, response, conversation_snapshot")
     .is("embedding", null)
+    // Only posts the feed may show. A post moderation hid (check_content
+    // false) is never embedded by embed-echo either; embedding it here would
+    // hand it to every similarity query that forgets to filter.
+    .eq("check_content", true)
     .limit(limit);
   if (fetchErr) {
     console.error("[backfill-embeddings] fetch failed", fetchErr.message);
@@ -154,7 +158,8 @@ Deno.serve(async (req: Request) => {
   const { count: remaining } = await supabase
     .from("public_echoes")
     .select("id", { count: "exact", head: true })
-    .is("embedding", null);
+    .is("embedding", null)
+    .eq("check_content", true);
 
   return new Response(
     JSON.stringify({ processed, failed: failures.length, failures: failures.slice(0, 5), remaining: remaining ?? null }),
