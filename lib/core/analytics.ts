@@ -3,6 +3,7 @@ export type AnalyticsEvent =
   | 'app_background'
   | 'signup_started'
   | 'signup_completed'
+  | 'signup_save_failed'
   | 'first_run_started'
   | 'first_run_answered'
   | 'goal_set'

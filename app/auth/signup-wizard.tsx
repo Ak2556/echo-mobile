@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
-import { syncInterests } from '../../lib/supabaseEchoApi';
+import { saveMyDateOfBirth, syncInterests } from '../../lib/supabaseEchoApi';
 import { cleanUsername } from '../../lib/social/username';
 import {
   View, Text, TextInput, ScrollView, Platform, useWindowDimensions,
@@ -25,6 +25,8 @@ import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 import { track, identify } from '../../lib/core/analytics';
+import { captureException } from '../../lib/core/monitoring';
+import { signupSaveOutcome } from '../../lib/auth/signupSaveError';
 import { useTheme } from '../../lib/ui/theme';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { WARM_AVATAR_COLORS } from '../../lib/social/avatarPalette';
@@ -571,36 +573,53 @@ export default function SignupWizard() {
     // don't let the guard above bounce us to the feed instead of /welcome.
     finishing.current = true;
 
-    const { error } = await supabase.from('profiles').upsert({
-      // Personalized notifications are on by default for adults (20260930130000),
-      // but the row is created before we know the date of birth, so
-      // trg_enforce_minor_profiling_off switched them off at insert. Setting
-      // both in this one statement lets the trigger see the birthday: adults
-      // keep it on, minors are still forced off.
-      ...(dobIso ? { date_of_birth: dobIso, personalized_notifications: true } : {}),
-      id: session.user.id,
-      username: usernameClean,
-      display_name: displayName.trim(),
-      avatar_color: avatarColor,
-      avatar_url: avatarUrl || null,
-      bio: bioText.trim() || null,
-      // What makes lib/auth/listener.ts stop routing here. Written in the same
-      // statement as the rest, so onboarding is only ever marked complete if
-      // the profile it describes actually landed.
-      onboarded_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
+    // The birthday goes first, by plain UPDATE, never inside the upsert below.
+    // An upsert is INSERT ... ON CONFLICT DO UPDATE, and Postgres needs SELECT
+    // on every column the DO UPDATE writes; clients may not read date_of_birth
+    // (age gate), so a birthday in the upsert failed the save with "permission
+    // denied for table profiles": no new account finished 2026-09-30..11-19.
+    // personalized_notifications travels with it so the minors trigger sees the
+    // birthday (adults keep it on, minors are forced off). First, so a refused
+    // birthday stops here and onboarding is never marked done without one.
+    let error: { code?: string; message: string } | null = null;
+    if (dobIso) {
+      try {
+        await saveMyDateOfBirth(dobIso);
+      } catch (e) {
+        error = e as { code?: string; message: string };
+      }
+    }
+
+    if (!error) {
+      const saved = await supabase.from('profiles').upsert({
+        id: session.user.id,
+        username: usernameClean,
+        display_name: displayName.trim(),
+        avatar_color: avatarColor,
+        avatar_url: avatarUrl || null,
+        // NOT NULL, default ''. null failed the save for anyone who skipped the bio.
+        bio: bioText.trim(),
+        // What makes lib/auth/listener.ts stop routing here. Written in the same
+        // statement as the rest, so onboarding is only ever marked complete if
+        // the profile it describes actually landed.
+        onboarded_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      error = saved.error;
+    }
 
     if (error) {
-      const msg = error.message.toLowerCase();
-      if (error.code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
-        showToast('Username taken. Pick another', 'Error');
-        setUsernameRaw('');
-        goToStep(STEP.NAME, true);
-        setSaving(false);
-        return;
+      // Plain words for the person, the real error for monitoring. This used to
+      // show error.message, which is how "permission denied for table profiles"
+      // reached a tester's screen while signup was broken for seven weeks.
+      const outcome = signupSaveOutcome(error);
+      if (outcome.report) {
+        captureException(error, { tags: { area: 'signup', step: 'profile_save', code: String(error.code ?? '') } });
+        track('signup_save_failed', { code: String(error.code ?? 'unknown') });
       }
-      showToast(error.message, 'Error');
+      showToast(outcome.message, 'Error');
+      if (outcome.clearUsername) setUsernameRaw('');
+      if (outcome.goTo) goToStep(outcome.goTo === 'bio' ? STEP.BIO : STEP.NAME, true);
       setSaving(false);
       return;
     }

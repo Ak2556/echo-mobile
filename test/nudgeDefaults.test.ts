@@ -32,7 +32,10 @@ describe('personalized nudges are on by default', () => {
   });
 
   it('new sign-ups get it: the wizard sends it with the date of birth, so the minors trigger can see an adult', () => {
-    expect(src('app/auth/signup-wizard.tsx')).toMatch(/\{ date_of_birth: dobIso, personalized_notifications: true \}/);
+    // Through saveMyDateOfBirth (a plain UPDATE), not the profile upsert: an
+    // upsert needs SELECT on date_of_birth, which clients do not have.
+    expect(src('app/auth/signup-wizard.tsx')).toMatch(/await saveMyDateOfBirth\(dobIso\)/);
+    expect(src('lib/supabaseEchoApi.ts')).toMatch(/\.update\(\{ date_of_birth: dobIso, personalized_notifications: true \}\)/);
   });
 
   it('the first nudge a person receives says where the switch is', () => {
