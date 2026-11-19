@@ -7,9 +7,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { spendActionBudget } from "../_shared/actionLimit.ts";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
 
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const ECHO_AI_MODEL = Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -78,7 +77,7 @@ function frame(app: App, stats: unknown): { summary: string; ask: string } {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
-  if (!OPENROUTER_API_KEY) return json({ error: "AI is not configured" }, 503);
+  if (!hasChatProvider()) return json({ error: "AI is not configured" }, 503);
 
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) return json({ error: "Missing auth" }, 401);
@@ -116,30 +115,23 @@ Deno.serve(async (req) => {
   const { summary, ask } = frame(app, stats);
 
   try {
-    const res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-        "X-Title": "Echo Mini-App Coach",
-      },
-      body: JSON.stringify({
-        model: ECHO_AI_MODEL,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are Echo, a warm, concise coach inside a productivity app. Ground every point in the user's real numbers. Be specific and encouraging, never generic or preachy. Reply in 2–4 short sentences, no markdown headers, no bullet lists unless truly needed.",
-          },
-          { role: "user", content: `Here are my ${app} stats:\n${summary}\n\n${ask}` },
-        ],
-        stream: false,
-      }),
+    // Gemini direct first, OpenRouter as the fallback, retired models handled:
+    // see _shared/aiChat. 2-4 sentences need far less than 1024 tokens; the
+    // headroom is for newer models that reason before they answer.
+    const out = await chatCompletion({
+      model: ECHO_AI_MODEL,
+      max_tokens: 1024,
+      title: "Echo Mini-App Coach",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are Echo, a warm, concise coach inside a productivity app. Ground every point in the user's real numbers. Be specific and encouraging, never generic or preachy. Reply in 2–4 short sentences, no markdown headers, no bullet lists unless truly needed.",
+        },
+        { role: "user", content: `Here are my ${app} stats:\n${summary}\n\n${ask}` },
+      ],
     });
-    if (!res.ok) return json({ error: "AI unavailable", detail: await res.text() }, 502);
-    const out = await res.json();
-    const coaching: string = out.choices?.[0]?.message?.content?.trim() ?? "";
+    const coaching: string = out.content.trim();
     if (!coaching) return json({ error: "Empty response" }, 502);
     return json({ app, coaching, summary });
   } catch (e) {

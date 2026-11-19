@@ -11,15 +11,14 @@
 // and only regenerated when the user's echo_count changes or the row goes stale
 // (>14 days). Pass { force: true } to bypass the cache.
 //
-// Routed through OpenRouter (google-ai-studio) so the only secret is
-// OPENROUTER_API_KEY — the same key used by chat, moderation, and embeddings.
+// Model calls go through _shared/aiChat: Gemini direct (GEMINI_API_KEY), then
+// OpenRouter (OPENROUTER_API_KEY), the same path as chat and moderation.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 
 const SYNTH_MODEL = Deno.env.get("FINGERPRINT_MODEL") ?? "google/gemini-2.5-flash";
 const SYNTH_TIMEOUT_MS = 15000;
@@ -150,39 +149,27 @@ function coerceFingerprint(content: string, range: number): Fingerprint | null {
 }
 
 async function synthesize(digest: string, range: number): Promise<Fingerprint | null> {
-  if (!OPENROUTER_API_KEY) return null;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), SYNTH_TIMEOUT_MS);
+  if (!hasChatProvider()) return null;
+  // Gemini direct first, OpenRouter as the fallback, retired models handled:
+  // see _shared/aiChat. The JSON needs about 400 tokens; the rest is room for
+  // newer models that reason before they answer, which at 400 could leave none.
   try {
-    const res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-        "X-Title": "Echo Thinking Fingerprint",
-      },
-      body: JSON.stringify({
-        model: SYNTH_MODEL,
-        provider: { only: ["google-ai-studio"] },
-        temperature: 0.4,
-        max_tokens: 400,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `Here are the person's echoes:\n\n${digest}` },
-        ],
-      }),
-      signal: controller.signal,
+    const { content } = await chatCompletion({
+      model: SYNTH_MODEL,
+      title: "Echo Thinking Fingerprint",
+      temperature: 0.4,
+      max_tokens: 1024,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: `Here are the person's echoes:\n\n${digest}` },
+      ],
+      timeoutMs: SYNTH_TIMEOUT_MS,
     });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const content: string = data?.choices?.[0]?.message?.content ?? "";
     return coerceFingerprint(content, range);
-  } catch {
+  } catch (e) {
+    console.error("[thinking-fingerprint] synthesis failed:", e instanceof Error ? e.message : String(e));
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }
 

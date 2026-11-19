@@ -3,7 +3,7 @@
 // The app translates its own interface into any of the ~25 supported languages
 // on demand: when a string has no hand-authored translation for the chosen
 // language, the client batches the misses and asks here. We translate via Gemini
-// (OpenRouter, same key as echo-ai) and the client caches the result (MMKV) so a
+// (_shared/aiChat: Gemini direct, then OpenRouter, like echo-ai) and the client caches the result (MMKV) so a
 // given string is only ever translated once per language.
 //
 // Contract:
@@ -13,9 +13,8 @@
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { spendActionBudget } from "../_shared/actionLimit.ts";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
 
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const MODEL = Deno.env.get("I18N_TRANSLATE_MODEL") ?? Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -66,7 +65,7 @@ function safeParse(raw: string): Record<string, string> | null {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
-  if (!OPENROUTER_API_KEY) return json({ error: "Translation is not configured" }, 503);
+  if (!hasChatProvider()) return json({ error: "Translation is not configured" }, 503);
 
   // Build-time generator path: a matching x-gen-secret bypasses user auth so the
   // offline script can populate all languages without a session. App calls still
@@ -115,28 +114,21 @@ Deno.serve(async (req) => {
   if (language === "en") return json({ translations: items });
 
   try {
-    const res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-        "X-Title": "Echo i18n",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: buildPrompt(languageName, language) },
-          { role: "user", content: JSON.stringify(items) },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.2,
-        stream: false,
-      }),
+    // Gemini direct first, OpenRouter as the fallback, retired models handled:
+    // see _shared/aiChat. A full batch (200 strings) needs several thousand
+    // tokens, more than OpenRouter's remaining credit covers, so this one
+    // effectively relies on Gemini; the limit is set for the batch, not the fallback.
+    const { content } = await chatCompletion({
+      model: MODEL,
+      title: "Echo i18n",
+      messages: [
+        { role: "system", content: buildPrompt(languageName, language) },
+        { role: "user", content: JSON.stringify(items) },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 8192,
     });
-    if (!res.ok) return json({ error: "Translator unavailable", detail: await res.text() }, 502);
-    const out = await res.json();
-    const content: string = out.choices?.[0]?.message?.content ?? "";
     const translations = safeParse(content);
     if (!translations) return json({ error: "Empty translation" }, 502);
     // Only return keys we were asked for (guard against the model inventing keys).
