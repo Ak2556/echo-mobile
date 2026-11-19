@@ -77,4 +77,16 @@ describe('the generator can find what it reads', () => {
         `generate-i18n.mjs reads ${rel}, which does not exist`).not.toThrow();
     }
   });
+
+  it('asks for a model that still answers, with a bounded reply', () => {
+    const src = readFileSync(join(process.cwd(), 'scripts/generate-i18n.mjs'), 'utf8');
+    const model = src.match(/^const MODEL = .*$/m)?.[0] ?? '';
+    // It defaulted to gemini-2.5-flash, retired by Google on 2026-11-19, and fell
+    // through the voice and assistant secrets first, which name other jobs' models.
+    expect(model).not.toMatch(/gemini-2\.5-(flash|pro)'/);
+    expect(model).not.toMatch(/VOICE_COMMAND_MODEL|ECHO_AI_MODEL/);
+    // Without max_tokens OpenRouter reserves the model's full output and answers
+    // 402 on a small balance, as it did for the app on 2026-11-19.
+    expect(src).toMatch(/max_tokens:\s*\w+/);
+  });
 });
