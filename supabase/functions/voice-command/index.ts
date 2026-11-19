@@ -1,8 +1,8 @@
 // voice-command — hands-free control for Echo.
 //
 // Takes a short voice clip (the user speaking, typically Hindi or English),
-// sends it to a multimodal model (Gemini via OpenRouter — the same key/route as
-// echo-ai), and returns BOTH the transcript and a structured intent the app can
+// sends it to a multimodal model (Gemini direct, OpenRouter as the fallback; see
+// models.ts), and returns BOTH the transcript and a structured intent the app can
 // act on, plus a short spoken-style reply in the user's own language.
 //
 // One round trip does speech-to-text + intent parsing, so the mobile client only
@@ -11,11 +11,13 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { spendActionBudget } from "../_shared/actionLimit.ts";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { interpretAudio, interpretTranscript } from "./models.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-// Prefer a fast multimodal model. gemini-2.5-flash-lite handles Hindi audio well.
-const VOICE_MODEL = Deno.env.get("VOICE_COMMAND_MODEL") ?? Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash-lite";
+// Transcripts (both providers) and the OpenRouter fallback for audio. A fast
+// model is right for intents, and gemini-2.5-flash-lite handles Hindi well. No
+// ECHO_AI_MODEL fallback: that is the assistant's setting, not voice's.
+const VOICE_MODEL = Deno.env.get("VOICE_COMMAND_MODEL") ?? "google/gemini-2.5-flash-lite";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 // Optional: call Google AI Studio (Gemini) directly. Its free tier accepts audio
@@ -202,79 +204,16 @@ Deno.serve(async (req) => {
     : `${localeHint}Here is the voice command:`;
 
   try {
-    let content = "";
-    if (GEMINI_API_KEY) {
-      // Google AI Studio (Gemini) direct — free tier, no OpenRouter balance needed.
-      const mime = AUDIO_MIME[format] ?? "audio/mp4";
-      // The key goes in a header, never the query string: Deno's fetch errors
-      // quote the full request URL, so a key in the URL leaks into any error
-      // message that reaches a log or a response.
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-      const geminiBody = JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{
-          role: "user",
-          parts: spokenText
-            ? [{ text: userText }]
-            : [{ text: userText }, { inlineData: { mimeType: mime, data: audioB64 } }],
-        }],
-        // Low temp = steadier, more deterministic intent detection.
-        generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
-      });
-      // Retry transient rate-limit / server errors (common on the free tier) with backoff.
-      let res: Response | null = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        res = await guardedFetch("gemini", url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
-          body: geminiBody,
-        });
-        if (res.ok || !(res.status === 429 || res.status >= 500)) break;
-        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
-      }
-      if (!res || !res.ok) {
-        console.error("[voice-command] Gemini", res?.status, res ? (await res.text()).slice(0, 500) : "no response");
-        return json({ error: "Voice model unavailable" }, 502);
-      }
-      const out = await res.json();
-      content = out.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
-    } else {
-      const res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-          "X-Title": "Echo Voice",
-        },
-        body: JSON.stringify({
-          model: VOICE_MODEL,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            {
-              role: "user",
-              // A transcript needs no recording attached. Sending the audio part
-              // anyway would ship an empty payload on the text path.
-              content: spokenText
-                ? userText
-                : [
-                    { type: "text", text: userText },
-                    { type: "input_audio", input_audio: { data: audioB64, format } },
-                  ],
-            },
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.2,
-          stream: false,
-        }),
-      });
-      if (!res.ok) {
-        console.error("[voice-command] OpenRouter", res.status, (await res.text()).slice(0, 500));
-        return json({ error: "Voice model unavailable" }, 502);
-      }
-      const out = await res.json();
-      content = out.choices?.[0]?.message?.content ?? "";
-    }
+    // A transcript is plain text and takes the shared chat path; a recording
+    // needs Gemini's native endpoint. Both fall through to OpenRouter (models.ts).
+    const content = spokenText
+      ? await interpretTranscript(SYSTEM_PROMPT, userText, VOICE_MODEL)
+      : await interpretAudio(
+        { geminiKey: GEMINI_API_KEY, geminiModel: GEMINI_MODEL, openRouterKey: OPENROUTER_API_KEY, openRouterModel: VOICE_MODEL },
+        SYSTEM_PROMPT,
+        userText,
+        { base64: audioB64, mime: AUDIO_MIME[format] ?? "audio/mp4", format },
+      );
     const parsed = safeParse(content);
     if (!parsed) {
       return json({ transcript: "", locale: hintLocale, intent: "unknown", args: {}, reply: "" }, 200);

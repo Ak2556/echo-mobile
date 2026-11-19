@@ -149,6 +149,9 @@ describe('edge functions keep provider keys out of URLs and responses', () => {
     expect(existsSync(file)).toBe(true);
     const src = readFileSync(file, 'utf8');
     expect(src).not.toMatch(/json\(\{[^}]*detail/);
-    expect(src).toMatch(/"x-goog-api-key": GEMINI_API_KEY/);
+    // The Gemini calls live in models.ts: the key rides in a header, never the URL.
+    const models = readFileSync(resolve(fnDir, 'voice-command/models.ts'), 'utf8');
+    expect(models).toMatch(/"x-goog-api-key": providers\.geminiKey/);
+    expect(models).not.toMatch(/[?&]key=/);
   });
 });
