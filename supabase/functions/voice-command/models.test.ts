@@ -60,7 +60,7 @@ describe('interpretAudio', () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(status(404)).mockResolvedValueOnce(geminiOk());
     vi.stubGlobal('fetch', fetchMock);
     await expect(interpretAudio(providers, 'sys', 'u', clip, 0)).resolves.toBe(INTENT);
-    expect(fetchMock.mock.calls[1][0]).toContain('/models/gemini-3.8-flash:generateContent');
+    expect(fetchMock.mock.calls[1][0]).toContain('/models/gemini-2.5-flash-lite:generateContent');
   });
 
   it('falls back to OpenRouter when Gemini fails, which it never did before', async () => {
