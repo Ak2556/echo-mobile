@@ -1,0 +1,18 @@
+-- Let the signup wizard finish again.
+--
+-- Since 2026-09-30 (commit 3ca4fae3) the wizard's final upsert on profiles names
+-- personalized_notifications alongside date_of_birth, so the minors trigger sees
+-- the birthday in the same statement. authenticated holds SELECT and UPDATE on
+-- that column (20260820150000) but never INSERT, and an upsert is INSERT ... ON
+-- CONFLICT DO UPDATE: Postgres checks INSERT privilege on every named column
+-- even though the row always exists (handle_new_user creates it). Every signup
+-- that entered a birthday failed with "permission denied for table profiles".
+-- On 2026-11-19, 0 of the 5 accounts created since 2026-09-30 had finished.
+--
+-- Same failure as onboarded_at and date_of_birth, fixed in 20260926120000.
+-- test/profileUpsertGrants.test.ts now checks every column a client upsert names.
+--
+-- Safe to grant: the user can already UPDATE this column, the default is true,
+-- and trg_enforce_minor_profiling_off still forces it off for minors on
+-- INSERT OR UPDATE. Idempotent.
+grant insert (personalized_notifications) on public.profiles to authenticated;
