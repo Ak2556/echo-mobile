@@ -2,8 +2,8 @@
 // ("Make clearer", "Shorten", "Turn into insight", "Add hook",
 // "Remove private details"). Invoked from app/share.tsx.
 //
-// Uses the same OpenRouter / Gemini Flash setup as echo-ai so we don't ship
-// an API key to the client. Non-streaming: returns JSON `{ text }`.
+// Uses the same model path as echo-ai (_shared/aiChat: Gemini direct, then
+// OpenRouter) so we don't ship an API key to the client. Non-streaming: returns JSON `{ text }`.
 //
 // Security parity with echo-ai: requires a real authenticated user (the public
 // anon key alone is NOT enough — we call auth.getUser()), and each call counts
@@ -11,15 +11,14 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "../_shared/rateLimit.ts";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
 
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const MODEL = Deno.env.get("EDITORIAL_REWRITE_MODEL") ?? "google/gemini-2.5-flash";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-// Hard ceiling on how long we'll wait for OpenRouter before giving up.
+// Hard ceiling per provider attempt (Gemini, then OpenRouter) before giving up on it.
 const UPSTREAM_TIMEOUT_MS = 20_000;
 
 const CORS_HEADERS: Record<string, string> = {
@@ -58,7 +57,7 @@ function json(status: number, payload: unknown, extraHeaders: Record<string, str
 
 
 async function rewrite(action: Action, text: string, prompt: string): Promise<string> {
-  if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY is not set");
+  if (!hasChatProvider()) throw new Error("No AI provider configured");
 
   const instruction = ACTION_INSTRUCTIONS[action];
   const system =
@@ -71,45 +70,21 @@ async function rewrite(action: Action, text: string, prompt: string): Promise<st
     (prompt.trim() ? `Context (original question / prompt the text answers):\n"""${prompt.trim()}"""\n\n` : "") +
     `Text to rewrite:\n"""${text}"""`;
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
-  let res: Response;
-  try {
-    res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-        "X-Title": "Echo Editorial Rewrite",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        provider: { only: ["google-ai-studio"] },
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-        stream: false,
-        temperature: 0.4,
-      }),
-      signal: controller.signal,
-    });
-  } catch (e) {
-    if (e instanceof DOMException && e.name === "AbortError") {
-      throw new Error("The rewrite timed out. Please try again.");
-    }
-    throw e;
-  } finally {
-    clearTimeout(timer);
-  }
-
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`OpenRouter ${res.status}: ${detail}`);
-  }
-  const data = await res.json();
-  const out = data?.choices?.[0]?.message?.content;
+  // Gemini direct first, OpenRouter as the fallback, retired models handled:
+  // see _shared/aiChat. 2048 tokens fits OpenRouter's remaining credit; it
+  // covers ordinary posts, though a rewrite near the 8000-character cap (or of
+  // long Hindi text) can be cut short.
+  const { content: out } = await chatCompletion({
+    model: MODEL,
+    title: "Echo Editorial Rewrite",
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    temperature: 0.4,
+    max_tokens: 2048,
+    timeoutMs: UPSTREAM_TIMEOUT_MS,
+  });
   if (typeof out !== "string" || !out.trim()) {
     throw new Error("Empty response from model");
   }

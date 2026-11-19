@@ -4,9 +4,9 @@
 // not judge instead of leaving it for a human who may never look.
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { chatCompletion } from "../_shared/aiChat.ts";
+import { imageDataUrl } from "../_shared/imageDataUrl.ts";
 
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const VISION_MODEL = Deno.env.get("VERIFY_VISION_MODEL") ?? "google/gemini-2.5-flash";
 
 // deno-lint-ignore no-explicit-any
@@ -42,28 +42,26 @@ async function judgeSelfie(avatarUrl: string, selfieUrl: string, pose: string): 
     `"reason": string (one short sentence)}. Be strict about live_selfie and same_person; ` +
     `be lenient about pose_matches (roughly is fine).`;
 
-  const res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: VISION_MODEL,
-      temperature: 0,
-      messages: [{
-        role: "user",
-        content: [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: avatarUrl } },
-          { type: "image_url", image_url: { url: selfieUrl } },
-        ],
-      }],
-    }),
+  // Gemini direct first, OpenRouter as the fallback, retired models handled:
+  // see _shared/aiChat. Google's endpoint takes images inline, not as links, so
+  // both photos are fetched and sent as data URLs (OpenRouter accepts those too).
+  // A failure here throws, and the caller records the request as unavailable
+  // and retries it later.
+  const [avatar, selfie] = await Promise.all([imageDataUrl(avatarUrl), imageDataUrl(selfieUrl)]);
+  const { content: raw } = await chatCompletion({
+    model: VISION_MODEL,
+    title: "Echo Verify Identity",
+    temperature: 0,
+    max_tokens: 1024,
+    messages: [{
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: avatar } },
+        { type: "image_url", image_url: { url: selfie } },
+      ],
+    }],
   });
-  if (!res.ok) throw new Error(`vision model ${res.status}`);
-  const data = await res.json();
-  const raw = data?.choices?.[0]?.message?.content ?? "";
   const match = raw.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("unparseable verdict");
   const v = JSON.parse(match[0]);
