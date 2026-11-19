@@ -50,6 +50,14 @@ describe('AI provider paths', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('no function defaults to gemini-2.5-flash or 2.5-pro, which Google no longer serves to this project', () => {
+    const RETIRED = /"google\/gemini-2\.5-(flash|pro)"/;
+    const offenders = sources(ROOT)
+      .map(p => relative(ROOT, p))
+      .filter(rel => RETIRED.test(readFileSync(join(ROOT, rel), 'utf8')));
+    expect(offenders).toEqual([]);
+  });
+
   it('the allowlist names files that still exist and still need it', () => {
     for (const rel of ALLOWED) {
       expect(DIRECT_CHAT.test(readFileSync(join(ROOT, rel), 'utf8')), rel).toBe(true);

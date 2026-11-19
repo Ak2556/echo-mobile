@@ -34,7 +34,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { timingSafeEqual } from "../_shared/timingSafeEqual.ts";
 import { moderateContent } from "../embed-echo/moderation.ts";
-import { chatCompletion } from "../_shared/aiChat.ts";
+import { chatCompletion, chatModel } from "../_shared/aiChat.ts";
 import { cosine, embedViaGemini, embedViaOpenRouter } from "../_shared/embed.ts";
 import {
   alertBody,
@@ -97,7 +97,7 @@ async function checkModeration(): Promise<CheckResult> {
  * model (gemini-2.5-flash) and every assistant turn failed. Google's model list
  * still showed the retired model, so only a real request tells.
  */
-const CHAT_PROBE_MODEL = Deno.env.get("CHAT_PROBE_MODEL") ?? "google/gemini-2.5-flash";
+const CHAT_PROBE_MODEL = Deno.env.get("CHAT_PROBE_MODEL") || chatModel();
 
 async function checkChat(): Promise<CheckResult> {
   const started = Date.now();

@@ -7,9 +7,9 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { spendActionBudget } from "../_shared/actionLimit.ts";
-import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
+import { chatCompletion, chatModel, hasChatProvider } from "../_shared/aiChat.ts";
 
-const ECHO_AI_MODEL = Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash";
+const COACH_MODEL = Deno.env.get("COACH_MODEL") || chatModel();
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
     // see _shared/aiChat. 2-4 sentences need far less than 1024 tokens; the
     // headroom is for newer models that reason before they answer.
     const out = await chatCompletion({
-      model: ECHO_AI_MODEL,
+      model: COACH_MODEL,
       max_tokens: 1024,
       title: "Echo Mini-App Coach",
       messages: [

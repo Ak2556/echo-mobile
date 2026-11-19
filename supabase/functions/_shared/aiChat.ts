@@ -71,6 +71,20 @@ export function hasChatProvider(): boolean {
   return Boolean(Deno.env.get("GEMINI_API_KEY") || Deno.env.get("OPENROUTER_API_KEY"));
 }
 
+/**
+ * The chat model every function asks for first. Google stopped serving
+ * gemini-2.5-flash to this project on 2026-11-19; gemini-3.5-flash-lite is the
+ * model ops-probe's chat check proved answering afterwards, and OpenRouter
+ * lists it under the same id, so one name works on both providers. Change it
+ * with the CHAT_MODEL secret, no deploy needed. A function's own *_MODEL
+ * secret still wins for that function.
+ */
+export const DEFAULT_CHAT_MODEL = "google/gemini-3.5-flash-lite";
+
+export function chatModel(): string {
+  return Deno.env.get("CHAT_MODEL") || DEFAULT_CHAT_MODEL;
+}
+
 export function geminiModelId(model: string): string {
   return model.replace(/^google\//, "");
 }

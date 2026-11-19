@@ -9,13 +9,10 @@ import { normalizeAiMode, toolsForMode } from "./mode.ts";
 import { moderateContent } from "./moderation.ts";
 import { findPendingToolCall, type StoredMessageRow } from "./pendingTool.ts";
 import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "../_shared/rateLimit.ts";
-import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
-
-const DEFAULT_ECHO_AI_MODEL = "google/gemini-2.5-flash";
+import { chatCompletion, chatModel, hasChatProvider } from "../_shared/aiChat.ts";
 
 /** What the user sees when a turn fails for any reason they cannot act on. */
 const ASSISTANT_UNAVAILABLE_MESSAGE = "The assistant can't answer right now. Please try again in a minute.";
-const CONFIGURED_ECHO_AI_MODEL = Deno.env.get("ECHO_AI_MODEL") ?? DEFAULT_ECHO_AI_MODEL;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -64,20 +61,20 @@ interface ORTool {
   };
 }
 
-const GOOGLE_AI_STUDIO_MODELS = new Set([
-  "google/gemini-2.5-flash",
-  "google/gemini-2.5-pro",
-  "google/gemini-2.5-flash-lite",
-]);
+/**
+ * The app's model picker still sends 2.5-era ids. Google stopped serving
+ * gemini-2.5-flash to this project on 2026-11-19, and 2.5 Pro went with it, so
+ * both resolve to the current chat model (_shared/aiChat chatModel). Flash-Lite
+ * is still served and is honoured as picked. Anything else — an unknown id, or
+ * none — gets the current model too.
+ */
+const SERVED_PICKER_MODELS = new Set(["google/gemini-2.5-flash-lite"]);
 
-function resolveEchoAIModel(modelOverride?: string, planId: string = "free"): string {
-  const canUseProModel = planId === "pro" || planId === "founder";
-  if (modelOverride && GOOGLE_AI_STUDIO_MODELS.has(modelOverride)) {
-    if (modelOverride === "google/gemini-2.5-pro" && !canUseProModel) return DEFAULT_ECHO_AI_MODEL;
-    return modelOverride;
-  }
-  if (GOOGLE_AI_STUDIO_MODELS.has(CONFIGURED_ECHO_AI_MODEL)) return CONFIGURED_ECHO_AI_MODEL;
-  return DEFAULT_ECHO_AI_MODEL;
+function resolveEchoAIModel(modelOverride?: string, _planId: string = "free"): string {
+  // Pro was gated to paid plans; with 2.5 Pro retired every plan gets the
+  // current model, so the plan no longer changes the answer.
+  if (modelOverride && (SERVED_PICKER_MODELS.has(modelOverride) || modelOverride === chatModel())) return modelOverride;
+  return chatModel();
 }
 
 async function modelChat(
@@ -85,9 +82,7 @@ async function modelChat(
   tools: ORTool[],
   modelOverride?: string,
 ): Promise<{ content: string; tool_calls?: ORToolCall[] }> {
-  const model = modelOverride && GOOGLE_AI_STUDIO_MODELS.has(modelOverride)
-    ? modelOverride
-    : resolveEchoAIModel();
+  const model = resolveEchoAIModel(modelOverride);
   // Non-streaming on purpose: we re-stream the final text deltas ourselves;
   // tool loops aren't streamable cleanly.
   return await chatCompletion({ model, messages, tools, title: "Echo AI" });
