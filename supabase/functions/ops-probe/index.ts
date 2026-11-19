@@ -35,6 +35,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { timingSafeEqual } from "../_shared/timingSafeEqual.ts";
 import { moderateContent } from "../embed-echo/moderation.ts";
 import { chatCompletion } from "../_shared/aiChat.ts";
+import { cosine, embedViaGemini, embedViaOpenRouter } from "../_shared/embed.ts";
 import {
   alertBody,
   alertDelivered,
@@ -42,6 +43,7 @@ import {
   alertRecipients,
   chatProbeDue,
   interpretChat,
+  interpretEmbeddings,
   interpretModeration,
   interpretQueues,
   interpretStuck,
@@ -110,6 +112,23 @@ async function checkChat(): Promise<CheckResult> {
   } catch (e) {
     return interpretChat(CHAT_PROBE_MODEL, { error: e instanceof Error ? e.message : String(e) }, Date.now() - started);
   }
+}
+
+/**
+ * One sentence embedded both ways. Posts embedded before 2026-11-19 came from
+ * OpenRouter, newer ones from Gemini direct, and search compares them with each
+ * other, so the two paths have to keep agreeing. About ten tokens per run.
+ */
+async function checkEmbeddings(): Promise<CheckResult> {
+  const started = Date.now();
+  const text = "A quiet walk after lunch, and the day felt lighter.";
+  const settle = (p: Promise<number[]>) =>
+    p.then((vector) => ({ vector }), (e) => ({ error: e instanceof Error ? e.message : String(e) }));
+  const [gemini, openRouter] = await Promise.all([
+    settle(embedViaGemini(text, { title: "ops-probe" })),
+    settle(embedViaOpenRouter(text, { title: "ops-probe" })),
+  ]);
+  return interpretEmbeddings(gemini, openRouter, cosine, Date.now() - started);
 }
 
 // deno-lint-ignore no-explicit-any
@@ -228,6 +247,7 @@ Deno.serve(async (req: Request) => {
   results.push(await checkQueues(supabase));
   results.push(await checkStuckPosts(supabase));
   results.push(await checkModeration());
+  results.push(await checkEmbeddings());
   if (chatProbeDue(new Date()) || new URL(req.url).searchParams.has("chat")) results.push(await checkChat());
 
   const outcome = overallStatus(results);

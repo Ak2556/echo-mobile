@@ -17,22 +17,17 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4
 import { moderateContent, moderateImages, moderateVideos } from "./moderation.ts";
 import { videoModerationEnabled } from "./videoModeration.ts";
 import { splitMediaForModeration } from "./mediaKinds.ts";
-import { guardedFetch } from "../_shared/breaker.ts";
+import { embedText } from "../_shared/embed.ts";
 
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 
 // Most videos one post may carry through the video gate. The composer attaches
 // one; more than this can only come from a hand-built request, and is hidden
 // rather than waved through.
 const MAX_VIDEOS_PER_POST = 3;
 
-// Embeddings are routed through OpenRouter (same key as chat + moderation) so
-// the deployment needs only OPENROUTER_API_KEY. gemini-embedding-001 supports
-// dimension reduction, so we request 768 dims to match the vector(768) column
-// and the <=> operators used by get_semantic_feed / get_thinking_partners.
-const EMBEDDING_MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "google/gemini-embedding-001";
-const EMBEDDING_DIM = 768;
-const EMBEDDING_URL = "https://openrouter.ai/api/v1/embeddings";
+// Embeddings: gemini-embedding-001 at 768 dimensions for the vector(768) column
+// and the <=> operators in get_semantic_feed / get_thinking_partners. Gemini
+// direct, OpenRouter as the fallback; see _shared/embed.
 
 interface EchoRow {
   id: string;
@@ -93,32 +88,7 @@ function computeThoughtfulnessScore(row: EchoRow): number {
 }
 
 async function generateEmbedding(text: string): Promise<number[]> {
-  if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not configured");
-  const res = await guardedFetch("openrouter", EMBEDDING_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-      "X-Title": "Echo Embeddings",
-    },
-    body: JSON.stringify({
-      model: EMBEDDING_MODEL,
-      input: text,
-      dimensions: EMBEDDING_DIM, // text-embedding-3 supports dimension reduction
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Embedding API ${res.status}: ${body.slice(0, 200)}`);
-  }
-  const json = await res.json();
-  // OpenAI-compatible shape: { data: [{ embedding: number[] }] }
-  const values = json?.data?.[0]?.embedding;
-  if (!Array.isArray(values) || values.length !== EMBEDDING_DIM) {
-    throw new Error(`Unexpected embedding shape (len=${values?.length ?? 'n/a'})`);
-  }
-  return values;
+  return await embedText(text, { title: "Echo Embeddings" });
 }
 
 const unavailable = (v: { ok: boolean; categories: string[] }) =>

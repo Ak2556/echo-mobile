@@ -17,10 +17,13 @@ import { describe, expect, it } from 'vitest';
  *                         compatible one does not take phone recording formats).
  *   embed-echo/moderation image moderation, already capped at 200 tokens on
  *                         a model Google still serves.
- * Embedding endpoints (/embeddings) are a different API and are not matched.
+ *
+ * Embeddings follow the same rule through _shared/embed: no function calls an
+ * embedding endpoint itself.
  */
 const ALLOWED = new Set(['voice-command/models.ts', 'embed-echo/moderation.ts']);
 const DIRECT_CHAT = /openrouter\.ai\/api\/v1\/chat\/completions|generativelanguage\.googleapis\.com/;
+const DIRECT_EMBEDDING = /openrouter\.ai\/api\/v1\/embeddings|:embedContent|:batchEmbedContents/;
 
 const ROOT = join(import.meta.dirname!, '.');
 
@@ -37,6 +40,13 @@ describe('AI provider paths', () => {
     const offenders = sources(ROOT)
       .map(p => relative(ROOT, p))
       .filter(rel => !ALLOWED.has(rel) && DIRECT_CHAT.test(readFileSync(join(ROOT, rel), 'utf8')));
+    expect(offenders).toEqual([]);
+  });
+
+  it('no edge function calls an embedding endpoint except through _shared/embed', () => {
+    const offenders = sources(ROOT)
+      .map(p => relative(ROOT, p))
+      .filter(rel => DIRECT_EMBEDDING.test(readFileSync(join(ROOT, rel), 'utf8')));
     expect(offenders).toEqual([]);
   });
 
