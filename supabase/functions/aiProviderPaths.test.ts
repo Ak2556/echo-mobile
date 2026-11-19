@@ -13,12 +13,13 @@ import { describe, expect, it } from 'vitest';
  * reopen that hole, so this fails on one.
  *
  * Allowed, each for a reason the shared client does not cover:
- *   voice-command        sends audio to Gemini's native endpoint.
+ *   voice-command/models audio goes to Gemini's native endpoint (the OpenAI-
+ *                         compatible one does not take phone recording formats).
  *   embed-echo/moderation image moderation, already capped at 200 tokens on
  *                         a model Google still serves.
  * Embedding endpoints (/embeddings) are a different API and are not matched.
  */
-const ALLOWED = new Set(['voice-command/index.ts', 'embed-echo/moderation.ts']);
+const ALLOWED = new Set(['voice-command/models.ts', 'embed-echo/moderation.ts']);
 const DIRECT_CHAT = /openrouter\.ai\/api\/v1\/chat\/completions|generativelanguage\.googleapis\.com/;
 
 const ROOT = join(import.meta.dirname!, '.');
