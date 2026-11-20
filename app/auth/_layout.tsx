@@ -1,4 +1,11 @@
 import { Stack } from 'expo-router';
+import { remountOnLanguageChange } from '../../lib/i18n/languageScope';
+
+// signup-wizard has its own language picker and holds the form in local state,
+// so a remount on a language switch would wipe what the user typed. It stays
+// mounted and takes its strings from useI18n().tt, which re-renders.
+const KEEP_MOUNTED = new Set(['signup-wizard']);
+const SCREEN_LAYOUT = remountOnLanguageChange(KEEP_MOUNTED);
 
 /**
  * Auth group layout. No redirector here — the central AuthListenerProvider
@@ -11,7 +18,7 @@ import { Stack } from 'expo-router';
  */
 export default function AuthLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+    <Stack screenOptions={{ headerShown: false, animation: 'fade' }} screenLayout={SCREEN_LAYOUT}>
       <Stack.Screen name="login" />
       <Stack.Screen name="signup-wizard" />
       <Stack.Screen name="email" />
