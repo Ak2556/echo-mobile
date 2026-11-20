@@ -31,6 +31,7 @@ import { mmkvPersister } from '../lib/core/queryPersister';
 import { PERSIST_BUSTER, shouldPersistQuery } from '../lib/core/persistPolicy';
 import { ToastProvider, showToast } from '../components/ui/Toast';
 import { ConfirmHost } from '../components/common/ConfirmSheet';
+import { LanguageScope, remountOnLanguageChange } from '../lib/i18n/languageScope';
 import { friendlyWriteError, isAuthSessionError } from '../lib/core/mutationErrors';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { useCommandPalette } from '../lib/ui/commandPalette';
@@ -300,6 +301,13 @@ let pendingPushTap: Record<string, unknown> | null = null;
 // The last tap this process opened, so a re-run of the effect cannot open it again.
 let lastHandledPushTap: string | null = null;
 
+// Root routes that are navigators themselves: remounting one would clear its
+// state (React Navigation drops a nested navigator's state on unmount), so their
+// own layouts remount their leaf screens instead. test/languageRemount.test.ts
+// checks this list against the folders that have a _layout.tsx.
+const NESTED_NAVIGATORS = new Set(['(tabs)', 'auth', 'mini-apps']);
+const ROOT_SCREEN_LAYOUT = remountOnLanguageChange(NESTED_NAVIGATORS);
+
 function RootLayout() {
   const userId = useAppStore(s => s.userId);
   usePresenceHeartbeat(userId ?? undefined);
@@ -497,7 +505,7 @@ function RootLayout() {
           from the platform's interactive swipe-back on iOS. test/navigationTransitions.test.ts
           holds the rule.
         */}
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: false }} screenLayout={ROOT_SCREEN_LAYOUT}>
           <Stack.Screen name="index" options={{ animation: 'fade' }} />
           <Stack.Screen name="auth" options={{ animation: 'fade' }} />
           <Stack.Screen name="welcome" options={{ animation: 'fade' }} />
@@ -549,15 +557,21 @@ function RootLayout() {
         </Stack>
         <FloatingMiniApp />
         <VoiceControl />
-        <NowReadingBar />
-        <TutorialOverlay />
+        {/* Overlays whose labels come from ttx() remount on a language switch (lib/i18n/languageScope).
+            Two scopes, so the toast keeps its place in the stacking order. */}
+        <LanguageScope>
+          <NowReadingBar />
+          <TutorialOverlay />
+        </LanguageScope>
         <ToastProvider />
-        <ConfirmHost />
-        <ConsentBanner />
-        {/* Terms / Privacy agreement, once per version. Before the birthday card: see lib/legal/gateStore.ts. */}
-        <TermsGate />
-        {/* One-time birthday card for accounts created before the age step. */}
-        <AgeConfirmGate />
+        <LanguageScope>
+          <ConfirmHost />
+          <ConsentBanner />
+          {/* Terms / Privacy agreement, once per version. Before the birthday card: see lib/legal/gateStore.ts. */}
+          <TermsGate />
+          {/* One-time birthday card for accounts created before the age step. */}
+          <AgeConfirmGate />
+        </LanguageScope>
         <AiConsentSheet />
         <HealthConsentSheet />
         {commandPaletteOpen ? <CommandPalette /> : null}

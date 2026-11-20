@@ -20,6 +20,7 @@ import { getRecentTools, recordToolOpen } from '../../lib/mini-apps/miniAppRecen
 import { miniAppById } from '../../lib/mini-apps/miniAppCatalog';
 import { rememberPrimaryTab } from '../../lib/routing/navigationMemory';
 import { useI18n, type TranslationKey } from '../../lib/i18n/i18n';
+import { remountOnLanguageChange } from '../../lib/i18n/languageScope';
 import { PushPromptGate } from '../../components/onboarding/PushPromptGate';
 import { DateOfBirthGate } from '../../components/onboarding/DateOfBirthGate';
 import { ON_MEDIA, ON_STATUS } from '../../lib/ui/fixedColors';
@@ -507,6 +508,10 @@ function FloatingTabBar(props: BottomTabBarProps) {
   );
 }
 
+// Tab screens stay mounted for the whole session, so a language switch has to
+// remount them for their ttx() labels to change (lib/i18n/languageScope).
+const SCREEN_LAYOUT = remountOnLanguageChange();
+
 export default function TabLayout() {
   const layout = useResponsiveLayout();
   const { colors } = useTheme();
@@ -516,6 +521,7 @@ export default function TabLayout() {
     <>
     <Tabs
       tabBar={props => <FloatingTabBar {...props} />}
+      screenLayout={SCREEN_LAYOUT}
       screenOptions={{
         headerShown: false,
         sceneStyle: {

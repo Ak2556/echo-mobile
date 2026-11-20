@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 import { Stack, usePathname } from 'expo-router';
 import { recordToolOpen } from '../../lib/mini-apps/miniAppRecents';
 import { miniAppById } from '../../lib/mini-apps/miniAppCatalog';
+import { remountOnLanguageChange } from '../../lib/i18n/languageScope';
+
+const SCREEN_LAYOUT = remountOnLanguageChange();
 
 export default function MiniAppsLayout() {
   const pathname = usePathname();
@@ -12,6 +15,6 @@ export default function MiniAppsLayout() {
   }, [pathname]);
 
   return (
-    <Stack screenOptions={{ headerShown: false, presentation: 'card' }} />
+    <Stack screenOptions={{ headerShown: false, presentation: 'card' }} screenLayout={SCREEN_LAYOUT} />
   );
 }
