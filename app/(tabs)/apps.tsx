@@ -383,7 +383,7 @@ export default function AppsScreen() {
                       backgroundColor: active ? colors.accent : colors.surface,
                       borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder,
                     }}>
-                      <Text style={{ color: active ? colors.onAccent : colors.textSecondary, fontSize: 13.5, fontFamily: active ? 'Inter_600SemiBold' : 'Inter_500Medium' }}>{l.label}</Text>
+                      <Text style={{ color: active ? colors.onAccent : colors.textSecondary, fontSize: 13.5, fontFamily: active ? 'Inter_600SemiBold' : 'Inter_500Medium' }}>{ttx(l.label)}</Text>
                     </View>
                   </Pressable>
                 );
@@ -402,7 +402,7 @@ export default function AppsScreen() {
 
             {/* Tools grid */}
             <View style={{ gap: GAP }}>
-              <Eyebrow>{lane === 'all' ? `All tools · ${APPS.length}` : `${TOOL_LANES.find(l => l.id === lane)?.label} suite · ${laneApps.length}`}</Eyebrow>
+              <Eyebrow>{lane === 'all' ? `${ttx('All tools')} · ${APPS.length}` : `${ttx(TOOL_LANES.find(l => l.id === lane)?.label ?? '')} · ${laneApps.length}`}</Eyebrow>
               {renderGrid(laneApps)}
             </View>
 
