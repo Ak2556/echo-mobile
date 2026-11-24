@@ -1297,4 +1297,10 @@ export const HI_BULK: Record<string, string> = {
   'That username is taken. Please choose another.': 'यह उपयोगकर्ता नाम पहले से लिया जा चुका है। कृपया कोई दूसरा चुनें।',
   "You're offline. Connect, then tap Continue again.": 'आप ऑफ़लाइन हैं। इंटरनेट से जुड़ें, फिर दोबारा जारी रखें पर टैप करें।',
   "We couldn't finish setting up your profile. Tap Continue to try again.": 'हम आपकी प्रोफ़ाइल तैयार नहीं कर सके। फिर से कोशिश करने के लिए जारी रखें पर टैप करें।',
+  // Tools tab lanes (app/(tabs)/apps.tsx TOOL_LANES) and its grid heading.
+  'All tools': 'सभी टूल्स',
+  'Master': 'महारत',
+  'Money': 'पैसा',
+  'Capture': 'कैप्चर',
+  'Utility': 'यूटिलिटी',
 };
