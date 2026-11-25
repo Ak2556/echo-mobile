@@ -3,7 +3,14 @@ import { extractHashtags, mapEchoRowToFeedItem, SupabaseEchoRow, SupabaseProfile
 
 describe('extractHashtags', () => {
   it('dedupes repeated tags', () => {
-    expect(extractHashtags('Hello #Echo #Echo')).toEqual(['#Echo']);
+    expect(extractHashtags('Hello #Echo #Echo')).toEqual(['Echo']);
+  });
+
+  // Tags are stored bare everywhere else (seed data, polls, edit-post) and every
+  // screen draws them as `#{tag}`; a leading # here showed "##hybrid" on posts and
+  // in Explore, and a tag tap searched for "##hybrid" (2026-11-25).
+  it('returns tags without the #, as every screen adds its own', () => {
+    expect(extractHashtags('Starting #hybrid training in #Himachal')).toEqual(['hybrid', 'Himachal']);
   });
 
   it('returns empty for none', () => {
