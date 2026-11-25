@@ -78,9 +78,10 @@ export function isMoodActive(mood?: string | null, expiresAt?: string | null): b
   return new Date(expiresAt).getTime() > Date.now();
 }
 
+/** Hashtags in a post, without the "#": screens draw them as `#{tag}`. */
 export function extractHashtags(text: string): string[] {
   const m = text.match(/#[\wÀ-ɏ]+/gi);
-  return m ? [...new Set(m)] : [];
+  return m ? [...new Set(m.map(tag => tag.slice(1)))] : [];
 }
 
 export function mapEchoRowToFeedItem(

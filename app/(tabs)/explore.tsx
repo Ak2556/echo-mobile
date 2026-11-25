@@ -21,7 +21,7 @@ import { useTheme } from '../../lib/ui/theme';
 import { useTracking } from '../../lib/ui/tracking';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
 import { useFeed } from '../../hooks/useFeed';
-import { buildSearchBuckets, deriveTopicFeed, groupDiscovery } from '../../lib/feed/echoUX';
+import { buildSearchBuckets, deriveTopicFeed, groupDiscovery, normalizeTopic } from '../../lib/feed/echoUX';
 import { useRemoteSearch } from '../../hooks/queries/useSearch';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
@@ -445,7 +445,7 @@ function SearchResults({
             {topicMatches.slice(0, activeTab === 'all' ? 8 : 24).map(item => (
               <AnimatedPressable
                 key={item.topic}
-                onPress={() => setQuery(item.topic)}
+                onPress={() => setQuery(`#${normalizeTopic(item.topic)}`)}
                 style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
               >
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>#{item.topic}</Text>
