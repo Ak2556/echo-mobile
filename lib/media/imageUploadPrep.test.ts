@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_UPLOAD_EDGE, resizeForUpload } from './imageUploadPrep';
+import { isHeicUri, MAX_UPLOAD_EDGE, resizeForUpload } from './imageUploadPrep';
 
 describe('resizeForUpload', () => {
   it('caps the width of a landscape photo', () => {
@@ -22,5 +22,18 @@ describe('resizeForUpload', () => {
   it('refuses to guess when the size is unknown', () => {
     expect(resizeForUpload(0, 4032, MAX_UPLOAD_EDGE.post)).toBeNull();
     expect(resizeForUpload(Number.NaN, 4032, MAX_UPLOAD_EDGE.post)).toBeNull();
+  });
+});
+
+// 2026-11-25: the iPhone picker passes HEIC through; Android and the web cannot show it.
+describe('isHeicUri', () => {
+  it('recognises the picker HEIC and HEIF files', () => {
+    expect(isHeicUri('file:///x/Library/Caches/ImagePicker/5C1D.heic')).toBe(true);
+    expect(isHeicUri('file:///x/IMG_1.HEIF')).toBe(true);
+  });
+
+  it('leaves JPEG and PNG alone', () => {
+    expect(isHeicUri('file:///x/a.jpg')).toBe(false);
+    expect(isHeicUri('file:///x/heic-notes.png')).toBe(false);
   });
 });
