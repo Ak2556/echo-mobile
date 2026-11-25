@@ -8,7 +8,7 @@ import { ImageSquare, MagnifyingGlassPlus } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { ZoomableImageViewer } from '../ui/ZoomableImageViewer';
 import { MEDIA_FADE_MS, mediaPlaceholderTint } from './mediaPlaceholder';
-import { isTabletPortrait, PHOTO_CROP_POSITION, singleMediaFrame } from '../../lib/media/mediaFrame';
+import { isTabletPortrait, knownPhotoAspect, PHOTO_CROP_POSITION, rememberPhotoAspect, singlePhotoFrame } from '../../lib/media/mediaFrame';
 import { useDataSaverPhoto } from '../../lib/media/dataSaverImages';
 import { useAppStore } from '../../store/useAppStore';
 import { ttx } from '../../lib/i18n/i18n';
@@ -37,7 +37,7 @@ interface MediaGridProps {
  * the new one decodes, and without a tint and a `transition` the image pops in
  * against grey.
  */
-function GridImage({ uri }: { uri: string }) {
+function GridImage({ uri, onSize }: { uri: string; onSize?: (width: number, height: number) => void }) {
   const dataSaver = useAppStore(s => s.dataSaver);
   const { held, load } = useDataSaverPhoto(uri, dataSaver);
   // Data Saver: nothing is downloaded until the person asks for this photo.
@@ -49,6 +49,7 @@ function GridImage({ uri }: { uri: string }) {
       contentFit="cover"
       // Upper-third crop, so a portrait photo keeps the face rather than the chest.
       contentPosition={PHOTO_CROP_POSITION}
+      onLoad={onSize ? e => onSize(e.source.width, e.source.height) : undefined}
       cachePolicy="memory-disk"
       // Ties the decoded bitmap to this URI rather than to the recycled view,
       // so a cell that scrolls back into place cannot briefly show its
@@ -113,6 +114,16 @@ function MediaGridView({ uris, height, allowDownloads = false, alts }: MediaGrid
   });
   const close = () => setViewerIndex(null);
 
+  // A single photo takes its own shape once it has loaded. Keyed by URI, so a
+  // recycled cell never keeps the previous post's shape.
+  const [loaded, setLoaded] = useState<{ uri: string; aspect: number } | null>(null);
+  const singleAspect = loaded && loaded.uri === uris[0] ? loaded.aspect : knownPhotoAspect(uris[0]);
+  const learnSize = (width: number, height: number) => {
+    const uri = uris[0];
+    const aspect = rememberPhotoAspect(uri, width, height);
+    if (aspect !== undefined && (loaded?.uri !== uri || loaded.aspect !== aspect)) setLoaded({ uri, aspect });
+  };
+
   const r = radius.md;
   // When a fixed height is requested, drop the per-image border radius so the
   // media reads as one full-bleed surface (the card supplies the rounding).
@@ -126,10 +137,10 @@ function MediaGridView({ uris, height, allowDownloads = false, alts }: MediaGrid
         <Pressable {...photoProps(0)} onPress={() => open(0)}
           style={[
             { borderRadius: height ? 0 : radius.card, overflow: 'hidden' },
-            height ? { height } : singleMediaFrame(winW, winH),
+            height ? { height } : singlePhotoFrame(winW, winH, singleAspect),
           ]}
         >
-          <GridImage uri={uris[0]} />
+          <GridImage uri={uris[0]} onSize={height ? undefined : learnSize} />
           <ZoomHint />
         </Pressable>
       )}
