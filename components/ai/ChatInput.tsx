@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
+import { ttx } from '../../lib/i18n/i18n';
 import { MOTION } from '../../lib/ui/motion';
 
 interface ChatInputProps {
@@ -113,7 +114,7 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
           }, inputShellStyle]}
         >
           <TextInput
-            placeholder={isLoading ? 'Responding...' : 'Message Echo...'}
+            placeholder={isLoading ? ttx('Responding...') : ttx('Message Echo...')}
             value={text}
             onChangeText={updateText}
             onFocus={() => { focus.value = withSpring(1, MOTION.snap); }}
