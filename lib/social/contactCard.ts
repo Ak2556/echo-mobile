@@ -1,4 +1,5 @@
 import { PermissionsAndroid, Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 /**
  * Echo's entry in the phone's address book.
@@ -12,10 +13,15 @@ import { PermissionsAndroid, Platform } from 'react-native';
  * PermissionsAndroid is part of React Native, so this costs no dependency.
  */
 
-export function contactCardSupported(): boolean {
+export function contactCardSupported(config: unknown = Constants.expoConfig): boolean {
   // Android only, and deliberately so: iOS has no supported way for an app to
   // own a row on a contact card. The iOS counterpart is App Intents.
-  return Platform.OS === 'android';
+  if (Platform.OS !== 'android') return false;
+  // A build that blocks WRITE_CONTACTS (app.json blockedPermissions) never gets
+  // the permission: Android refuses the request at once, so the switch could
+  // never turn on. Hide it there instead of offering a dead control.
+  const blocked = (config as { android?: { blockedPermissions?: string[] } } | null | undefined)?.android?.blockedPermissions ?? [];
+  return !blocked.includes('android.permission.WRITE_CONTACTS');
 }
 
 export async function contactCardEnabled(): Promise<boolean> {

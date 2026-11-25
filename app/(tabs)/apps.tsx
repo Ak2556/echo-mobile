@@ -76,7 +76,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
       <Pressable
         onPress={() => onOpen(app)}
         accessibilityRole="button"
-        accessibilityLabel={`${t('common.open')} ${app.name}`}
+        accessibilityLabel={`${t('common.open')} ${ttx(app.name)}`}
         style={({ pressed }) => ({ width: '100%', alignItems: 'center', gap: 10, paddingVertical: 12, transform: [{ scale: pressed ? 0.92 : 1 }] })}
       >
         <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
@@ -84,7 +84,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
           style={{ alignSelf: 'stretch', color: colors.text, fontSize: 17, ...font.bodySemibold, textAlign: 'center', lineHeight: 20 }}
           numberOfLines={1}
         >
-          {app.name}
+          {ttx(app.name)}
         </Text>
       </Pressable>
     </Animated.View>
@@ -98,7 +98,7 @@ function RecentChip({ app, onOpen }: { app: MiniApp; onOpen: (app: MiniApp) => v
     <Pressable
       onPress={() => onOpen(app)}
       accessibilityRole="button"
-      accessibilityLabel={`Open ${app.name}`}
+      accessibilityLabel={ttx('Open {name}').replace('{name}', ttx(app.name))}
       style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.95 : 1 }] })}
     >
       <View style={{
@@ -110,7 +110,7 @@ function RecentChip({ app, onOpen }: { app: MiniApp; onOpen: (app: MiniApp) => v
       }}>
         <MiniAppIcon id={app.id} color={app.color} size={32} />
         <Text style={{ color: colors.text, fontSize: 13.5, ...font.bodySemibold }} numberOfLines={1}>
-          {app.name}
+          {ttx(app.name)}
         </Text>
       </View>
     </Pressable>
@@ -154,14 +154,14 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
               {ttx("Smart start")}
             </Text>
             <Text style={{ color: colors.text, fontSize: fontSizes.title, lineHeight: 25, ...font.displayBlack, marginTop: 3 }} numberOfLines={1}>
-              {primary ? `Continue ${primary.name}` : `Tools for ${targetLabel}`}
+              {primary ? ttx('Continue {name}').replace('{name}', ttx(primary.name)) : ttx('Tools for {target}').replace('{target}', targetLabel)}
             </Text>
             <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={2}>
-              {primary ? 'Echo remembers where you left off.' : 'A short path based on your current target.'}
+              {primary ? ttx('Echo remembers where you left off.') : ttx('A short path based on your current target.')}
             </Text>
           </View>
           {primary ? (
-            <Pressable onPress={() => onOpen(primary)} accessibilityRole="button" accessibilityLabel={`Continue ${primary.name}`} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.95 : 1 }] })}>
+            <Pressable onPress={() => onOpen(primary)} accessibilityRole="button" accessibilityLabel={ttx('Continue {name}').replace('{name}', ttx(primary.name))} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.95 : 1 }] })}>
               <MiniAppIcon id={primary.id} color={primary.color} size={52} />
             </Pressable>
           ) : (
@@ -173,10 +173,10 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
         {targetApps.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {targetApps.slice(0, 4).map(app => (
-              <Pressable key={app.id} onPress={() => onOpen(app)} accessibilityRole="button" accessibilityLabel={`Open ${app.name}`}>
+              <Pressable key={app.id} onPress={() => onOpen(app)} accessibilityRole="button" accessibilityLabel={ttx('Open {name}').replace('{name}', ttx(app.name))}>
                 <View style={{ height: 38, borderRadius: radius.full, paddingLeft: 6, paddingRight: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                   <MiniAppIcon id={app.id} color={app.color} size={28} />
-                  <Text style={{ color: colors.text, fontSize: 12.5, ...font.bodySemibold }}>{app.name}</Text>
+                  <Text style={{ color: colors.text, fontSize: 12.5, ...font.bodySemibold }}>{ttx(app.name)}</Text>
                 </View>
               </Pressable>
             ))}

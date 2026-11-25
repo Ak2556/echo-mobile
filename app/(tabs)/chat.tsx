@@ -227,7 +227,7 @@ function ChatEmptyLaunchpad({
                     paddingHorizontal: 14,
                     paddingVertical: 9,
                   }}>
-                    <Text style={[font.bodySemibold, { color: colors.text, fontSize: 13.5 }]}>{chip}</Text>
+                    <Text style={[font.bodySemibold, { color: colors.text, fontSize: 13.5 }]}>{ttx(chip)}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -340,7 +340,7 @@ export default function ChatScreen() {
       gatherProactiveContext({ name, targetOutcome, lastChat })
         .then(ctx => {
           if (cancelled) return;
-          setOpener(pickProactiveOpener(ctx));
+          setOpener(pickProactiveOpener(ctx, useAppStore.getState().appLanguage));
           // Personalized reach-back nudges: learned timing + interest, now fed the
           // same reasoned per-user signals the chat opener uses — streak on the
           // line, habits still open today, and focus-goal momentum — so the pings

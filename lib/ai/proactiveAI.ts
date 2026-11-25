@@ -118,16 +118,26 @@ function meaningfulTitle(title: string | undefined): string | null {
 }
 
 /** Choose the opener that speaks to the strongest live signal. */
-export function pickProactiveOpener(ctx: ProactiveContext): ProactiveOpener {
+export function pickProactiveOpener(ctx: ProactiveContext, language: string = 'en'): ProactiveOpener {
   const who = ctx.name ? `, ${ctx.name}` : '';
   const target = ctx.targetOutcome;
+  // Hindi is a launch language, and the greeting is built from parts, so it is
+  // written in Hindi here rather than looked up. User content (names, habit
+  // names, the target, a chat title) stays as the person wrote it. The
+  // assistant's first person avoids gendered verb endings.
+  const hi = language === 'hi';
+  const hiWho = ctx.name ? `${ctx.name}, ` : '';
+  const say = (en: string, hindi: string) => (hi ? hindi : en);
 
   // 1. A streak on the line right now — most time-sensitive.
   if (ctx.streakAtRisk) {
     const { name, streak } = ctx.streakAtRisk;
     return {
       id: `streak:${name}`,
-      message: `You're ${streak} days deep on ${name}${who} — don't let today break the chain. Knock it out now, or want me to set a reminder?`,
+      message: say(
+        `You're ${streak} days deep on ${name}${who} — don't let today break the chain. Knock it out now, or want me to set a reminder?`,
+        `${hiWho}${name} पर आपका सिलसिला ${streak} दिन का है — आज इसे टूटने मत दीजिए। अभी पूरा कर लीजिए, या आज रात याद दिला दूँ?`,
+      ),
       chips: ['Mark it done', 'Remind me tonight', 'Plan it in'],
     };
   }
@@ -135,13 +145,13 @@ export function pickProactiveOpener(ctx: ProactiveContext): ProactiveOpener {
   // 2. Been away a while — reconnect, and reference what Echo remembers.
   if (ctx.daysSinceLastChat !== null && ctx.daysSinceLastChat >= 3) {
     const recall = ctx.topMemory
-      ? `Last I knew, ${ctx.topMemory}. Still on that?`
+      ? say(`Last I knew, ${ctx.topMemory}. Still on that?`, `पिछली बार की बात: ${ctx.topMemory}। क्या अब भी वही चल रहा है?`)
       : target
-        ? `Still chasing "${target}"? Where are you now?`
-        : `What's been on your mind?`;
+        ? say(`Still chasing "${target}"? Where are you now?`, `क्या "${target}" पर अब भी काम चल रहा है? अभी कहाँ तक पहुँचे?`)
+        : say(`What's been on your mind?`, `इन दिनों मन में क्या चल रहा है?`);
     return {
       id: 'welcome-back',
-      message: `It's been ${ctx.daysSinceLastChat} days${who}. ${recall}`,
+      message: say(`It's been ${ctx.daysSinceLastChat} days${who}. ${recall}`, `${hiWho}${ctx.daysSinceLastChat} दिन हो गए। ${recall}`),
       chips: ['Catch you up', 'New focus', 'Reflect'],
     };
   }
@@ -151,7 +161,10 @@ export function pickProactiveOpener(ctx: ProactiveContext): ProactiveOpener {
   if (lastTitle) {
     return {
       id: 'continue',
-      message: `Last time we were working through "${lastTitle}"${who}. Want to pick that back up, or is today about something else?`,
+      message: say(
+        `Last time we were working through "${lastTitle}"${who}. Want to pick that back up, or is today about something else?`,
+        `${hiWho}पिछली बातचीत "${lastTitle}" पर थी। वहीं से आगे बढ़ें, या आज कुछ और है?`,
+      ),
       chips: ['Continue that', 'Plan my day', 'Draft an Echo'],
     };
   }
@@ -161,13 +174,19 @@ export function pickProactiveOpener(ctx: ProactiveContext): ProactiveOpener {
     if (left > 0) {
       return {
         id: 'morning:habits',
-        message: `Morning${who}. ${left} habit${left === 1 ? '' : 's'} lined up today${target ? `, plus "${target}" to push forward` : ''}. Want to plan the first block?`,
+        message: say(
+          `Morning${who}. ${left} habit${left === 1 ? '' : 's'} lined up today${target ? `, plus "${target}" to push forward` : ''}. Want to plan the first block?`,
+          `${hiWho}सुप्रभात। आज ${left} ${left === 1 ? 'आदत बाकी है' : 'आदतें बाकी हैं'}${target ? `, और "${target}" को आगे बढ़ाना है` : ''}। पहला काम तय करें?`,
+        ),
         chips: ['Plan my day', 'Start a focus session', 'What matters most today?'],
       };
     }
     return {
       id: 'morning:plan',
-      message: `Morning${who}. What's the one thing that would make today count${target ? ` toward "${target}"` : ''}?`,
+      message: say(
+        `Morning${who}. What's the one thing that would make today count${target ? ` toward "${target}"` : ''}?`,
+        `${hiWho}सुप्रभात। आज कौन-सा एक काम दिन को सार्थक बनाएगा${target ? ` — "${target}" की ओर` : ''}?`,
+      ),
       chips: ['Help me prioritise', 'Draft an Echo', 'Start a focus session'],
     };
   }
@@ -176,15 +195,24 @@ export function pickProactiveOpener(ctx: ProactiveContext): ProactiveOpener {
     return {
       id: 'evening:reflect',
       message: ctx.focusToday > 0
-        ? `${ctx.focusToday} focus session${ctx.focusToday === 1 ? '' : 's'} in today${who} — solid. Want to reflect on what worked, or set up tomorrow?`
-        : `Evening${who}. How did today actually go? Two minutes of reflection now makes tomorrow sharper.`,
+        ? say(
+          `${ctx.focusToday} focus session${ctx.focusToday === 1 ? '' : 's'} in today${who} — solid. Want to reflect on what worked, or set up tomorrow?`,
+          `${hiWho}आज ${ctx.focusToday} फ़ोकस सेशन पूरे हुए — बढ़िया। क्या काम आया, इस पर सोचें, या कल की तैयारी करें?`,
+        )
+        : say(
+          `Evening${who}. How did today actually go? Two minutes of reflection now makes tomorrow sharper.`,
+          `${hiWho}शुभ संध्या। आज का दिन असल में कैसा रहा? अभी दो मिनट सोचने से कल बेहतर होगा।`,
+        ),
       chips: ['Reflect on today', 'Plan tomorrow', 'Draft an Echo'],
     };
   }
 
   return {
     id: 'afternoon:nudge',
-    message: `Hey${who} — want a hand moving something forward${target ? ` on "${target}"` : ''}? I can plan the next step, draft something, or kick off a focus block.`,
+    message: say(
+      `Hey${who} — want a hand moving something forward${target ? ` on "${target}"` : ''}? I can plan the next step, draft something, or kick off a focus block.`,
+      `${hiWho}कुछ आगे बढ़ाने में मदद चाहिए${target ? ` — "${target}" पर` : ''}? अगला कदम तय करना, कुछ लिखना या फ़ोकस ब्लॉक शुरू करना — बताइए किससे शुरू करें।`,
+    ),
     chips: ['Plan the next step', 'Start a focus session', 'Draft an Echo'],
   };
 }
