@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
@@ -67,7 +68,7 @@ export function EdgeFeaturePanel({
   };
 
   const openTargetProgress = () => router.push('/target-progress' as Href);
-  const openEcho = () => router.push('/chat' as Href);
+  const openEcho = () => openRoute('/chat' as Href);
 
   // For the four structured apps, "Ask Echo" pulls real data-grounded coaching
   // from the mini-app-coach edge function and shows it inline; anything else

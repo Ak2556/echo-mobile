@@ -1,4 +1,5 @@
 import React from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { ttx } from '../../lib/i18n/i18n';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { UsersThree, Plus, Compass } from 'phosphor-react-native';
@@ -62,7 +63,7 @@ export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
           </View>
 
           <Pressable 
-            onPress={() => router.push('/(tabs)/explore')}
+            onPress={() => openRoute('/(tabs)/explore')}
             style={{ marginTop: 20, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, alignItems: 'center' }}
           >
             <Text style={[font.bodyBold, { color: colors.accent, fontSize: 15 }]}>{ttx('Discover more people')}</Text>

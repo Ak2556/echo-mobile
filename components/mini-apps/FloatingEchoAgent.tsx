@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { usePathname, useRouter, type Href } from 'expo-router';
@@ -385,7 +386,7 @@ export default function FloatingEchoAgent() {
 
   const openFullChat = useCallback(() => {
     if (sessionId) setCurrentSessionId(sessionId);
-    router.push('/(tabs)/chat');
+    openRoute('/(tabs)/chat');
   }, [router, sessionId, setCurrentSessionId]);
 
   return (

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { openRoute } from '../lib/routing/openRoute';
 import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import {
@@ -624,7 +625,7 @@ export default function CreatePostScreen() {
             }
           } catch { /* fall through to feed */ }
         }
-        router.replace('/(tabs)/home');
+        openRoute('/(tabs)/home');
       }, 1800);
     } catch (e) {
       Alert.alert('Publish failed', (e as Error).message);
@@ -658,11 +659,11 @@ export default function CreatePostScreen() {
         onAccept={async () => {
           setShowPushPrePrompt(false);
           await registerForPush();
-          router.replace('/(tabs)/home');
+          openRoute('/(tabs)/home');
         }}
         onDecline={() => {
           setShowPushPrePrompt(false);
-          router.replace('/(tabs)/home');
+          openRoute('/(tabs)/home');
         }}
       />
 

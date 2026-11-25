@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { openRoute } from '../lib/routing/openRoute';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useVoiceControl } from '../store/voiceControl';
@@ -32,7 +33,7 @@ export default function VoiceEntryScreen() {
       done = true;
       // Leave first, so the panel opens over the feed rather than over a blank
       // route the back gesture would land on.
-      router.replace('/(tabs)/home');
+      openRoute('/(tabs)/home');
       start();
     };
 
@@ -49,7 +50,7 @@ export default function VoiceEntryScreen() {
     const bail = setTimeout(() => {
       if (!done) {
         done = true;
-        router.replace('/(tabs)/home');
+        openRoute('/(tabs)/home');
       }
     }, 10_000);
 

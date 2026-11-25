@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import { openRoute } from '../lib/routing/openRoute';
 import { View, Text, Pressable, Image, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useShareIntentContext } from 'expo-share-intent';
@@ -45,7 +46,7 @@ export default function ShareIntentScreen() {
 
   // Nothing to act on — usually a cold start onto this route with no payload.
   useEffect(() => {
-    if (!hasShareIntent && !body && images.length === 0) router.replace('/(tabs)/home');
+    if (!hasShareIntent && !body && images.length === 0) openRoute('/(tabs)/home');
   }, [hasShareIntent, body, images.length, router]);
 
   const leave = (go: () => void) => {
@@ -77,7 +78,7 @@ export default function ShareIntentScreen() {
     } catch {
       showToast('Could not save that', 'Error');
     }
-    leave(() => router.replace('/(tabs)/home'));
+    leave(() => openRoute('/(tabs)/home'));
   };
 
   const Action = ({ icon, label, hint, onPress, primary }: {

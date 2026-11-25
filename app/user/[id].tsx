@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { Share, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -238,7 +239,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
             {creatorProfile.topics.map((topic: string) => (
               <AnimatedPressable
                 key={topic}
-                onPress={() => router.push({ pathname: '/(tabs)/explore', params: { q: topic } })}
+                onPress={() => openRoute({ pathname: '/(tabs)/explore', params: { q: topic } })}
                 accessibilityRole="button"
                 accessibilityLabel={`Explore ${topic}`}
                 scaleValue={0.94}
@@ -310,7 +311,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
               key: 'topic',
               label: `Explore #${primaryTopic}`,
               icon: <Compass color={colors.textSecondary} size={18} />,
-              onPress: () => router.push({ pathname: '/(tabs)/explore', params: { q: primaryTopic } }),
+              onPress: () => openRoute({ pathname: '/(tabs)/explore', params: { q: primaryTopic } }),
             }] : []),
             {
               key: 'followers',
