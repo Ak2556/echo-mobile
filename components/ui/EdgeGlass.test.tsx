@@ -55,11 +55,22 @@ describe('EdgeGlass', () => {
   // more transparent layer).
   it('draws a single blur layer on the shader tier', () => {
     const { container } = render(
+      <EdgeGlass edge="bottom" height={90}>
+        <Text>Tabs</Text>
+      </EdgeGlass>,
+    );
+    expect(blurLayers(container)).toHaveLength(1);
+  });
+
+  // 2026-11-25: Home's quote read as grey text behind the wordmark through a 0.9 wash.
+  it('draws the header solid, with no glass under it', () => {
+    const { container } = render(
       <EdgeGlass edge="top" height={90}>
         <Text>Echo</Text>
       </EdgeGlass>,
     );
-    expect(blurLayers(container)).toHaveLength(1);
+    expect(blurLayers(container)).toHaveLength(0);
+    expect(screen.getByText('Echo')).toBeTruthy();
   });
 
   it('draws a single blur layer on the blur tier', () => {
@@ -104,13 +115,13 @@ describe('glassWash', () => {
     expect(glassWash('bottom', true, true)).toBeGreaterThanOrEqual(0.4);
   });
 
-  it('keeps the header the most opaque of the two', () => {
-    expect(glassWash('top', true, false)).toBeGreaterThan(glassWash('bottom', true, false));
-    expect(glassWash('top', true, true)).toBeGreaterThan(glassWash('bottom', true, true));
+  it('makes the header bar solid in every theme, blurred or not', () => {
+    for (const blurred of [true, false]) {
+      for (const dark of [true, false]) expect(glassWash('top', blurred, dark)).toBe(1);
+    }
   });
 
-  it('is nearly solid on either edge when nothing blurs', () => {
-    expect(glassWash('top', false, false)).toBe(0.96);
+  it('keeps the tab bar nearly solid when nothing blurs', () => {
     expect(glassWash('bottom', false, true)).toBe(0.96);
   });
 });

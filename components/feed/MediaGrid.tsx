@@ -8,7 +8,7 @@ import { ImageSquare, MagnifyingGlassPlus } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { ZoomableImageViewer } from '../ui/ZoomableImageViewer';
 import { MEDIA_FADE_MS, mediaPlaceholderTint } from './mediaPlaceholder';
-import { isTabletPortrait, singleMediaFrame } from '../../lib/media/mediaFrame';
+import { isTabletPortrait, PHOTO_CROP_POSITION, singleMediaFrame } from '../../lib/media/mediaFrame';
 import { useDataSaverPhoto } from '../../lib/media/dataSaverImages';
 import { useAppStore } from '../../store/useAppStore';
 import { ttx } from '../../lib/i18n/i18n';
@@ -47,6 +47,8 @@ function GridImage({ uri }: { uri: string }) {
       source={{ uri }}
       style={{ width: '100%', height: '100%', backgroundColor: mediaPlaceholderTint(uri) }}
       contentFit="cover"
+      // Upper-third crop, so a portrait photo keeps the face rather than the chest.
+      contentPosition={PHOTO_CROP_POSITION}
       cachePolicy="memory-disk"
       // Ties the decoded bitmap to this URI rather than to the recycled view,
       // so a cell that scrolls back into place cannot briefly show its

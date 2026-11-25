@@ -9,6 +9,17 @@
 
 export const PHONE_MEDIA_HEIGHT = 240;
 
+/**
+ * Where a cropped photo is cut, as CSS object-position (expo-image follows it).
+ *
+ * The 240pt frame shows under half of a portrait photo, and a centred crop keeps
+ * the middle: a 3:4 shot of a person lost the head and kept the chest (iPhone,
+ * 2026-11-25). Faces sit in the upper third. 15% puts a point about 28% down a 3:4
+ * or 9:16 photo near the frame's middle. Landscape photos barely overflow
+ * vertically, so for them this is close to a centred crop.
+ */
+export const PHOTO_CROP_POSITION = { top: '15%', left: '50%' } as const;
+
 export function isTabletPortrait(width: number, height: number): boolean {
   return Math.min(width, height) >= 744 && height > width;
 }

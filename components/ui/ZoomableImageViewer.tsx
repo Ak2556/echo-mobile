@@ -63,7 +63,9 @@ export function ZoomableImageViewer({
 
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.97)' }}>
+      {/* Solid: at 0.97 the screen under it showed through, so "Edit Profile"
+          sat beside the viewer's own title and the form showed under the photo. */}
+      <View style={{ flex: 1, backgroundColor: '#000000' }}>
         <View style={{
           position: 'absolute',
           top: insets.top + 10,
