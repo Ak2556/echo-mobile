@@ -55,10 +55,13 @@ function withAlpha(hex: string, alpha: number): string {
  * still do the softening. Without any blur the bar has to be the surface.
  */
 export function glassWash(edge: 'top' | 'bottom', blurred: boolean, isDark: boolean): number {
-  if (!blurred) return 0.96;
   // Scrolled content has to go out of sight under the header, not sit readable behind the
-  // wordmark: at 0.72 a post's name row and kicker still showed through it (owner, 2026-10-19).
-  if (edge === 'top') return isDark ? 0.9 : 0.94;
+  // wordmark (owner, 2026-10-19). 0.72 showed a post's name row; 0.9 still showed Home's
+  // white 20pt serif quote as grey text behind "EchoX" on a black theme (iPhone, 2026-11-25).
+  // Any residue is legible against pure black, so the bar itself is solid and only the
+  // tail below it fades.
+  if (edge === 'top') return 1;
+  if (!blurred) return 0.96;
   return isDark ? 0.45 : 0.55;
 }
 
@@ -163,6 +166,9 @@ export function EdgeGlass({
   // read straight through it — post text under the header, a post's like and
   // comment chips under the tab icons ("Home 2", "Explore 1").
   const wash = glassWash(edge, Boolean(NativeGlass || blurs), dark);
+  // The glass only ever covers the bar, so under a solid wash it is GPU spent on
+  // nothing anyone can see.
+  const showGlass = wash < 1;
   const tailFraction = 1 - barFraction;
   const washColors = [
     withAlpha(base, wash),
@@ -172,19 +178,31 @@ export function EdgeGlass({
     withAlpha(base, wash * 0.14),
     withAlpha(base, 0),
   ] as const;
-  const washLocations = [
-    0,
-    barFraction * 0.78,
-    barFraction,
-    barFraction + tailFraction * 0.34,
-    barFraction + tailFraction * 0.66,
-    1,
-  ] as const;
+  // A solid bar holds to its own edge and eases out only in the tail. Releasing
+  // inside it let the last fifth of Home's header (about 24pt beside the
+  // wordmark) show the quote under it at 14-23% (iPhone, 2026-11-25).
+  const washLocations = showGlass
+    ? ([
+        0,
+        barFraction * 0.78,
+        barFraction,
+        barFraction + tailFraction * 0.34,
+        barFraction + tailFraction * 0.66,
+        1,
+      ] as const)
+    : ([
+        0,
+        barFraction,
+        barFraction + tailFraction * 0.2,
+        barFraction + tailFraction * 0.5,
+        barFraction + tailFraction * 0.78,
+        1,
+      ] as const);
 
   return (
     <View style={host} pointerEvents="box-none">
       <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]} pointerEvents="none">
-        {NativeGlass ? (
+        {!showGlass ? null : NativeGlass ? (
           <NativeGlass
             glassEffectStyle="regular"
             colorScheme={dark ? 'dark' : 'light'}
