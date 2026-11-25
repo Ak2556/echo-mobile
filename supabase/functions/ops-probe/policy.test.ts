@@ -19,6 +19,7 @@ import {
   QUEUE_STALE_MINUTES,
   shouldAlert,
   stuckWindow,
+  TRANSIENT_FAILURES_BEFORE_ALERT,
   type CheckResult,
   type ProbeRunRow,
 } from './policy';
@@ -145,6 +146,60 @@ describe('shouldAlert', () => {
 
   it('survives a history with no rows for this check', () => {
     expect(shouldAlert(undefined as unknown as ProbeRunRow[], NOW)).toBe(true);
+  });
+});
+
+// 2026-11-25: the moderation model times out on about 8% of calls (p95 6.4 s
+// against an 8 s cut-off), so a single timeout pushed "moderation failing" to
+// the owner's phone 17 times in six days while every real post still got
+// its verdict on retry. A timeout now has to repeat before anyone is woken.
+describe('transient failures', () => {
+  const slow: CheckResult = { check: 'moderation', ok: false, detail: 'unavailable after 8011 ms', transient: true };
+  const hard: CheckResult = { check: 'moderation', ok: false, detail: 'unavailable after 900 ms: Gemini 404' };
+
+  it('marks a moderation timeout as transient', () => {
+    const r = interpretModeration(
+      { ok: false, categories: ['moderation_unavailable'], error: 'The signal has been aborted' },
+      8011,
+    );
+    expect(r.ok).toBe(false);
+    expect(r.transient).toBe(true);
+  });
+
+  it('does not mark a hard provider error as transient', () => {
+    const r = interpretModeration(
+      { ok: false, categories: ['moderation_unavailable'], error: 'Gemini 404: model is no longer available' },
+      900,
+    );
+    expect(r.transient).toBeFalsy();
+  });
+
+  it('does not mark a wrong verdict as transient', () => {
+    expect(interpretModeration({ ok: false, categories: ['hate'] }, 1200).transient).toBeFalsy();
+  });
+
+  it('stays quiet on the first and second transient failure in a row', () => {
+    expect(TRANSIENT_FAILURES_BEFORE_ALERT).toBe(3);
+    expect(shouldAlert([], NOW, slow)).toBe(false);
+    expect(shouldAlert([run(30, true)], NOW, slow)).toBe(false);
+    expect(shouldAlert([run(30, false), run(60, true)], NOW, slow)).toBe(false);
+  });
+
+  it('alerts when the transient failure is the third in a row', () => {
+    expect(shouldAlert([run(30, false), run(60, false), run(90, true)], NOW, slow)).toBe(true);
+  });
+
+  it('stays quiet when slow and healthy runs alternate', () => {
+    expect(shouldAlert([run(30, true), run(60, false), run(90, true)], NOW, slow)).toBe(false);
+  });
+
+  it('still respects the re-alert window once it has alerted', () => {
+    expect(shouldAlert([run(30, false), run(60, false, true), run(90, false)], NOW, slow)).toBe(false);
+  });
+
+  it('still alerts on the first hard failure', () => {
+    expect(shouldAlert([run(30, true)], NOW, hard)).toBe(true);
+    expect(shouldAlert([], NOW, hard)).toBe(true);
   });
 });
 

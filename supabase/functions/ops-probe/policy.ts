@@ -7,6 +7,8 @@ export interface CheckResult {
   check: string;
   ok: boolean;
   detail: string;
+  /** A failure one slow upstream reply explains: it alerts only when it repeats (see shouldAlert). */
+  transient?: boolean;
 }
 
 export interface ProbeRunRow {
@@ -21,6 +23,13 @@ export const STUCK_AFTER_MINUTES = 20;
 export const STUCK_WINDOW_HOURS = 24;
 /** Keep a failing check from pushing every half hour once it is known. */
 export const REALERT_AFTER_MINUTES = 180;
+/**
+ * Runs in a row a transient failure needs before it alerts: an hour at the
+ * half-hourly cadence. The moderation model answers in 1.6 s at the median but
+ * passes the 8 s cut-off on about 8% of calls (probe_runs, 19-25 Nov 2026),
+ * and a post whose check times out is retried, so one timeout is not news.
+ */
+export const TRANSIENT_FAILURES_BEFORE_ALERT = 3;
 /** Expo shows roughly this much of a body on a lock screen. */
 export const ALERT_BODY_LIMIT = 170;
 
@@ -45,7 +54,15 @@ export function interpretModeration(
 ): CheckResult {
   if (verdict.ok) return { check: "moderation", ok: true, detail: "verdict in " + ms + " ms" };
   if (verdict.categories.indexOf("moderation_unavailable") !== -1) {
-    return { check: "moderation", ok: false, detail: "unavailable after " + ms + " ms: " + (verdict.error || "no detail") };
+    // Our own cut-off firing (AbortController) means slow, not down. A 404, a
+    // bad key or a missing secret fails every call and still alerts at once.
+    const timedOut = /abort|timed? ?out/i.test(verdict.error || "");
+    return {
+      check: "moderation",
+      ok: false,
+      detail: "unavailable after " + ms + " ms: " + (verdict.error || "no detail"),
+      ...(timedOut ? { transient: true } : {}),
+    };
   }
   return { check: "moderation", ok: false, detail: "benign text flagged as " + verdict.categories.join(", ") };
 }
@@ -217,7 +234,12 @@ export function interpretQueues(rows: QueueHealthRow[] | null, errorMessage: str
  * waits out the re-alert window so a broken system does not push every half
  * hour for a day.
  */
-export function shouldAlert(rows: ProbeRunRow[], now: number): boolean {
+export function shouldAlert(rows: ProbeRunRow[], now: number, current?: CheckResult): boolean {
+  if (current && current.transient) {
+    let failingBefore = 0;
+    while (rows && failingBefore < rows.length && !rows[failingBefore].ok) failingBefore++;
+    if (failingBefore < TRANSIENT_FAILURES_BEFORE_ALERT - 1) return false;
+  }
   const previous = rows && rows.length ? rows[0] : null;
   if (!previous) return true;
   if (previous.ok) return true;
