@@ -326,11 +326,11 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
                   >
                     <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
                       <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }} numberOfLines={1}>
-                        {opt.label || String(opt.value)}
+                        {opt.label ? ttx(opt.label) : String(opt.value)}
                       </Text>
                       {opt.desc && (
                         <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, marginTop: 3 }} numberOfLines={1}>
-                          {opt.desc}
+                          {ttx(opt.desc)}
                         </Text>
                       )}
                     </View>
@@ -850,21 +850,21 @@ export default function SettingsScreen() {
     catch (e) { s.setAutoSaveChats(prev); Alert.alert('Could not update auto-save chats', (e as Error).message); }
   };
 
-  const fontLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.fontSize];
+  const fontLabel = ttx({ small: 'Small', medium: 'Medium', large: 'Large' }[s.fontSize]);
   const fontStyleValue = s.fontStyle ?? 'editorial';
-  const fontStyleText = fontStyleLabel(fontStyleValue);
+  const fontStyleText = ttx(fontStyleLabel(fontStyleValue));
   const modelLabel = {
     'gemini-2.5-flash': 'Gemini 2.5 Flash',
     'gemini-2.5-pro': 'Gemini 2.5 Pro',
     'gemini-2.5-flash-lite': 'Gemini 2.5 Flash Lite',
   }[s.aiModel];
-  const bubbleLabel = { modern: 'Modern', classic: 'Classic', minimal: 'Minimal' }[s.chatBubbleStyle];
-  const dmLabel = { everyone: 'Everyone', followers: 'Followers Only', nobody: 'Nobody' }[s.dmPrivacy];
-  const cornerLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.roundedCorners];
-  const themeLabel = THEMES[s.theme]?.name ?? 'Midnight';
+  const bubbleLabel = ttx({ modern: 'Modern', classic: 'Classic', minimal: 'Minimal' }[s.chatBubbleStyle]);
+  const dmLabel = ttx({ everyone: 'Everyone', followers: 'Followers Only', nobody: 'Nobody' }[s.dmPrivacy]);
+  const cornerLabel = ttx({ small: 'Small', medium: 'Medium', large: 'Large' }[s.roundedCorners]);
+  const themeLabel = ttx(THEMES[s.theme]?.name ?? 'Midnight');
   const appLanguageLabel = languageLabel(s.appLanguage);
   const RATE_STEPS = [0.75, 1, 1.25];
-  const rateLabel = (r: number) => (r <= 0.85 ? 'Slow' : r >= 1.15 ? 'Fast' : 'Normal');
+  const rateLabel = (r: number) => ttx(r <= 0.85 ? 'Slow' : r >= 1.15 ? 'Fast' : 'Normal');
   const cycleSpeechRate = () => {
     const idx = RATE_STEPS.findIndex((x) => Math.abs(x - s.speechRate) < 0.06);
     const next = RATE_STEPS[(idx + 1) % RATE_STEPS.length] ?? 1;
@@ -1050,9 +1050,9 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Envelope} label={ttx("Who Can Message You")} subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Users} label={`Blocked Users (${s.blockedIds.length})`} subtitle={ttx("Manage users you've blocked")} onPress={() => router.push('/blocked-users')} />
+            <SettingsRow theme={theme} icon={Users} label={`${ttx('Blocked Users')} (${s.blockedIds.length})`} subtitle={ttx("Manage users you've blocked")} onPress={() => router.push('/blocked-users')} />
             {divider}
-            <SettingsRow theme={theme} icon={Users} label={`Muted Users (${s.mutedIds.length})`} subtitle={ttx("Hide their echoes without notifying them")} onPress={() => router.push('/muted-users')} />
+            <SettingsRow theme={theme} icon={Users} label={`${ttx('Muted Users')} (${s.mutedIds.length})`} subtitle={ttx("Hide their echoes without notifying them")} onPress={() => router.push('/muted-users')} />
           </GlassPanel>
         </Animated.View>}
 
@@ -1065,7 +1065,7 @@ export default function SettingsScreen() {
               icon={SunHorizon}
               iconColor={colors.accent}
               label={ttx("Theme")}
-              subtitle={`${themeLabel} — tap to change`}
+              subtitle={ttx('{theme} — tap to change').replace('{theme}', themeLabel)}
               onPress={() => setShowThemePicker(true)}
               right={
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
