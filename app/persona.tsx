@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from 'react';
+import { openRoute } from '../lib/routing/openRoute';
 import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Brain, ChatTeardropDots, Check, Clock, ShieldCheck, Trash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -56,7 +57,6 @@ function SummaryList({ title, items, empty }: { title: string; items: string[]; 
 }
 
 export default function PersonaScreen() {
-  const router = useRouter();
   const theme = useTheme();
   const layout = useResponsiveLayout();
   const { colors, radius, fontSizes, animation } = theme;
@@ -229,7 +229,7 @@ export default function PersonaScreen() {
 
         <View style={styles.actions}>
           <AnimatedPressable
-            onPress={() => router.push('/(tabs)/chat')}
+            onPress={() => openRoute('/(tabs)/chat')}
             style={[styles.secondaryButton, { borderColor: colors.glassBorder, backgroundColor: colors.surfaceHover, borderRadius: radius.md }]}
           >
             <ChatTeardropDots color={colors.text} size={18} />

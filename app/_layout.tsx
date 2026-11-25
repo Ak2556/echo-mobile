@@ -1,4 +1,5 @@
 import { purgeLegacyMessageStore, registerQueryClient } from '../lib/core/localDataReset';
+import { openRoute } from '../lib/routing/openRoute';
 import { useEffect } from 'react';
 import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
@@ -312,7 +313,6 @@ function RootLayout() {
   const userId = useAppStore(s => s.userId);
   usePresenceHeartbeat(userId ?? undefined);
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);
-  const router = useRouter();
 
   // Native builds embed these fonts (expo-font plugin in app.json), so they
   // exist before the first frame. This load is for web. On Android it used to
@@ -418,7 +418,7 @@ function RootLayout() {
       // routed:false means the push named a kind or id with no screen of its own and
       // the person went to the inbox instead. Worth knowing when it climbs.
       track('notification_tapped', { kind: input.kind, routed: target !== INBOX });
-      router.push(target as Href);
+      openRoute(target as Href);
     };
 
     if (authStatus === 'ready' && pendingPushTap) {

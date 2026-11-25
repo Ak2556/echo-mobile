@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { View, Text } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useTheme } from '../../lib/ui/theme';
 import type { FeatureFlag } from '../../lib/core/featureFlags';
 import { useFeature } from '../../hooks/useFeature';
@@ -21,13 +21,12 @@ interface V2FeatureGuardProps {
  * primary entry points in the UI.
  */
 export function V2FeatureGuard({ flag, children }: V2FeatureGuardProps) {
-  const router = useRouter();
   const { colors } = useTheme();
   const enabled = useFeature(flag);
 
   useEffect(() => {
-    if (!enabled) router.replace('/(tabs)/home');
-  }, [enabled, router]);
+    if (!enabled) openRoute('/(tabs)/home');
+  }, [enabled]);
 
   if (!enabled) {
     return (

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { Text, TextProps, TextStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../lib/ui/theme';
@@ -65,7 +66,7 @@ export function LinkifiedText({ text, style, linkStyle, ...rest }: LinkifiedText
             <Text
               key={i}
               style={[accent, linkStyle]}
-              onPress={() => router.push({ pathname: '/(tabs)/explore', params: { q: tag } })}
+              onPress={() => openRoute({ pathname: '/(tabs)/explore', params: { q: tag } })}
               suppressHighlighting
             >
               {seg.value}

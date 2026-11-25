@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, ActivityIndicator, ScrollView, Alert, StyleSheet, TextInput } from 'react-native';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
@@ -92,7 +93,7 @@ export default function RemixScreen() {
       perspectiveType,
       sourceUrl: sourceUrl.trim() || undefined,
     });
-    router.replace('/(tabs)/chat');
+    openRoute('/(tabs)/chat');
   };
 
   const isLoading = echoQuery.isLoading || snapshotQuery.isLoading;

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { openRoute } from '../lib/routing/openRoute';
 import { ICON_SIZE } from '../lib/ui/icons';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -117,7 +118,7 @@ export default function TargetProgressScreen() {
                 icon={<SquaresFour color={colors.onAccent} size={18} weight="bold" />}
                 label={ttx("Open target tools")}
                 caption={ttx("Jump straight to the mini apps for this target.")}
-                onPress={() => router.push('/(tabs)/apps' as Href)}
+                onPress={() => openRoute('/(tabs)/apps' as Href)}
                 filled
               />
               <ActionButton

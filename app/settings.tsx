@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { openRoute } from '../lib/routing/openRoute';
 import { ICON_SIZE } from '../lib/ui/icons';
 import { View, Text, ScrollView, Switch, Alert, Modal, Platform, StyleSheet, Linking } from 'react-native';
 import { contactCardEnabled, contactCardSupported, enableContactCard } from '../lib/social/contactCard';
@@ -1235,7 +1236,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Question} label={ttx("Help & Support")} onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
             {divider}
-            <SettingsRow theme={theme} icon={MapTrifold} label={t('settings.replayTour')} subtitle={t('settings.replayTourSubtitle')} onPress={() => { router.push('/(tabs)/home'); setTimeout(() => useTutorialStore.getState().startTour('home'), 450); }} />
+            <SettingsRow theme={theme} icon={MapTrifold} label={t('settings.replayTour')} subtitle={t('settings.replayTourSubtitle')} onPress={() => { openRoute('/(tabs)/home'); setTimeout(() => useTutorialStore.getState().startTour('home'), 450); }} />
             {divider}
             {__DEV__ && (
               <SettingsRow

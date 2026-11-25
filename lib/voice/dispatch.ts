@@ -4,6 +4,7 @@
 // DispatchOutcome describing what happened and what to show/speak back.
 
 import { router } from 'expo-router';
+import { openRoute } from '../routing/openRoute';
 import { useAppStore } from '../../store/useAppStore';
 import { APP_LANGUAGES, normalizeAppLanguage, type AppLanguageCode } from '../i18n/languages';
 import { MINI_APP_CATALOG } from '../mini-apps/miniAppCatalog';
@@ -217,7 +218,7 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     case 'navigate': {
       const route = matchDestination(str(args.destination)) || matchDestination(transcript);
       if (!route) return { handled: false, reply };
-      router.push(route as never);
+      openRoute(route as never);
       return { handled: true, reply, navigatedTo: route };
     }
 
@@ -238,7 +239,7 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     case 'set_feed': {
       const scope = matchFeedScope(str(args.scope)) || matchFeedScope(transcript);
       if (!scope) return { handled: false, reply };
-      router.push('/(tabs)/home' as never);
+      openRoute('/(tabs)/home' as never);
       useAppStore.getState().setFeedScope(scope);
       return { handled: true, reply };
     }
@@ -336,13 +337,13 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
 
     case 'search': {
       const q = str(args.query);
-      router.push({ pathname: '/(tabs)/explore', params: q ? { q } : {} } as never);
+      openRoute({ pathname: '/(tabs)/explore', params: q ? { q } : {} } as never);
       return { handled: true, reply, navigatedTo: '/(tabs)/explore' };
     }
 
     case 'open_ai_chat': {
       const prompt = str(args.prompt);
-      router.push({ pathname: '/(tabs)/chat', params: prompt ? { prompt } : {} } as never);
+      openRoute({ pathname: '/(tabs)/chat', params: prompt ? { prompt } : {} } as never);
       return { handled: true, reply, navigatedTo: '/(tabs)/chat' };
     }
 

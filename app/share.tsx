@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { openRoute } from '../lib/routing/openRoute';
 import { ICON_SIZE } from '../lib/ui/icons';
 import { View, Text, Pressable, Alert, ScrollView , ActivityIndicator } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CheckCircle, Eye, FloppyDisk, Globe, GitBranch, Lock, MagicWand, PaperPlaneTilt, ShieldCheck } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -37,7 +38,6 @@ import { Button } from '../components/ui/Button';
 const SHARE_DRAFT_KEY = 'echo/share-draft';
 
 export default function ShareScreen() {
-  const router = useRouter();
   const { prompt, response, onboarding } = useLocalSearchParams<{ prompt: string; response: string; onboarding?: string }>();
   const {
     username,
@@ -233,7 +233,7 @@ export default function ShareScreen() {
       publishEcho(echo);
       await AsyncStorage.removeItem(SHARE_DRAFT_KEY);
       Alert.alert('Published', 'Your Echo is live in Discover.', [
-        { text: 'Open Discover', onPress: () => router.replace('/(tabs)/home') },
+        { text: 'Open Discover', onPress: () => openRoute('/(tabs)/home') },
       ]);
       setPublishing(false);
     }, 200);
@@ -249,7 +249,7 @@ export default function ShareScreen() {
           variant={celebration.variant}
           onDone={() => {
             setCelebration(null);
-            router.replace('/(tabs)/home');
+            openRoute('/(tabs)/home');
           }}
         />
       )}

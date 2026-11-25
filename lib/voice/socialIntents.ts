@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { openRoute } from '../routing/openRoute';
 import { persistSet } from '../../store/persist';
 import { searchRemoteUsers, getOrCreateRemoteConversation } from '../supabaseEchoApi';
 import { parseSendMessage } from './parseMessage';
@@ -50,12 +51,12 @@ export async function trySocialIntent(transcript: string): Promise<SocialOutcome
   if (picked.kind === 'none') {
     // Send them somewhere useful rather than failing flat: the search screen
     // with the name already entered.
-    router.push({ pathname: '/(tabs)/explore', params: { q: parsed.recipient } });
+    openRoute({ pathname: '/(tabs)/explore', params: { q: parsed.recipient } });
     return { handled: true, reply: `No one called ${parsed.recipient}. Here's the search.` };
   }
 
   if (picked.kind === 'ambiguous') {
-    router.push({ pathname: '/(tabs)/explore', params: { q: parsed.recipient } });
+    openRoute({ pathname: '/(tabs)/explore', params: { q: parsed.recipient } });
     const names = picked.candidates.map(c => c.display_name || c.username).join(', ');
     return { handled: true, reply: `More than one match: ${names}. Pick one.` };
   }

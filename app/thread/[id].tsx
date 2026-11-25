@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, StyleSheet, Modal } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -306,7 +307,7 @@ export default function ThreadDetailScreen() {
               {visibleTopics.map(topic => (
                 <Pressable
                   key={topic}
-                  onPress={() => router.push({ pathname: '/(tabs)/explore', params: { q: topic } })}
+                  onPress={() => openRoute({ pathname: '/(tabs)/explore', params: { q: topic } })}
                   accessibilityRole="button"
                   accessibilityLabel={`Explore ${topic}`}
                 >

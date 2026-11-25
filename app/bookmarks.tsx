@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { openRoute } from '../lib/routing/openRoute';
 import { ICON_SIZE } from '../lib/ui/icons';
 import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
@@ -117,7 +118,7 @@ export default function BookmarksScreen() {
           title={ttx("No bookmarks yet")}
           subtitle={ttx("Save echoes you want to revisit later by tapping the bookmark icon.")}
           actionLabel={ttx("Explore")}
-          onAction={() => router.push('/(tabs)/home')}
+          onAction={() => openRoute('/(tabs)/home')}
         />
       ) : (
         <FlashList

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -696,7 +697,7 @@ export default function LearnScreen() {
               reflection={reflection}
               setReflection={setReflection}
               onCreateReflection={createReflection}
-              onChat={() => router.push('/(tabs)/chat' as Href)}
+              onChat={() => openRoute('/(tabs)/chat' as Href)}
             />
             </Disclosure>
           )}

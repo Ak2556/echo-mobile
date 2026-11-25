@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ShareSheet } from '../common/ShareSheet';
@@ -668,7 +669,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
             {item.hashtags && item.hashtags.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {item.hashtags.slice(0, 3).map(tag => (
-                  <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}>
+                  <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); openRoute({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}>
                     <Text style={{ color: colors.accent, fontSize: 12.5, fontWeight: '600' }}>#{tag}</Text>
                   </Pressable>
                 ))}
@@ -946,7 +947,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
               uri={item.videoUri}
               borderRadius={radius.md}
               viewCount={item.viewCount}
-              onPress={() => router.push({ pathname: '/(tabs)/watch', params: { echoId: item.id } } as Href)}
+              onPress={() => openRoute({ pathname: '/(tabs)/watch', params: { echoId: item.id } } as Href)}
             />
           </View>
         )}
@@ -976,7 +977,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
             {item.hashtags.slice(0, 3).map(tag => (
               <Pressable
                 key={tag}
-                onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}
+                onPress={(e) => { e.stopPropagation?.(); openRoute({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}
                 style={{ borderRadius: 999, backgroundColor: `${colors.accent}16`, paddingHorizontal: 9, paddingVertical: 5 }}
               >
                 <Text style={{ color: colors.accent, fontSize: fontSizes.caption, ...font.bodySemibold }}>#{tag}</Text>

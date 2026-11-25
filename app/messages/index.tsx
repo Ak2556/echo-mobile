@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { openRoute } from '../../lib/routing/openRoute';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { StyleSheet, View, Text, Alert, Pressable, Modal, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -862,7 +863,7 @@ export default function MessagesListScreen() {
             <AnimatedPressable onPress={() => setGroupModalOpen(true)} className="p-1" scaleValue={0.88} haptic="light">
               <Users color={colors.accent} size={22} weight="bold" />
             </AnimatedPressable>
-            <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} className="p-1" scaleValue={0.88} haptic="light">
+            <AnimatedPressable onPress={() => openRoute('/(tabs)/explore')} className="p-1" scaleValue={0.88} haptic="light">
               <PencilSimple color={colors.accent} size={22} />
             </AnimatedPressable>
           </View>
@@ -899,7 +900,7 @@ export default function MessagesListScreen() {
           <AnimatedPressable onPress={() => setGroupModalOpen(true)} style={{ width: 40, height: 40, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }} scaleValue={0.88} haptic="light">
             <Users color={colors.accent} size={ICON_SIZE.md} weight="bold" />
           </AnimatedPressable>
-          <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} style={{ width: 40, height: 40, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }} scaleValue={0.88} haptic="light">
+          <AnimatedPressable onPress={() => openRoute('/(tabs)/explore')} style={{ width: 40, height: 40, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }} scaleValue={0.88} haptic="light">
             <PencilSimple color={colors.onAccent} size={ICON_SIZE.md} weight="bold" />
           </AnimatedPressable>
         </View>
@@ -940,7 +941,7 @@ export default function MessagesListScreen() {
               actionLabel={queryText || filter !== 'all' ? 'Show all' : 'Find people'}
               onAction={() => {
                 if (queryText || filter !== 'all') { setQuery(''); setFilter('all'); }
-                else router.push('/(tabs)/explore');
+                else openRoute('/(tabs)/explore');
               }}
             />
           </View>

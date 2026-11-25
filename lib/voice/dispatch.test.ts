@@ -3,14 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock the side-effecting deps so we can unit-test pure intent→action mapping.
 // vi.hoisted lets the (hoisted) vi.mock factories reference these spies.
 const h = vi.hoisted(() => ({
-  push: vi.fn(), back: vi.fn(),
+  push: vi.fn(), dismissTo: vi.fn(), back: vi.fn(),
   setTheme: vi.fn(), setDarkMode: vi.fn(), setFeedScope: vi.fn(), setAppLanguage: vi.fn(),
   setNotificationsEnabled: vi.fn(), setHapticEnabled: vi.fn(), setPrivateAccount: vi.fn(),
 }));
 const { push, setTheme, setDarkMode, setFeedScope, setAppLanguage,
   setNotificationsEnabled, setHapticEnabled, setPrivateAccount } = h;
 
-vi.mock('expo-router', () => ({ router: { push: h.push, back: h.back, canGoBack: () => true } }));
+vi.mock('expo-router', () => ({ router: { push: h.push, dismissTo: h.dismissTo, back: h.back, canGoBack: () => true } }));
 vi.mock('../../store/useAppStore', () => ({
   useAppStore: {
     getState: () => ({
@@ -54,6 +54,14 @@ describe('voice dispatch — navigate (English · Devanagari · Romanized)', () 
   });
   it('returns not-handled for an unknown destination', () => {
     expect(dispatchVoiceIntent(res('navigate', { destination: 'xyzzy' })).handled).toBe(false);
+  });
+  it('goes back to the tab bar for a tab and pushes any other screen', () => {
+    // A push to a tab from a screen outside the tabs stacked a second tab bar.
+    dispatchVoiceIntent(res('navigate', { destination: 'home' }));
+    expect(h.dismissTo).toHaveBeenCalledWith('/(tabs)/home');
+    expect(push).not.toHaveBeenCalled();
+    dispatchVoiceIntent(res('navigate', { destination: 'settings' }));
+    expect(push).toHaveBeenCalledWith('/settings');
   });
 });
 
