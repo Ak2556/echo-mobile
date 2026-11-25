@@ -224,14 +224,14 @@ async function alertByEmail(failures: CheckResult[]): Promise<boolean> {
 
 /** This check's recent history, newest first, for the alert decision in policy.ts. */
 // deno-lint-ignore no-explicit-any
-async function shouldAlert(supabase: any, check: string): Promise<boolean> {
+async function shouldAlert(supabase: any, result: CheckResult): Promise<boolean> {
   const { data } = await supabase
     .from("probe_runs")
     .select("ok, alerted, ran_at")
-    .eq("check_name", check)
+    .eq("check_name", result.check)
     .order("ran_at", { ascending: false })
     .limit(20);
-  return shouldAlertFrom((data ?? []) as ProbeRunRow[], Date.now());
+  return shouldAlertFrom((data ?? []) as ProbeRunRow[], Date.now(), result);
 }
 
 Deno.serve(async (req: Request) => {
@@ -273,7 +273,7 @@ Deno.serve(async (req: Request) => {
   let pushed = 0;
   let emailed = false;
   if (failures.length) {
-    const wanted = await Promise.all(failures.map((f) => shouldAlert(supabase, f.check)));
+    const wanted = await Promise.all(failures.map((f) => shouldAlert(supabase, f)));
     if (wanted.some(Boolean)) {
       // Independent channels: a push outage must not stop the email.
       [pushed, emailed] = await Promise.all([
