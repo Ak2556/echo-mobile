@@ -25,6 +25,15 @@ export function resizeForUpload(
   return width >= height ? { width: maxEdge } : { height: maxEdge };
 }
 
+/**
+ * HEIC is what an iPhone shoots, and the picker passes it through untouched.
+ * Android and browsers cannot show it, so it is never uploaded as-is, even when
+ * it is already small enough.
+ */
+export function isHeicUri(uri: string): boolean {
+  return /\.hei[cf](?:$|[?#])/i.test(uri);
+}
+
 type Manipulator = typeof import('expo-image-manipulator');
 
 function loadManipulator(): Manipulator | null {
@@ -48,9 +57,10 @@ export async function downscaleForUpload(uri: string, maxEdge: number): Promise<
   try {
     const { width, height } = await Image.getSize(uri);
     const resize = resizeForUpload(width, height, maxEdge);
-    if (!resize) return null;
+    if (!resize && !isHeicUri(uri)) return null;
 
-    const image = await manipulator.ImageManipulator.manipulate(uri).resize(resize).renderAsync();
+    const context = manipulator.ImageManipulator.manipulate(uri);
+    const image = await (resize ? context.resize(resize) : context).renderAsync();
     const saved = await image.saveAsync({ compress: JPEG_QUALITY, format: manipulator.SaveFormat.JPEG });
     return saved.uri;
   } catch {
