@@ -23,6 +23,7 @@ import {
 import { ttx } from '../../lib/i18n/i18n';
 import { InteractiveCrop } from './InteractiveCrop';
 import { screenRectToImageCrop, type Rect as CropRect, type ViewTransform } from '../../lib/media/cropGeometry';
+import { editingResize } from '../../lib/media/editorInput';
 
 type OptionalManipulator = {
   manipulateAsync: (uri: string, actions: unknown[], options: { compress?: number; format?: unknown }) => Promise<{ uri: string; width: number; height: number }>;
@@ -45,6 +46,33 @@ try { Sk = require('@shopify/react-native-skia'); } catch { Sk = null; }
 const SKIA_OK = !!Sk;
 function getFileSystem(): OptionalFileSystem | null {
   try { return require('expo-file-system/legacy') as OptionalFileSystem; } catch { return null; }
+}
+
+type WorkingCopy = { uri: string; w: number; h: number };
+
+function readSize(uri: string): Promise<WorkingCopy> {
+  return new Promise(resolve => {
+    RNImage.getSize(uri, (w, h) => resolve({ uri, w, h }), () => resolve({ uri, w: 1, h: 1 }));
+  });
+}
+
+/**
+ * A JPEG, at most EDITOR_MAX_EDGE on its longest side, of whatever was picked.
+ * The picker passes HEIC through untouched and Skia cannot decode it (see
+ * lib/media/editorInput.ts). Without the manipulator (an old build) the original
+ * is used as before.
+ */
+async function prepareForEditing(uri: string): Promise<WorkingCopy> {
+  const original = await readSize(uri);
+  const m = getManipulator();
+  if (!m) return original;
+  try {
+    const resize = editingResize(original.w, original.h);
+    const r = await m.manipulateAsync(uri, resize ? [resize] : [], { compress: 0.92, format: m.SaveFormat.JPEG });
+    return { uri: r.uri, w: r.width, h: r.height };
+  } catch {
+    return original;
+  }
 }
 
 interface PhotoEditorProps {
@@ -93,9 +121,19 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
   const displayMatrix = showOriginal ? IDENTITY : matrix;
   const colorDirty = preset !== 'none' || hasAdjustments(adjust) || drawPaths.length > 0 || overlayText.length > 0;
 
+  // The prepared copy of the picked photo, so Reset returns to it without
+  // re-encoding the original again.
+  const baseRef = useRef<WorkingCopy | null>(null);
+
   useEffect(() => {
-    if (!visible || !uri) { setCur(null); setMode('transform'); setAdjust(NO_ADJUST); setPreset('none'); setDrawPaths([]); setOverlayText(''); setDirty(false); return; }
-    RNImage.getSize(uri, (w, h) => setCur({ uri, w, h }), () => setCur({ uri, w: 1, h: 1 }));
+    if (!visible || !uri) { baseRef.current = null; setCur(null); setMode('transform'); setAdjust(NO_ADJUST); setPreset('none'); setDrawPaths([]); setOverlayText(''); setDirty(false); return; }
+    let live = true;
+    void prepareForEditing(uri).then(copy => {
+      if (!live) return;
+      baseRef.current = copy;
+      setCur(copy);
+    });
+    return () => { live = false; };
   }, [visible, uri]);
 
   // Geometry ops bake into the file eagerly via expo-image-manipulator.
@@ -142,11 +180,9 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
   const resetColor = () => { setAdjust(NO_ADJUST); setPreset('none'); setDrawPaths([]); setOverlayText(''); };
   
   const resetTransform = () => {
-    if (!uri) return;
-    RNImage.getSize(uri, (w, h) => {
-      setCur({ uri, w, h });
-      setDirty(true);
-    }, () => setCur({ uri, w: 1, h: 1 }));
+    if (!baseRef.current) return;
+    setCur(baseRef.current);
+    setDirty(true);
   };
 
   const handleDone = async () => {
@@ -452,8 +488,11 @@ function buildSvgPath(pts: DrawPoint[], w: number, h: number) {
 const SkiaColorPreview = forwardRef<{ bake: () => Promise<string | null> }, SkiaPreviewProps>(
   function SkiaColorPreview({ uri, matrix, vignette, boxW, boxH, skia, cover, drawPaths, currentPath, activeDrawColor, activeStrokeWidth, isDrawingMode, isTextMode, overlayText, textPos, textColor, onTextDrag, onDrawStart, onDrawMove, onDrawEnd }, ref) {
     const { useImage, Canvas, Image: SkImageComp, ColorMatrix, drawAsImage, ImageFormat, RadialGradient, vec, Rect, Group, Path, Text: SkText, useFont } = skia;
-    const img = useImage(uri);
-    
+    // useImage resolves to null, with no other signal, when Skia cannot decode
+    // the file. Without this the preview waited on it forever.
+    const [failedUri, setFailedUri] = useState<string | null>(null);
+    const img = useImage(uri, () => setFailedUri(uri));
+
     // We require the font statically for Metro, then use it in Skia
     const fontPreview = useFont(require('@expo-google-fonts/inter/900Black/Inter_900Black.ttf'), 48);
 
@@ -498,6 +537,11 @@ const SkiaColorPreview = forwardRef<{ bake: () => Promise<string | null> }, Skia
       },
     }), [img, matrix, vignette, drawAsImage, SkImageComp, ColorMatrix, ImageFormat, Group, Rect, RadialGradient, vec]);
 
+    if (!img && failedUri === uri) {
+      // Crop, rotate and Done still work on the file; only the live colour
+      // preview needs Skia.
+      return <Image source={{ uri }} style={{ flex: 1, width: '100%' }} contentFit="contain" />;
+    }
     if (!img || boxW < 1 || boxH < 1) return <ActivityIndicator color="#fff" />;
     
     let dw = boxW, dh = boxH;
