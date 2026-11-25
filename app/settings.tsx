@@ -133,7 +133,7 @@ function SettingsHero({
   const visibleAvatar = profilePhotoVisible ? avatarUrl : undefined;
   const quickActions = [
     { label: t('settings.editProfile'), subtitle: `@${username}`, icon: PencilSimple, color: colors.accent, onPress: onEditProfile },
-    { label: t('settings.targetTools'), subtitle: 'Progress', icon: Target, color: WARM.olive, onPress: onTarget },
+    { label: t('settings.targetTools'), subtitle: ttx('Progress'), icon: Target, color: WARM.olive, onPress: onTarget },
     { label: t('settings.aiMemory'), subtitle: modelLabel.replace('Gemini 2.5 ', ''), icon: Brain, color: WARM.plum, onPress: onAiMemory },
   ];
 
@@ -578,9 +578,9 @@ export default function SettingsScreen() {
 
   const handleSignOut = () => {
     void confirmAction({
-      title: 'Sign Out',
-      message: 'Are you sure you want to sign out?',
-      confirmLabel: 'Sign Out',
+      title: ttx('Sign Out'),
+      message: ttx('Are you sure you want to sign out?'),
+      confirmLabel: ttx('Sign Out'),
       destructive: true,
     }).then(async (confirmed) => {
       if (!confirmed) return;
@@ -596,9 +596,9 @@ export default function SettingsScreen() {
 
   const handleClearCache = () => {
     void confirmAction({
-      title: 'Clear Cache',
-      message: `Current cache: ${s.getCacheSize()}\n\nThis will clear cached data but keep your account and settings.`,
-      confirmLabel: 'Clear',
+      title: ttx('Clear Cache'),
+      message: `${ttx('Current cache:')} ${s.getCacheSize()}\n\n${ttx('This will clear cached data but keep your account and settings.')}`,
+      confirmLabel: ttx('Clear'),
       destructive: true,
     }).then(async (confirmed) => {
       if (!confirmed) return;
@@ -610,16 +610,16 @@ export default function SettingsScreen() {
 
   const handleClearChats = () => {
     void confirmAction({
-      title: 'Clear Chat History',
-      message: `Delete all ${s.sessions.length} chat sessions and server-side AI conversations? This cannot be undone.`,
-      confirmLabel: 'Clear All',
+      title: ttx('Clear Chat History'),
+      message: ttx('Delete all {count} chat sessions and server-side AI conversations? This cannot be undone.').replace('{count}', String(s.sessions.length)),
+      confirmLabel: ttx('Clear All'),
       destructive: true,
     }).then(async (confirmed) => {
       if (!confirmed) return;
       try {
             await deleteRemoteAIConversations();
             s.clearChatHistory();
-            showToast('Chat history cleared', 'Done');
+            showToast(ttx('Chat history cleared'), ttx('Done'));
           } catch (e) {
             Alert.alert('Could not clear chat history', (e as Error).message);
           }
@@ -628,22 +628,22 @@ export default function SettingsScreen() {
 
   const handleClearBookmarks = () => {
     void confirmAction({
-      title: 'Clear Bookmarks',
-      message: `Remove all ${s.bookmarkedIds.length} bookmarks?`,
-      confirmLabel: 'Clear All',
+      title: ttx('Clear Bookmarks'),
+      message: ttx('Remove all {count} bookmarks?').replace('{count}', String(s.bookmarkedIds.length)),
+      confirmLabel: ttx('Clear All'),
       destructive: true,
     }).then(async (confirmed) => {
       if (!confirmed) return;
       s.clearAllBookmarks();
-          showToast('Bookmarks cleared', '');
+          showToast(ttx('Bookmarks cleared'), '');
     });
   };
 
   const handleClearNotifications = () => {
     void confirmAction({
-      title: 'Clear Notifications',
-      message: 'Remove all notifications?',
-      confirmLabel: 'Clear All',
+      title: ttx('Clear Notifications'),
+      message: ttx('Remove all notifications?'),
+      confirmLabel: ttx('Clear All'),
       destructive: true,
     }).then(async (confirmed) => {
       if (!confirmed) return;
@@ -980,7 +980,7 @@ export default function SettingsScreen() {
         {showGroup('essentials') && <Animated.View entering={animation(FadeInDown.delay(50).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Essentials")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label={ttx("Push Notifications")} subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, handlePushToggle)} />
+            <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label={ttx("Push Notifications")} subtitle={s.notificationsEnabled ? ttx('On') : ttx('Off')} right={SwitchEl(s.notificationsEnabled, handlePushToggle)} />
             {divider}
             <SettingsRow theme={theme} icon={Vibrate} label={ttx("Haptic Feedback")} subtitle={ttx("Vibration on interactions")} right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
             {divider}
@@ -1034,7 +1034,7 @@ export default function SettingsScreen() {
               icon={UserCircle}
               iconColor={colors.accent}
               label={ttx("Profile Photo")}
-              subtitle={s.profilePhotoVisible ? 'Visible on profile and feed' : 'Hidden from other users'}
+              subtitle={s.profilePhotoVisible ? ttx('Visible on profile and feed') : ttx('Hidden from other users')}
               right={SwitchEl(s.profilePhotoVisible, handleProfilePhotoVisibleToggle)}
             />
             {divider}
@@ -1166,7 +1166,7 @@ export default function SettingsScreen() {
               icon={Brain}
               iconColor={colors.accent}
               label={ttx("Personal Persona")}
-              subtitle={s.personaLearningEnabled ? 'Learn your voice over the first week' : 'Persona learning is paused'}
+              subtitle={s.personaLearningEnabled ? ttx('Learn your voice over the first week') : ttx('Persona learning is paused')}
               onPress={() => router.push('/persona' as never)}
               right={
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -1194,9 +1194,9 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Eraser} label={ttx("Clear Cache")} subtitle={ttx("Free up storage space")} onPress={handleClearCache} />
             {divider}
-            <SettingsRow theme={theme} icon={ChatTeardropDots} label={`Clear Chat History (${s.sessions.length})`} subtitle={ttx("Delete local and server-side AI conversations")} onPress={handleClearChats} />
+            <SettingsRow theme={theme} icon={ChatTeardropDots} label={`${ttx('Clear Chat History')} (${s.sessions.length})`} subtitle={ttx("Delete local and server-side AI conversations")} onPress={handleClearChats} />
             {divider}
-            <SettingsRow theme={theme} icon={BookmarkSimple} label={`Clear Bookmarks (${s.bookmarkedIds.length})`} subtitle={ttx("Remove all saved echoes")} onPress={handleClearBookmarks} />
+            <SettingsRow theme={theme} icon={BookmarkSimple} label={`${ttx('Clear Bookmarks')} (${s.bookmarkedIds.length})`} subtitle={ttx("Remove all saved echoes")} onPress={handleClearBookmarks} />
             {divider}
             <SettingsRow theme={theme} icon={BellSlash} label={ttx("Clear Notifications")} subtitle={ttx("Remove all notifications")} onPress={handleClearNotifications} />
           </GlassPanel>

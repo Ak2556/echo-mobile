@@ -38,6 +38,14 @@ describe('Settings in Hindi', () => {
     expect(missing(strings)).toEqual([]);
   });
 
+  it('leaves no raw English in dialogs, subtitles or counters', () => {
+    // A raw literal never reaches ttx, so the Hindi table cannot help it.
+    expect(src.match(/^\s+(title|message|confirmLabel): (['"]|`(?!\$\{ttx\())/gm) ?? []).toEqual([]);
+    expect(src.match(/subtitle: ['"`][A-Z]/g) ?? []).toEqual([]);
+    expect(src.match(/subtitle=\{[^}]*\? ['"][A-Z]/g) ?? []).toEqual([]);
+    expect(src.match(/label=\{`[A-Z][a-z]+[^`$]*\(\$\{/g) ?? []).toEqual([]);
+  });
+
   it('translates option rows, value badges and counters instead of drawing them raw', () => {
     expect(src).toMatch(/opt\.label \? ttx\(opt\.label\)/);
     expect(src).toMatch(/\{ttx\(opt\.desc\)\}/);
