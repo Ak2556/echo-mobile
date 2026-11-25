@@ -26,8 +26,9 @@ export const REALERT_AFTER_MINUTES = 180;
 /**
  * Runs in a row a transient failure needs before it alerts: an hour at the
  * half-hourly cadence. The moderation model answers in 1.6 s at the median but
- * passes the 8 s cut-off on about 8% of calls (probe_runs, 19-25 Nov 2026),
- * and a post whose check times out is retried, so one timeout is not news.
+ * passed the old 8 s cut-off on about 8% of calls (probe_runs, 19-25 Nov 2026;
+ * the cut-off is now MODERATION_TIMEOUT_MS), and a post whose check times out
+ * is retried, so one timeout is not news.
  */
 export const TRANSIENT_FAILURES_BEFORE_ALERT = 3;
 /** Expo shows roughly this much of a body on a lock screen. */

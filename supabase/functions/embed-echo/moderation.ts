@@ -21,6 +21,7 @@
 import { chatCompletion, geminiModelId, hasChatProvider } from "../_shared/aiChat.ts";
 import { guardedFetch } from "../_shared/breaker.ts";
 import { videoMimeType } from "./mediaKinds.ts";
+import { MODERATION_TIMEOUT_MS, VISION_TIMEOUT_MS } from "./moderationLimits.ts";
 import { parseVerdict } from "./verdict.ts";
 import {
   blockReason,
@@ -49,9 +50,6 @@ const MODERATION_MODEL =
 // so the vision model can be tuned without touching text moderation.
 const VISION_MODEL =
   Deno.env.get("MODERATION_VISION_MODEL") ?? "google/gemini-2.5-flash-lite";
-const MODERATION_TIMEOUT_MS = 8000;
-// A vision call carries whole images, so give it longer than the text gate.
-const VISION_TIMEOUT_MS = 20000;
 // Enough to cover an ordinary multi-photo post without unbounded cost on one
 // call. Anything beyond this is reported as unchecked rather than ignored.
 const MAX_IMAGES_PER_CALL = 4;
