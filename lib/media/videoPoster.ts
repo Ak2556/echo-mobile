@@ -59,13 +59,40 @@ async function androidPoster(uri: string): Promise<ImageSource | null> {
   return null;
 }
 
+/** How long to wait for a fresh player to have something to take a frame from. */
+const IOS_ATTEMPTS = 20;
+const IOS_RETRY_MS = 250;
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Asks until there is a frame to give. createVideoPlayer loads its source
+ * asynchronously, and until it has, expo-video's generateThumbnailsAsync finds
+ * no current item and returns [] rather than failing (VideoModule.swift: "We
+ * should throw here as nothing is playing"). Asked once, straight away, it
+ * always got [], so every video tile on iOS stayed black (2026-11-26).
+ */
+export async function firstThumbnail<T>(
+  generate: () => Promise<T[]>,
+  attempts: number = IOS_ATTEMPTS,
+  delayMs: number = IOS_RETRY_MS,
+  sleep: (ms: number) => Promise<void> = wait,
+): Promise<T | null> {
+  for (let i = 0; i < attempts; i++) {
+    const [thumb] = await generate();
+    if (thumb) return thumb;
+    if (i < attempts - 1) await sleep(delayMs);
+  }
+  return null;
+}
+
 async function iosPoster(uri: string): Promise<ImageSource | null> {
   // Loaded lazily: expo-video's native module is absent in Expo Go.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { createVideoPlayer } = require('expo-video') as typeof import('expo-video');
   const player = createVideoPlayer({ uri });
   try {
-    const [thumb] = await player.generateThumbnailsAsync([POSTER_TIME_S], { maxWidth: POSTER_WIDTH });
+    const thumb = await firstThumbnail(() => player.generateThumbnailsAsync([POSTER_TIME_S], { maxWidth: POSTER_WIDTH }));
     return (thumb as unknown as ImageSource) ?? null;
   } finally {
     player.release();

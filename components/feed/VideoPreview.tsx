@@ -11,6 +11,7 @@ import { FIRST_FRAME_GRACE_MS, useFirstFrameWatchdog } from '../../lib/feed/firs
 import { videoSourceForUri } from '../../lib/media/videoMedia';
 import { capFeedBuffer } from '../../lib/media/playerBuffer';
 import { useVideoPoster } from '../../lib/media/videoPoster';
+import { formatViewCount } from '../../lib/media/viewCount';
 import { MEDIA_FADE_MS } from './mediaPlaceholder';
 import { videoFallbackHtml } from '../../lib/media/videoHtml';
 import { useAppStore } from '../../store/useAppStore';
@@ -94,11 +95,6 @@ function loadStateFromStatus(status: string | undefined): VideoLoadState | null 
   return null;
 }
 
-function formatViewCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return `${n}`;
-}
 
 // Static fallback (Expo Go / no native module)
 function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, echoId }: VideoPreviewProps) {
@@ -504,7 +500,7 @@ function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCo
       {viewCount !== undefined && (
         <View style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)' }}>
           <Eye size={ICON_SIZE.xs} color="#fff" />
-          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{viewCount >= 1000 ? `${(viewCount / 1000).toFixed(1)}K` : `${viewCount}`}</Text>
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{formatViewCount(viewCount)}</Text>
         </View>
       )}
     </Pressable>
