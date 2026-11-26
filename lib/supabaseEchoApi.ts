@@ -157,9 +157,10 @@ function assertImageUploadAllowed(image: UploadableImage): { ext: string; conten
 async function prepareImageUpload(
   picked: UploadableImage,
   maxEdge: number,
+  options: { square?: boolean } = {},
 ): Promise<{ image: UploadableImage; ext: string; contentType: string }> {
   const original = assertImageUploadAllowed(picked);
-  const resized = await downscaleForUpload(typeof picked === 'string' ? picked : picked.uri, maxEdge);
+  const resized = await downscaleForUpload(typeof picked === 'string' ? picked : picked.uri, maxEdge, options);
   if (!resized) return { image: picked, ...original };
   return { image: { uri: resized, mimeType: 'image/jpeg' }, ext: 'jpg', contentType: 'image/jpeg' };
 }
@@ -347,7 +348,7 @@ export async function uploadAvatar(picked: UploadableImage): Promise<string> {
   if (!uid) throw new Error('Not signed in');
   await checkRemoteAppRateLimit('avatar_upload_hour', 10, 3600);
 
-  const { image, ext, contentType } = await prepareImageUpload(picked, MAX_UPLOAD_EDGE.avatar);
+  const { image, ext, contentType } = await prepareImageUpload(picked, MAX_UPLOAD_EDGE.avatar, { square: true });
   const path = `${uid}/avatar.${ext}`;
 
   const { data: { session } } = await supabase.auth.getSession();
