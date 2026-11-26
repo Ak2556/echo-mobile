@@ -9,6 +9,7 @@ import { useTheme } from '../../lib/ui/theme';
 import { FeedItem } from '../../types';
 import { ttx } from '../../lib/i18n/i18n';
 import { useVideoPoster } from '../../lib/media/videoPoster';
+import { formatViewCount } from '../../lib/media/viewCount';
 
 const GRID_GAP = 8;
 const GRID_HORIZONTAL_INSET = 12;
@@ -72,11 +73,17 @@ function MosaicTile({
           />
         )}
         {isVideo ? (
+          // The play mark carries the view count, as a profile's video tiles do
+          // elsewhere: one pill, so it never competes with the caption below.
           <View
             pointerEvents="none"
-            style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}
+            accessibilityLabel={`${formatViewCount(item.viewCount ?? 0)} ${ttx('views')}`}
+            style={{ position: 'absolute', top: 10, right: 10, height: 30, minWidth: 30, paddingHorizontal: 9, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.55)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }}
           >
             <Play color="#fff" size={ICON_SIZE.xs} weight="fill" />
+            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }} maxFontSizeMultiplier={COMPACT_TEXT_SCALE}>
+              {formatViewCount(item.viewCount ?? 0)}
+            </Text>
           </View>
         ) : null}
         <View style={{ flex: 1, justifyContent: hasMedia || isVideo ? 'flex-end' : 'flex-start', padding: 13 }}>
