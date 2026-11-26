@@ -36,24 +36,49 @@ export function posterFileName(uri: string): string {
   return `poster_${h.toString(36)}.mp4`;
 }
 
+/**
+ * The second try, for a clip whose index (moov) sits at the end of the file,
+ * where the first megabyte never reaches it. One of kavish's five clips is laid
+ * out ftyp-mdat-moov and was the one black tile on Android (2026-11-26). Up to
+ * this much of it is fetched once and kept in the cache; a bigger clip with its
+ * index at the end still gets no poster.
+ */
+const FULL_FETCH_BYTES = 25 * 1024 * 1024;
+
+async function readFrame(path: string): Promise<string | null> {
+  for (const ms of [POSTER_TIME_S * 1000, 0]) {
+    try {
+      return await frameAt(path, ms, POSTER_WIDTH);
+    } catch {
+      // try the first frame, then give up
+    }
+  }
+  return null;
+}
+
+/** Makes sure the cached file holds at least the first `bytes` of the clip. */
+async function fetchStart(uri: string, path: string, bytes: number): Promise<boolean> {
+  const have = await FileSystem.getInfoAsync(path);
+  const size = have.exists ? ((have as { size?: number }).size ?? 0) : 0;
+  // A cached file is already the prefix; for the long fetch it only counts
+  // when it is longer than a prefix could be.
+  if (have.exists && (bytes === PREFIX_BYTES || size > PREFIX_BYTES)) return true;
+  const res = await FileSystem.downloadAsync(uri, path, { headers: { Range: `bytes=0-${bytes - 1}` } });
+  if (res.status !== 206 && res.status !== 200) {
+    await FileSystem.deleteAsync(path, { idempotent: true });
+    return false;
+  }
+  return true;
+}
+
 async function androidPoster(uri: string): Promise<ImageSource | null> {
   const dir = FileSystem.cacheDirectory;
   if (!canReadFrames() || !dir) return null;
   const path = dir + posterFileName(uri);
-  const have = await FileSystem.getInfoAsync(path);
-  if (!have.exists) {
-    const res = await FileSystem.downloadAsync(uri, path, { headers: { Range: `bytes=0-${PREFIX_BYTES - 1}` } });
-    if (res.status !== 206 && res.status !== 200) {
-      await FileSystem.deleteAsync(path, { idempotent: true });
-      return null;
-    }
-  }
-  for (const ms of [POSTER_TIME_S * 1000, 0]) {
-    try {
-      return { uri: await frameAt(path, ms, POSTER_WIDTH) };
-    } catch {
-      // try the first frame, then give up
-    }
+  for (const bytes of [PREFIX_BYTES, FULL_FETCH_BYTES]) {
+    if (!(await fetchStart(uri, path, bytes))) return null;
+    const frame = await readFrame(path);
+    if (frame) return { uri: frame };
   }
   await FileSystem.deleteAsync(path, { idempotent: true });
   return null;
