@@ -51,9 +51,12 @@ describe('Android video poster', () => {
     expect(fs.downloads).toEqual(['bytes=0-1048575', `bytes=0-${25 * 1024 * 1024 - 1}`]);
   });
 
-  it('gives up, and keeps nothing, when no frame can be read at all', async () => {
+  it('gives up, keeps nothing, and never downloads that clip again this session', async () => {
     frames.readable = () => false;
     expect(await loadVideoPoster('https://x.dev/broken.mp4')).toBeNull();
     expect(fs.files.size).toBe(0);
+    expect(fs.downloads).toHaveLength(2);
+    expect(await loadVideoPoster('https://x.dev/broken.mp4')).toBeNull();
+    expect(fs.downloads).toHaveLength(2);
   });
 });

@@ -71,15 +71,20 @@ async function fetchStart(uri: string, path: string, bytes: number): Promise<boo
   return true;
 }
 
+// Clips that gave no frame even after the long fetch. Without this, a tile for
+// one of them re-downloaded up to FULL_FETCH_BYTES every time it was drawn.
+const noFrame = new Set<string>();
+
 async function androidPoster(uri: string): Promise<ImageSource | null> {
   const dir = FileSystem.cacheDirectory;
-  if (!canReadFrames() || !dir) return null;
+  if (!canReadFrames() || !dir || noFrame.has(uri)) return null;
   const path = dir + posterFileName(uri);
   for (const bytes of [PREFIX_BYTES, FULL_FETCH_BYTES]) {
     if (!(await fetchStart(uri, path, bytes))) return null;
     const frame = await readFrame(path);
     if (frame) return { uri: frame };
   }
+  noFrame.add(uri);
   await FileSystem.deleteAsync(path, { idempotent: true });
   return null;
 }
