@@ -19,7 +19,7 @@ import {
   Warning, ListChecks, Globe, Gavel, PencilSimple, Target, SlidersHorizontal,
   BellRinging, Drop, MapTrifold, Microphone,
   AddressBook, DownloadSimple,
-  Gauge, ChatTeardropText, ChatCircleText, Prohibit, SpeakerSlash, TextAa, Rows, DotsThree, HandHeart,
+  Gauge, ChatCircleText, Prohibit, SpeakerSlash, TextAa, Rows, DotsThree, HandHeart,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -188,7 +188,7 @@ function SettingsHero({
                 </IconBadge>
                 <View>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]} numberOfLines={1}>{action.label}</Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={2}>{action.subtitle}</Text>
                 </View>
               </AnimatedPressable>
             );
@@ -982,7 +982,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Gauge} label={ttx("Read-aloud speed")} subtitle={ttx("How fast Echo speaks content")} onPress={cycleSpeechRate} right={chevronValue(rateLabel(s.speechRate))} />
             {divider}
-            <SettingsRow theme={theme} icon={ChatTeardropText} label={ttx("Auto-read AI replies")} subtitle={ttx("Speak each answer aloud when it finishes")} right={SwitchEl(s.autoReadAiReplies, s.setAutoReadAiReplies)} />
+            <SettingsRow theme={theme} icon={Robot} label={ttx("Auto-read AI replies")} subtitle={ttx("Speak each answer aloud when it finishes")} right={SwitchEl(s.autoReadAiReplies, s.setAutoReadAiReplies)} />
             {divider}
             <SettingsRow theme={theme} icon={ChatCircleText} label={ttx("Auto-read messages")} subtitle={ttx("Read incoming DMs aloud while a chat is open")} right={SwitchEl(s.autoReadMessages, s.setAutoReadMessages)} />
             {divider}
