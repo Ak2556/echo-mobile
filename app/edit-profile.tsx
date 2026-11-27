@@ -233,7 +233,7 @@ export default function EditProfileScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScreenHeader
-        title={ttx("Edit Profile")}
+        title={ttx("Edit profile")}
         right={
           <Button label={ttx("Save")} onPress={() => { void handleSave(); }} size="compact" loading={saving} leftIcon={Check} style={{ marginRight: 6 }} />
         }
@@ -302,27 +302,30 @@ export default function EditProfileScreen() {
               </View>
             </View>
 
-            <View style={{ gap: 8 }}>
+            {/* Only while something is missing. Complete, a full bar and four
+                "done" chips were decoration (2026-11-27). */}
+            {completion < 1 && <View style={{ gap: 8 }}>
               <View style={{ height: 6, borderRadius: radius.full, backgroundColor: colors.surfaceHover, overflow: 'hidden' }}>
                 <View style={{ width: `${completion * 100}%`, height: '100%', borderRadius: radius.full, backgroundColor: colors.accent }} />
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
                 {completionItems.map(item => (
-                  <View key={item.label} style={{ borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: item.done ? `${colors.success}1E` : colors.surfaceHover }}>
-                    <Text style={[font.bodySemibold, { color: item.done ? colors.success : colors.textMuted, fontSize: fontSizes.caption }]}>{item.label}</Text>
+                  <View key={item.label} style={{ borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: item.done ? `${colors.accent}1E` : colors.surfaceHover }}>
+                    <Text style={[font.bodySemibold, { color: item.done ? colors.accent : colors.textMuted, fontSize: fontSizes.caption }]}>{ttx(item.label)}</Text>
                   </View>
                 ))}
               </View>
-            </View>
+            </View>}
           </View>
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(130).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 12 }}>
           <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]}>{ttx("Profile color")}</Text>
-          <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+          {/* Two even rows of five. Wrapping freely left two swatches alone on the second row. */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 10 }}>
             {AVATAR_COLORS.map(color => (
+              <View key={color} style={{ width: `${100 / Math.ceil(AVATAR_COLORS.length / 2)}%`, alignItems: 'center' }}>
               <AnimatedPressable
-                key={color}
                 onPress={() => setNewColor(color)}
                 style={{
                   width: 36,
@@ -335,6 +338,7 @@ export default function EditProfileScreen() {
                 scaleValue={0.85}
                 haptic="light"
               />
+              </View>
             ))}
           </View>
         </Animated.View>
@@ -355,7 +359,7 @@ export default function EditProfileScreen() {
               marginLeft: 4,
             }}
           >
-            {ttx("Display Name")}
+            {ttx("Display name")}
           </Text>
           <TextInput
             value={newDisplayName}
@@ -418,7 +422,8 @@ export default function EditProfileScreen() {
             maxLength={32}
             autoCapitalize="none"
           />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginLeft: 4 }}>
+          {/* One scrolling row: wrapped, "any/all" sat alone on a second line. */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingLeft: 4 }} style={{ marginTop: 8 }} keyboardShouldPersistTaps="handled">
             {PRONOUN_PRESETS.filter(p => p).map((p) => {
               const active = newPronouns === p;
               return (
@@ -440,7 +445,7 @@ export default function EditProfileScreen() {
                 </AnimatedPressable>
               );
             })}
-          </View>
+          </ScrollView>
           </View>
         </Animated.View>
 

@@ -363,11 +363,13 @@ function SearchResults({
         // Below the glass header's fade: the result chips used to sit inside it
         // and render as unreadable smudges.
         paddingTop: headerHeight + EXPLORE_FADE + 4,
-        paddingHorizontal: layout.gutter,
+        // No side padding here: section labels, people and posts bring their
+        // own 16pt, and with this as well they sat at 32 (2026-11-27). The rows
+        // that bring none (filters, topics, tools) take the gutter themselves.
         paddingBottom: layout.bottomChromePadding,
       }]}
     >
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14, paddingHorizontal: layout.gutter }}>
         {SEARCH_TABS.map(tab => {
           const selected = activeTab === tab;
           return (
@@ -377,7 +379,8 @@ function SearchResults({
               accessibilityRole="tab"
               accessibilityState={{ selected }}
             >
-              {/* Layout on an inner View: on the Pressable, minHeight was dropped
+              {/* A count only when there is something: "People 0" on every empty search was noise.
+                  Layout on an inner View: on the Pressable, minHeight was dropped
                   in release builds and the chips rendered ~19pt tall. */}
               <View
                 style={{
@@ -392,7 +395,7 @@ function SearchResults({
                 }}
               >
                 <Text style={{ color: selected ? colors.onAccent : colors.textSecondary, fontSize: 13, ...font.bodySemibold, textTransform: 'capitalize' }}>
-                  {(tab === 'all' ? t('notif.filterAll') : tab === 'people' ? t('explore.people') : tab === 'echoes' ? t('explore.echoes') : tab === 'topics' ? t('explore.topics') : t('explore.tools'))}{tabCount[tab] !== undefined ? ` ${tabCount[tab]}` : ''}
+                  {(tab === 'all' ? t('notif.filterAll') : tab === 'people' ? t('explore.people') : tab === 'echoes' ? t('explore.echoes') : tab === 'topics' ? t('explore.topics') : t('explore.tools'))}{tabCount[tab] ? ` ${tabCount[tab]}` : ''}
                 </Text>
               </View>
             </AnimatedPressable>
@@ -417,7 +420,7 @@ function SearchResults({
 
       {(activeTab === 'all' || activeTab === 'topics') && topicMatches.length > 0 && (
         <ResultSection label={t('explore.topics')}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: layout.gutter }}>
             {topicMatches.slice(0, activeTab === 'all' ? 8 : 24).map(item => (
               <AnimatedPressable
                 key={item.topic}
@@ -436,7 +439,7 @@ function SearchResults({
 
       {(activeTab === 'all' || activeTab === 'tools') && toolMatches.length > 0 && (
         <ResultSection label={t('explore.tools')}>
-          <View style={{ gap: 10 }}>
+          <View style={{ gap: 10, paddingHorizontal: layout.gutter }}>
             {toolMatches.map(tool => (
               <ActionRow
                 key={tool.id}

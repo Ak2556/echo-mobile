@@ -257,7 +257,7 @@ export default function TasksScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <MiniAppShell title={tt('Tasks')} subtitle={tt('Action')} headerRight={<HeaderAddButton onPress={() => setShowAddSheet(true)} label={tt('Add task')} />}>
+      <MiniAppShell title={tt('Tasks')} headerRight={<HeaderAddButton onPress={() => setShowAddSheet(true)} label={tt('Add task')} />}>
         {stats.open > 0 && (
           <MiniCommandDeck
             accent={accent}
@@ -273,11 +273,12 @@ export default function TasksScreen() {
         )}
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 14, paddingHorizontal: 4 }}>
-          {(['today', 'upcoming', 'someday', 'any'] as Filter[]).map(item => (
+          {/* "Someday" (no date) and "Any Time" (everything) read as the same thing. */}
+          {(['any', 'today', 'upcoming', 'someday'] as Filter[]).map(item => (
             <MiniChip
               key={item}
               accent={accent}
-              label={tt(item === 'any' ? 'Any Time' : item.charAt(0).toUpperCase() + item.slice(1))}
+              label={tt({ any: 'All', today: 'Today', upcoming: 'Upcoming', someday: 'No date' }[item])}
               active={filter === item}
               onPress={() => {
                 tap('selection');
@@ -342,7 +343,8 @@ export default function TasksScreen() {
           )}
         </View>
 
-        <EdgeFeaturePanel
+        {/* Share, Compare and Post on an empty list shared nothing. */}
+        {tasks.length > 0 && <EdgeFeaturePanel
           appId="tasks"
           appName="Tasks"
           accent={accent}
@@ -357,7 +359,7 @@ export default function TasksScreen() {
           shareText={`Tasks: ${stats.open} open, ${stats.dueToday} due today, ${stats.high} high priority.`}
           publishTitle="Task progress"
           publishBody={`I have ${stats.open} open tasks and ${stats.dueToday} due today.`}
-        />
+        />}
 
         {/* Detail Modal */}
         <Modal visible={!!detailTask} animationType="slide" transparent={true} onRequestClose={closeDetail}>

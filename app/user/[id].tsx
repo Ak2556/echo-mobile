@@ -11,7 +11,7 @@ import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import {
   SealCheck, DotsThreeOutline, Envelope,
-  UserMinus, Flag, ShareNetwork, Images, Lock, Compass, Users, PencilSimple, ChatTeardropDots,
+  UserMinus, Flag, ShareNetwork, Images, Lock, Compass, PencilSimple, ChatTeardropDots,
 } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
@@ -57,7 +57,7 @@ const SECTION_LABELS: Record<ProfileSection, string> = {
   echoes: 'Echoes',
   photos: 'Photos',
   flows: 'Reverb',
-  reechoed: 'Reechoed',
+  reechoed: 'Reposts',
 };
 
 /**
@@ -125,7 +125,7 @@ function ProfileSections({ section, onChange, counts, colors }: any) {
 }
 
 function ProfileHeader({ user, echoeCount, following, requested, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId, section, onSectionChange, sectionCounts }: any) {
-  const { colors, radius, animation, isUserOnline, fontSizes } = useTheme();
+  const { colors, radius, animation, isUserOnline, fontSizes, font } = useTheme();
   const online = isUserOnline(user.id);
   usePresence(isSelf ? [] : [user.id]);
   const presenceText = presencePhrase(usePresenceStore(s => s.byUser[user.id]));
@@ -197,6 +197,9 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
         <AnimatedPressable
           onPress={() => user.avatarUrl ? setPhotoPreviewOpen(true) : undefined}
           disabled={!user.avatarUrl}
+          // With no photo the button is disabled, and a disabled button is drawn
+          // at 45%, so the initial looked greyed out (2026-11-27).
+          dimWhenDisabled={false}
           accessibilityRole={user.avatarUrl ? 'button' : undefined}
           accessibilityLabel={user.avatarUrl ? 'Open profile photo' : undefined}
           style={{ marginBottom: 12 }}
@@ -220,7 +223,10 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
           <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700' }}>{personName(user)}</Text>
           {user.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.md} weight="fill" />}
         </View>
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, marginBottom: 8 }}>@{user.username}</Text>
+        {/* Once, when the name is the handle ("monubhunga / @monubhunga"). */}
+        {personName(user).toLowerCase() !== (user.username ?? '').toLowerCase() ? (
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, marginBottom: 8 }}>@{user.username}</Text>
+        ) : <View style={{ height: 8 }} />}
         <View style={{ marginTop: -4, marginBottom: 8 }}>
           <ProfileRank userId={user.id} />
         </View>
@@ -253,15 +259,15 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
 
         <View style={{ flexDirection: 'row', gap: 32, marginBottom: 16 }}>
           <View style={{ alignItems: "center" }} accessible accessibilityLabel={countLabel(echoeCount, ttx('Echo'), ttx('Echoes'))}>
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{echoeCount}</Text>
+            <Text style={[font.display, { color: colors.text, fontSize: 18 }]}>{echoeCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Echoes")}</Text>
           </View>
           <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light" accessibilityRole="button" accessibilityLabel={countLabel(user.followerCount, ttx('follower'), ttx('followers'))}>
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followerCount}</Text>
+            <Text style={[font.display, { color: colors.text, fontSize: 18 }]}>{user.followerCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Followers")}</Text>
           </AnimatedPressable>
           <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'following' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light" accessibilityRole="button" accessibilityLabel={`${ttx('Following')} ${user.followingCount ?? 0}`}>
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followingCount}</Text>
+            <Text style={[font.display, { color: colors.text, fontSize: 18 }]}>{user.followingCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Following")}</Text>
           </AnimatedPressable>
         </View>
@@ -312,12 +318,6 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
               icon: <Compass color={colors.textSecondary} size={18} />,
               onPress: () => openRoute({ pathname: '/(tabs)/explore', params: { q: primaryTopic } }),
             }] : []),
-            {
-              key: 'followers',
-              label: 'Followers',
-              icon: <Users color={colors.textSecondary} size={18} />,
-              onPress: () => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } }),
-            },
             {
               key: 'thinking',
               label: 'Thinking partners',

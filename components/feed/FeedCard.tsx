@@ -33,7 +33,7 @@ import { GestureCard, type GestureCardAction } from '../ui/GestureCard';
 import { Avatar } from '../ui/Avatar';
 import { showToast } from '../ui/Toast';
 import { warmAvatarColor } from '../../lib/social/avatarPalette';
-import { MusicNote, ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, GitBranch, Trash } from 'phosphor-react-native';
+import { MusicNote, ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, Quotes, Trash } from 'phosphor-react-native';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FeedItem, PerspectiveType, Poll } from '../../types/index';
 import { useAppStore } from '../../store/useAppStore';
@@ -453,10 +453,14 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
       accessibilityRole="button"
     >
       {/* Static glass, not LiquidGlass: one live blur per button was the Home
-          feed's scroll lag (components/ui/GlassChip.tsx has the numbers). */}
+          feed's scroll lag (components/ui/GlassChip.tsx has the numbers).
+          Only an action that is on (liked, reposted, saved) gets the chip.
+          Six boxed icons on every card was the heaviest thing in the feed
+          (2026-11-27); off, an action is its icon alone. */}
       <GlassChip
         borderRadius={ACTION_RADIUS}
         tint={active ? color : undefined}
+        bare={!active}
         style={{ flex: 1 }}
         contentStyle={{
           flex: 1,
@@ -535,7 +539,8 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         />
         <ActionButton
           label="Remix"
-          icon={<GitBranch color={colors.textMuted} size={ICON_SIZE.md} weight="bold" />}
+          // Quote marks: adding a perspective quotes the post. A Git branch read as developer jargon.
+          icon={<Quotes color={colors.textMuted} size={ICON_SIZE.md} />}
           onPress={(e) => {
             e.stopPropagation?.();
             router.push({

@@ -21,18 +21,26 @@ export function useRemoteSearch(query: string) {
         searchRemoteEchoes(trimmed),
       ]);
 
-      // Derive topic matches from returned echoes
-      const topicCounts = new Map<string, number>();
-      for (const echo of echoes) {
-        for (const tag of echo.hashtags ?? []) {
-          topicCounts.set(tag, (topicCounts.get(tag) ?? 0) + 1);
-        }
-      }
-      const topicMatches = [...topicCounts.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .map(([topic, count]) => ({ topic, count }));
+      const topicMatches = topicMatchesFrom(echoes, trimmed);
 
       return { userMatches: users, echoMatches: echoes, topicMatches };
     },
   });
+}
+
+/**
+ * Topics whose name contains the query, counted over the posts the search
+ * returned. It used to list every hashtag on those posts, so "nature" also
+ * offered #echo and #newpost because one matching post carried all three
+ * (2026-11-27).
+ */
+export function topicMatchesFrom(echoes: Pick<FeedItem, 'hashtags'>[], query: string): { topic: string; count: number }[] {
+  const q = query.trim().replace(/^#/, '').toLowerCase();
+  const counts = new Map<string, number>();
+  for (const echo of echoes) {
+    for (const tag of echo.hashtags ?? []) {
+      if (q && tag.toLowerCase().includes(q)) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([topic, count]) => ({ topic, count }));
 }
