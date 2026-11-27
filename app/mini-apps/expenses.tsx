@@ -685,12 +685,12 @@ export default function ExpensesApp() {
             <View style={{ flexDirection: 'row', marginTop: 18, gap: 16 }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 2 }}>{tt('Money in')}</Text>
-                <Text style={{ color: colors.success, fontSize: 20, fontWeight: '800' }}>+{money(income)}</Text>
+                <Text style={{ color: income > 0 ? colors.success : colors.text, fontSize: 20, fontWeight: '800' }}>{income > 0 ? '+' : ''}{money(income)}</Text>
               </View>
               <View style={{ width: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 2 }}>{tt('Money out')}</Text>
-                <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>-{money(expense)}</Text>
+                <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{expense > 0 ? '-' : ''}{money(expense)}</Text>
               </View>
             </View>
           </View>
