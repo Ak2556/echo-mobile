@@ -19,6 +19,8 @@ import { track } from '../../lib/core/analytics';
 import { writeErrorMessage } from '../../lib/moderation/textFilterError';
 
 export const MAX_ANSWER_LENGTH = 600;
+/** The count appears only near the limit; "0/600" before typing was noise. */
+const COUNTER_FROM = 480;
 
 interface DailyQuestionComposerProps {
   question: DailyQuestion;
@@ -156,17 +158,20 @@ export function DailyQuestionComposer({
           editable={!dictation.listening}
           multiline
           numberOfLines={4}
+          // numberOfLines does not size a TextInput on iOS: the box was one line
+          // tall for an answer of up to 600 characters (2026-11-27).
+          style={{ minHeight: 88, textAlignVertical: 'top' }}
         />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, gap: 10 }}>
           {dictation.listening ? (
             <Text style={{ flexShrink: 1, color: colors.accent, fontSize: fontSizes.caption, fontWeight: '600' }} accessibilityLiveRegion="polite">
               {t('voice.listening')} {t('voice.tapToStop')}
             </Text>
-          ) : (
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
+          ) : shown.length >= COUNTER_FROM ? (
+            <Text style={{ color: shown.length >= MAX_ANSWER_LENGTH ? colors.danger : colors.textMuted, fontSize: fontSizes.caption }}>
               {shown.length}/{MAX_ANSWER_LENGTH}
             </Text>
-          )}
+          ) : <View />}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {dictation.available && (
               <Pressable

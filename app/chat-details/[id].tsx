@@ -142,6 +142,14 @@ export default function ChatDetailsScreen() {
           ) : null}
         </View>
 
+        {/* The person (or group) first, right under their name. These two rows
+            sat under "Privacy & safety", which they have nothing to do with. */}
+        {isGroup ? (
+          <Row colors={colors} radius={radius} icon={<Users color={colors.text} size={ICON_SIZE.md} />} label={ttx("Members & group settings")} onPress={() => router.push(`/group/${id}`)} />
+        ) : otherId ? (
+          <Row colors={colors} radius={radius} icon={<UserCircle color={colors.text} size={ICON_SIZE.md} />} label={ttx("View profile")} onPress={() => router.push(`/user/${otherId}`)} />
+        ) : null}
+
         {/* Customization */}
         <SectionLabel colors={colors}>{ttx("Customization")}</SectionLabel>
         {!isGroup && (
@@ -199,6 +207,7 @@ export default function ChatDetailsScreen() {
           label={mutedNow ? 'Muted' : 'Mute notifications'}
           sub={mutedNow ? (prefs.mutedUntil ? `Until ${new Date(prefs.mutedUntil).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : 'Until you turn it back on') : 'Silence this conversation'}
           onPress={() => (mutedNow ? unmute() : setMuteOpen(true))} />
+        <Row colors={colors} radius={radius} icon={<EnvelopeSimple color={colors.text} size={ICON_SIZE.md} />} label={ttx("Mark as unread")} onPress={markUnread} />
 
         {/* Media */}
         <SectionLabel colors={colors}>{ttx("Media & links")}</SectionLabel>
@@ -206,12 +215,6 @@ export default function ChatDetailsScreen() {
 
         {/* Privacy & safety */}
         <SectionLabel colors={colors}>{ttx("Privacy & safety")}</SectionLabel>
-        <Row colors={colors} radius={radius} icon={<EnvelopeSimple color={colors.text} size={ICON_SIZE.md} />} label={ttx("Mark as unread")} onPress={markUnread} />
-        {isGroup ? (
-          <Row colors={colors} radius={radius} icon={<Users color={colors.text} size={ICON_SIZE.md} />} label={ttx("Members & group settings")} onPress={() => router.push(`/group/${id}`)} />
-        ) : otherId ? (
-          <Row colors={colors} radius={radius} icon={<UserCircle color={colors.text} size={ICON_SIZE.md} />} label={ttx("View profile")} onPress={() => router.push(`/user/${otherId}`)} />
-        ) : null}
         {!isGroup && otherId && (
           <Row colors={colors} radius={radius} danger icon={<Prohibit color={colors.danger} size={ICON_SIZE.md} />} label={blocked ? 'Unblock' : 'Block'} onPress={doBlock} />
         )}

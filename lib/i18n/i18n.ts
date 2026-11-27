@@ -56,7 +56,8 @@ const BASE_TRANSLATIONS = {
   'home.trendingDesc': 'Ranked by engagement and recency.',
   'home.followingDesc': 'Only echoes from people you follow.',
   'home.latestDesc': 'Every public echo in time order.',
-  'home.todayQuestion': "Daily Spark",
+  // The same name as the screen it opens and the App Store listing (was "Daily Spark").
+  'home.todayQuestion': "Daily Question",
   'home.tapToAnswer': 'Tap to answer',
   'home.thoughtForToday': 'Thought for today',
   'home.dismissThought': "Dismiss today's thought",
@@ -360,7 +361,7 @@ const COMMON_TRANSLATIONS: Record<Exclude<AppLanguageCode, 'en'>, TranslationMap
     'home.trending': "ट्रेंडिंग",
     'home.following': "फॉलोइंग",
     'home.latest': "नवीनतम",
-    'home.todayQuestion': "दैनिक प्रेरणा",
+    'home.todayQuestion': "आज का सवाल",
     'home.tapToAnswer': "जवाब दें",
     'home.thoughtForToday': "आज का विचार",
     'home.dismissThought': "आज का विचार हटाएं",
