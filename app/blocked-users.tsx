@@ -3,7 +3,7 @@ import { View, Text, Alert } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { FlashList } from '@shopify/flash-list';
 import { ShieldSlash } from 'phosphor-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
@@ -18,7 +18,7 @@ import { BRAND } from '../lib/ui/fixedColors';
 
 export default function BlockedUsersScreen() {
   const { blockedIds, toggleBlock, getUser } = useAppStore();
-  const { colors, radius, fontSizes, animation, showAvatars } = useTheme();
+  const { colors, radius, fontSizes, showAvatars } = useTheme();
 
   const blockedUsers = blockedIds
     .map(id => getUser(id))
@@ -58,7 +58,7 @@ export default function BlockedUsersScreen() {
         <FlashList 
           data={blockedUsers}
             renderItem={({ item, index }) => (
-            <Animated.View entering={animation(FadeInDown.delay(index * 50).duration(220))}>
+            <Animated.View>
               <View
                 style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 }, { borderBottomWidth: 1, borderBottomColor: colors.border }]}
               >

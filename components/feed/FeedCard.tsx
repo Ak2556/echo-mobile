@@ -34,7 +34,7 @@ import { Avatar } from '../ui/Avatar';
 import { showToast } from '../ui/Toast';
 import { warmAvatarColor } from '../../lib/social/avatarPalette';
 import { MusicNote, ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, Quotes, Trash } from 'phosphor-react-native';
-import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FeedItem, PerspectiveType, Poll } from '../../types/index';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/ui/theme';
@@ -44,7 +44,6 @@ import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { recordRemoteEchoView, markNotInterested } from '../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, useDeleteRemoteEcho } from '../../hooks/useSupabaseSocial';
 import { useFollow } from '../../hooks/queries/useFollow';
-import { usePerformanceProfile } from '../../lib/ui/performance';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { confirmAction } from '../../lib/ui/confirm';
 
@@ -161,13 +160,12 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
   const remoteBm = useToggleRemoteBookmark();
   const remoteLike = useToggleRemoteLike();
   const remoteRp = useToggleRemoteRepost();
-  const { colors, radius, fontSizes, font, reduceAnimations, showAvatars } = useTheme();
+  const { colors, radius, fontSizes, font, showAvatars } = useTheme();
   const { t } = useI18n();
   // What "read aloud" speaks: the post's title + body.
   const readableText = [item.editorialTitle ?? item.prompt, item.authorNote ?? item.response]
     .filter(Boolean)
     .join('. ');
-  const performance = usePerformanceProfile('hot');
   const layout = useResponsiveLayout();
   // Hero media height: phones keep the fixed portrait-ish media; tablets scale
   // it with the now-full-width card so it stays a balanced ~5:4 shape, clamped
@@ -295,11 +293,10 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
     router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } });
   };
 
-  const entering = reduceAnimations
-    ? undefined
-    : performance.listAnimations
-      ? FadeInUp.delay(Math.min(index, 3) * 24).duration(80)
-      : undefined;
+  // No entering animation. The feed is a recycling FlashList, and a card reused
+  // mid-animation can freeze part-way, as Tools tiles did (2026-11-27). It ran
+  // only with Glass Theme on, at 80 ms, so nobody is losing much.
+  const entering = undefined;
 
   const textSize = fontSizes.body;
   const cardMargin = layout.isDesktop ? 20 : layout.isTablet ? 18 : 16;
