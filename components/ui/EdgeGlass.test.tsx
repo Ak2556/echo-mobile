@@ -117,7 +117,7 @@ describe('glassWash', () => {
 
   // 2026-11-27: at 0.45 a text row under the tab bar was readable between the labels.
   it('keeps text under the tab bar from reading through it', () => {
-    for (const dark of [true, false]) expect(glassWash('bottom', true, dark)).toBeGreaterThanOrEqual(0.85);
+    for (const dark of [true, false]) expect(glassWash('bottom', true, dark)).toBeGreaterThanOrEqual(0.9);
   });
 
   it('makes the header bar solid in every theme, blurred or not', () => {

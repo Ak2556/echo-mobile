@@ -152,19 +152,27 @@ export function evaluatePublishChecklist(input: {
 export function deriveTopicFeed(feed: FeedItem[]): { topic: string; count: number; cover?: string }[] {
   if (!Array.isArray(feed)) return [];
   const counts = new Map<string, number>();
-  const covers = new Map<string, string>();
+  const photos = new Map<string, string[]>();
   feed.forEach(item => {
     const photo = /^https?:\/\//i.test(item.mediaUris?.[0] ?? '') ? item.mediaUris![0] : undefined;
     inferTopics(item).forEach(topic => {
       counts.set(topic, (counts.get(topic) ?? 0) + 1);
-      if (photo && !covers.has(topic)) covers.set(topic, photo);
+      if (photo) photos.set(topic, [...(photos.get(topic) ?? []), photo]);
     });
   });
 
+  // One post often carries several tags, so its photo would cover all of them:
+  // three tiles side by side wearing the same rose. Each photo covers one topic
+  // at most; a topic left without one is drawn in type instead.
+  const used = new Set<string>();
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .map(([topic, count]) => ({ topic, count, cover: covers.get(topic) }))
-    .slice(0, 8);
+    .slice(0, 8)
+    .map(([topic, count]) => {
+      const cover = (photos.get(topic) ?? []).find(uri => !used.has(uri));
+      if (cover) used.add(cover);
+      return { topic, count, cover };
+    });
 }
 
 export function groupDiscovery(feed: FeedItem[], interests: string[], followingIds: string[]) {

@@ -523,7 +523,7 @@ function TopicTile({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`#${shownLabel}, ${countLabel}`}
-      style={({ pressed }) => ({ width, transform: [{ scale: pressed ? 0.97 : 1 }] })}
+      style={{ width }}
     >
       <View style={{
         height: 112,
