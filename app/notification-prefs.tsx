@@ -46,14 +46,13 @@ export default function NotificationPrefsScreen() {
     icon: any; iconColor: string; label: string; subtitle?: string;
     value: boolean; onValueChange: (v: boolean) => void;
   }) => (
-    <View className="flex-row items-center py-3.5 px-1">
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 4 }}>
       <View
-        className="w-9 h-9 items-center justify-center mr-3"
-        style={{ borderRadius: radius.md, backgroundColor: colors.surfaceHover }}
+        style={[{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginRight: 12 }, { borderRadius: radius.md, backgroundColor: colors.surfaceHover }]}
       >
         <Icon color={iconColor} size={18} />
       </View>
-      <View className="flex-1 mr-3">
+      <View style={{ flex: 1, marginRight: 12 }}>
         <Text style={{ color: colors.text, fontSize: fontSizes.body }}>{label}</Text>
         {subtitle && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>{subtitle}</Text>}
       </View>
@@ -72,17 +71,16 @@ export default function NotificationPrefsScreen() {
     <ResponsiveScreen>
       <ScreenHeader title={ttx("Notification Preferences")} />
 
-      <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
+      <ScrollView style={{ paddingHorizontal: 16, paddingTop: 16 }} showsVerticalScrollIndicator={false}>
         <Animated.View entering={animation(FadeInDown.delay(50).duration(220))}>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>{ttx("General")}</Text>
           <View
-            className="px-4 mb-5"
-            style={{
+            style={[{ paddingHorizontal: 16, marginBottom: 20 }, {
               borderRadius: radius.card,
               backgroundColor: colors.surface,
               borderWidth: 1,
               borderColor: colors.border,
-            }}
+            }]}
           >
             <ToggleRow
               icon={Bell}
@@ -98,13 +96,12 @@ export default function NotificationPrefsScreen() {
         <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={{ opacity: notificationsEnabled ? 1 : 0.4 }} pointerEvents={notificationsEnabled ? 'auto' : 'none'}>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>{ttx("Activity Types")}</Text>
           <View
-            className="px-4 mb-5"
-            style={{
+            style={[{ paddingHorizontal: 16, marginBottom: 20 }, {
               borderRadius: radius.card,
               backgroundColor: colors.surface,
               borderWidth: 1,
               borderColor: colors.border,
-            }}
+            }]}
           >
             <ToggleRow icon={HeartStraight} iconColor={colors.danger} label={ttx("Likes")} subtitle={ttx("When someone likes your echo")} value={notifyLikes} onValueChange={(v) => { setNotifyLikes(v); void syncNotificationPrefs(); }} />
             {divider}
@@ -123,13 +120,12 @@ export default function NotificationPrefsScreen() {
         <Animated.View entering={animation(FadeInDown.delay(150).duration(220))}>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>{ttx("Feedback")}</Text>
           <View
-            className="px-4 mb-5"
-            style={{
+            style={[{ paddingHorizontal: 16, marginBottom: 20 }, {
               borderRadius: radius.card,
               backgroundColor: colors.surface,
               borderWidth: 1,
               borderColor: colors.border,
-            }}
+            }]}
           >
             <ToggleRow icon={SpeakerHigh} iconColor={colors.textSecondary} label={ttx("Sound Effects")} subtitle={ttx("Play sounds for notifications and actions")} value={soundEnabled} onValueChange={setSoundEnabled} />
             {divider}
@@ -137,7 +133,7 @@ export default function NotificationPrefsScreen() {
           </View>
         </Animated.View>
 
-        <View className="h-8" />
+        <View style={{ height: 32 }} />
       </ScrollView>
     </ResponsiveScreen>
   );

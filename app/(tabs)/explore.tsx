@@ -5,10 +5,10 @@ import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { BookOpen, Brain, Camera, CaretRight, ChartLineUp, Code, Cpu, GameController, MusicNote, PaintBrush, Play, RocketLaunch, Sparkle, UsersThree, VideoCamera } from 'phosphor-react-native';
+import { Brain, CaretRight, Play, UsersThree } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { EdgeGlass, EDGE_GLASS_FADE } from '../../components/ui/EdgeGlass';
+import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { SearchBar } from '../../components/feed/SearchBar';
 import { TabHeader } from '../../components/ui/TabHeader';
 import { Avatar } from '../../components/ui/Avatar';
@@ -27,46 +27,16 @@ import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { track } from '../../lib/core/analytics';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
+import { useVideoPoster } from '../../lib/media/videoPoster';
 import { MINI_APP_CATALOG } from '../../lib/mini-apps/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
-import { WARM, TOPIC, ON_MEDIA } from '../../lib/ui/fixedColors';
+import { ON_MEDIA } from '../../lib/ui/fixedColors';
 import { useUserRefresh } from '../../hooks/useUserRefresh';
 
 type SearchTab = 'all' | 'people' | 'echoes' | 'topics' | 'tools';
 
 
 const CATEGORY_FALLBACKS = ['AI', 'Design', 'Productivity', 'Startups'];
-
-/**
- * Icon and colour are chosen by what a topic IS. The previous code indexed a
- * four-entry table by list position, so the first topic always got the AI chip
- * and the second always got the design brush — which is why "Video" shipped
- * wearing a CPU icon and "Ai" a paintbrush.
- */
-const TOPIC_VISUALS: { match: RegExp; color: string; Icon: React.ComponentType<any> }[] = [
-  { match: /(^|\b)(ai|ml|llm|gpt|machine\s?learning|neural)/i, color: WARM.steel, Icon: Cpu },
-  { match: /(video|film|movie|reel|clip|cinema)/i, color: TOPIC.vermilion, Icon: VideoCamera },
-  { match: /(design|ux|ui|art|draw|illustrat)/i, color: WARM.terracotta, Icon: PaintBrush },
-  { match: /(code|coding|dev|program|software|engineer)/i, color: TOPIC.slate, Icon: Code },
-  { match: /(music|song|audio|beat|sound)/i, color: WARM.plum, Icon: MusicNote },
-  { match: /(photo|camera|picture|shot)/i, color: TOPIC.moss, Icon: Camera },
-  { match: /(book|read|writ|story|poem)/i, color: TOPIC.straw, Icon: BookOpen },
-  { match: /(game|gaming|play)/i, color: WARM.heather, Icon: GameController },
-  { match: /(startup|founder|business|money|finance)/i, color: WARM.plum, Icon: RocketLaunch },
-  { match: /(productiv|habit|focus|growth|goal)/i, color: WARM.olive, Icon: ChartLineUp },
-];
-
-const NEUTRAL_TOPIC_PALETTE = [WARM.steel, WARM.terracotta, WARM.olive, WARM.plum, WARM.heather];
-
-function resolveTopicVisual(topic: string) {
-  const hit = TOPIC_VISUALS.find(entry => entry.match.test(topic));
-  if (hit) return { color: hit.color, Icon: hit.Icon };
-  // Hash rather than index: an unrecognised topic keeps the same colour when
-  // the feed reorders it, instead of changing hue on every refresh.
-  let hash = 0;
-  for (let i = 0; i < topic.length; i += 1) hash = (hash * 31 + topic.charCodeAt(i)) >>> 0;
-  return { color: NEUTRAL_TOPIC_PALETTE[hash % NEUTRAL_TOPIC_PALETTE.length], Icon: Sparkle };
-}
 
 /** Hashtags arrive in whatever case the author typed, so "ai" rendered as "Ai". */
 const TOPIC_INITIALISMS = new Set(['ai', 'ui', 'ux', 'ml', 'api', 'diy', 'ceo', 'nba', 'nfl', 'vr', 'ar']);
@@ -80,6 +50,13 @@ const SEARCH_TABS: SearchTab[] = ['all', 'people', 'echoes', 'topics', 'tools'];
 const HEADER_SEARCH_HEIGHT = 52;
 const HEADER_TITLE_GAP = 12;
 const HEADER_BOTTOM_PAD = 14;
+/**
+ * How far the header's fade reaches into the page; both lists start below it.
+ * The default 36, plus a section's own top margin, left about 70pt of empty
+ * page between the search field and the first row (iPhone, 2026-11-27). The bar
+ * itself is solid now, so a short fade is enough to soften its edge.
+ */
+const EXPLORE_FADE = 20;
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -155,7 +132,7 @@ export default function SearchScreen() {
   const discovery = useMemo(() => groupDiscovery(feed, interests, followingIds), [feed, followingIds, interests]);
   const { data: remoteSuggested } = useSuggestedUsers();
   const suggestedUsers = (remote ? (remoteSuggested ?? []) : users).slice(0, layout.isWide ? 6 : 4);
-  const topTopics = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(label => ({ topic: label, count: 0 }));
+  const topTopics: { topic: string; count: number; cover?: string; coverVideo?: string }[] = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(label => ({ topic: label, count: 0 }));
   // Derived from the pieces the header actually contains rather than guessed.
   // The old constants (112, or 86 on desktop) were smaller than their own
   // content — ~130pt of title plus a 52pt search field inside a 112pt box with
@@ -169,9 +146,6 @@ export default function SearchScreen() {
   const headerHeight = measuredHeaderHeight || estimatedHeaderHeight;
   // iPad is not `isDesktop` (that flag is web-only), so it was falling through
   // to the phone's 2-up grid and rendering ~660pt-wide tiles holding one glyph.
-  const trendingColumns = layout.isDesktop ? 4 : layout.isWide ? 3 : 2;
-  const tileGap = 10;
-  const tileWidth = Math.floor((layout.wideContentWidth - layout.gutter * 2 - tileGap * (trendingColumns - 1)) / trendingColumns);
   const hasAnyResult = searchBuckets.userMatches.length > 0 ||
     searchBuckets.echoMatches.length > 0 ||
     searchBuckets.topicMatches.length > 0 ||
@@ -223,7 +197,7 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false}
           // Start below the glass header's fade, not inside it: content at rest
           // under the fade renders blurred (2026-09-30 audit).
-          contentContainerStyle={{ paddingTop: headerHeight + EDGE_GLASS_FADE, paddingBottom: layout.bottomChromePadding }}
+          contentContainerStyle={{ paddingTop: headerHeight + EXPLORE_FADE, paddingBottom: layout.bottomChromePadding }}
           refreshControl={
             <RefreshControl
               refreshing={pulling}
@@ -236,7 +210,7 @@ export default function SearchScreen() {
           <View style={layout.wideContentStyle}>
             {recentSearches.length > 0 && (
               <View style={{ marginBottom: 16 }}>
-                <SectionHeader label={t('explore.recent')} actionLabel={t('explore.clear')} onAction={() => setRecentSearches([])} />
+                <SectionHeader first label={t('explore.recent')} actionLabel={t('explore.clear')} onAction={() => setRecentSearches([])} />
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -249,22 +223,22 @@ export default function SearchScreen() {
               </View>
             )}
 
-            <SectionHeader label={t('explore.browseTopics')} />
-            <View style={{ paddingHorizontal: layout.gutter, flexDirection: 'row', flexWrap: 'wrap', gap: tileGap, marginBottom: 18 }}>
-              {topTopics.slice(0, 8).map(item => {
-                const visual = resolveTopicVisual(item.topic);
-                return (
-                  <TopicTile
-                    key={item.topic}
-                    label={formatTopicLabel(item.topic)}
-                    count={item.count}
-                    color={visual.color}
-                    width={tileWidth}
-                    Icon={visual.Icon}
-                    onPress={() => setQuery(item.topic)}
-                  />
-                );
-              })}
+            <SectionHeader first={recentSearches.length === 0} label={t('explore.browseTopics')} />
+            {/* A list, like the people below it. A 2x4 grid of big tiles
+                oversold topics that mostly have one post, and six of them
+                were the same coloured # (owner: "not production quality",
+                2026-11-27). */}
+            <View style={{ marginBottom: 18 }}>
+              {topTopics.slice(0, 6).map(item => (
+                <TopicRow
+                  key={item.topic}
+                  label={formatTopicLabel(item.topic)}
+                  count={item.count}
+                  cover={item.cover}
+                  coverVideo={item.coverVideo}
+                  onPress={() => setQuery(item.topic)}
+                />
+              ))}
             </View>
 
             {remote && (
@@ -281,7 +255,9 @@ export default function SearchScreen() {
             {suggestedUsers.length > 0 && (
               <>
                 <SectionHeader label={t('explore.peopleToStart')} />
-                <View style={{ paddingHorizontal: layout.gutter, marginBottom: 36 }}>
+                {/* UserRow carries its own 16pt inset; the container adding the
+                    gutter as well put these rows at 32. */}
+                <View style={{ marginBottom: 36 }}>
                   {suggestedUsers.map(user => (
                     <UserRow key={user.id} user={user} onPress={() => router.push(`/user/${user.id}`)} showFollowButton />
                   ))}
@@ -316,7 +292,7 @@ export default function SearchScreen() {
        * border and a bevel on a bar whose other three sides are off-screen, so
        * it read as a slab with a hard line under it. EdgeGlass fades the blur
        * out into the content instead — the tab bar and home header do the same. */}
-      <EdgeGlass edge="top" height={headerHeight} style={{ zIndex: 10 }}>
+      <EdgeGlass edge="top" height={headerHeight} fadeLength={EXPLORE_FADE} style={{ zIndex: 10 }}>
           <View
             onLayout={event => {
               const next = Math.ceil(event.nativeEvent.layout.height);
@@ -386,7 +362,7 @@ function SearchResults({
       contentContainerStyle={[layout.wideContentStyle, {
         // Below the glass header's fade: the result chips used to sit inside it
         // and render as unreadable smudges.
-        paddingTop: headerHeight + EDGE_GLASS_FADE + 4,
+        paddingTop: headerHeight + EXPLORE_FADE + 4,
         paddingHorizontal: layout.gutter,
         paddingBottom: layout.bottomChromePadding,
       }]}
@@ -489,77 +465,68 @@ function SearchResults({
   );
 }
 
-function TopicTile({
+function TopicRow({
   label,
   count,
-  color,
-  width,
-  Icon,
+  cover,
+  coverVideo,
   onPress,
 }: {
   label: string;
   count: number;
-  color: string;
-  width: number;
-  Icon: React.ComponentType<any>;
+  cover?: string;
+  coverVideo?: string;
   onPress: () => void;
 }) {
   const { colors, font, fontSizes } = useTheme();
   const { t } = useI18n();
+  const [coverFailed, setCoverFailed] = useState(false);
+  const poster = useVideoPoster(cover ? undefined : coverVideo);
   // Only the four built-in names are translated: other labels are real topics
   // people wrote, which must show as written.
   const shownLabel = CATEGORY_FALLBACKS.includes(label) ? ttx(label) : label;
+  const countLabel = count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : t('explore.startExploring');
+  const picture = cover && !coverFailed ? { uri: cover } : poster;
   return (
-    <Pressable onPress={onPress} style={{ width }}>
-      {/* A background and a border: the tile used to be a tint fading to
-          transparent, which on a black ground gave it no bottom edge at all —
-          it dissolved into the page instead of reading as a card. */}
-      <View style={{
-        minHeight: 104,
-        borderRadius: 20,
-        padding: 14,
-        overflow: 'hidden',
-        backgroundColor: colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.border,
-        justifyContent: 'space-between',
-      }}>
-        <LinearGradient
-          colors={[`${color}2E`, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFill as any}
-          pointerEvents="none"
-        />
-        <View style={{
-          width: 34,
-          height: 34,
-          borderRadius: 12,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: `${color}26`,
-        }}>
-          <Icon color={color} size={19} weight="bold" />
-        </View>
-        <View style={{ marginTop: 14 }}>
-          <Text style={[font.display, { color: colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>
-            {shownLabel}
-          </Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 3 }]}>
-            {count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : t('explore.startExploring')}
-          </Text>
-        </View>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`#${shownLabel}, ${countLabel}`}
+      style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8 }}
+    >
+      <View style={{ width: 46, height: 46, borderRadius: 12, overflow: 'hidden', backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+        {picture ? (
+          <ExpoImage
+            source={picture}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={150}
+            onError={() => setCoverFailed(true)}
+          />
+        ) : (
+          <Text style={[font.display, { color: colors.textMuted, fontSize: 22, lineHeight: 26 }]} maxFontSizeMultiplier={1} accessible={false}>#</Text>
+        )}
       </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>
+          #{shownLabel}
+        </Text>
+        <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, marginTop: 1 }]} numberOfLines={1}>
+          {countLabel}
+        </Text>
+      </View>
+      <CaretRight color={colors.textMuted} size={ICON_SIZE.sm} />
     </Pressable>
   );
 }
 
 
-function SectionHeader({ label, actionLabel, onAction }: { label: string; actionLabel?: string; onAction?: () => void }) {
+function SectionHeader({ label, actionLabel, onAction, first = false }: { label: string; actionLabel?: string; onAction?: () => void; first?: boolean }) {
   const tracking = useTracking();
   const { colors, font, fontSizes } = useTheme();
   return (
-    <View style={{ paddingHorizontal: 16, marginTop: 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center' }}>
+    <View style={{ paddingHorizontal: 16, marginTop: first ? 4 : 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center' }}>
       <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: tracking(1.4), textTransform: 'uppercase', flex: 1 }]}>
         {label}
       </Text>

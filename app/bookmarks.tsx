@@ -107,7 +107,7 @@ export default function BookmarksScreen() {
       </View>
 
       {loading ? (
-        <View className="pt-2">
+        <View style={{ paddingTop: 8 }}>
           <FeedCardSkeleton />
           <FeedCardSkeleton />
           <FeedCardSkeleton />

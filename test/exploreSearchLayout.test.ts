@@ -20,13 +20,13 @@ describe('Explore search', () => {
   });
 
   it('both lists start below the glass header fade', () => {
-    expect(explore).toMatch(/paddingTop: headerHeight \+ EDGE_GLASS_FADE,/);
-    expect(explore).toMatch(/paddingTop: headerHeight \+ EDGE_GLASS_FADE \+ 4,/);
+    expect(explore).toMatch(/paddingTop: headerHeight \+ EXPLORE_FADE,/);
+    expect(explore).toMatch(/paddingTop: headerHeight \+ EXPLORE_FADE \+ 4,/);
     expect(explore).not.toMatch(/paddingTop: headerHeight(,| \+ 12,)/);
   });
 
-  it('the fade length the lists clear is the one EdgeGlass draws', () => {
-    expect(read('components/ui/EdgeGlass.tsx')).toMatch(/export const EDGE_GLASS_FADE = DEFAULT_FADE;/);
+  it('the fade length the lists clear is the one the header draws', () => {
+    expect(explore).toMatch(/<EdgeGlass edge="top" height=\{headerHeight\} fadeLength=\{EXPLORE_FADE\}/);
   });
 
   it('the search field has an accessible name', () => {

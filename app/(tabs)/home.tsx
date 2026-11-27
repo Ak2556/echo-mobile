@@ -216,14 +216,10 @@ function DailyThought() {
       exiting={FadeOut.duration(180)}
       style={{ marginHorizontal: layout.gutter, marginTop: 12, marginBottom: 32 }}
     >
-      <View style={{ position: 'relative', overflow: 'visible' }}>
-        <LinearGradient
-          colors={[`${colors.accent}15`, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={{ position: 'absolute', top: -20, left: -20, right: -20, bottom: -40 }}
-          pointerEvents="none"
-        />
+      {/* No glow behind the quote. A full-width olive wash read as a band with
+          an edge in dark and as a grey smear on the light page (iPhone,
+          2026-11-27); the quote's own type carries it. */}
+      <View>
         <View style={{ paddingTop: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
@@ -243,7 +239,7 @@ function DailyThought() {
             </Pressable>
           </View>
           <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 20 : 24, lineHeight: layout.isPhone ? 28 : 32 }]}>
-            &quot;{active.text}&quot;
+            {`\u201C${active.text}\u201D`}
           </Text>
         </View>
       </View>
@@ -645,7 +641,7 @@ export default function DiscoverScreen() {
       {/* The daily-question ritual is the north-star action — it leads on an
           engaged home, right under the greeting, before the feed controls. */}
       {dailyQuestionEnabled && !focusedHome && (
-        <Pressable onPress={() => router.push('/daily-question')} style={{ marginHorizontal: 12, marginTop: 4, marginBottom: 6 }}>
+        <Pressable onPress={() => router.push('/daily-question')} style={{ marginHorizontal: layout.gutter, marginTop: 4, marginBottom: 6 }}>
           <View style={{ borderRadius: 20, overflow: 'hidden' }}>
             <LinearGradient
               colors={[BRAND.emberFrom, BRAND.emberTo]}
@@ -684,7 +680,12 @@ export default function DiscoverScreen() {
         </>
       )}
       <View ref={feedTarget.ref} onLayout={feedTarget.onLayout}>
-        {(feedScope !== 'following' || popularItems.length > 0) && <SectionHeader label={focusedHome ? t('home.fromCommunity') : feedScope === 'forYou' ? t('home.topConversations') : feedScopeLabel(feedScope, t)} sub={focusedHome || feedScope !== 'forYou' ? undefined : t('home.liveNow')} icon={<TrendUp color={colors.accent} size={ICON_SIZE.sm} weight="bold" />} />}
+        {/* Trending, Following and Latest are already named by the selected chip
+            right above, so a section label repeating it ("LATEST") is dropped
+            (iPhone, 2026-11-27). For You keeps its own "Top conversations". */}
+        {focusedHome || feedScope === 'forYou'
+          ? <SectionHeader label={focusedHome ? t('home.fromCommunity') : t('home.topConversations')} sub={focusedHome ? undefined : t('home.liveNow')} icon={<TrendUp color={colors.accent} size={ICON_SIZE.sm} weight="bold" />} />
+          : <View style={{ height: 18 }} />}
       </View>
     </View>
   );

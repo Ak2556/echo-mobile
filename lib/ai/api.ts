@@ -49,12 +49,6 @@ export function normalizeEchoAIError(message: string): string {
 
 export type EchoAIModel = 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.5-flash-lite';
 
-// Map the in-app model key to Google models routed through Google AI Studio.
-const AI_MODEL_MAP: Record<EchoAIModel, string> = {
-  'gemini-2.5-flash': 'google/gemini-2.5-flash',
-  'gemini-2.5-pro': 'google/gemini-2.5-pro',
-  'gemini-2.5-flash-lite': 'google/gemini-2.5-flash-lite',
-};
 
 interface StreamArgs {
   message?: string;
@@ -75,7 +69,7 @@ interface StreamArgs {
     result?: any;
     error?: string;
   };
-  /** When set, overrides the default model on the Edge Function side. */
+  /** Ignored: the server always uses its current model (see below). Kept so callers still compile. */
   preferredModel?: EchoAIModel;
   /** Expo Router pathname of the screen the user is currently on (e.g. '/(tabs)/home'). Injected into the system prompt so the AI knows context. */
   currentScreen?: string;
@@ -263,7 +257,6 @@ export async function streamEchoAI({
   conversationId,
   confirm,
   localResult,
-  preferredModel,
   currentScreen,
   personaContext,
   onAbortHandle,
@@ -297,9 +290,10 @@ export async function streamEchoAI({
   if (conversationId) payload.conversation_id = conversationId;
   if (confirm) payload.confirm = confirm;
   if (localResult) payload.local_result = localResult;
-  if (preferredModel && AI_MODEL_MAP[preferredModel]) {
-    payload.preferred_model = AI_MODEL_MAP[preferredModel];
-  }
+  // No preferred_model. The picker offered 2.5 Flash, Pro and Flash Lite, but
+  // Google retired the first two on 2026-11-19 and echo-ai quietly answered
+  // them with its current model (chatModel()), so the setting named a model
+  // nobody got. The server picks; the app no longer offers a choice.
   if (mode) payload.mode = mode;
   if (currentScreen) payload.current_screen = currentScreen;
   if (personaContext) payload.persona_context = personaContext.slice(0, 2800);

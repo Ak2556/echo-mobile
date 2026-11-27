@@ -142,19 +142,46 @@ export function evaluatePublishChecklist(input: {
   };
 }
 
-export function deriveTopicFeed(feed: FeedItem[]) {
+/**
+ * The most-used topics in a feed, each with the first photo posted under it.
+ *
+ * The photo is what Explore's topic tile shows: a picture people actually
+ * posted says what "Himachal" is about better than any icon could, and the tiles
+ * stop looking alike (2026-11-27).
+ */
+export function deriveTopicFeed(feed: FeedItem[]): { topic: string; count: number; cover?: string; coverVideo?: string }[] {
   if (!Array.isArray(feed)) return [];
   const counts = new Map<string, number>();
+  const photos = new Map<string, string[]>();
+  const videos = new Map<string, string>();
+  const remote = (uri?: string) => (uri && /^https?:\/\//i.test(uri) ? uri : undefined);
   feed.forEach(item => {
+    const photo = remote(item.mediaUris?.[0]);
+    const video = remote(item.videoUri);
     inferTopics(item).forEach(topic => {
       counts.set(topic, (counts.get(topic) ?? 0) + 1);
+      if (photo) photos.set(topic, [...(photos.get(topic) ?? []), photo]);
+      if (video && !videos.has(topic)) videos.set(topic, video);
     });
   });
 
+  // One post often carries several tags, so its photo would cover all of them:
+  // three tiles side by side wearing the same rose. Each photo covers one topic
+  // at most; a topic left without one is drawn in type instead.
+  const used = new Set<string>();
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .map(([topic, count]) => ({ topic, count }))
-    .slice(0, 8);
+    .slice(0, 8)
+    .map(([topic, count]) => {
+      const cover = (photos.get(topic) ?? []).find(uri => !used.has(uri));
+      if (cover) used.add(cover);
+      // No photo: a frame from one of its videos, when that video is not
+      // already standing in for another topic.
+      const video = cover ? undefined : videos.get(topic);
+      const coverVideo = video && !used.has(video) ? video : undefined;
+      if (coverVideo) used.add(coverVideo);
+      return { topic, count, cover, coverVideo };
+    });
 }
 
 export function groupDiscovery(feed: FeedItem[], interests: string[], followingIds: string[]) {

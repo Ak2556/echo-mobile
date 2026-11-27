@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Text } from 'react-native';
@@ -51,15 +52,19 @@ describe('EdgeGlass', () => {
     expect(screen.getByText('Echo')).toBeTruthy();
   });
 
-  // One blur layer, not a stacked ramp (owner request 2026-10-01: a single,
-  // more transparent layer).
-  it('draws a single blur layer on the shader tier', () => {
-    const { container } = render(
-      <EdgeGlass edge="bottom" height={90}>
-        <Text>Tabs</Text>
-      </EdgeGlass>,
-    );
-    expect(blurLayers(container)).toHaveLength(1);
+  // 2026-11-27: the tab bar went solid like the header. A blur under a solid
+  // wash is GPU spent on nothing anyone can see.
+  it('draws the tab bar solid, with no glass under it', () => {
+    for (const tier of ['shader', 'blur'] as const) {
+      profile.surfaceTier = tier;
+      const { container, unmount } = render(
+        <EdgeGlass edge="bottom" height={90}>
+          <Text>Tabs</Text>
+        </EdgeGlass>,
+      );
+      expect(blurLayers(container)).toHaveLength(0);
+      unmount();
+    }
   });
 
   // 2026-11-25: Home's quote read as grey text behind the wordmark through a 0.9 wash.
@@ -71,16 +76,6 @@ describe('EdgeGlass', () => {
     );
     expect(blurLayers(container)).toHaveLength(0);
     expect(screen.getByText('Echo')).toBeTruthy();
-  });
-
-  it('draws a single blur layer on the blur tier', () => {
-    profile.surfaceTier = 'blur';
-    const { container } = render(
-      <EdgeGlass edge="bottom" height={90}>
-        <Text>Tabs</Text>
-      </EdgeGlass>,
-    );
-    expect(blurLayers(container)).toHaveLength(1);
   });
 
   it('draws no blur at all on the solid tier', () => {
@@ -97,31 +92,24 @@ describe('EdgeGlass', () => {
     expect(screen.getByText('Tabs')).toBeTruthy();
   });
 
-  it('falls back to the blur ramp when iOS 26 glass is absent', () => {
-    // Android and every iOS below 26 take this path, which is nearly everyone.
-    const { container } = render(
-      <EdgeGlass edge="bottom" height={90}>
-        <Text>Tabs</Text>
-      </EdgeGlass>,
-    );
-    expect(container.querySelector('[data-glass-style]')).toBeNull();
-    expect(blurLayers(container).length).toBeGreaterThan(0);
-  });
 });
 
 describe('glassWash', () => {
-  it('washes the tab bar enough that muted icons survive a dark photo', () => {
-    expect(glassWash('bottom', true, false)).toBeGreaterThanOrEqual(0.5);
-    expect(glassWash('bottom', true, true)).toBeGreaterThanOrEqual(0.4);
-  });
-
-  it('makes the header bar solid in every theme, blurred or not', () => {
-    for (const blurred of [true, false]) {
-      for (const dark of [true, false]) expect(glassWash('top', blurred, dark)).toBe(1);
+  // 2026-11-27: a translucent tab bar let a name and a Follow button read
+  // through behind the icons at every value tried (0.45, 0.85, 0.92).
+  it('makes both bars solid in every theme, blurred or not', () => {
+    for (const edge of ['top', 'bottom'] as const) {
+      for (const blurred of [true, false]) {
+        for (const dark of [true, false]) expect(glassWash(edge, blurred, dark)).toBe(1);
+      }
     }
   });
+});
 
-  it('keeps the tab bar nearly solid when nothing blurs', () => {
-    expect(glassWash('bottom', false, true)).toBe(0.96);
+// 2026-11-27: in light themes the header was pure white over an off-white page.
+describe('EdgeGlass base colour', () => {
+  it('is the page colour, not a fixed white', () => {
+    const src = readFileSync('components/ui/EdgeGlass.tsx', 'utf8');
+    expect(src).toMatch(/const base = tone === 'dark' \? '#000000' : colors\.bg;/);
   });
 });

@@ -13,6 +13,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { destinationFor, summaryTextFor } from '../../lib/notifications/presentation';
+import { groupNotifications as collapseRepeats } from '../../lib/notifications/grouping';
 import { resolveTapRoute, tapRoute } from '../../lib/notifications/tapTarget';
 import { echoIsVideo } from '../../lib/notifications/echoIsVideo';
 import { NOTIFICATION_FILTERS, matchesFilter, type NotificationFilter } from '../../lib/notifications/filters';
@@ -132,34 +133,7 @@ export default function NotificationsScreen() {
       .filter(n => n.type !== 'dm')
       .filter(n => !mutedIds.includes(n.fromUserId))
       .filter(n => matchesFilter(n, filter));
-    type Bucket = { key: string; notifications: Notification[] };
-    const buckets = new Map<string, Bucket>();
-    for (const n of visible) {
-      // Reactions and the preview field together, so distinct reactions on
-      // the same echo remain in separate buckets.
-      const subkey = n.type === 'reaction' ? `${n.targetId ?? n.fromUserId}:${n.targetPreview ?? ''}` : (n.targetId ?? n.fromUserId);
-      const k = `${n.type}:${subkey}`;
-      const b = buckets.get(k) ?? { key: k, notifications: [] };
-      b.notifications.push(n);
-      buckets.set(k, b);
-    }
-    // Newest first by latest createdAt within bucket.
-    return Array.from(buckets.values())
-      .map(b => ({ ...b, latest: b.notifications.reduce((acc, x) => x.createdAt > acc ? x.createdAt : acc, b.notifications[0].createdAt) }))
-      .sort((a, b) => b.latest.localeCompare(a.latest))
-      .flatMap(b => {
-        const sample = b.notifications[0];
-        if (b.notifications.length === 1) return [sample];
-        // Synthesize a grouped notification preserving the most-recent metadata.
-        // groupCount drives the +N pill in the row UI so the collapsed
-        // count is visible at a glance.
-        const others = b.notifications.length - 1;
-        return [{
-          ...sample,
-          groupCount: b.notifications.length,
-          targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${summaryTextFor(sample.type, sample.targetPreview)}`,
-        }];
-      });
+    return collapseRepeats(visible);
   }, [notifications, mutedIds, filter]);
 
   // Wide layouts (tablet/desktop) lay notifications out in a 2-column grid at

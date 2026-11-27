@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import {
   PencilSimple, Envelope, SealCheck, BellSlash, Archive,
   CaretDown, CaretRight, Users, X, MagnifyingGlass, Check, PushPin,
-  ChatCircleText, Lightning, Camera, LinkSimple, Microphone,
+  ChatCircleText, Lightning, Camera, LinkSimple, Microphone, LockSimple,
 } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -27,7 +27,7 @@ import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { useCreateGroupConversation, useRemoteConversations, useSetDMPref } from '../../hooks/queries/useDMs';
 import { usePresence } from '../../lib/social/presence';
 import { ConversationSkeleton } from '../../components/ui/Skeleton';
-import { RemoteConversation, searchRemoteUsers, UserSearchHit, fetchNetworkAuras, publishAura } from '../../lib/supabaseEchoApi';
+import { RemoteConversation, searchRemoteUsers, UserSearchHit, fetchNetworkAuras, publishAura, SEALED_PREVIEW } from '../../lib/supabaseEchoApi';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { safeBack } from '../../lib/routing/safeBack';
 import { ttx } from '../../lib/i18n/i18n';
@@ -48,6 +48,8 @@ function getTimeAgo(dateStr: string): string {
 }
 
 type InboxConversation = Conversation & {
+  /** text, image, voice, link or echo: decides the icon in the preview line. */
+  lastKind?: string | null;
   muted?: boolean;
   archived?: boolean;
   markedUnread?: boolean;
@@ -57,14 +59,17 @@ type InboxConversation = Conversation & {
 
 type InboxFilter = 'all' | 'unread' | 'people' | 'groups' | 'pinned';
 
-function previewMeta(conversation: InboxConversation): { label: string; icon: React.ReactNode } {
-  const text = conversation.lastMessage || '';
-  const lower = text.toLowerCase();
-  if (lower.includes('photo')) return { label: 'Photo', icon: null };
-  if (lower.includes('voice')) return { label: 'Voice', icon: null };
-  if (lower.includes('link')) return { label: 'Link', icon: null };
-  if (conversation.isGroup) return { label: `${conversation.memberCount ?? 1} members`, icon: null };
-  return { label: text || `@${conversation.username}`, icon: null };
+/**
+ * One line: an icon for what the last message was, then its text. It used to
+ * be a label, a "·", the message and a second line holding the same icon, so a
+ * photo read "Photo · 📷 Photo" with a camera under it.
+ */
+function previewLine(conversation: InboxConversation): { text: string; kind: 'image' | 'voice' | 'link' | 'sealed' | null } {
+  const text = conversation.lastMessage || (conversation.isGroup ? `${conversation.memberCount ?? 1} members` : `@${conversation.username}`);
+  const k = conversation.lastKind;
+  const kind = k === 'image' ? 'image' : k === 'voice' ? 'voice' : k === 'link' ? 'link'
+    : conversation.lastMessage === SEALED_PREVIEW ? 'sealed' : null;
+  return { text, kind };
 }
 
 function CreateGroupModal({
@@ -250,13 +255,13 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
   const { colors, fontSizes, showAvatars, animation, isUserOnline } = useTheme();
   const online = !conversation.isGroup && isUserOnline(conversation.userId);
   const showUnread = (conversation.unreadCount > 0 || !!conversation.markedUnread) && !conversation.muted;
-  const meta = previewMeta(conversation);
+  const line = previewLine(conversation);
   const draft = persistGet<string>('chat:draft:' + conversation.id, '').trim();
-  const preview = draft
-    ? `Draft · ${draft}`
-    : conversation.isGroup && conversation.lastMessage
-    ? `${meta.label} · ${conversation.lastMessage}`
-    : meta.label;
+  const preview = draft ? `Draft · ${draft}` : line.text;
+  const iconColor = colors.textMuted;
+  const PreviewIcon = draft ? null
+    : line.kind === 'image' ? Camera : line.kind === 'voice' ? Microphone
+    : line.kind === 'link' ? LinkSimple : line.kind === 'sealed' ? LockSimple : null;
 
   return (
     <Animated.View entering={animation(FadeIn.delay(index * 20).duration(80))}>
@@ -283,7 +288,6 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
               url={conversation.isGroup ? undefined : conversation.avatarUrl}
               size={50}
               online={online}
-              squircle
             >
               {conversation.isGroup ? <Users color={ON_MEDIA} size={ICON_SIZE.md} weight="fill" /> : undefined}
             </Avatar>
@@ -305,31 +309,19 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
             {conversation.isGroup && <Users color={colors.textMuted} size={ICON_SIZE.xs} weight="fill" />}
             {pinned && <PushPin color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
           </View>
-          <Text
-            style={{
-              fontSize: fontSizes.small, marginTop: 2,
-              color: draft ? colors.accent : showUnread ? colors.textSecondary : colors.textMuted,
-              fontWeight: draft || showUnread ? '700' : '400',
-            }}
-            numberOfLines={1}
-          >
-            {preview}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-            }}>
-              {conversation.lastMessage.toLowerCase().includes('photo')
-                ? <Camera color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
-                : conversation.lastMessage.toLowerCase().includes('voice')
-                  ? <Microphone color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
-                  : conversation.lastMessage.toLowerCase().includes('link')
-                    ? <LinkSimple color={colors.textMuted} size={ICON_SIZE.xs} weight="bold" />
-                    : null
-              }
-            </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
+            {PreviewIcon ? <PreviewIcon color={iconColor} size={ICON_SIZE.xs} weight="bold" /> : null}
+            <Text
+              style={{
+                flexShrink: 1,
+                fontSize: fontSizes.small,
+                color: draft ? colors.accent : showUnread ? colors.textSecondary : colors.textMuted,
+                fontWeight: draft || showUnread ? '700' : '400',
+              }}
+              numberOfLines={1}
+            >
+              {preview}
+            </Text>
           </View>
         </View>
 
@@ -596,15 +588,21 @@ export function AurasRow() {
   };
 
   return (
-    <View style={{ paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.surface }}>
+    // On the page, not on a grey band of its own with hard edges above and below.
+    <View style={{ paddingVertical: 4 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, paddingTop: 16, paddingBottom: 8 }}>
+        {/* Your own name and photo. It was passed the literal name "Me", so the
+            circle showed an "M" and never your picture. */}
         <StatusAvatar
-          name="Me" color={myProfile?.avatarColor || colors.accent} isMe
+          name={myProfile?.displayName || myProfile?.username || 'Me'}
+          color={myProfile?.avatarColor || colors.accent}
+          url={myProfile?.profilePhotoVisible ? myProfile?.avatarUrl || undefined : undefined}
+          isMe
           aura={remote ? myAuraObj : localMyAura}
           onPress={() => setModalOpen(true)}
         />
         {othersAuras.map((a) => (
-          <StatusAvatar key={a.user_id} name={a.name} color={a.color} aura={a} onPress={() => setViewingAura(a)} />
+          <StatusAvatar key={a.user_id} name={a.name} color={a.color} url={a.avatar_url ?? undefined} aura={a} onPress={() => setViewingAura(a)} />
         ))}
         {!remote && (
           <>
@@ -618,7 +616,7 @@ export function AurasRow() {
       <Modal visible={!!viewingAura} animationType="fade" transparent onRequestClose={() => setViewingAura(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setViewingAura(null)}>
           <View style={{ alignItems: 'center', gap: 16 }}>
-            <Avatar name={viewingAura?.name ?? '?'} color={viewingAura?.color} size={100} />
+            <Avatar name={viewingAura?.name ?? '?'} color={viewingAura?.color} url={viewingAura?.avatar_url ?? undefined} size={100} />
             <Text style={{ color: ON_MEDIA, fontSize: 24, fontWeight: 'bold' }}>{viewingAura?.name}</Text>
             {viewingAura?.text_content || viewingAura?.aura?.text_content ? (
               <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 24 }}>
@@ -722,6 +720,7 @@ export default function MessagesListScreen() {
         avatarUrl: rc.otherAvatarUrl ?? undefined,
         isVerified: false,
         lastMessage: rc.lastMessage ?? '',
+        lastKind: rc.lastMessageKind,
         lastMessageAt: rc.lastMessageAt ?? new Date().toISOString(),
         unreadCount: rc.unreadCount,
         muted: rc.muted,
@@ -847,7 +846,7 @@ export default function MessagesListScreen() {
   if (remote && remoteLoading) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
           <BackButton fallback={'/(tabs)/chat'} />
           <View style={{ flex: 1, alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: radius.full }}>
@@ -860,10 +859,10 @@ export default function MessagesListScreen() {
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <AnimatedPressable onPress={() => setGroupModalOpen(true)} className="p-1" scaleValue={0.88} haptic="light">
+            <AnimatedPressable style={{ padding: 4 }} onPress={() => setGroupModalOpen(true)} scaleValue={0.88} haptic="light">
               <Users color={colors.accent} size={22} weight="bold" />
             </AnimatedPressable>
-            <AnimatedPressable onPress={() => openRoute('/(tabs)/explore')} className="p-1" scaleValue={0.88} haptic="light">
+            <AnimatedPressable style={{ padding: 4 }} onPress={() => openRoute('/(tabs)/explore')} scaleValue={0.88} haptic="light">
               <PencilSimple color={colors.accent} size={22} />
             </AnimatedPressable>
           </View>
@@ -920,14 +919,9 @@ export default function MessagesListScreen() {
               onFilterChange={setFilter}
               counts={counts}
             />
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 4, paddingBottom: 6 }}>
-              <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>
-                {filter === 'all' ? 'Recent conversations' : `${filter[0].toUpperCase()}${filter.slice(1)} conversations`}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, fontWeight: '700' }}>
-                {filteredActive.length} {ttx("shown")}
-              </Text>
-            </View>
+            {/* No "Recent conversations · 9 shown" heading: the selected chip
+                above already names the list, and the count told nobody anything. */}
+            <View style={{ height: 6 }} />
           </View>
         )}
         ListEmptyComponent={(

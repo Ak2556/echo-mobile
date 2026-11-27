@@ -61,17 +61,16 @@ export default function FollowersScreen() {
     <ResponsiveScreen>
       <ScreenHeader title={ttx("Connections")} />
 
-      <View className="flex-row" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+      <View style={[{ flexDirection: 'row' }, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
         {(['followers', 'following'] as const).map(tab => (
           <AnimatedPressable
             key={tab}
             onPress={() => setActiveTab(tab)}
             performanceMode="hot"
-            className="flex-1 py-3 items-center"
-            style={{
+            style={[{ flex: 1, paddingVertical: 12, alignItems: 'center' }, {
               borderBottomWidth: 2,
               borderBottomColor: activeTab === tab ? colors.accent : 'transparent',
-            }}
+            }]}
             scaleValue={0.97}
             haptic="light"
           >
@@ -89,7 +88,7 @@ export default function FollowersScreen() {
       </View>
 
       {loading ? (
-        <View className="pt-2">
+        <View style={{ paddingTop: 8 }}>
           <UserRowSkeleton />
           <UserRowSkeleton />
           <UserRowSkeleton />

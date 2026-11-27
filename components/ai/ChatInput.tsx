@@ -114,7 +114,7 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
           }, inputShellStyle]}
         >
           <TextInput
-            placeholder={isLoading ? ttx('Responding...') : ttx('Message Echo...')}
+            placeholder={isLoading ? ttx('Responding…') : ttx('Message Echo…')}
             value={text}
             onChangeText={updateText}
             onFocus={() => { focus.value = withSpring(1, MOTION.snap); }}

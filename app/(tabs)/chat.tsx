@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { EdgeGlass } from '../../components/ui/EdgeGlass';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import { MessageBubble, Message } from '../../components/ai/MessageBubble';
 import { ChatInput } from '../../components/ai/ChatInput';
@@ -18,7 +17,6 @@ import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
-import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
 import { streamEchoAI, isRateLimitError } from '../../lib/ai/api';
 import { speak } from '../../lib/mini-apps/tts';
 import { isLocalTool, LocalToolContext } from '../../lib/ai/localTools';
@@ -32,7 +30,7 @@ import { useTheme } from '../../lib/ui/theme';
 import { useTracking } from '../../lib/ui/tracking';
 import { Avatar } from '../../components/ui/Avatar';
 import { wantsToPost } from '../../lib/ai/postIntent';
-import { Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
+import { List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/feed/publishContext';
 import { track } from '../../lib/core/analytics';
@@ -46,7 +44,6 @@ import type { Conversation } from '../../types';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { getTargetCategory } from '../../lib/retention/targetCategories';
 import { miniAppById } from '../../lib/mini-apps/miniAppCatalog';
-import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { persistGet } from '../../store/persist';
 import { assistantLanguageInstruction } from '../../lib/i18n/languages';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
@@ -54,11 +51,6 @@ import type { AiMode } from '../../supabase/functions/echo-ai/mode';
 import { ON_MEDIA } from '../../lib/ui/fixedColors';
 
 
-function modelLabel(model: string): string {
-  if (model.includes('pro')) return 'Pro';
-  if (model.includes('lite')) return 'Lite';
-  return 'Flash';
-}
 
 
 
@@ -147,7 +139,6 @@ function ChatEmptyLaunchpad({
   const layout = useResponsiveLayout();
   const router = useRouter();
   const toolApps = targetAppIds.map(id => miniAppById(id)).filter(Boolean).slice(0, 3);
-  const firstTool = toolApps[0];
   const quickActions = [
     {
       key: 'target',
@@ -167,21 +158,20 @@ function ChatEmptyLaunchpad({
       key: 'tools',
       title: t('chat.openTools'),
       subtitle: toolApps.map(app => app?.name).filter(Boolean).join(' · ') || t('chat.miniApps'),
-      icon: firstTool ? <MiniAppIcon id={firstTool.id} color={firstTool.color} size={30} /> : <SquaresFour color={colors.accent} size={ICON_SIZE.md} weight="bold" />,
+      // The same accent glyph as the rows above it. A tool's own coloured icon
+      // here was a red tile among olive outlines.
+      icon: <SquaresFour color={colors.accent} size={ICON_SIZE.md} weight="bold" />,
       onPress: () => router.push('/(tabs)/apps' as Href),
     },
   ];
 
   return (
     <View style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingTop: layout.isPhone ? 12 : 18, paddingBottom: 28, gap: 14 }]}>
-      <View style={{ position: 'relative', overflow: 'visible', marginHorizontal: 4 }}>
-        <LinearGradient
-          colors={[`${colors.accent}20`, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={{ position: 'absolute', top: -30, left: -20, right: -20, bottom: -50 }}
-          pointerEvents="none"
-        />
+      {/* No inset of its own: the 4pt it had put the chips at 20 while the
+          action cards below start at 16 (iPhone, 2026-11-27). */}
+      {/* No glow behind the greeting: on the light page it was a grey smear with
+          an edge under the header (iPhone, 2026-11-27). */}
+      <View>
         <View style={{ paddingTop: 12, gap: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 13 }}>
             <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: `${colors.accent}15`, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
@@ -265,7 +255,7 @@ function ChatEmptyLaunchpad({
               <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]} numberOfLines={1}>{action.title}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
             </View>
-            {action.key === 'target' ? <ChartLineUp color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" /> : <ArrowUpRight color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />}
+            <ArrowUpRight color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />
           </Pressable>
         ))}
       </View>
@@ -287,7 +277,6 @@ export default function ChatScreen() {
   const { t } = useI18n();
   const showTyping = useAppStore(s => s.showTypingIndicator);
   const aiModel = useAppStore(s => s.aiModel);
-  const setAiModel = useAppStore(s => s.setAiModel);
   const sessions = useAppStore(s => s.sessions);
   const currentSessionId = useAppStore(s => s.currentSessionId);
   const conversationIdBySession = useAppStore(s => s.conversationIdBySession);
@@ -370,7 +359,6 @@ export default function ChatScreen() {
   const [streamingMsgId, setStreamingMsgId] = useState<string | null>(null);
   const [showActionCenter, setShowActionCenter] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [draft, setDraft] = useState('');
 
   // Voice dictation lands in the box, not in the thread. A mis-transcription
@@ -871,9 +859,6 @@ export default function ChatScreen() {
     />
   ) : null;
 
-  // modelActions previously rendered via generic ActionSheet — replaced
-  // by ModelPickerSheet (richer rows with icons + taglines + active state).
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView
@@ -996,7 +981,6 @@ export default function ChatScreen() {
                   {hasExchange && !showShareNudge && !isStreaming ? (
                     <HeaderActionButton icon={ArrowUpRight} label={ttx('Share as Echo')} onPress={handleShare} />
                   ) : null}
-                  <HeaderActionButton icon={Lightning} tone="accent" label={`${ttx('AI model')}: ${modelLabel(aiModel)}`} onPress={() => setModelSheetOpen(true)} />
                   <HeaderAddButton onPress={handleNewChat} label={ttx('New chat')} />
                 </View>
               </View>
@@ -1038,12 +1022,6 @@ export default function ChatScreen() {
         initialValue={editTarget?.content ?? ''}
         onCancel={() => setEditTarget(null)}
         onSubmit={handleEditSubmit}
-      />
-      <ModelPickerSheet
-        visible={modelSheetOpen}
-        onClose={() => setModelSheetOpen(false)}
-        selected={aiModel}
-        onSelect={setAiModel}
       />
     </View>
   );

@@ -741,7 +741,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         }}
       >
         {item.repostedByUsername && (
-          <View className="flex-row items-center mb-2 ml-1 gap-1.5">
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
             <ArrowsClockwise color={colors.textMuted} size={ICON_SIZE.xs} />
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.repostedByUsername} re-echoed</Text>
           </View>
@@ -773,7 +773,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
           </Pressable>
         )}
 
-        <View className={`flex-row items-center ${compactFeed ? 'mb-2' : 'mb-3'}`} style={{ gap: 0 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: compactFeed ? 8 : 12, gap: 0 }}>
           {showAvatars && (
             <AnimatedPressable
               onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
@@ -793,8 +793,8 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
                 />
               ) : (
                 <View
-                  className={`${compactFeed ? 'w-7 h-7' : 'w-9 h-9'} rounded-full items-center justify-center mr-3`}
-                  style={{ backgroundColor: warmAvatarColor(item.avatarColor, item.username), borderWidth: 1.5, borderColor: `${canvasTint}66` }}
+                  // Same size as the photo above (was 28/36 against the photo's 30/40).
+                  style={{ width: compactFeed ? 30 : 40, height: compactFeed ? 30 : 40, borderRadius: compactFeed ? 15 : 20, alignItems: 'center', justifyContent: 'center', marginRight: 12, backgroundColor: warmAvatarColor(item.avatarColor, item.username), borderWidth: 1.5, borderColor: `${canvasTint}66` }}
                 >
                   <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
                     {(item.displayName || item.username).charAt(0).toUpperCase()}
@@ -805,13 +805,12 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
           )}
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
-            className="flex-1"
             depth="soft"
             haptic="none"
             performanceMode="hot"
-            style={{ minWidth: 0 }}
+            style={[{ flex: 1 }, { minWidth: 0 }]}
           >
-            <View className="flex-row items-center gap-1" style={{ minWidth: 0 }}>
+            <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 4 }, { minWidth: 0 }]}>
               <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: -0.3, flexShrink: 1 }]} numberOfLines={1}>{item.displayName || item.username}</Text>
               {item.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.xs} weight="fill" />}
               <RankMark userId={item.userId} size={14} />
@@ -973,7 +972,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         )}
 
         {!compactFeed && item.hashtags && item.hashtags.length > 0 && (
-          <View className="flex-row flex-wrap gap-1.5 mb-3">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
             {item.hashtags.slice(0, 3).map(tag => (
               <Pressable
                 key={tag}

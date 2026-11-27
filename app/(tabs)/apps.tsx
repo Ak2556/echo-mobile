@@ -67,7 +67,10 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
   const { t } = useI18n();
   // Clean app-grid tile: one big icon + its name. Uniform by construction (every
   // tile is icon + a single-line label), so the grid stays perfectly even.
-  const iconSize = Math.min(100, Math.max(50, Math.round(width * 0.58)));
+  // Two columns of 100pt icons read as a phone home screen blown up, with each
+  // label nearly touching the icon under it (iPhone, 2026-11-27). Three columns
+  // at about 64pt, with room between rows.
+  const iconSize = Math.min(72, Math.max(50, Math.round(width * 0.5)));
   return (
     <Animated.View
       entering={FadeInDown.delay(Math.min(index, 10) * 20).duration(220).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
@@ -77,15 +80,21 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
         onPress={() => onOpen(app)}
         accessibilityRole="button"
         accessibilityLabel={`${t('common.open')} ${ttx(app.name)}`}
-        style={({ pressed }) => ({ width: '100%', alignItems: 'center', gap: 10, paddingVertical: 12, transform: [{ scale: pressed ? 0.92 : 1 }] })}
+        style={{ width: '100%' }}
       >
-        <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
-        <Text
-          style={{ alignSelf: 'stretch', color: colors.text, fontSize: 17, ...font.bodySemibold, textAlign: 'center', lineHeight: 20 }}
-          numberOfLines={1}
-        >
-          {ttx(app.name)}
-        </Text>
+        {/* Layout on an inner View: a style *function* on a Pressable drops its
+            padding in Release, which is why the rows had no space between them. */}
+        {({ pressed }) => (
+          <View style={{ width: '100%', alignItems: 'center', gap: 8, paddingTop: 6, paddingBottom: 14, transform: [{ scale: pressed ? 0.92 : 1 }] }}>
+            <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
+            <Text
+              style={{ alignSelf: 'stretch', color: colors.text, fontSize: 13.5, ...font.bodyMedium, textAlign: 'center', lineHeight: 18 }}
+              numberOfLines={1}
+            >
+              {ttx(app.name)}
+            </Text>
+          </View>
+        )}
       </Pressable>
     </Animated.View>
   );
@@ -171,7 +180,9 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
           )}
         </View>
         {targetApps.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          // Wrapped, not a sideways scroll: inside the card's padding a scrolling
+          // row was cut mid-chip at the card edge ("N…", iPhone, 2026-11-27).
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {targetApps.slice(0, 4).map(app => (
               <Pressable key={app.id} onPress={() => onOpen(app)} accessibilityRole="button" accessibilityLabel={ttx('Open {name}').replace('{name}', ttx(app.name))}>
                 <View style={{ height: 38, borderRadius: radius.full, paddingLeft: 6, paddingRight: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
@@ -180,7 +191,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
                 </View>
               </Pressable>
             ))}
-          </ScrollView>
+          </View>
         )}
       </View>
     </View>
@@ -215,7 +226,7 @@ export default function AppsScreen() {
   const HEADER_HEIGHT = insets.top + (layout.isPhone ? 88 : 98);
   const PAD = layout.gutter;
   const contentMaxWidth = Math.min(windowWidth, layout.isDesktop ? 980 : layout.wideMaxWidth);
-  const columns = layout.isDesktop ? 6 : layout.isTablet ? 4 : 2;
+  const columns = layout.isDesktop ? 6 : layout.isTablet ? 4 : 3;
   const cardWidth = Math.floor((contentMaxWidth - PAD * 2 - GAP * (columns - 1)) / columns);
 
   const scrollY = useSharedValue(0);
@@ -304,10 +315,19 @@ export default function AppsScreen() {
     () => recents.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a)).slice(0, 6),
     [recents, appById],
   );
+  const primaryApp = recentApps[0];
   const targetApps = useMemo(
-    () => selectedTarget.apps.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a)),
-    [selectedTarget.apps, appById],
+    () => selectedTarget.apps
+      .map(id => appById.get(id))
+      .filter((a): a is MiniApp => a !== undefined && a.id !== primaryApp?.id),
+    [selectedTarget.apps, appById, primaryApp?.id],
   );
+  // "Jump back in" leaves out what the Smart start card above already offers.
+  // Shown in both, Fitness, Pomodoro and Habits sat twice within a screen.
+  const jumpBackApps = useMemo(() => {
+    const shown = new Set([primaryApp?.id, ...targetApps.slice(0, 4).map(a => a.id)]);
+    return recentApps.filter(a => !shown.has(a.id));
+  }, [recentApps, targetApps, primaryApp?.id]);
 
   const renderGrid = (list: MiniApp[]) => {
     const grid: MiniApp[][] = [];
@@ -366,7 +386,7 @@ export default function AppsScreen() {
           /* ── Browse ── */
           <>
             <SmartStartCard
-              primary={recentApps[0]}
+              primary={primaryApp}
               targetApps={targetApps}
               targetLabel={selectedTarget.label}
               onOpen={openTool}
@@ -391,11 +411,11 @@ export default function AppsScreen() {
             </ScrollView>
 
             {/* Jump back in */}
-            {lane === 'all' && recentApps.length > 0 && (
+            {lane === 'all' && jumpBackApps.length > 0 && (
               <View>
                 <Eyebrow>{ttx("Jump back in")}</Eyebrow>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
-                  {recentApps.map(app => <RecentChip key={app.id} app={app} onOpen={openTool} />)}
+                  {jumpBackApps.map(app => <RecentChip key={app.id} app={app} onOpen={openTool} />)}
                 </ScrollView>
               </View>
             )}

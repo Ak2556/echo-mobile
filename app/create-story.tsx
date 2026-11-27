@@ -103,9 +103,9 @@ function CreateStoryScreenInner() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+      <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
         <BackButton />
-        <View className="flex-row items-center gap-2">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Broadcast color={colors.accent} size={ICON_SIZE.sm} />
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{ttx("New Story")}</Text>
         </View>
@@ -113,16 +113,16 @@ function CreateStoryScreenInner() {
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
-          <Animated.View entering={animation(FadeIn.delay(50))} className="flex-row items-center mb-4">
-            <View className="mr-3" style={{ borderRadius: 24, borderWidth: 2.5, borderColor: colors.accent }}>
+        <ScrollView style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }} showsVerticalScrollIndicator={false}>
+          <Animated.View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }} entering={animation(FadeIn.delay(50))}>
+            <View style={[{ marginRight: 12 }, { borderRadius: 24, borderWidth: 2.5, borderColor: colors.accent }]}>
               <Avatar name={username || '?'} color={avatarColor} url={avatarUrl} size={43} />
             </View>
-            <View className="flex-1">
+            <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>
                 {displayName || username || 'You'}
               </Text>
-              <View className="flex-row items-center gap-1 mt-0.5">
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                 <Clock color={colors.textMuted} size={10} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Expires in 24 hours")}</Text>
               </View>
@@ -132,13 +132,12 @@ function CreateStoryScreenInner() {
           <Animated.View entering={animation(FadeInDown.delay(100).duration(220))}>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>{ttx("Asked")}</Text>
             <View
-              className="p-4 mb-4"
-              style={{
+              style={[{ padding: 16, marginBottom: 16 }, {
                 backgroundColor: colors.surface,
                 borderRadius: radius.card,
                 borderWidth: 1,
                 borderColor: colors.border,
-              }}
+              }]}
             >
               <TextInput
                 multiline
@@ -156,18 +155,17 @@ function CreateStoryScreenInner() {
           </Animated.View>
 
           <Animated.View entering={animation(FadeInDown.delay(150).duration(220))}>
-            <View className="flex-row items-center mb-2 ml-1 gap-1.5">
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
               <Lightning color={colors.accent} size={ICON_SIZE.xs} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }}>{ttx("Echo")}</Text>
             </View>
             <View
-              className="p-4 mb-4"
-              style={{
+              style={[{ padding: 16, marginBottom: 16 }, {
                 backgroundColor: colors.accentMuted,
                 borderRadius: radius.card,
                 borderWidth: 1,
                 borderColor: colors.accent,
-              }}
+              }]}
             >
               <TextInput
                 multiline
@@ -186,13 +184,12 @@ function CreateStoryScreenInner() {
 
           <Animated.View entering={animation(FadeInDown.delay(200).duration(220))}>
             <View
-              className="p-3 flex-row items-center gap-2"
-              style={{
+              style={[{ padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }, {
                 backgroundColor: colors.surfaceHover,
                 borderRadius: radius.md,
                 borderLeftWidth: 3,
                 borderLeftColor: colors.accent,
-              }}
+              }]}
             >
               <Broadcast color={colors.accent} size={ICON_SIZE.xs} />
               <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, flex: 1 }}>
@@ -201,7 +198,7 @@ function CreateStoryScreenInner() {
             </View>
           </Animated.View>
 
-          <View className="h-10" />
+          <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
