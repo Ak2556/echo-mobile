@@ -55,18 +55,15 @@ function withAlpha(hex: string, alpha: number): string {
  * still do the softening. Without any blur the bar has to be the surface.
  */
 export function glassWash(edge: 'top' | 'bottom', blurred: boolean, isDark: boolean): number {
-  // Scrolled content has to go out of sight under the header, not sit readable behind the
-  // wordmark (owner, 2026-10-19). 0.72 showed a post's name row; 0.9 still showed Home's
-  // white 20pt serif quote as grey text behind "EchoX" on a black theme (iPhone, 2026-11-25).
-  // Any residue is legible against pure black, so the bar itself is solid and only the
-  // tail below it fades.
-  if (edge === 'top') return 1;
-  if (!blurred) return 0.96;
-  // At 0.45 Explore's "Thinking partners" row read clearly between the Home and
-  // Explore labels, and at 0.85 a name under the bar was still faintly legible
-  // (iPhone, 2026-11-27). Enough wash that text under the bar turns to colour,
-  // not words; the blur keeps a trace of the frost.
-  return 0.92;
+  // Scrolled content has to go out of sight under the bars, not sit readable
+  // behind the wordmark or the tab labels. Header (2026-11-25): 0.9 still showed
+  // Home's quote behind "EchoX". Tab bar (2026-11-27): at 0.45, then 0.85, then
+  // 0.92, a name and a Follow button under it stayed legible, because a
+  // translucent bar fades toward its inner edge, which is where the icons sit.
+  // Any residue is legible against a plain page, so both bars are solid and
+  // only the tail past them fades.
+  void edge; void blurred; void isDark;
+  return 1;
 }
 
 export interface EdgeGlassProps {
