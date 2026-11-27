@@ -80,15 +80,21 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
         onPress={() => onOpen(app)}
         accessibilityRole="button"
         accessibilityLabel={`${t('common.open')} ${ttx(app.name)}`}
-        style={({ pressed }) => ({ width: '100%', alignItems: 'center', gap: 8, paddingTop: 6, paddingBottom: 14, transform: [{ scale: pressed ? 0.92 : 1 }] })}
+        style={{ width: '100%' }}
       >
-        <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
-        <Text
-          style={{ alignSelf: 'stretch', color: colors.text, fontSize: 13.5, ...font.bodyMedium, textAlign: 'center', lineHeight: 18 }}
-          numberOfLines={1}
-        >
-          {ttx(app.name)}
-        </Text>
+        {/* Layout on an inner View: a style *function* on a Pressable drops its
+            padding in Release, which is why the rows had no space between them. */}
+        {({ pressed }) => (
+          <View style={{ width: '100%', alignItems: 'center', gap: 8, paddingTop: 6, paddingBottom: 14, transform: [{ scale: pressed ? 0.92 : 1 }] }}>
+            <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
+            <Text
+              style={{ alignSelf: 'stretch', color: colors.text, fontSize: 13.5, ...font.bodyMedium, textAlign: 'center', lineHeight: 18 }}
+              numberOfLines={1}
+            >
+              {ttx(app.name)}
+            </Text>
+          </View>
+        )}
       </Pressable>
     </Animated.View>
   );
