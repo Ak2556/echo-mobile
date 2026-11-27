@@ -114,6 +114,8 @@ export function languageByCode(code: AppLanguageCode): LanguageOption {
 
 export function languageLabel(code: AppLanguageCode): string {
   const language = languageByCode(code);
+  // "English (English)" said the same word twice in Settings.
+  if (language.nativeName === language.englishName) return language.englishName;
   return `${language.englishName} (${language.nativeName})`;
 }
 

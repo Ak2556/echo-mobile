@@ -8,7 +8,6 @@ import { useRouter } from 'expo-router';
 import { useIncomingFollowRequests } from '../hooks/queries/useFollowRequests';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   CaretRight, Bell, Vibrate, Lock, UserPlus, Moon, SpeakerHigh,
   Shield, Info, Question, SignOut, Trash, Eye, EyeSlash,
@@ -16,10 +15,11 @@ import {
   Palette, TextT, SquaresFour, Star, Robot, FloppyDisk,
   ChatCircle, Broadcast, Database, Eraser, BookmarkSimple,
   BellSlash, Rectangle, FileText,
-  Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain, Heartbeat,
+  Check, DeviceMobile, Envelope, SunHorizon, UserCircle, Brain, Heartbeat,
   Warning, ListChecks, Globe, Gavel, PencilSimple, Target, SlidersHorizontal,
   BellRinging, Drop, MapTrifold, Microphone,
   AddressBook, DownloadSimple,
+  Gauge, ChatTeardropText, ChatCircleText, Prohibit, SpeakerSlash, TextAa, Rows, DotsThree, HandHeart,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -94,7 +94,9 @@ function SettingsRow({ icon: Icon, iconColor, label, subtitle, right, onPress, d
       </IconBadge>
       <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
         <Text style={[font.bodySemibold, { color: destructive ? colors.danger : colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>{label}</Text>
-        {subtitle && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={2}>{subtitle}</Text>}
+        {/* Never truncated: several of these say what a consent switch shares, and
+            "…" cut off the end of what people were agreeing to (2026-11-27). */}
+        {subtitle && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>{subtitle}</Text>}
       </View>
       {right || (onPress && <CaretRight color={colors.textMuted} size={18} />)}
     </AnimatedPressable>
@@ -108,7 +110,6 @@ function SettingsHero({
   avatarColor,
   avatarUrl,
   profilePhotoVisible,
-  modelLabel,
   notificationsEnabled,
   privateAccount,
   onEditProfile,
@@ -121,7 +122,6 @@ function SettingsHero({
   avatarColor: string;
   avatarUrl?: string;
   profilePhotoVisible: boolean;
-  modelLabel: string;
   notificationsEnabled: boolean;
   privateAccount: boolean;
   onEditProfile: () => void;
@@ -132,20 +132,15 @@ function SettingsHero({
   const { t } = useI18n();
   const visibleAvatar = profilePhotoVisible ? avatarUrl : undefined;
   const quickActions = [
-    { label: t('settings.editProfile'), subtitle: `@${username}`, icon: PencilSimple, color: colors.accent, onPress: onEditProfile },
-    { label: t('settings.targetTools'), subtitle: ttx('Progress'), icon: Target, color: WARM.olive, onPress: onTarget },
-    { label: t('settings.aiMemory'), subtitle: modelLabel.replace('Gemini 2.5 ', ''), icon: Brain, color: WARM.plum, onPress: onAiMemory },
+    { label: t('settings.editProfile'), subtitle: ttx('Name, photo, bio'), icon: PencilSimple, onPress: onEditProfile },
+    { label: t('settings.targetTools'), subtitle: ttx('Progress'), icon: Target, onPress: onTarget },
+    // Was the model name ("Flash"), which said nothing about memory.
+    { label: t('settings.aiMemory'), subtitle: ttx('What it remembers'), icon: Brain, onPress: onAiMemory },
   ];
 
   return (
     <View style={{ overflow: 'visible', backgroundColor: 'transparent', marginBottom: 28 }}>
-      <LinearGradient
-        colors={[`${colors.accent}30`, `${colors.accent}08`, 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', top: -40, left: -20, right: -20, bottom: -40 }}
-        pointerEvents="none"
-      />
+      {/* No wash behind the header: it began on a hard line under the title. */}
       <View style={{ padding: 18, gap: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <ProfileAvatar
@@ -156,11 +151,12 @@ function SettingsHero({
             showHalo
           />
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 33 }]} numberOfLines={1}>
-              {t('settings.title')}
+            {/* The account, not a second "Settings" under the screen title. */}
+            <Text style={[font.display, { color: colors.text, fontSize: 24, lineHeight: 30 }]} numberOfLines={1}>
+              {displayName}
             </Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 3 }]} numberOfLines={2}>
-              {t('settings.subtitle')}
+            <Text style={[font.body, { color: colors.textMuted, fontSize: 14, lineHeight: 19, marginTop: 2 }]} numberOfLines={1}>
+              @{username}
             </Text>
           </View>
         </View>
@@ -185,8 +181,10 @@ function SettingsHero({
                 scaleValue={0.96}
                 haptic="light"
               >
-                <IconBadge color={action.color} size={36} radius={13}>
-                  <Icon color={ON_MEDIA} size={18} weight="bold" />
+                {/* Flat, like every row below; the glossy filled tiles were the
+                    only ones on the screen. */}
+                <IconBadge color={colors.accent} size={36} radius={13} muted>
+                  <Icon color={colors.accent} size={18} weight="bold" />
                 </IconBadge>
                 <View>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]} numberOfLines={1}>{action.label}</Text>
@@ -564,7 +562,6 @@ export default function SettingsScreen() {
 
   const [showAppearancePicker, setShowAppearancePicker] = useState(false);
   const [showFontStylePicker, setShowFontStylePicker] = useState(false);
-  const [showModelPicker, setShowModelPicker] = useState(false);
   const [showBubblePicker, setShowBubblePicker] = useState(false);
   const [showDmPicker, setShowDmPicker] = useState(false);
   const [showAppLanguagePicker, setShowAppLanguagePicker] = useState(false);
@@ -803,14 +800,6 @@ export default function SettingsScreen() {
     track(enabled ? 'persona_learning_started' : 'persona_learning_disabled');
   };
 
-  const handleAiModel = async (v: 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.5-flash-lite') => {
-    const prev = s.aiModel;
-    s.setAiModel(v);
-    if (!isSupabaseRemote()) { showToast(`Model: ${v}`, 'Model'); return; }
-    try { await updateRemoteProfile({ ai_model: v }); showToast(`Model: ${v}`, 'Model'); }
-    catch (e) { s.setAiModel(prev); Alert.alert('Could not update AI model', (e as Error).message); }
-  };
-
   const handleSensitiveContentFilter = async (enabled: boolean) => {
     const prev = s.sensitiveContentFilter;
     s.setSensitiveContentFilter(enabled);
@@ -851,11 +840,6 @@ export default function SettingsScreen() {
   const fontLabel = ttx({ small: 'Small', medium: 'Medium', large: 'Large' }[s.fontSize]);
   const fontStyleValue = s.fontStyle ?? 'editorial';
   const fontStyleText = ttx(fontStyleLabel(fontStyleValue));
-  const modelLabel = {
-    'gemini-2.5-flash': 'Gemini 2.5 Flash',
-    'gemini-2.5-pro': 'Gemini 2.5 Pro',
-    'gemini-2.5-flash-lite': 'Gemini 2.5 Flash Lite',
-  }[s.aiModel];
   const bubbleLabel = ttx({ modern: 'Modern', classic: 'Classic', minimal: 'Minimal' }[s.chatBubbleStyle]);
   const dmLabel = ttx({ everyone: 'Everyone', followers: 'Followers Only', nobody: 'Nobody' }[s.dmPrivacy]);
   const cornerLabel = ttx({ small: 'Small', medium: 'Medium', large: 'Large' }[s.roundedCorners]);
@@ -965,7 +949,6 @@ export default function SettingsScreen() {
           avatarColor={s.avatarColor}
           avatarUrl={s.avatarUrl || undefined}
           profilePhotoVisible={s.profilePhotoVisible}
-          modelLabel={modelLabel}
           notificationsEnabled={s.notificationsEnabled}
           privateAccount={s.privateAccount}
           onEditProfile={() => router.push('/edit-profile')}
@@ -978,11 +961,11 @@ export default function SettingsScreen() {
         {showGroup('essentials') && <Animated.View entering={animation(FadeInDown.delay(50).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Essentials")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label={ttx("Push Notifications")} subtitle={s.notificationsEnabled ? ttx('On') : ttx('Off')} right={SwitchEl(s.notificationsEnabled, handlePushToggle)} />
+            <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label={ttx("Push notifications")} right={SwitchEl(s.notificationsEnabled, handlePushToggle)} />
             {divider}
-            <SettingsRow theme={theme} icon={Vibrate} label={ttx("Haptic Feedback")} subtitle={ttx("Vibration on interactions")} right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
+            <SettingsRow theme={theme} icon={Vibrate} label={ttx("Haptic feedback")} subtitle={ttx("Vibration on interactions")} right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
             {divider}
-            <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Sound Effects")} subtitle={ttx("Play sounds for actions")} right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
+            <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Sound effects")} subtitle={ttx("Play sounds for actions")} right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
             {contactCardSupported() ? (
               <>
                 {divider}
@@ -997,23 +980,23 @@ export default function SettingsScreen() {
               </>
             ) : null}
             {divider}
-            <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Read-aloud speed")} subtitle={ttx("How fast Echo speaks content")} onPress={cycleSpeechRate} right={chevronValue(rateLabel(s.speechRate))} />
+            <SettingsRow theme={theme} icon={Gauge} label={ttx("Read-aloud speed")} subtitle={ttx("How fast Echo speaks content")} onPress={cycleSpeechRate} right={chevronValue(rateLabel(s.speechRate))} />
             {divider}
-            <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Auto-read AI replies")} subtitle={ttx("Speak each answer aloud when it finishes")} right={SwitchEl(s.autoReadAiReplies, s.setAutoReadAiReplies)} />
+            <SettingsRow theme={theme} icon={ChatTeardropText} label={ttx("Auto-read AI replies")} subtitle={ttx("Speak each answer aloud when it finishes")} right={SwitchEl(s.autoReadAiReplies, s.setAutoReadAiReplies)} />
             {divider}
-            <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Auto-read messages")} subtitle={ttx("Read incoming DMs aloud while a chat is open")} right={SwitchEl(s.autoReadMessages, s.setAutoReadMessages)} />
+            <SettingsRow theme={theme} icon={ChatCircleText} label={ttx("Auto-read messages")} subtitle={ttx("Read incoming DMs aloud while a chat is open")} right={SwitchEl(s.autoReadMessages, s.setAutoReadMessages)} />
             {divider}
             <SettingsRow theme={theme} icon={Microphone} label={ttx("Voice captions")} subtitle={ttx("Show what you said on screen after speaking")} right={SwitchEl(s.voiceCaptions, s.setVoiceCaptions)} />
             {divider}
-            <SettingsRow theme={theme} icon={Bell} label={ttx("Notification Preferences")} subtitle={ttx("Customize which notifications you receive")} onPress={() => router.push('/notification-prefs')} />
+            <SettingsRow theme={theme} icon={Bell} label={ttx("Notification preferences")} subtitle={ttx("Customize which notifications you receive")} onPress={() => router.push('/notification-prefs')} />
             {divider}
-            <SettingsRow theme={theme} icon={Lock} iconColor={WARM.ochre} label={ttx("Private Account")} subtitle={ttx("Only people you approve can see your echoes")} right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
+            <SettingsRow theme={theme} icon={Lock} iconColor={WARM.ochre} label={ttx("Private account")} subtitle={ttx("Only people you approve can see your echoes")} right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
             {(s.privateAccount || pendingRequests > 0) && divider}
             {(s.privateAccount || pendingRequests > 0) && (
               <SettingsRow theme={theme} icon={UserPlus} iconColor={WARM.ochre} label={ttx("Follow requests")} subtitle={pendingRequests > 0 ? `${pendingRequests} waiting` : ttx("Approve or decline people who ask to follow you")} onPress={() => router.push('/follow-requests' as never)} />
             )}
             {divider}
-            <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label={ttx("Sensitive Content Filter")} subtitle={ttx("Filter potentially sensitive content")} right={SwitchEl(s.sensitiveContentFilter, handleSensitiveContentFilter)} />
+            <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label={ttx("Sensitive content filter")} subtitle={ttx("Filter potentially sensitive content")} right={SwitchEl(s.sensitiveContentFilter, handleSensitiveContentFilter)} />
           </GlassPanel>
         </Animated.View>}
 
@@ -1031,26 +1014,26 @@ export default function SettingsScreen() {
               theme={theme}
               icon={UserCircle}
               iconColor={colors.accent}
-              label={ttx("Profile Photo")}
+              label={ttx("Profile photo")}
               subtitle={s.profilePhotoVisible ? ttx('Visible on profile and feed') : ttx('Hidden from other users')}
               right={SwitchEl(s.profilePhotoVisible, handleProfilePhotoVisibleToggle)}
             />
             {divider}
-            <SettingsRow theme={theme} icon={ChatCircle} label={ttx("Read Receipts")} subtitle={ttx("Show when you've read messages")} right={SwitchEl(s.readReceipts, handleReadReceipts)} />
+            <SettingsRow theme={theme} icon={ChatCircle} label={ttx("Read receipts")} subtitle={ttx("Show when you've read messages")} right={SwitchEl(s.readReceipts, handleReadReceipts)} />
             {divider}
-            <SettingsRow theme={theme} icon={DownloadSimple} label={ttx("Allow Downloads")} subtitle={ttx("Let others save your photos and videos to their device. Turning this off hides the save option on everything you have posted.")} right={SwitchEl(s.allowDownloads, handleAllowDownloads)} />
+            <SettingsRow theme={theme} icon={DownloadSimple} label={ttx("Allow downloads")} subtitle={ttx("Let others save your photos and videos to their device. Turning this off hides the save option on everything you have posted.")} right={SwitchEl(s.allowDownloads, handleAllowDownloads)} />
             {divider}
-            <SettingsRow theme={theme} icon={BellRinging} iconColor={colors.accent} label={ttx("Personalized Notifications")} subtitle={ttx("Echo learns when you usually open the app, and what you use most, to time reminders. Turn off anytime.")} right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
+            <SettingsRow theme={theme} icon={BellRinging} iconColor={colors.accent} label={ttx("Personalized notifications")} subtitle={ttx("Echo learns when you usually open the app, and what you use most, to time reminders. Turn off anytime.")} right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
             {divider}
             <SettingsRow theme={theme} icon={Heartbeat} iconColor={colors.accent} label={ttx("Back up health data")} subtitle={ttx("Store Fitness data (weight, meals, water, workouts) on Echo's servers for sync and coaching. Off keeps it on this device only.")} right={SwitchEl(healthConsentGranted, handleHealthConsent)} />
             {divider}
             <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label={ttx("AI features")} subtitle={ttx("Chat, voice commands, rewrites and coaching send what you give them to Google Gemini. Off means none of it leaves your device.")} right={SwitchEl(aiConsentGranted, setAiConsentGranted)} />
             {divider}
-            <SettingsRow theme={theme} icon={Envelope} label={ttx("Who Can Message You")} subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
+            <SettingsRow theme={theme} icon={Envelope} label={ttx("Who can message you")} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Users} label={`${ttx('Blocked Users')} (${s.blockedIds.length})`} subtitle={ttx("Manage users you've blocked")} onPress={() => router.push('/blocked-users')} />
+            <SettingsRow theme={theme} icon={Prohibit} label={`${ttx('Blocked users')} (${s.blockedIds.length})`} subtitle={ttx("Manage users you've blocked")} onPress={() => router.push('/blocked-users')} />
             {divider}
-            <SettingsRow theme={theme} icon={Users} label={`${ttx('Muted Users')} (${s.mutedIds.length})`} subtitle={ttx("Hide their echoes without notifying them")} onPress={() => router.push('/muted-users')} />
+            <SettingsRow theme={theme} icon={SpeakerSlash} label={`${ttx('Muted users')} (${s.mutedIds.length})`} subtitle={ttx("Hide their echoes without notifying them")} onPress={() => router.push('/muted-users')} />
           </GlassPanel>
         </Animated.View>}
 
@@ -1063,7 +1046,7 @@ export default function SettingsScreen() {
               icon={SunHorizon}
               iconColor={colors.accent}
               label={ttx("Theme")}
-              subtitle={ttx('{theme} — tap to change').replace('{theme}', themeLabel)}
+              subtitle={themeLabel}
               onPress={() => setShowThemePicker(true)}
               right={
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1095,13 +1078,13 @@ export default function SettingsScreen() {
               right={chevronValue(ttx(s.appearance === 'system' ? 'System' : s.appearance === 'light' ? 'Light' : 'Dark'))}
             />
             {divider}
-            <SettingsRow theme={theme} icon={DeviceMobile} label={ttx("Pure Black Background")} subtitle={ttx("True black for AMOLED screens")} right={SwitchEl(s.pureBlackBackground, s.setPureBlackBackground)} />
+            <SettingsRow theme={theme} icon={DeviceMobile} label={ttx("Pure black background")} subtitle={ttx("True black for AMOLED screens")} right={SwitchEl(s.pureBlackBackground, s.setPureBlackBackground)} />
             {divider}
             <SettingsRow
               theme={theme}
               icon={Palette}
               iconColor={s.accentColor}
-              label={ttx("Accent Color")}
+              label={ttx("Accent color")}
               subtitle={ttx("Customize the app's accent color")}
               onPress={() => setShowAccentPicker(true)}
               right={
@@ -1112,26 +1095,26 @@ export default function SettingsScreen() {
               }
             />
             {divider}
-            <SettingsRow theme={theme} icon={TextT} label={ttx("Font Size")} subtitle={fontLabel} onPress={() => setShowFontPicker(true)} right={chevronValue(fontLabel)} />
+            <SettingsRow theme={theme} icon={TextT} label={ttx("Font size")} onPress={() => setShowFontPicker(true)} right={chevronValue(fontLabel)} />
             {divider}
             <SettingsRow
               theme={theme}
-              icon={TextT}
+              icon={TextAa}
               iconColor={colors.accent}
-              label={ttx("Font Style")}
+              label={ttx("Font style")}
               subtitle={ttx("Choose the typography personality across Echo")}
               onPress={() => setShowFontStylePicker(true)}
               right={chevronValue(fontStyleText)}
             />
             {divider}
-            <SettingsRow theme={theme} icon={Rectangle} label={ttx("Corner Radius")} subtitle={`${cornerLabel} rounded corners`} onPress={() => setShowCornerPicker(true)} right={chevronValue(cornerLabel)} />
+            <SettingsRow theme={theme} icon={Rectangle} label={ttx("Corner radius")} onPress={() => setShowCornerPicker(true)} right={chevronValue(cornerLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Eye} label={ttx("Show Avatars")} subtitle={ttx("Display user avatar icons")} right={SwitchEl(s.showAvatars, s.setShowAvatars)} />
+            <SettingsRow theme={theme} icon={Eye} label={ttx("Show avatars")} subtitle={ttx("Display user avatar icons")} right={SwitchEl(s.showAvatars, s.setShowAvatars)} />
             {divider}
-            <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Show Preview Cards")} subtitle={ttx("Show response previews in feed")} right={SwitchEl(s.showPreviewCards, s.setShowPreviewCards)} />
+            <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Show preview cards")} subtitle={ttx("Show response previews in feed")} right={SwitchEl(s.showPreviewCards, s.setShowPreviewCards)} />
             {divider}
-            <SettingsRow theme={theme} icon={Lightning} label={ttx("Reduce Animations")} subtitle={ttx("Minimize motion effects")} right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
-            <SettingsRow theme={theme} icon={Drop} label={ttx("Glass Theme")} subtitle={ttx("Blurred backgrounds. Off is fastest; turn on if your phone stays smooth")} right={SwitchEl(s.glassTheme, s.setGlassTheme)} />
+            <SettingsRow theme={theme} icon={Lightning} label={ttx("Reduce animations")} subtitle={ttx("Minimize motion effects")} right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
+            <SettingsRow theme={theme} icon={Drop} label={ttx("Glass theme")} subtitle={ttx("Blurred backgrounds. Off is fastest; turn on if your phone stays smooth")} right={SwitchEl(s.glassTheme, s.setGlassTheme)} />
           </GlassPanel>
         </Animated.View>}
 
@@ -1141,13 +1124,13 @@ export default function SettingsScreen() {
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Globe} iconColor={colors.accent} label={t('settings.appLanguage')} subtitle={t('settings.appLanguageSubtitle')} onPress={() => setShowAppLanguagePicker(true)} right={chevronValue(appLanguageLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Compact Feed")} subtitle={ttx("Show smaller cards in the feed")} right={SwitchEl(s.compactFeed, s.setCompactFeed)} />
+            <SettingsRow theme={theme} icon={Rows} label={ttx("Compact feed")} subtitle={ttx("Show smaller cards in the feed")} right={SwitchEl(s.compactFeed, s.setCompactFeed)} />
             {divider}
-            <SettingsRow theme={theme} icon={Broadcast} label={ttx("Autoplay Stories")} subtitle={ttx("Auto-advance through stories")} right={SwitchEl(s.autoplayStories, s.setAutoplayStories)} />
+            <SettingsRow theme={theme} icon={Broadcast} label={ttx("Autoplay stories")} subtitle={ttx("Auto-advance through stories")} right={SwitchEl(s.autoplayStories, s.setAutoplayStories)} />
             {divider}
             <SettingsRow theme={theme} icon={Translate} label={t('settings.contentLanguage')} subtitle={t('settings.contentLanguageSubtitle')} onPress={() => setShowLanguagePicker(true)} right={chevronValue(s.contentLanguage)} />
             {divider}
-            <SettingsRow theme={theme} icon={WifiSlash} label={ttx("Data Saver")} subtitle={ttx("Pause videos and load photos only when you tap them")} right={SwitchEl(s.dataSaver, s.setDataSaver)} />
+            <SettingsRow theme={theme} icon={WifiSlash} label={ttx("Data saver")} subtitle={ttx("Pause videos and load photos only when you tap them")} right={SwitchEl(s.dataSaver, s.setDataSaver)} />
           </GlassPanel>
         </Animated.View>}
 
@@ -1155,15 +1138,13 @@ export default function SettingsScreen() {
         {showGroup('ai') && <Animated.View entering={animation(FadeInDown.delay(250).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Chat & AI")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label={ttx("AI Model")} subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
-            {divider}
-            <SettingsRow theme={theme} icon={Database} iconColor={colors.accent} label={ttx("AI Memory")} subtitle={ttx("View and clear remembered preferences")} onPress={() => router.push('/ai-memory')} />
+            <SettingsRow theme={theme} icon={Database} iconColor={colors.accent} label={ttx("AI memory")} subtitle={ttx("View and clear remembered preferences")} onPress={() => router.push('/ai-memory')} />
             {divider}
             <SettingsRow
               theme={theme}
               icon={Brain}
               iconColor={colors.accent}
-              label={ttx("Personal Persona")}
+              label={ttx("Personal persona")}
               subtitle={s.personaLearningEnabled ? ttx('Learn your voice over the first week') : ttx('Persona learning is paused')}
               onPress={() => router.push('/persona' as never)}
               right={
@@ -1174,13 +1155,13 @@ export default function SettingsScreen() {
               }
             />
             {divider}
-            <SettingsRow theme={theme} icon={ChatTeardropDots} label={ttx("Chat Bubble Style")} subtitle={bubbleLabel} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
+            <SettingsRow theme={theme} icon={ChatTeardropDots} label={ttx("Chat bubble style")} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Star} label={ttx("Stream Responses")} subtitle={ttx("Show AI responses as they're generated")} right={SwitchEl(s.streamResponses, handleStreamResponses)} />
+            <SettingsRow theme={theme} icon={Star} label={ttx("Stream responses")} subtitle={ttx("Show AI responses as they're generated")} right={SwitchEl(s.streamResponses, handleStreamResponses)} />
             {divider}
-            <SettingsRow theme={theme} icon={Lightning} label={ttx("Typing Indicator")} subtitle={ttx("Show dots while AI is thinking")} right={SwitchEl(s.showTypingIndicator, s.setShowTypingIndicator)} />
+            <SettingsRow theme={theme} icon={DotsThree} label={ttx("Typing indicator")} subtitle={ttx("Show dots while AI is thinking")} right={SwitchEl(s.showTypingIndicator, s.setShowTypingIndicator)} />
             {divider}
-            <SettingsRow theme={theme} icon={FloppyDisk} label={ttx("Auto-save Chats")} subtitle={ttx("Automatically save conversations")} right={SwitchEl(s.autoSaveChats, handleAutoSaveChats)} />
+            <SettingsRow theme={theme} icon={FloppyDisk} label={ttx("Auto-save chats")} subtitle={ttx("Automatically save conversations")} right={SwitchEl(s.autoSaveChats, handleAutoSaveChats)} />
           </GlassPanel>
         </Animated.View>}
 
@@ -1188,15 +1169,15 @@ export default function SettingsScreen() {
         {showGroup('data') && <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Advanced Data Controls")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Database} label={ttx("Storage Used")} right={<Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{s.getCacheSize()}</Text>} />
+            <SettingsRow theme={theme} icon={Database} label={ttx("Storage used")} right={<Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{s.getCacheSize()}</Text>} />
             {divider}
-            <SettingsRow theme={theme} icon={Eraser} label={ttx("Clear Cache")} subtitle={ttx("Free up storage space")} onPress={handleClearCache} />
+            <SettingsRow theme={theme} icon={Eraser} label={ttx("Clear cache")} subtitle={ttx("Free up storage space")} onPress={handleClearCache} />
             {divider}
-            <SettingsRow theme={theme} icon={ChatTeardropDots} label={`${ttx('Clear Chat History')} (${s.sessions.length})`} subtitle={ttx("Delete local and server-side AI conversations")} onPress={handleClearChats} />
+            <SettingsRow theme={theme} icon={ChatTeardropDots} label={`${ttx('Clear chat history')} (${s.sessions.length})`} subtitle={ttx("Delete local and server-side AI conversations")} onPress={handleClearChats} />
             {divider}
-            <SettingsRow theme={theme} icon={BookmarkSimple} label={`${ttx('Clear Bookmarks')} (${s.bookmarkedIds.length})`} subtitle={ttx("Remove all saved echoes")} onPress={handleClearBookmarks} />
+            <SettingsRow theme={theme} icon={BookmarkSimple} label={`${ttx('Clear bookmarks')} (${s.bookmarkedIds.length})`} subtitle={ttx("Remove all saved echoes")} onPress={handleClearBookmarks} />
             {divider}
-            <SettingsRow theme={theme} icon={BellSlash} label={ttx("Clear Notifications")} subtitle={ttx("Remove all notifications")} onPress={handleClearNotifications} />
+            <SettingsRow theme={theme} icon={BellSlash} label={ttx("Clear notifications")} subtitle={ttx("Remove all notifications")} onPress={handleClearNotifications} />
           </GlassPanel>
         </Animated.View>}
 
@@ -1214,7 +1195,7 @@ export default function SettingsScreen() {
         {showGroup('support') && <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("EU Digital Services Act")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Warning} label={ttx("My Reports")} subtitle={ttx("Track the outcome of content reports you've filed")} onPress={() => router.push('/my-reports')} />
+            <SettingsRow theme={theme} icon={Warning} label={ttx("My reports")} subtitle={ttx("Track the outcome of content reports you've filed")} onPress={() => router.push('/my-reports')} />
             {divider}
             <SettingsRow theme={theme} icon={Globe} label={ttx("DSA Contact")} subtitle={ttx("Contact us for DSA-related matters")} onPress={() => openTrustedExternalUrl(`mailto:${DSA_EMAIL}`)} />
             {divider}
@@ -1228,11 +1209,11 @@ export default function SettingsScreen() {
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Shield} label={ttx("Privacy Policy")} onPress={() => router.push('/privacy')} />
             {divider}
-            <SettingsRow theme={theme} icon={Shield} label={ttx("Child Safety Standards")} onPress={() => router.push('/legal/child-safety' as never)} />
+            <SettingsRow theme={theme} icon={HandHeart} label={ttx("Child safety standards")} onPress={() => router.push('/legal/child-safety' as never)} />
             {divider}
             <SettingsRow theme={theme} icon={FileText} label={ttx("Terms of Service")} onPress={() => router.push('/terms')} />
             {divider}
-            <SettingsRow theme={theme} icon={Question} label={ttx("Help & Support")} onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
+            <SettingsRow theme={theme} icon={Question} label={ttx("Help and support")} onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
             {divider}
             <SettingsRow theme={theme} icon={MapTrifold} label={t('settings.replayTour')} subtitle={t('settings.replayTourSubtitle')} onPress={() => { openRoute('/(tabs)/home'); setTimeout(() => useTutorialStore.getState().startTour('home'), 450); }} />
             {divider}
@@ -1246,22 +1227,22 @@ export default function SettingsScreen() {
               />
             )}
             {__DEV__ && divider}
-            <SettingsRow theme={theme} icon={Info} label={ttx("Version")} right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.0.0</Text>} />
+            <SettingsRow theme={theme} icon={Info} label={ttx("Version")} right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{Constants.expoConfig?.version ?? '1.0.0'}</Text>} />
           </GlassPanel>
         </Animated.View>}
 
         {}
         {showGroup('support', 'data') && <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>{ttx("Danger Zone")}</Text>
+          <Text style={sectionHeaderStyle}>{ttx("Account")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={SignOut} label={ttx("Sign Out")} onPress={handleSignOut} destructive />
+            <SettingsRow theme={theme} icon={SignOut} label={ttx("Sign out")} onPress={handleSignOut} />
             {divider}
-            <SettingsRow theme={theme} icon={Trash} label={ttx("Delete Account")} subtitle={ttx("Permanently delete all data")} onPress={handleDeleteAccount} destructive />
+            <SettingsRow theme={theme} icon={Trash} label={ttx("Delete account")} subtitle={ttx("Permanently delete all data")} onPress={handleDeleteAccount} destructive />
           </GlassPanel>
         </Animated.View>}
         </View>
 
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 32 }}>{`Echo v${Constants.expoConfig?.version ?? '1.0.0'}`}</Text>
+        <View style={{ height: 32 }} />
       </ScrollView>
 
       {}
@@ -1307,21 +1288,6 @@ export default function SettingsScreen() {
           value={fontStyleValue}
           onChange={(v) => { s.setFontStyle(v); showToast(`Font style: ${fontStyleLabel(v)}`, 'Typography'); }}
           onClose={() => setShowFontStylePicker(false)}
-        />
-      )}
-
-      {showModelPicker && (
-        <OptionPicker
-          theme={theme}
-          title={ttx("AI Model")}
-          options={[
-            { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash' as const, desc: 'Fast Google AI Studio model' },
-            { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro' as const, desc: 'More capable Google AI Studio model' },
-            { label: 'Gemini 2.5 Flash Lite', value: 'gemini-2.5-flash-lite' as const, desc: 'Lightweight Google AI Studio model' },
-          ]}
-          value={s.aiModel}
-          onChange={(v) => void handleAiModel(v)}
-          onClose={() => setShowModelPicker(false)}
         />
       )}
 

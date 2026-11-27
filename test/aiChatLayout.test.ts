@@ -9,7 +9,9 @@ describe('AI chat layout', () => {
   it('the header is one row, with no share button in it', () => {
     expect(chat).toMatch(/const headerHeight = insets\.top \+ 54;/);
     expect(chat).not.toMatch(/<HeaderIconButton icon=\{<ShareNetwork/);
-    expect(chat).toMatch(/label=\{`\$\{ttx\('AI model'\)\}/);
+    // 2026-11-27: no model button. The picker named retired models the server
+    // never used (2.5 Flash and Pro were answered by its current model).
+    expect(chat).not.toMatch(/ModelPickerSheet|ttx\('AI model'\)/);
   });
 
   it('"Draft ready" keeps its layout on an inner View so the text renders', () => {

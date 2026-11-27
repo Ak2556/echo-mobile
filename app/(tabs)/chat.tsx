@@ -17,7 +17,6 @@ import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
-import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
 import { streamEchoAI, isRateLimitError } from '../../lib/ai/api';
 import { speak } from '../../lib/mini-apps/tts';
 import { isLocalTool, LocalToolContext } from '../../lib/ai/localTools';
@@ -31,7 +30,7 @@ import { useTheme } from '../../lib/ui/theme';
 import { useTracking } from '../../lib/ui/tracking';
 import { Avatar } from '../../components/ui/Avatar';
 import { wantsToPost } from '../../lib/ai/postIntent';
-import { Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
+import { List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/feed/publishContext';
 import { track } from '../../lib/core/analytics';
@@ -52,11 +51,6 @@ import type { AiMode } from '../../supabase/functions/echo-ai/mode';
 import { ON_MEDIA } from '../../lib/ui/fixedColors';
 
 
-function modelLabel(model: string): string {
-  if (model.includes('pro')) return 'Pro';
-  if (model.includes('lite')) return 'Lite';
-  return 'Flash';
-}
 
 
 
@@ -283,7 +277,6 @@ export default function ChatScreen() {
   const { t } = useI18n();
   const showTyping = useAppStore(s => s.showTypingIndicator);
   const aiModel = useAppStore(s => s.aiModel);
-  const setAiModel = useAppStore(s => s.setAiModel);
   const sessions = useAppStore(s => s.sessions);
   const currentSessionId = useAppStore(s => s.currentSessionId);
   const conversationIdBySession = useAppStore(s => s.conversationIdBySession);
@@ -366,7 +359,6 @@ export default function ChatScreen() {
   const [streamingMsgId, setStreamingMsgId] = useState<string | null>(null);
   const [showActionCenter, setShowActionCenter] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [draft, setDraft] = useState('');
 
   // Voice dictation lands in the box, not in the thread. A mis-transcription
@@ -867,9 +859,6 @@ export default function ChatScreen() {
     />
   ) : null;
 
-  // modelActions previously rendered via generic ActionSheet — replaced
-  // by ModelPickerSheet (richer rows with icons + taglines + active state).
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView
@@ -992,7 +981,6 @@ export default function ChatScreen() {
                   {hasExchange && !showShareNudge && !isStreaming ? (
                     <HeaderActionButton icon={ArrowUpRight} label={ttx('Share as Echo')} onPress={handleShare} />
                   ) : null}
-                  <HeaderActionButton icon={Lightning} tone="accent" label={`${ttx('AI model')}: ${modelLabel(aiModel)}`} onPress={() => setModelSheetOpen(true)} />
                   <HeaderAddButton onPress={handleNewChat} label={ttx('New chat')} />
                 </View>
               </View>
@@ -1034,12 +1022,6 @@ export default function ChatScreen() {
         initialValue={editTarget?.content ?? ''}
         onCancel={() => setEditTarget(null)}
         onSubmit={handleEditSubmit}
-      />
-      <ModelPickerSheet
-        visible={modelSheetOpen}
-        onClose={() => setModelSheetOpen(false)}
-        selected={aiModel}
-        onSelect={setAiModel}
       />
     </View>
   );
