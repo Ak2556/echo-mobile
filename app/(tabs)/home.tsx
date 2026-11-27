@@ -216,17 +216,10 @@ function DailyThought() {
       exiting={FadeOut.duration(180)}
       style={{ marginHorizontal: layout.gutter, marginTop: 12, marginBottom: 32 }}
     >
-      <View style={{ position: 'relative', overflow: 'visible' }}>
-        {/* Fades in as well as out. Starting at full strength drew a hard
-            horizontal line across the screen above the quote (iPhone, 2026-11-27). */}
-        <LinearGradient
-          colors={['transparent', `${colors.accent}15`, 'transparent']}
-          locations={[0, 0.3, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={{ position: 'absolute', top: -20, left: -20, right: -20, bottom: -40 }}
-          pointerEvents="none"
-        />
+      {/* No glow behind the quote. A full-width olive wash read as a band with
+          an edge in dark and as a grey smear on the light page (iPhone,
+          2026-11-27); the quote's own type carries it. */}
+      <View>
         <View style={{ paddingTop: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>

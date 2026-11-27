@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { EdgeGlass } from '../../components/ui/EdgeGlass';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import { MessageBubble, Message } from '../../components/ai/MessageBubble';
 import { ChatInput } from '../../components/ai/ChatInput';
@@ -176,14 +175,9 @@ function ChatEmptyLaunchpad({
     <View style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingTop: layout.isPhone ? 12 : 18, paddingBottom: 28, gap: 14 }]}>
       {/* No inset of its own: the 4pt it had put the chips at 20 while the
           action cards below start at 16 (iPhone, 2026-11-27). */}
-      <View style={{ position: 'relative', overflow: 'visible' }}>
-        <LinearGradient
-          colors={[`${colors.accent}20`, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={{ position: 'absolute', top: -30, left: -20, right: -20, bottom: -50 }}
-          pointerEvents="none"
-        />
+      {/* No glow behind the greeting: on the light page it was a grey smear with
+          an edge under the header (iPhone, 2026-11-27). */}
+      <View>
         <View style={{ paddingTop: 12, gap: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 13 }}>
             <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: `${colors.accent}15`, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
