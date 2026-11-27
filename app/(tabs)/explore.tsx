@@ -27,48 +27,16 @@ import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { track } from '../../lib/core/analytics';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
+import { useVideoPoster } from '../../lib/media/videoPoster';
 import { MINI_APP_CATALOG } from '../../lib/mini-apps/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
-import { WARM, TOPIC, ON_MEDIA } from '../../lib/ui/fixedColors';
+import { ON_MEDIA } from '../../lib/ui/fixedColors';
 import { useUserRefresh } from '../../hooks/useUserRefresh';
 
 type SearchTab = 'all' | 'people' | 'echoes' | 'topics' | 'tools';
 
 
 const CATEGORY_FALLBACKS = ['AI', 'Design', 'Productivity', 'Startups'];
-
-/**
- * A topic's colour, chosen by what the topic IS rather than its list position
- * (position once put a CPU icon on "Video"). The tile used to pair it with a
- * stock icon in a tinted square, which made every tile look alike and gave the
- * unrecognised ones a sparkle, the stock "AI" mark (owner: "dull and AI made",
- * 2026-11-27). Tiles now show a photo from the topic, or set the hashtag itself
- * in type, and the colour only marks the "#".
- */
-const TOPIC_COLORS: { match: RegExp; color: string }[] = [
-  { match: /(^|\b)(ai|ml|llm|gpt|machine\s?learning|neural)/i, color: WARM.steel },
-  { match: /(video|film|movie|reel|clip|cinema)/i, color: TOPIC.vermilion },
-  { match: /(design|ux|ui|art|draw|illustrat)/i, color: WARM.terracotta },
-  { match: /(code|coding|dev|program|software|engineer)/i, color: TOPIC.slate },
-  { match: /(music|song|audio|beat|sound)/i, color: WARM.plum },
-  { match: /(photo|camera|picture|shot)/i, color: TOPIC.moss },
-  { match: /(book|read|writ|story|poem)/i, color: TOPIC.straw },
-  { match: /(game|gaming|play)/i, color: WARM.heather },
-  { match: /(startup|founder|business|money|finance)/i, color: WARM.plum },
-  { match: /(productiv|habit|focus|growth|goal)/i, color: WARM.olive },
-];
-
-const NEUTRAL_TOPIC_PALETTE = [WARM.steel, WARM.terracotta, WARM.olive, WARM.plum, WARM.heather];
-
-function topicColor(topic: string) {
-  const hit = TOPIC_COLORS.find(entry => entry.match.test(topic));
-  if (hit) return hit.color;
-  // Hash rather than index: an unrecognised topic keeps the same colour when
-  // the feed reorders it, instead of changing hue on every refresh.
-  let hash = 0;
-  for (let i = 0; i < topic.length; i += 1) hash = (hash * 31 + topic.charCodeAt(i)) >>> 0;
-  return NEUTRAL_TOPIC_PALETTE[hash % NEUTRAL_TOPIC_PALETTE.length];
-}
 
 /** Hashtags arrive in whatever case the author typed, so "ai" rendered as "Ai". */
 const TOPIC_INITIALISMS = new Set(['ai', 'ui', 'ux', 'ml', 'api', 'diy', 'ceo', 'nba', 'nfl', 'vr', 'ar']);
@@ -164,7 +132,7 @@ export default function SearchScreen() {
   const discovery = useMemo(() => groupDiscovery(feed, interests, followingIds), [feed, followingIds, interests]);
   const { data: remoteSuggested } = useSuggestedUsers();
   const suggestedUsers = (remote ? (remoteSuggested ?? []) : users).slice(0, layout.isWide ? 6 : 4);
-  const topTopics: { topic: string; count: number; cover?: string }[] = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(label => ({ topic: label, count: 0 }));
+  const topTopics: { topic: string; count: number; cover?: string; coverVideo?: string }[] = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(label => ({ topic: label, count: 0 }));
   // Derived from the pieces the header actually contains rather than guessed.
   // The old constants (112, or 86 on desktop) were smaller than their own
   // content — ~130pt of title plus a 52pt search field inside a 112pt box with
@@ -178,9 +146,6 @@ export default function SearchScreen() {
   const headerHeight = measuredHeaderHeight || estimatedHeaderHeight;
   // iPad is not `isDesktop` (that flag is web-only), so it was falling through
   // to the phone's 2-up grid and rendering ~660pt-wide tiles holding one glyph.
-  const trendingColumns = layout.isDesktop ? 4 : layout.isWide ? 3 : 2;
-  const tileGap = 10;
-  const tileWidth = Math.floor((layout.wideContentWidth - layout.gutter * 2 - tileGap * (trendingColumns - 1)) / trendingColumns);
   const hasAnyResult = searchBuckets.userMatches.length > 0 ||
     searchBuckets.echoMatches.length > 0 ||
     searchBuckets.topicMatches.length > 0 ||
@@ -259,15 +224,18 @@ export default function SearchScreen() {
             )}
 
             <SectionHeader first={recentSearches.length === 0} label={t('explore.browseTopics')} />
-            <View style={{ paddingHorizontal: layout.gutter, flexDirection: 'row', flexWrap: 'wrap', gap: tileGap, marginBottom: 18 }}>
-              {topTopics.slice(0, 8).map(item => (
-                <TopicTile
+            {/* A list, like the people below it. A 2x4 grid of big tiles
+                oversold topics that mostly have one post, and six of them
+                were the same coloured # (owner: "not production quality",
+                2026-11-27). */}
+            <View style={{ marginBottom: 18 }}>
+              {topTopics.slice(0, 6).map(item => (
+                <TopicRow
                   key={item.topic}
                   label={formatTopicLabel(item.topic)}
                   count={item.count}
-                  color={topicColor(item.topic)}
                   cover={item.cover}
-                  width={tileWidth}
+                  coverVideo={item.coverVideo}
                   onPress={() => setQuery(item.topic)}
                 />
               ))}
@@ -287,7 +255,9 @@ export default function SearchScreen() {
             {suggestedUsers.length > 0 && (
               <>
                 <SectionHeader label={t('explore.peopleToStart')} />
-                <View style={{ paddingHorizontal: layout.gutter, marginBottom: 36 }}>
+                {/* UserRow carries its own 16pt inset; the container adding the
+                    gutter as well put these rows at 32. */}
+                <View style={{ marginBottom: 36 }}>
                   {suggestedUsers.map(user => (
                     <UserRow key={user.id} user={user} onPress={() => router.push(`/user/${user.id}`)} showFollowButton />
                   ))}
@@ -495,84 +465,58 @@ function SearchResults({
   );
 }
 
-function TopicTile({
+function TopicRow({
   label,
   count,
-  color,
   cover,
-  width,
+  coverVideo,
   onPress,
 }: {
   label: string;
   count: number;
-  color: string;
   cover?: string;
-  width: number;
+  coverVideo?: string;
   onPress: () => void;
 }) {
   const { colors, font, fontSizes } = useTheme();
   const { t } = useI18n();
   const [coverFailed, setCoverFailed] = useState(false);
+  const poster = useVideoPoster(cover ? undefined : coverVideo);
   // Only the four built-in names are translated: other labels are real topics
   // people wrote, which must show as written.
   const shownLabel = CATEGORY_FALLBACKS.includes(label) ? ttx(label) : label;
   const countLabel = count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : t('explore.startExploring');
-  const photo = cover && !coverFailed ? cover : undefined;
+  const picture = cover && !coverFailed ? { uri: cover } : poster;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`#${shownLabel}, ${countLabel}`}
-      style={{ width }}
+      style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8 }}
     >
-      <View style={{
-        height: 112,
-        borderRadius: 18,
-        overflow: 'hidden',
-        backgroundColor: colors.surface,
-        borderWidth: photo ? 0 : StyleSheet.hairlineWidth,
-        borderColor: colors.border,
-        padding: 14,
-        justifyContent: 'flex-end',
-      }}>
-        {photo ? (
-          <>
-            <ExpoImage
-              source={{ uri: photo }}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-              recyclingKey={photo}
-              transition={150}
-              onError={() => setCoverFailed(true)}
-            />
-            <LinearGradient
-              colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.25)', 'rgba(0,0,0,0.72)']}
-              locations={[0, 0.4, 1]}
-              style={StyleSheet.absoluteFill}
-              pointerEvents="none"
-            />
-          </>
+      <View style={{ width: 46, height: 46, borderRadius: 12, overflow: 'hidden', backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+        {picture ? (
+          <ExpoImage
+            source={picture}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={150}
+            onError={() => setCoverFailed(true)}
+          />
         ) : (
-          // No photo under this topic yet: the hashtag itself is the picture.
-          <Text
-            style={[font.display, { position: 'absolute', top: 4, right: 12, color, fontSize: 64, lineHeight: 72, opacity: 0.9 }]}
-            maxFontSizeMultiplier={1}
-            accessible={false}
-          >
-            #
-          </Text>
+          <Text style={[font.display, { color: colors.textMuted, fontSize: 22, lineHeight: 26 }]} maxFontSizeMultiplier={1} accessible={false}>#</Text>
         )}
-        <Text
-          style={[font.display, { color: photo ? ON_MEDIA : colors.text, fontSize: fontSizes.body + 1 }]}
-          numberOfLines={1}
-        >
-          {photo ? `#${shownLabel}` : shownLabel}
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>
+          #{shownLabel}
         </Text>
-        <Text style={[font.body, { color: photo ? 'rgba(255,255,255,0.82)' : colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>
+        <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, marginTop: 1 }]} numberOfLines={1}>
           {countLabel}
         </Text>
       </View>
+      <CaretRight color={colors.textMuted} size={ICON_SIZE.sm} />
     </Pressable>
   );
 }
