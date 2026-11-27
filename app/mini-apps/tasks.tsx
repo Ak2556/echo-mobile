@@ -343,8 +343,8 @@ export default function TasksScreen() {
           )}
         </View>
 
-        {/* Share, Compare and Post on an empty list shared nothing. */}
-        {tasks.length > 0 && <EdgeFeaturePanel
+        {/* Share, Compare and Post with nothing open shared "0 open tasks". */}
+        {stats.open > 0 && <EdgeFeaturePanel
           appId="tasks"
           appName="Tasks"
           accent={accent}
