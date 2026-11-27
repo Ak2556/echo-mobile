@@ -3,7 +3,7 @@ import { ICON_SIZE } from '../../lib/ui/icons';
 import { useRouter } from 'expo-router';
 import { View, Text } from 'react-native';
 import { HeartStraight, SealCheck, ChatCircle } from 'phosphor-react-native';
-import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Avatar } from '../ui/Avatar';
@@ -40,7 +40,7 @@ const ACTION_HIT_SLOP = { top: 15, bottom: 15, left: 10, right: 10 };
 export function CommentCard({ comment, echoId, indented, onReply }: CommentCardProps) {
   const { likeComment } = useAppStore();
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
-  const { colors, fontSizes, showAvatars, animation } = useTheme();
+  const { colors, fontSizes, showAvatars } = useTheme();
   const heartScale = useSharedValue(1);
   const remote = isSupabaseRemote();
   const toggleRemoteLike = useToggleRemoteCommentLike(echoId);
@@ -70,7 +70,6 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
 
   return (
     <Animated.View
-      entering={animation(FadeInDown.duration(220))}
       style={{
         flexDirection: 'row',
         // These were Tailwind classes (`flex-row py-3`), but this file lives in

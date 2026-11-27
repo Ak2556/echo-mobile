@@ -6,7 +6,7 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-nati
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Brain, UsersThree, Lightning } from 'phosphor-react-native';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
@@ -175,7 +175,7 @@ function PartnerRow({
   };
 
   return (
-    <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 40).duration(220)}>
+    <Animated.View>
       <Pressable style={styles.row} onPress={() => router.push(`/user/${partner.id}`)}>
         <ProfileAvatar
           displayName={partner.displayName}

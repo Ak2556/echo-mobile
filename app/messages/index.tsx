@@ -252,7 +252,7 @@ function CreateGroupModal({
 function ConversationCard({ conversation, index, pinned, onPress, onLongPress }: {
   conversation: InboxConversation; index: number; pinned?: boolean; onPress: () => void; onLongPress?: () => void;
 }) {
-  const { colors, fontSizes, showAvatars, animation, isUserOnline } = useTheme();
+  const { colors, fontSizes, showAvatars, isUserOnline } = useTheme();
   const online = !conversation.isGroup && isUserOnline(conversation.userId);
   const showUnread = (conversation.unreadCount > 0 || !!conversation.markedUnread) && !conversation.muted;
   const line = previewLine(conversation);
@@ -264,7 +264,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
     : line.kind === 'link' ? LinkSimple : line.kind === 'sealed' ? LockSimple : null;
 
   return (
-    <Animated.View entering={animation(FadeIn.delay(index * 20).duration(80))}>
+    <Animated.View>
       <AnimatedPressable
         onPress={onPress}
         onLongPress={onLongPress}

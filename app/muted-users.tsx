@@ -4,7 +4,7 @@ import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { FlashList } from '@shopify/flash-list';
 import { SpeakerSlash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Avatar } from '../components/ui/Avatar';
 import { EmptyState } from '../components/common/EmptyState';
@@ -18,7 +18,7 @@ import { BRAND } from '../lib/ui/fixedColors';
 
 export default function MutedUsersScreen() {
   const { mutedIds, toggleMute, getUser } = useAppStore();
-  const { colors, radius, fontSizes, animation, showAvatars } = useTheme();
+  const { colors, radius, fontSizes, showAvatars } = useTheme();
 
   const mutedUsers = mutedIds
     .map(id => getUser(id))
@@ -41,7 +41,7 @@ export default function MutedUsersScreen() {
         <FlashList 
           data={mutedUsers}
             renderItem={({ item, index }) => (
-            <Animated.View entering={animation(FadeInDown.delay(index * 50).duration(220))}>
+            <Animated.View>
               <View
                 style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 }, { borderBottomWidth: 1, borderBottomColor: colors.border }]}
               >
