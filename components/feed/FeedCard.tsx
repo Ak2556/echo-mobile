@@ -44,7 +44,6 @@ import { isSupabaseRemote } from '../../lib/core/remoteConfig';
 import { recordRemoteEchoView, markNotInterested } from '../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, useDeleteRemoteEcho } from '../../hooks/useSupabaseSocial';
 import { useFollow } from '../../hooks/queries/useFollow';
-import { usePerformanceProfile } from '../../lib/ui/performance';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { confirmAction } from '../../lib/ui/confirm';
 
@@ -167,7 +166,6 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
   const readableText = [item.editorialTitle ?? item.prompt, item.authorNote ?? item.response]
     .filter(Boolean)
     .join('. ');
-  const performance = usePerformanceProfile('hot');
   const layout = useResponsiveLayout();
   // Hero media height: phones keep the fixed portrait-ish media; tablets scale
   // it with the now-full-width card so it stays a balanced ~5:4 shape, clamped
