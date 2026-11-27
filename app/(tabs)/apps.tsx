@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Platform, Pressable, TextInput, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
-import Animated, { Extrapolation, FadeIn, FadeInDown, interpolate, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -62,7 +62,7 @@ function Eyebrow({ children, trailing }: { children: React.ReactNode; trailing?:
   );
 }
 
-function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; width: number; onOpen: (app: MiniApp) => void }) {
+function AppCard({ app, width, onOpen }: { app: MiniApp; width: number; onOpen: (app: MiniApp) => void }) {
   const { colors, font } = useTheme();
   const { t } = useI18n();
   // Clean app-grid tile: one big icon + its name. Uniform by construction (every
@@ -72,10 +72,10 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
   // at about 64pt, with room between rows.
   const iconSize = Math.min(72, Math.max(50, Math.round(width * 0.5)));
   return (
-    <Animated.View
-      entering={FadeInDown.delay(Math.min(index, 10) * 20).duration(220).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
-      style={{ width, alignItems: 'center' }}
-    >
+    // No entering animation. A tile that remounted while it played could freeze
+    // part-way: on an iPhone one tile stayed invisible and Shopping sat over
+    // Planner (owner screenshot, 2026-11-27).
+    <View style={{ width, alignItems: 'center' }}>
       <Pressable
         onPress={() => onOpen(app)}
         accessibilityRole="button"
@@ -96,7 +96,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
           </View>
         )}
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -300,16 +300,15 @@ export default function AppsScreen() {
       const flagship = FLAGSHIP_MINI_APPS
         .map(id => appById.get(id))
         .filter((a): a is MiniApp => Boolean(a));
-      const recencyIndex = new Map(recents.map((id, i) => [id, i]));
-      const rest = APPS
-        .filter(a => !isFlagshipMiniApp(a.id))
-        .sort((a, b) => (recencyIndex.get(a.id) ?? Infinity) - (recencyIndex.get(b.id) ?? Infinity));
+      // Catalog order, not recency: recents load after the grid draws, so the
+      // tiles moved under the user's finger. "Jump back in" shows recency.
+      const rest = APPS.filter(a => !isFlagshipMiniApp(a.id));
       return [...flagship, ...rest];
     }
     const def = TOOL_LANES.find(l => l.id === lane);
     if (!def?.apps) return APPS;
     return def.apps.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a));
-  }, [lane, appById, recents]);
+  }, [lane, appById]);
 
   const recentApps = useMemo(
     () => recents.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a)).slice(0, 6),
@@ -329,16 +328,13 @@ export default function AppsScreen() {
     return recentApps.filter(a => !shown.has(a.id));
   }, [recentApps, targetApps, primaryApp?.id]);
 
-  const renderGrid = (list: MiniApp[]) => {
-    const grid: MiniApp[][] = [];
-    for (let i = 0; i < list.length; i += columns) grid.push(list.slice(i, i + columns));
-    return grid.map((row, ri) => (
-      <View key={ri} style={{ flexDirection: 'row', gap: GAP }}>
-        {row.map((app, ci) => <AppCard key={app.id} app={app} width={cardWidth} index={ri * columns + ci} onOpen={openTool} />)}
-        {Array.from({ length: columns - row.length }).map((_, i) => <View key={`sp-${i}`} style={{ width: cardWidth }} />)}
-      </View>
-    ));
-  };
+  // One wrapping container, tiles keyed by tool. With a View per row, a tool
+  // that changed rows was unmounted and mounted again.
+  const renderGrid = (list: MiniApp[]) => (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: GAP }}>
+      {list.map(app => <AppCard key={app.id} app={app} width={cardWidth} onOpen={openTool} />)}
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
