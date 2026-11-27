@@ -152,7 +152,10 @@ export function EdgeGlass({
   const start = edge === 'top' ? { x: 0.5, y: 0 } : { x: 0.5, y: 1 };
   const end = edge === 'top' ? { x: 0.5, y: 1 } : { x: 0.5, y: 0 };
 
-  const base = tone === 'dark' ? '#000000' : colors.isDark ? colors.bg : '#FFFFFF';
+  // The page colour in every theme. Pure white over an off-white light theme
+  // (#FAFAFA, #ECEFF4...) drew a visible edge under the solid header, the
+  // seam #351 meant to remove (iPhone, light, 2026-11-27).
+  const base = tone === 'dark' ? '#000000' : colors.bg;
   const barFraction = height / total;
 
   // Flat across the bar, then eased out across the tail.

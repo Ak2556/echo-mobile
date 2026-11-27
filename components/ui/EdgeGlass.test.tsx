@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Text } from 'react-native';
@@ -128,5 +129,13 @@ describe('glassWash', () => {
 
   it('keeps the tab bar nearly solid when nothing blurs', () => {
     expect(glassWash('bottom', false, true)).toBe(0.96);
+  });
+});
+
+// 2026-11-27: in light themes the header was pure white over an off-white page.
+describe('EdgeGlass base colour', () => {
+  it('is the page colour, not a fixed white', () => {
+    const src = readFileSync('components/ui/EdgeGlass.tsx', 'utf8');
+    expect(src).toMatch(/const base = tone === 'dark' \? '#000000' : colors\.bg;/);
   });
 });
