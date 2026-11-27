@@ -13,11 +13,10 @@ interface SkeletonProps {
   width?: number | string;
   height?: number;
   borderRadius?: number;
-  className?: string;
   style?: any;
 }
 
-export function Skeleton({ width = '100%', height = 16, borderRadius = 8, className, style }: SkeletonProps) {
+export function Skeleton({ width = '100%', height = 16, borderRadius = 8, style }: SkeletonProps) {
   const { colors, reduceAnimations } = useTheme();
   const shimmer = useSharedValue(0.4);
 
@@ -39,7 +38,6 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 8, classN
 
   return (
     <Animated.View
-      className={className}
       style={[
         {
           width: width as any,
@@ -61,21 +59,21 @@ export function FeedCardSkeleton() {
   return (
     <View style={{ marginHorizontal: 12, marginVertical: 7 }}>
       <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 18 }}>
-        <View className="flex-row items-center mb-4">
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
           <Skeleton width={34} height={34} borderRadius={17} />
-          <View className="ml-3 flex-1">
-            <Skeleton width={110} height={13} className="mb-1.5" />
+          <View style={{ marginLeft: 12, flex: 1 }}>
+            <Skeleton style={{ marginBottom: 6 }} width={110} height={13} />
             <Skeleton width={60} height={10} />
           </View>
         </View>
-        <Skeleton width="94%" height={22} className="mb-2" />
-        <Skeleton width="70%" height={22} className="mb-4" />
-        <Skeleton width="100%" height={13} className="mb-1.5" />
+        <Skeleton style={{ marginBottom: 8 }} width="94%" height={22} />
+        <Skeleton style={{ marginBottom: 16 }} width="70%" height={22} />
+        <Skeleton style={{ marginBottom: 6 }} width="100%" height={13} />
         <Skeleton width="82%" height={13} />
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 6, paddingTop: 10 }}>
         <Skeleton width={90} height={28} borderRadius={14} />
-        <View className="flex-row gap-4">
+        <View style={{ flexDirection: 'row', gap: 16 }}>
           <Skeleton width={19} height={19} borderRadius={10} />
           <Skeleton width={19} height={19} borderRadius={10} />
           <Skeleton width={19} height={19} borderRadius={10} />
@@ -92,8 +90,8 @@ export function ListingCardSkeleton() {
     <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 18, overflow: 'hidden' }}>
       <Skeleton width="100%" height={140} borderRadius={0} />
       <View style={{ padding: 12 }}>
-        <Skeleton width="88%" height={14} className="mb-2" />
-        <Skeleton width="52%" height={12} className="mb-3" />
+        <Skeleton style={{ marginBottom: 8 }} width="88%" height={14} />
+        <Skeleton style={{ marginBottom: 12 }} width="52%" height={12} />
         <Skeleton width={70} height={16} borderRadius={8} />
       </View>
     </View>
@@ -102,10 +100,10 @@ export function ListingCardSkeleton() {
 
 export function NotificationSkeleton() {
   return (
-    <View className="flex-row items-center px-4 py-3">
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
       <Skeleton width={40} height={40} borderRadius={20} />
-      <View className="ml-3 flex-1">
-        <Skeleton width="70%" height={14} className="mb-1.5" />
+      <View style={{ marginLeft: 12, flex: 1 }}>
+        <Skeleton style={{ marginBottom: 6 }} width="70%" height={14} />
         <Skeleton width="40%" height={12} />
       </View>
     </View>
@@ -114,10 +112,10 @@ export function NotificationSkeleton() {
 
 export function UserRowSkeleton() {
   return (
-    <View className="flex-row items-center px-4 py-3">
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
       <Skeleton width={44} height={44} borderRadius={22} />
-      <View className="ml-3 flex-1">
-        <Skeleton width={100} height={14} className="mb-1.5" />
+      <View style={{ marginLeft: 12, flex: 1 }}>
+        <Skeleton style={{ marginBottom: 6 }} width={100} height={14} />
         <Skeleton width={140} height={12} />
       </View>
       <Skeleton width={80} height={32} borderRadius={16} />
@@ -128,10 +126,10 @@ export function UserRowSkeleton() {
 export function ConversationSkeleton() {
   // Mirrors a DM inbox row: avatar, name + message preview, trailing timestamp.
   return (
-    <View className="flex-row items-center px-4 py-3">
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
       <Skeleton width={50} height={50} borderRadius={25} />
-      <View className="ml-3 flex-1">
-        <Skeleton width={120} height={14} className="mb-2" />
+      <View style={{ marginLeft: 12, flex: 1 }}>
+        <Skeleton style={{ marginBottom: 8 }} width={120} height={14} />
         <Skeleton width="70%" height={12} />
       </View>
       <Skeleton width={36} height={11} borderRadius={6} />

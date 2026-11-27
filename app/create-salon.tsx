@@ -87,14 +87,14 @@ function CreateSalonScreenInner() {
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         {/* Name */}
-        <Animated.View entering={animation(FadeInDown.duration(220))} className="mb-4">
+        <Animated.View style={{ marginBottom: 16 }} entering={animation(FadeInDown.duration(220))}>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Name")}</Text>
           <TextInput value={name} onChangeText={(t) => setName(t.slice(0, NAME_MAX))} placeholder={ttx("e.g. Long-form Thinkers")} maxLength={NAME_MAX} />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 4, marginLeft: 4 }}>{name.length}/{NAME_MAX}</Text>
         </Animated.View>
 
         {/* Slug */}
-        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} className="mb-4">
+        <Animated.View style={{ marginBottom: 16 }} entering={animation(FadeInDown.delay(100).duration(220))}>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("URL slug")}</Text>
           <TextInput
             value={slug || derivedSlug}
@@ -109,7 +109,7 @@ function CreateSalonScreenInner() {
         </Animated.View>
 
         {/* Description */}
-        <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} className="mb-4">
+        <Animated.View style={{ marginBottom: 16 }} entering={animation(FadeInDown.delay(200).duration(220))}>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Description (optional)")}</Text>
           <TextInput
             value={description}
@@ -121,7 +121,7 @@ function CreateSalonScreenInner() {
         </Animated.View>
 
         {/* Topic tags */}
-        <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} className="mb-4">
+        <Animated.View style={{ marginBottom: 16 }} entering={animation(FadeInDown.delay(300).duration(220))}>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Topics (comma-separated)")}</Text>
           <TextInput
             value={topicTags}
@@ -132,7 +132,7 @@ function CreateSalonScreenInner() {
         </Animated.View>
 
         {/* Cover color picker */}
-        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} className="mb-6">
+        <Animated.View style={{ marginBottom: 24 }} entering={animation(FadeInDown.delay(400).duration(220))}>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Cover color")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
             {COVER_COLORS.map((c) => {

@@ -2,7 +2,6 @@
 // Sentry's serializer, which injects debug IDs into the bundle so uploaded
 // sourcemaps reliably match production crashes (@sentry/react-native 7.x).
 const { getSentryExpoConfig } = require("@sentry/react-native/metro");
-const { withNativeWind } = require("nativewind/metro");
 const path = require("path");
 
 const config = getSentryExpoConfig(__dirname);
@@ -37,4 +36,4 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-module.exports = withNativeWind(config, { input: "./global.css" });
+module.exports = config;

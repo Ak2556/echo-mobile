@@ -173,11 +173,10 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
 
   return (
     <View>
-      <View className="flex-row items-center justify-between px-4 py-2">
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8 }}>
         <BackButton />
-        <AnimatedPressable
+        <AnimatedPressable style={{ padding: 4 }}
           onPress={() => setShowMenu(true)}
-          className="p-1"
           scaleValue={0.88}
           haptic="light"
           accessibilityLabel={ttx("Profile options")}
@@ -194,7 +193,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
         actions={menuActions}
       />
 
-      <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} className="items-center px-4 pt-2 pb-4">
+      <Animated.View style={{ alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }} entering={animation(FadeInDown.delay(100).duration(220))}>
         <AnimatedPressable
           onPress={() => user.avatarUrl ? setPhotoPreviewOpen(true) : undefined}
           disabled={!user.avatarUrl}
@@ -204,7 +203,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
           scaleValue={0.93}
           haptic="light"
         >
-          <View className="relative">
+          <View style={{ position: 'relative' }}>
             <ProfileAvatar
               displayName={personName(user)}
               avatarColor={user.avatarColor}
@@ -213,11 +212,11 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
               isVerified={false}
             />
             {online && (
-              <View className="absolute bottom-3 right-1 w-4 h-4 rounded-full" style={{ backgroundColor: colors.success, borderWidth: 2.5, borderColor: colors.bg }} />
+              <View style={[{ position: 'absolute', bottom: 12, right: 4, width: 16, height: 16, borderRadius: radius.full }, { backgroundColor: colors.success, borderWidth: 2.5, borderColor: colors.bg }]} />
             )}
           </View>
         </AnimatedPressable>
-        <View className="flex-row items-center gap-1.5 mb-1">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
           <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700' }}>{personName(user)}</Text>
           {user.isVerified && <SealCheck color={colors.accent} size={ICON_SIZE.md} weight="fill" />}
         </View>
@@ -235,7 +234,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
           </View>
         ) : null}
         {creatorProfile?.topics?.length ? (
-          <View className="flex-row flex-wrap justify-center gap-2 mb-4">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
             {creatorProfile.topics.map((topic: string) => (
               <AnimatedPressable
                 key={topic}
@@ -252,7 +251,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
           </View>
         ) : null}
 
-        <View className="flex-row gap-8 mb-4">
+        <View style={{ flexDirection: 'row', gap: 32, marginBottom: 16 }}>
           <View style={{ alignItems: "center" }} accessible accessibilityLabel={countLabel(echoeCount, ttx('Echo'), ttx('Echoes'))}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{echoeCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("Echoes")}</Text>
@@ -329,7 +328,7 @@ function ProfileHeader({ user, echoeCount, following, requested, blocked, muted,
         />
       </View>
 
-      <View className="mx-4 mb-2" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
+      <View style={[{ marginHorizontal: 16, marginBottom: 8 }, { borderBottomWidth: 1, borderBottomColor: colors.border }]} />
       <ProfileSections
         section={section}
         onChange={onSectionChange}
@@ -412,16 +411,16 @@ export default function UserProfileScreen() {
         ? (remoteBundle.error as Error).message || 'Something went wrong loading this profile.'
         : null;
       return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} className="items-center justify-center">
+        <SafeAreaView style={[{ alignItems: 'center', justifyContent: 'center' }, { flex: 1, backgroundColor: colors.bg }]}>
           <Text style={{ color: colors.textSecondary, textAlign: 'center', paddingHorizontal: 32 }}>
             {errMessage ? `Couldn't load profile\n${errMessage}` : 'User not found'}
           </Text>
           {errMessage ? (
-            <AnimatedPressable onPress={() => remoteBundle.refetch()} className="mt-4" scaleValue={0.95} haptic="light">
+            <AnimatedPressable style={{ marginTop: 16 }} onPress={() => remoteBundle.refetch()} scaleValue={0.95} haptic="light">
               <Text style={{ color: colors.accent }}>{ttx("Retry")}</Text>
             </AnimatedPressable>
           ) : null}
-          <AnimatedPressable onPress={() => safeBack()} className="mt-4" scaleValue={0.95} haptic="light">
+          <AnimatedPressable style={{ marginTop: 16 }} onPress={() => safeBack()} scaleValue={0.95} haptic="light">
             <Text style={{ color: colors.accent }}>{ttx("Go Back")}</Text>
           </AnimatedPressable>
         </SafeAreaView>
@@ -571,9 +570,9 @@ export default function UserProfileScreen() {
 
   if (!user) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} className="items-center justify-center">
+      <SafeAreaView style={[{ alignItems: 'center', justifyContent: 'center' }, { flex: 1, backgroundColor: colors.bg }]}>
         <Text style={{ color: colors.textSecondary }}>{ttx("User not found")}</Text>
-        <AnimatedPressable onPress={() => safeBack()} className="mt-4" scaleValue={0.95} haptic="light">
+        <AnimatedPressable style={{ marginTop: 16 }} onPress={() => safeBack()} scaleValue={0.95} haptic="light">
           <Text style={{ color: colors.accent }}>{ttx("Go Back")}</Text>
         </AnimatedPressable>
       </SafeAreaView>

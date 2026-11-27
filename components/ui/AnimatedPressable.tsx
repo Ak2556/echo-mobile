@@ -79,7 +79,6 @@ interface AnimatedPressableProps extends PressableProps {
   sinkOnPress?: boolean;
   dimWhenDisabled?: boolean;
   haptic?: 'light' | 'medium' | 'heavy' | 'none';
-  className?: string;
   style?: any;
   performanceMode?: PerformanceMode;
 }

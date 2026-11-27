@@ -402,22 +402,20 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
           <View style={{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', backgroundColor: colors.glassBorder, marginBottom: 16 }} />
           <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>{ttx("Accent Color")}</Text>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>{ttx("Choose the accent color used throughout the app")}</Text>
-          <View className="flex-row flex-wrap gap-3 justify-center">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
             {ACCENT_COLORS.map(c => (
-              <AnimatedPressable
+              <AnimatedPressable style={{ alignItems: 'center' }}
                 key={c.color}
                 onPress={() => { onChange(c.color); onClose(); showToast(`Accent: ${c.name}`, 'Accent'); }}
                 scaleValue={0.85}
                 haptic="medium"
-                className="items-center"
               >
                 <View
-                  className="w-12 h-12 rounded-full items-center justify-center"
-                  style={{
+                  style={[{ width: 48, height: 48, borderRadius: theme.radius.full, alignItems: 'center', justifyContent: 'center' }, {
                     backgroundColor: c.color,
                     borderWidth: value === c.color ? 2 : 0,
                     borderColor: colors.text,
-                  }}
+                  }]}
                 >
                   {value === c.color && <Check color={ON_MEDIA} size={ICON_SIZE.md} />}
                 </View>

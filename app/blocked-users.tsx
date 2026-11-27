@@ -60,27 +60,25 @@ export default function BlockedUsersScreen() {
             renderItem={({ item, index }) => (
             <Animated.View entering={animation(FadeInDown.delay(index * 50).duration(220))}>
               <View
-                className="flex-row items-center px-4 py-3.5"
-                style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
+                style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 }, { borderBottomWidth: 1, borderBottomColor: colors.border }]}
               >
                 {showAvatars && (
-                  <View className="mr-3">
+                  <View style={{ marginRight: 12 }}>
                     <Avatar name={personName(item)} color={item.avatarColor} url={item.avatarUrl} size={44} />
                   </View>
                 )}
-                <View className="flex-1">
+                <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }}>{personName(item)}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>@{item.username}</Text>
                 </View>
                 <AnimatedPressable
                   onPress={() => handleUnblock(item)}
-                  className="px-4 py-2"
-                  style={{
+                  style={[{ paddingHorizontal: 16, paddingVertical: 8 }, {
                     borderRadius: radius.lg,
                     backgroundColor: colors.surface,
                     borderWidth: 1,
                     borderColor: colors.border,
-                  }}
+                  }]}
                   scaleValue={0.93}
                   haptic="medium"
                 >

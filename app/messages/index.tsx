@@ -847,7 +847,7 @@ export default function MessagesListScreen() {
   if (remote && remoteLoading) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
           <BackButton fallback={'/(tabs)/chat'} />
           <View style={{ flex: 1, alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: radius.full }}>
@@ -860,10 +860,10 @@ export default function MessagesListScreen() {
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <AnimatedPressable onPress={() => setGroupModalOpen(true)} className="p-1" scaleValue={0.88} haptic="light">
+            <AnimatedPressable style={{ padding: 4 }} onPress={() => setGroupModalOpen(true)} scaleValue={0.88} haptic="light">
               <Users color={colors.accent} size={22} weight="bold" />
             </AnimatedPressable>
-            <AnimatedPressable onPress={() => openRoute('/(tabs)/explore')} className="p-1" scaleValue={0.88} haptic="light">
+            <AnimatedPressable style={{ padding: 4 }} onPress={() => openRoute('/(tabs)/explore')} scaleValue={0.88} haptic="light">
               <PencilSimple color={colors.accent} size={22} />
             </AnimatedPressable>
           </View>

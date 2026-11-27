@@ -56,7 +56,6 @@ import { NowReadingBar } from '../components/voice/NowReadingBar';
 import { isPublicRoute } from '../lib/routing/publicRoutes';
 import { refreshRemoteFlags } from '../lib/core/remoteFlags';
 import { enableFreeze } from 'react-native-screens';
-import '../global.css';
 
 // Freeze off-screen screens (inactive tabs + background stack entries) so they
 // stop re-rendering while hidden — keeps the foreground screen smoother.
