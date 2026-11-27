@@ -122,11 +122,15 @@ export function CommentsPanel({ echoId, bottomInset = 0, onCountChange }: Props)
 
   return (
     <View style={{ flex: 1 }}>
+      {/* The list area takes the height that is left, so the composer sits at
+          the bottom. With no comments the empty state did not grow, and the
+          composer rode up to the middle of the screen (2026-11-27). */}
+      <View style={{ flex: 1 }}>
       {loadingRemote ? (
         <LoadingState size="large" />
       ) : threadedRows.length === 0 ? (
         <EmptyState
-          icon={<ChatCircle color="#6366F1" size={32} />}
+          icon={<ChatCircle color={colors.accent} size={32} />}
           title={ttx("No comments yet")}
           subtitle={ttx("Be the first to share your thoughts on this echo.")}
         />
@@ -155,6 +159,7 @@ export function CommentsPanel({ echoId, bottomInset = 0, onCountChange }: Props)
           }
         />
       )}
+      </View>
 
       {inputFocused && (
         <MentionSuggestions

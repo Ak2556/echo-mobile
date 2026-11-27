@@ -661,7 +661,7 @@ export default function HabitsApp() {
 
   return (
     <View style={{ flex: 1 }}>
-      <MiniAppShell title={tt('Habits')} subtitle={tt('Streak')} headerRight={<HeaderAddButton onPress={() => setShowAdd(true)} label={tt('Add habit')} />}>
+      <MiniAppShell title={tt('Habits')} headerRight={<HeaderAddButton onPress={() => setShowAdd(true)} label={tt('Add habit')} />}>
       <MiniCommandDeck
         accent={colors.accent}
         title={tt('Consistency engine')}

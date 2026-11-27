@@ -833,7 +833,7 @@ export default function PomodoroScreen() {
   );
 
   return (
-    <MiniAppShell title={tt('Pomodoro')} subtitle={tt('Flow')} headerRight={HeaderRight}>
+    <MiniAppShell title={tt('Pomodoro')} headerRight={HeaderRight}>
       {showStageRail(running, pct) && <StageRail mode={mode} elapsedRatio={elapsedRatio} accent={accent} />}
       {/* Mode tabs */}
       <GlassPanel variant="light" borderRadius={radius.card} style={{ marginBottom: 12 }} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }}>

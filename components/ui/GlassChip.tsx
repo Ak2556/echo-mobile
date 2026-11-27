@@ -22,6 +22,7 @@ import { useTheme } from '../../lib/ui/theme';
 export function GlassChip({
   borderRadius,
   tint,
+  bare = false,
   style,
   contentStyle,
   children,
@@ -29,6 +30,8 @@ export function GlassChip({
   borderRadius: number;
   /** An active state's colour; the chip takes a light wash of it. */
   tint?: string;
+  /** No fill and no edge: the same box, drawn as nothing until it is needed. */
+  bare?: boolean;
   style?: ViewStyle;
   contentStyle?: ViewStyle;
   children?: React.ReactNode;
@@ -38,7 +41,7 @@ export function GlassChip({
   const edge = tint ? `${tint}4D` : colors.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
 
   return (
-    <View style={[{ borderRadius, overflow: 'hidden', backgroundColor: fill, borderWidth: StyleSheet.hairlineWidth, borderColor: edge }, style]}>
+    <View style={[{ borderRadius, overflow: 'hidden', backgroundColor: bare ? 'transparent' : fill, borderWidth: StyleSheet.hairlineWidth, borderColor: bare ? 'transparent' : edge }, style]}>
       <View style={contentStyle}>{children}</View>
     </View>
   );

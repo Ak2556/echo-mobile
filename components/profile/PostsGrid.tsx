@@ -10,6 +10,7 @@ import { FeedItem } from '../../types';
 import { ttx } from '../../lib/i18n/i18n';
 import { useVideoPoster } from '../../lib/media/videoPoster';
 import { formatViewCount } from '../../lib/media/viewCount';
+import { PHOTO_CROP_POSITION } from '../../lib/media/mediaFrame';
 
 const GRID_GAP = 8;
 // The phone gutter, so the grid lines up with the profile card above it (it
@@ -56,7 +57,9 @@ function MosaicTile({
       <View style={{ width, height, borderRadius: 20, overflow: 'hidden', backgroundColor: colors.surface }}>
         {hasMedia ? (
           <>
-            <Image source={image} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={160} />
+            {/* Upper third, as the feed does: centred, a portrait in this wide
+                tile lost the top of the head (monubhunga's profile, 2026-11-27). */}
+            <Image source={image} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={PHOTO_CROP_POSITION} cachePolicy="memory-disk" transition={160} />
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.72)']}
               style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: Math.min(height * 0.6, 120) }}

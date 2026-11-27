@@ -1477,4 +1477,8 @@ export const HI_BULK: Record<string, string> = {
   'Name, photo, bio': 'नाम, फ़ोटो, परिचय',
   'Memories': 'यादें',
   'Account': 'खाता',
+  'Reposts': 'रीपोस्ट',
+  'No date': 'बिना तारीख',
+  'Edit profile': 'प्रोफ़ाइल संपादित करें',
+  'Display name': 'प्रदर्शित नाम',
 };
