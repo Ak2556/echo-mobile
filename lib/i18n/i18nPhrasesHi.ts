@@ -1475,6 +1475,6 @@ export const HI_BULK: Record<string, string> = {
   'Help and support': 'मदद और सहायता',
   'Sign out': 'साइन आउट',
   'Name, photo, bio': 'नाम, फ़ोटो, परिचय',
-  'What it remembers': 'इसे क्या याद है',
+  'Memories': 'यादें',
   'Account': 'खाता',
 };

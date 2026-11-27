@@ -135,7 +135,7 @@ function SettingsHero({
     { label: t('settings.editProfile'), subtitle: ttx('Name, photo, bio'), icon: PencilSimple, onPress: onEditProfile },
     { label: t('settings.targetTools'), subtitle: ttx('Progress'), icon: Target, onPress: onTarget },
     // Was the model name ("Flash"), which said nothing about memory.
-    { label: t('settings.aiMemory'), subtitle: ttx('What it remembers'), icon: Brain, onPress: onAiMemory },
+    { label: t('settings.aiMemory'), subtitle: ttx('Memories'), icon: Brain, onPress: onAiMemory },
   ];
 
   return (
@@ -188,7 +188,7 @@ function SettingsHero({
                 </IconBadge>
                 <View>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]} numberOfLines={1}>{action.label}</Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={2}>{action.subtitle}</Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
                 </View>
               </AnimatedPressable>
             );
