@@ -222,8 +222,11 @@ export default function ProfileScreen() {
         <View style={layout.contentStyle}>
           <View style={{ paddingTop: 32, paddingBottom: 40, alignItems: 'center' }}>
             <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
+              {/* Eases in from nothing. Starting at full strength it cut a hard
+                  line across the screen under the status bar (iPhone, 2026-11-27). */}
               <LinearGradient
-                colors={[`${profileAccent}22`, 'transparent']}
+                colors={['transparent', `${profileAccent}22`, 'transparent']}
+                locations={[0, 0.25, 1]}
                 style={{ width: '100%', height: 350, position: 'absolute', top: 0 }}
                 start={{ x: 0.5, y: 0 }}
                 end={{ x: 0.5, y: 1 }}

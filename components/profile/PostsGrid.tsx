@@ -12,7 +12,9 @@ import { useVideoPoster } from '../../lib/media/videoPoster';
 import { formatViewCount } from '../../lib/media/viewCount';
 
 const GRID_GAP = 8;
-const GRID_HORIZONTAL_INSET = 12;
+// The phone gutter, so the grid lines up with the profile card above it (it
+// sat 4pt wider, iPhone, 2026-11-27).
+const GRID_HORIZONTAL_INSET = 16;
 const COMPACT_TEXT_SCALE = 1.2;
 
 interface PostsGridProps {

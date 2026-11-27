@@ -30,8 +30,11 @@ describe('Home feed has one ranking control', () => {
     expect(home).toMatch(/railPinned && !focusedHome/);
   });
 
-  it('names the section after the selected chip, not always "Top conversations"', () => {
-    expect(home).toMatch(/feedScope === 'forYou' \? t\('home\.topConversations'\) : feedScopeLabel\(feedScope, t\)/);
+  // 2026-11-27: the label then repeated the chip right above it ("Latest" over
+  // "LATEST"). Only For You and the new-user home keep a section label.
+  it('labels only For You, never repeating the selected chip', () => {
+    expect(home).toMatch(/focusedHome \|\| feedScope === 'forYou'\n\s+\? <SectionHeader/);
+    expect(home).not.toMatch(/<SectionHeader label=\{[^}]*feedScopeLabel\(feedScope/);
   });
 });
 

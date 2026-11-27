@@ -5,10 +5,10 @@ import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { BookOpen, Brain, Camera, CaretRight, ChartLineUp, Code, Cpu, GameController, MusicNote, PaintBrush, Play, RocketLaunch, Sparkle, UsersThree, VideoCamera } from 'phosphor-react-native';
+import { Brain, CaretRight, Play, UsersThree } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { EdgeGlass, EDGE_GLASS_FADE } from '../../components/ui/EdgeGlass';
+import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { SearchBar } from '../../components/feed/SearchBar';
 import { TabHeader } from '../../components/ui/TabHeader';
 import { Avatar } from '../../components/ui/Avatar';
@@ -38,34 +38,36 @@ type SearchTab = 'all' | 'people' | 'echoes' | 'topics' | 'tools';
 const CATEGORY_FALLBACKS = ['AI', 'Design', 'Productivity', 'Startups'];
 
 /**
- * Icon and colour are chosen by what a topic IS. The previous code indexed a
- * four-entry table by list position, so the first topic always got the AI chip
- * and the second always got the design brush — which is why "Video" shipped
- * wearing a CPU icon and "Ai" a paintbrush.
+ * A topic's colour, chosen by what the topic IS rather than its list position
+ * (position once put a CPU icon on "Video"). The tile used to pair it with a
+ * stock icon in a tinted square, which made every tile look alike and gave the
+ * unrecognised ones a sparkle, the stock "AI" mark (owner: "dull and AI made",
+ * 2026-11-27). Tiles now show a photo from the topic, or set the hashtag itself
+ * in type, and the colour only marks the "#".
  */
-const TOPIC_VISUALS: { match: RegExp; color: string; Icon: React.ComponentType<any> }[] = [
-  { match: /(^|\b)(ai|ml|llm|gpt|machine\s?learning|neural)/i, color: WARM.steel, Icon: Cpu },
-  { match: /(video|film|movie|reel|clip|cinema)/i, color: TOPIC.vermilion, Icon: VideoCamera },
-  { match: /(design|ux|ui|art|draw|illustrat)/i, color: WARM.terracotta, Icon: PaintBrush },
-  { match: /(code|coding|dev|program|software|engineer)/i, color: TOPIC.slate, Icon: Code },
-  { match: /(music|song|audio|beat|sound)/i, color: WARM.plum, Icon: MusicNote },
-  { match: /(photo|camera|picture|shot)/i, color: TOPIC.moss, Icon: Camera },
-  { match: /(book|read|writ|story|poem)/i, color: TOPIC.straw, Icon: BookOpen },
-  { match: /(game|gaming|play)/i, color: WARM.heather, Icon: GameController },
-  { match: /(startup|founder|business|money|finance)/i, color: WARM.plum, Icon: RocketLaunch },
-  { match: /(productiv|habit|focus|growth|goal)/i, color: WARM.olive, Icon: ChartLineUp },
+const TOPIC_COLORS: { match: RegExp; color: string }[] = [
+  { match: /(^|\b)(ai|ml|llm|gpt|machine\s?learning|neural)/i, color: WARM.steel },
+  { match: /(video|film|movie|reel|clip|cinema)/i, color: TOPIC.vermilion },
+  { match: /(design|ux|ui|art|draw|illustrat)/i, color: WARM.terracotta },
+  { match: /(code|coding|dev|program|software|engineer)/i, color: TOPIC.slate },
+  { match: /(music|song|audio|beat|sound)/i, color: WARM.plum },
+  { match: /(photo|camera|picture|shot)/i, color: TOPIC.moss },
+  { match: /(book|read|writ|story|poem)/i, color: TOPIC.straw },
+  { match: /(game|gaming|play)/i, color: WARM.heather },
+  { match: /(startup|founder|business|money|finance)/i, color: WARM.plum },
+  { match: /(productiv|habit|focus|growth|goal)/i, color: WARM.olive },
 ];
 
 const NEUTRAL_TOPIC_PALETTE = [WARM.steel, WARM.terracotta, WARM.olive, WARM.plum, WARM.heather];
 
-function resolveTopicVisual(topic: string) {
-  const hit = TOPIC_VISUALS.find(entry => entry.match.test(topic));
-  if (hit) return { color: hit.color, Icon: hit.Icon };
+function topicColor(topic: string) {
+  const hit = TOPIC_COLORS.find(entry => entry.match.test(topic));
+  if (hit) return hit.color;
   // Hash rather than index: an unrecognised topic keeps the same colour when
   // the feed reorders it, instead of changing hue on every refresh.
   let hash = 0;
   for (let i = 0; i < topic.length; i += 1) hash = (hash * 31 + topic.charCodeAt(i)) >>> 0;
-  return { color: NEUTRAL_TOPIC_PALETTE[hash % NEUTRAL_TOPIC_PALETTE.length], Icon: Sparkle };
+  return NEUTRAL_TOPIC_PALETTE[hash % NEUTRAL_TOPIC_PALETTE.length];
 }
 
 /** Hashtags arrive in whatever case the author typed, so "ai" rendered as "Ai". */
@@ -80,6 +82,13 @@ const SEARCH_TABS: SearchTab[] = ['all', 'people', 'echoes', 'topics', 'tools'];
 const HEADER_SEARCH_HEIGHT = 52;
 const HEADER_TITLE_GAP = 12;
 const HEADER_BOTTOM_PAD = 14;
+/**
+ * How far the header's fade reaches into the page; both lists start below it.
+ * The default 36, plus a section's own top margin, left about 70pt of empty
+ * page between the search field and the first row (iPhone, 2026-11-27). The bar
+ * itself is solid now, so a short fade is enough to soften its edge.
+ */
+const EXPLORE_FADE = 20;
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -155,7 +164,7 @@ export default function SearchScreen() {
   const discovery = useMemo(() => groupDiscovery(feed, interests, followingIds), [feed, followingIds, interests]);
   const { data: remoteSuggested } = useSuggestedUsers();
   const suggestedUsers = (remote ? (remoteSuggested ?? []) : users).slice(0, layout.isWide ? 6 : 4);
-  const topTopics = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(label => ({ topic: label, count: 0 }));
+  const topTopics: { topic: string; count: number; cover?: string }[] = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(label => ({ topic: label, count: 0 }));
   // Derived from the pieces the header actually contains rather than guessed.
   // The old constants (112, or 86 on desktop) were smaller than their own
   // content — ~130pt of title plus a 52pt search field inside a 112pt box with
@@ -223,7 +232,7 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false}
           // Start below the glass header's fade, not inside it: content at rest
           // under the fade renders blurred (2026-09-30 audit).
-          contentContainerStyle={{ paddingTop: headerHeight + EDGE_GLASS_FADE, paddingBottom: layout.bottomChromePadding }}
+          contentContainerStyle={{ paddingTop: headerHeight + EXPLORE_FADE, paddingBottom: layout.bottomChromePadding }}
           refreshControl={
             <RefreshControl
               refreshing={pulling}
@@ -236,7 +245,7 @@ export default function SearchScreen() {
           <View style={layout.wideContentStyle}>
             {recentSearches.length > 0 && (
               <View style={{ marginBottom: 16 }}>
-                <SectionHeader label={t('explore.recent')} actionLabel={t('explore.clear')} onAction={() => setRecentSearches([])} />
+                <SectionHeader first label={t('explore.recent')} actionLabel={t('explore.clear')} onAction={() => setRecentSearches([])} />
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -249,22 +258,19 @@ export default function SearchScreen() {
               </View>
             )}
 
-            <SectionHeader label={t('explore.browseTopics')} />
+            <SectionHeader first={recentSearches.length === 0} label={t('explore.browseTopics')} />
             <View style={{ paddingHorizontal: layout.gutter, flexDirection: 'row', flexWrap: 'wrap', gap: tileGap, marginBottom: 18 }}>
-              {topTopics.slice(0, 8).map(item => {
-                const visual = resolveTopicVisual(item.topic);
-                return (
-                  <TopicTile
-                    key={item.topic}
-                    label={formatTopicLabel(item.topic)}
-                    count={item.count}
-                    color={visual.color}
-                    width={tileWidth}
-                    Icon={visual.Icon}
-                    onPress={() => setQuery(item.topic)}
-                  />
-                );
-              })}
+              {topTopics.slice(0, 8).map(item => (
+                <TopicTile
+                  key={item.topic}
+                  label={formatTopicLabel(item.topic)}
+                  count={item.count}
+                  color={topicColor(item.topic)}
+                  cover={item.cover}
+                  width={tileWidth}
+                  onPress={() => setQuery(item.topic)}
+                />
+              ))}
             </View>
 
             {remote && (
@@ -316,7 +322,7 @@ export default function SearchScreen() {
        * border and a bevel on a bar whose other three sides are off-screen, so
        * it read as a slab with a hard line under it. EdgeGlass fades the blur
        * out into the content instead — the tab bar and home header do the same. */}
-      <EdgeGlass edge="top" height={headerHeight} style={{ zIndex: 10 }}>
+      <EdgeGlass edge="top" height={headerHeight} fadeLength={EXPLORE_FADE} style={{ zIndex: 10 }}>
           <View
             onLayout={event => {
               const next = Math.ceil(event.nativeEvent.layout.height);
@@ -386,7 +392,7 @@ function SearchResults({
       contentContainerStyle={[layout.wideContentStyle, {
         // Below the glass header's fade: the result chips used to sit inside it
         // and render as unreadable smudges.
-        paddingTop: headerHeight + EDGE_GLASS_FADE + 4,
+        paddingTop: headerHeight + EXPLORE_FADE + 4,
         paddingHorizontal: layout.gutter,
         paddingBottom: layout.bottomChromePadding,
       }]}
@@ -493,73 +499,90 @@ function TopicTile({
   label,
   count,
   color,
+  cover,
   width,
-  Icon,
   onPress,
 }: {
   label: string;
   count: number;
   color: string;
+  cover?: string;
   width: number;
-  Icon: React.ComponentType<any>;
   onPress: () => void;
 }) {
   const { colors, font, fontSizes } = useTheme();
   const { t } = useI18n();
+  const [coverFailed, setCoverFailed] = useState(false);
   // Only the four built-in names are translated: other labels are real topics
   // people wrote, which must show as written.
   const shownLabel = CATEGORY_FALLBACKS.includes(label) ? ttx(label) : label;
+  const countLabel = count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : t('explore.startExploring');
+  const photo = cover && !coverFailed ? cover : undefined;
   return (
-    <Pressable onPress={onPress} style={{ width }}>
-      {/* A background and a border: the tile used to be a tint fading to
-          transparent, which on a black ground gave it no bottom edge at all —
-          it dissolved into the page instead of reading as a card. */}
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`#${shownLabel}, ${countLabel}`}
+      style={({ pressed }) => ({ width, transform: [{ scale: pressed ? 0.97 : 1 }] })}
+    >
       <View style={{
-        minHeight: 104,
-        borderRadius: 20,
-        padding: 14,
+        height: 112,
+        borderRadius: 18,
         overflow: 'hidden',
         backgroundColor: colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
+        borderWidth: photo ? 0 : StyleSheet.hairlineWidth,
         borderColor: colors.border,
-        justifyContent: 'space-between',
+        padding: 14,
+        justifyContent: 'flex-end',
       }}>
-        <LinearGradient
-          colors={[`${color}2E`, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFill as any}
-          pointerEvents="none"
-        />
-        <View style={{
-          width: 34,
-          height: 34,
-          borderRadius: 12,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: `${color}26`,
-        }}>
-          <Icon color={color} size={19} weight="bold" />
-        </View>
-        <View style={{ marginTop: 14 }}>
-          <Text style={[font.display, { color: colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>
-            {shownLabel}
+        {photo ? (
+          <>
+            <ExpoImage
+              source={{ uri: photo }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={photo}
+              transition={150}
+              onError={() => setCoverFailed(true)}
+            />
+            <LinearGradient
+              colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.25)', 'rgba(0,0,0,0.72)']}
+              locations={[0, 0.4, 1]}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+          </>
+        ) : (
+          // No photo under this topic yet: the hashtag itself is the picture.
+          <Text
+            style={[font.display, { position: 'absolute', top: 4, right: 12, color, fontSize: 64, lineHeight: 72, opacity: 0.9 }]}
+            maxFontSizeMultiplier={1}
+            accessible={false}
+          >
+            #
           </Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 3 }]}>
-            {count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : t('explore.startExploring')}
-          </Text>
-        </View>
+        )}
+        <Text
+          style={[font.display, { color: photo ? ON_MEDIA : colors.text, fontSize: fontSizes.body + 1 }]}
+          numberOfLines={1}
+        >
+          {photo ? `#${shownLabel}` : shownLabel}
+        </Text>
+        <Text style={[font.body, { color: photo ? 'rgba(255,255,255,0.82)' : colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>
+          {countLabel}
+        </Text>
       </View>
     </Pressable>
   );
 }
 
 
-function SectionHeader({ label, actionLabel, onAction }: { label: string; actionLabel?: string; onAction?: () => void }) {
+function SectionHeader({ label, actionLabel, onAction, first = false }: { label: string; actionLabel?: string; onAction?: () => void; first?: boolean }) {
   const tracking = useTracking();
   const { colors, font, fontSizes } = useTheme();
   return (
-    <View style={{ paddingHorizontal: 16, marginTop: 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center' }}>
+    <View style={{ paddingHorizontal: 16, marginTop: first ? 4 : 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center' }}>
       <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.meta, letterSpacing: tracking(1.4), textTransform: 'uppercase', flex: 1 }]}>
         {label}
       </Text>

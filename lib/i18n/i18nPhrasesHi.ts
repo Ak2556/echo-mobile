@@ -1333,9 +1333,9 @@ export const HI_BULK: Record<string, string> = {
   'New focus': 'नया फ़ोकस',
   'Ask': 'पूछें',
   'Do': 'करें',
-  'Message Echo...': 'Echo को मैसेज करें...',
-  'Message the assistant...': 'असिस्टेंट को मैसेज करें...',
-  'Responding...': 'जवाब आ रहा है...',
+  'Message Echo…': 'Echo को मैसेज करें…',
+  'Message the assistant…': 'असिस्टेंट को मैसेज करें…',
+  'Responding…': 'जवाब आ रहा है…',
   // 2026-11-25: Settings strings that showed in English (test/hindiSettings.test.ts).
   "Stop backing up health data?": "स्वास्थ्य डेटा का बैकअप बंद करें?",
   "Your fitness data stays on this device. The copy on our servers is deleted, and other devices stop syncing it.": "आपका फ़िटनेस डेटा इसी डिवाइस पर रहेगा। हमारे सर्वर की कॉपी हटा दी जाएगी, और दूसरे डिवाइस इसे सिंक करना बंद कर देंगे।",

@@ -62,7 +62,10 @@ export function glassWash(edge: 'top' | 'bottom', blurred: boolean, isDark: bool
   // tail below it fades.
   if (edge === 'top') return 1;
   if (!blurred) return 0.96;
-  return isDark ? 0.45 : 0.55;
+  // At 0.45 Explore's "Thinking partners" row read clearly between the Home and
+  // Explore labels (iPhone, 2026-11-27). Enough wash that text under the bar
+  // turns to colour, not words; the blur keeps it frosted rather than flat.
+  return isDark ? 0.85 : 0.88;
 }
 
 export interface EdgeGlassProps {

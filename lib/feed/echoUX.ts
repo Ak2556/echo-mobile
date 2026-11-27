@@ -142,18 +142,28 @@ export function evaluatePublishChecklist(input: {
   };
 }
 
-export function deriveTopicFeed(feed: FeedItem[]) {
+/**
+ * The most-used topics in a feed, each with the first photo posted under it.
+ *
+ * The photo is what Explore's topic tile shows: a picture people actually
+ * posted says what "Himachal" is about better than any icon could, and the tiles
+ * stop looking alike (2026-11-27).
+ */
+export function deriveTopicFeed(feed: FeedItem[]): { topic: string; count: number; cover?: string }[] {
   if (!Array.isArray(feed)) return [];
   const counts = new Map<string, number>();
+  const covers = new Map<string, string>();
   feed.forEach(item => {
+    const photo = /^https?:\/\//i.test(item.mediaUris?.[0] ?? '') ? item.mediaUris![0] : undefined;
     inferTopics(item).forEach(topic => {
       counts.set(topic, (counts.get(topic) ?? 0) + 1);
+      if (photo && !covers.has(topic)) covers.set(topic, photo);
     });
   });
 
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .map(([topic, count]) => ({ topic, count }))
+    .map(([topic, count]) => ({ topic, count, cover: covers.get(topic) }))
     .slice(0, 8);
 }
 

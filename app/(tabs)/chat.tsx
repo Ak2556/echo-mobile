@@ -32,7 +32,7 @@ import { useTheme } from '../../lib/ui/theme';
 import { useTracking } from '../../lib/ui/tracking';
 import { Avatar } from '../../components/ui/Avatar';
 import { wantsToPost } from '../../lib/ai/postIntent';
-import { Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
+import { Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/feed/publishContext';
 import { track } from '../../lib/core/analytics';
@@ -46,7 +46,6 @@ import type { Conversation } from '../../types';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { getTargetCategory } from '../../lib/retention/targetCategories';
 import { miniAppById } from '../../lib/mini-apps/miniAppCatalog';
-import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { persistGet } from '../../store/persist';
 import { assistantLanguageInstruction } from '../../lib/i18n/languages';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
@@ -147,7 +146,6 @@ function ChatEmptyLaunchpad({
   const layout = useResponsiveLayout();
   const router = useRouter();
   const toolApps = targetAppIds.map(id => miniAppById(id)).filter(Boolean).slice(0, 3);
-  const firstTool = toolApps[0];
   const quickActions = [
     {
       key: 'target',
@@ -167,14 +165,18 @@ function ChatEmptyLaunchpad({
       key: 'tools',
       title: t('chat.openTools'),
       subtitle: toolApps.map(app => app?.name).filter(Boolean).join(' · ') || t('chat.miniApps'),
-      icon: firstTool ? <MiniAppIcon id={firstTool.id} color={firstTool.color} size={30} /> : <SquaresFour color={colors.accent} size={ICON_SIZE.md} weight="bold" />,
+      // The same accent glyph as the rows above it. A tool's own coloured icon
+      // here was a red tile among olive outlines.
+      icon: <SquaresFour color={colors.accent} size={ICON_SIZE.md} weight="bold" />,
       onPress: () => router.push('/(tabs)/apps' as Href),
     },
   ];
 
   return (
     <View style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingTop: layout.isPhone ? 12 : 18, paddingBottom: 28, gap: 14 }]}>
-      <View style={{ position: 'relative', overflow: 'visible', marginHorizontal: 4 }}>
+      {/* No inset of its own: the 4pt it had put the chips at 20 while the
+          action cards below start at 16 (iPhone, 2026-11-27). */}
+      <View style={{ position: 'relative', overflow: 'visible' }}>
         <LinearGradient
           colors={[`${colors.accent}20`, 'transparent']}
           start={{ x: 0, y: 0 }}
@@ -265,7 +267,7 @@ function ChatEmptyLaunchpad({
               <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.label }]} numberOfLines={1}>{action.title}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
             </View>
-            {action.key === 'target' ? <ChartLineUp color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" /> : <ArrowUpRight color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />}
+            <ArrowUpRight color={colors.textMuted} size={ICON_SIZE.sm} weight="bold" />
           </Pressable>
         ))}
       </View>
