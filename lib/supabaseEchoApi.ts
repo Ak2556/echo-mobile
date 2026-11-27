@@ -3503,8 +3503,13 @@ export interface RemoteDirectMessage {
   unreadable?: 'no_key' | 'failed' | null;
 }
 
+/** The list row for a sealed message, which the server cannot preview. The row draws a lock beside it. */
+export const SEALED_PREVIEW = 'Encrypted message';
+
 function dmPreviewText(kind: string | null | undefined, text: string | null | undefined): string | null {
-  if (kind === 'image') return text?.trim() ? `📷 ${text.trim()}` : 'Photo';
+  // The list draws the camera itself; prefixing an emoji made photo rows read
+  // "Photo · 📷 Photo" next to a camera icon.
+  if (kind === 'image') return text?.trim() ? text.trim() : 'Photo';
   if (kind === 'voice') return 'Voice message';
   if (kind === 'echo') return 'Shared Echo';
   if (kind === 'link') {
@@ -3518,7 +3523,7 @@ function dmPreviewText(kind: string | null | undefined, text: string | null | un
   }
   // A sealed message's preview is null on the server by design (see
   // fn_sync_conv_last_message); say so rather than show an empty row.
-  return text ?? (kind === 'text' ? '🔒 Message' : null);
+  return text ?? (kind === 'text' ? SEALED_PREVIEW : null);
 }
 
 /** Upsert a dm_conversation row and return its UUID. Does NOT send a message. */
@@ -4536,6 +4541,7 @@ export interface UserAura {
   user_id: string;
   name: string;
   color: string;
+  avatar_url?: string | null;
   text_content?: string;
   music_title?: string;
   music_artist?: string;
@@ -4568,7 +4574,7 @@ export async function fetchNetworkAuras(): Promise<UserAura[]> {
 
   const { data: profiles, error: pErr } = await supabase
     .from('profiles')
-    .select('id, display_name, avatar_color')
+    .select('id, display_name, avatar_color, avatar_url')
     .in('id', userIds);
   if (pErr) throw pErr;
 
@@ -4580,6 +4586,7 @@ export async function fetchNetworkAuras(): Promise<UserAura[]> {
       user_id: row.user_id,
       name: p?.display_name || 'Unknown',
       color: p?.avatar_color || '#999',
+      avatar_url: (p?.avatar_url as string | null | undefined) ?? null,
       text_content: row.text_content,
       music_title: row.music_title,
       music_artist: row.music_artist,
