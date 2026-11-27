@@ -16,7 +16,7 @@ import { HabitMarkerIcon, habitMarkerLabel } from '../../components/mini-apps/Ha
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
@@ -662,28 +662,26 @@ export default function HabitsApp() {
   return (
     <View style={{ flex: 1 }}>
       <MiniAppShell title={tt('Habits')} headerRight={<HeaderAddButton onPress={() => setShowAdd(true)} label={tt('Add habit')} />}>
-      <MiniCommandDeck
-        accent={colors.accent}
-        title={tt('Consistency engine')}
-        subtitle={tt('Streaks, proof, recovery.')}
-        metrics={[
-          { label: tt('Best'), value: `${bestStreak}`, detail: tt('streak') },
-          { label: tt('Proof'), value: `${proofCount}`, detail: tt('logs') },
-        ]}
-        chips={[tt('Proof-backed'), tt('Reminder-ready'), tt('Compare progress')]}
-      />
+      {/* One card for today. There was also a strip of "0 Best / 0 Proof" above
+          it (unlabelled, and "Proof" meant nothing), and the card led with a
+          big "0%" that repeated "0 of 1 due today" (2026-11-27). */}
       {/* Progress */}
       {dueToday.length > 0 && (
         <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: fontSizes.heading, fontWeight: '900' }}>{pct}%</Text>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{doneToday} {tt('of')} {dueToday.length} {tt('due today')}</Text>
+              <Text style={{ color: colors.text, fontSize: fontSizes.heading, fontWeight: '900' }}>{doneToday} {tt('of')} {dueToday.length}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{tt('done today')}</Text>
             </View>
-            <View style={{ alignItems: 'center' }}>
-              <Fire color={pct === 100 ? colors.warning : colors.textMuted} size={36} weight={pct === 100 ? 'fill' : 'thin'} />
-              {pct === 100 && <Text style={{ color: colors.warning, fontSize: fontSizes.caption, fontWeight: '700' }}>{tt('Perfect!')}</Text>}
-            </View>
+            {bestStreak > 0 ? (
+              <View style={{ alignItems: 'flex-end' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Fire color={colors.warning} size={ICON_SIZE.sm} weight="fill" />
+                  <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '800' }}>{bestStreak}</Text>
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{tt('best streak')}</Text>
+              </View>
+            ) : null}
           </View>
           <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden' }}>
             <View style={{ height: '100%', width: `${pct}%`, backgroundColor: colors.accent, borderRadius: 4 }} />
@@ -702,7 +700,7 @@ export default function HabitsApp() {
         />
       )}
 
-      {[{title: 'Morning', data: habitsMorning}, {title: 'Afternoon', data: habitsAfternoon}, {title: 'Evening', data: habitsEvening}, {title: 'Any Time', data: habitsAny}].map(({title, data}) => {
+      {[{title: 'Morning', data: habitsMorning}, {title: 'Afternoon', data: habitsAfternoon}, {title: 'Evening', data: habitsEvening}, {title: 'Any time', data: habitsAny}].map(({title, data}) => {
         if (data.length === 0) return null;
         return (
           <View key={title}>
@@ -808,8 +806,9 @@ export default function HabitsApp() {
         </View>
       )}
 
-      {/* Echo actions sit after the content, not between a summary and the list it summarises. */}
-      <EdgeFeaturePanel
+      {/* Echo actions sit after the content, and only once there is something to
+          share: at 0 of 1 with no streak it offered to post "0 habits done". */}
+      {(doneToday > 0 || bestStreak > 0) && <EdgeFeaturePanel
         appName="Habits"
         accent={colors.accent}
         headline={tt('Make consistency social')}
@@ -823,7 +822,7 @@ export default function HabitsApp() {
         shareText={`Habit progress: ${doneToday}/${dueToday.length} habits done today, best streak ${bestStreak} days, ${proofCount} proof notes/photos saved.`}
         publishTitle="Habit progress"
         publishBody={`Today I completed ${doneToday} of ${dueToday.length} scheduled habits. My best active streak is ${bestStreak} days, with ${proofCount} proof-backed check-ins.`}
-      />
+      />}
 
       {detailHabit && !editHabit && (
         <HabitDetail

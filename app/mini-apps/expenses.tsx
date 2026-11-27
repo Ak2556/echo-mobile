@@ -7,15 +7,14 @@ import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon, Bell, GearSix } from 'phosphor-react-native';
+import { Wallet, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Bell, GearSix } from 'phosphor-react-native';
 import { ActionSheet } from '../../components/common/ActionSheet';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { HeaderActionButton } from '../../components/ui/HeaderActionButton';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
-import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { useResponsiveLayout } from '../../lib/ui/responsive';
+import { MiniChip, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/ui/theme';
 import { useI18n } from '../../lib/i18n/i18n';
@@ -427,6 +426,7 @@ function ProfileModal({ value, onSelect, onClose }: { value: KhataProfile; onSel
 
 export default function ExpensesApp() {
   const { colors, radius, font, fontSizes } = useTheme();
+  const layout = useResponsiveLayout();
   const { tt } = useI18n();
     const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
   const [activeTab, setActiveTab] = useState<'dashboard' | 'parties' | 'table'>('dashboard');
@@ -580,12 +580,12 @@ export default function ExpensesApp() {
       const path = `${FS.cacheDirectory}${filename}`;
       await FS.writeAsStringAsync(path, content);
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(path, { mimeType, dialogTitle: tt('Export Khata') });
+        await Sharing.shareAsync(path, { mimeType, dialogTitle: tt('Export entries') });
       } else {
         showToast(tt('Sharing is not available on this device'), tt('Error'));
       }
     } catch (err) {
-      showToast(tt('Failed to export Khata'), tt('Error'));
+      showToast(tt('Could not export entries'), tt('Error'));
     }
   };
 
@@ -598,7 +598,7 @@ export default function ExpensesApp() {
   // carries two buttons, not four.
   const HeaderBtns = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <HeaderActionButton icon={GearSix} label={tt('Khata settings')} onPress={() => setShowSettings(true)} />
+      <HeaderActionButton icon={GearSix} label={tt('Settings')} onPress={() => setShowSettings(true)} />
       <HeaderActionButton icon={Export} label={tt('Export')} onPress={handleExport} />
       <HeaderAddButton onPress={() => setShowAdd(true)} label={tt('Add entry')} />
     </View>
@@ -608,9 +608,21 @@ export default function ExpensesApp() {
   const terms = PROFILE_TERM[profile];
 
   return (
-    <MiniAppShell title={tt('Khata')} subtitle={tt('Accounting')} scrollable={false} headerRight={HeaderBtns}>
+    <MiniAppShell title={tt('Money')} scrollable={false} headerRight={HeaderBtns}>
       <View style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Math.max(40, layout.bottomChromePadding) }}>
+      {/* The three views, as the app's chips at the top. They were a floating
+          pill bar of their own at the bottom, over where the app's tab bar sits
+          (2026-11-27). */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16 }}>
+        {([
+          { key: 'dashboard', label: tt('Entries') },
+          { key: 'table', label: tt('Daybook') },
+          { key: 'parties', label: profile === 'personal' ? tt('Friends') : tt('Parties') },
+        ] as const).map(({ key, label }) => (
+          <MiniChip key={key} accent={colors.accent} label={label} active={activeTab === key} onPress={() => setActiveTab(key)} />
+        ))}
+      </ScrollView>
       {activeTab === 'parties' && (
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingHorizontal: 4 }}>
@@ -660,38 +672,27 @@ export default function ExpensesApp() {
 
       {activeTab === 'dashboard' && (
         <Animated.View entering={FadeInUp.duration(300)}>
-          {/* Main Fintech Balance Card */}
-          <View style={{ marginBottom: 24, marginHorizontal: 2 }}>
-            <LinearGradient
-              colors={balance >= 0 ? [colors.success, colors.surface] : [colors.danger, colors.surface]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={{ borderRadius: 28, padding: 24, paddingBottom: 28, shadowColor: balance >= 0 ? colors.success : colors.danger, shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}
-            >
-              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: fontSizes.small, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>
-                {searching ? tt('Matching P&L') : `${tt('Net')} ${balance >= 0 ? tt('Profit') : tt('Loss')} · ${doc.currency}`}
-              </Text>
-              <Text style={{ color: colors.bgPure, fontSize: 48, ...font.displayBlack, letterSpacing: -1.5 }}>
-                {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
-              </Text>
-              
-              <View style={{ flexDirection: 'row', marginTop: 32, gap: 16 }}>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <ArrowDown color="rgba(255,255,255,0.9)" size={ICON_SIZE.xs} weight="bold" />
-                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: fontSizes.caption, fontWeight: '800', letterSpacing: 0.5 }}>{tt('TOTAL INCOME')}</Text>
-                  </View>
-                  <Text style={{ color: colors.bgPure, fontSize: 22, fontWeight: '800' }}>{money(income)}</Text>
-                </View>
-                <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.2)' }} />
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <ArrowUp color="rgba(255,255,255,0.9)" size={ICON_SIZE.xs} weight="bold" />
-                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: fontSizes.caption, fontWeight: '800', letterSpacing: 0.5 }}>{tt('TOTAL SPEND')}</Text>
-                  </View>
-                  <Text style={{ color: colors.bgPure, fontSize: 22, fontWeight: '800' }}>{money(expense)}</Text>
-                </View>
+          {/* This month's balance. It was a green-to-grey gradient card (red when
+              in loss) with white text, income under a down arrow and spending
+              under an up arrow, which read backwards (2026-11-27). */}
+          <View style={{ marginBottom: 20, padding: 20, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', marginBottom: 4 }}>
+              {searching ? tt('Matching entries') : `${balance >= 0 ? tt('Profit') : tt('Loss')} · ${monthLabel(month)}`}
+            </Text>
+            <Text style={{ color: balance < 0 ? colors.danger : colors.text, fontSize: 40, ...font.displayBlack, letterSpacing: -1 }}>
+              {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
+            </Text>
+            <View style={{ flexDirection: 'row', marginTop: 18, gap: 16 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 2 }}>{tt('Money in')}</Text>
+                <Text style={{ color: colors.success, fontSize: 20, fontWeight: '800' }}>+{money(income)}</Text>
               </View>
-            </LinearGradient>
+              <View style={{ width: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 2 }}>{tt('Money out')}</Text>
+                <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>-{money(expense)}</Text>
+              </View>
+            </View>
           </View>
 
           {/* Search */}
@@ -709,7 +710,7 @@ export default function ExpensesApp() {
           </GlassPanel>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, paddingHorizontal: 4 }}>
-            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '800', letterSpacing: -0.2 }}>{tt('Recent Activity')}</Text>
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '800', letterSpacing: -0.2 }}>{tt('Recent activity')}</Text>
           </View>
 
 
@@ -735,7 +736,7 @@ export default function ExpensesApp() {
           accent={colors.accent}
           icon={<Wallet color={colors.textMuted} size={48} weight="duotone" />}
           title={searching ? tt('No matches') : `${tt('Nothing in')} ${monthLabel(month)}`}
-          subtitle={searching ? tt('Try a different search or category.') : tt('Add the first money move to see this month clearly.')}
+          subtitle={searching ? tt('Try a different search or category.') : tt('Add your first entry with the + button.')}
         />
       )}
 
@@ -833,33 +834,6 @@ export default function ExpensesApp() {
       )}
       </ScrollView>
 
-      {/* Floating Bottom Navigation & FAB */}
-      <View style={{ position: 'absolute', bottom: 32, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'box-none' }}>
-        <View style={{ flex: 1, alignItems: 'center', pointerEvents: 'box-none' }}>
-          <View style={{ flexDirection: 'row', backgroundColor: colors.isDark ? 'rgba(40,40,40,0.85)' : 'rgba(255,255,255,0.9)', borderRadius: radius.full, padding: 6, shadowColor: colors.bgPure, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
-            {([
-              { key: 'dashboard', label: tt('Dashboard'), Icon: ChartPieSlice },
-              { key: 'table', label: tt('Table'), Icon: TableIcon },
-              { key: 'parties', label: profile === 'personal' ? tt('Friends') : tt('Parties'), Icon: Users },
-            ] as const).map(({ key, label, Icon }) => {
-              const active = activeTab === key;
-              return (
-                <Pressable
-                  key={key}
-                  onPress={() => setActiveTab(key)}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: active }}
-                  accessibilityLabel={label}
-                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.full, alignItems: 'center', gap: 2, backgroundColor: active ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent' }}
-                >
-                  <Icon color={active ? colors.text : colors.textMuted} size={20} weight={active ? 'fill' : 'regular'} />
-                  <Text style={{ color: active ? colors.text : colors.textMuted, fontWeight: '800', fontSize: fontSizes.caption }}>{label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      </View>
       </View>
 
       {showAdd && <AddModal profile={profile} currency={doc.currency} parties={parties} onAdd={addTx} onClose={() => setShowAdd(false)} />}
@@ -869,7 +843,7 @@ export default function ExpensesApp() {
       <ActionSheet
         visible={showSettings}
         onClose={() => setShowSettings(false)}
-        title={tt('Khata settings')}
+        title={tt('Settings')}
         actions={[
           {
             key: 'reminder',
@@ -878,7 +852,7 @@ export default function ExpensesApp() {
             onPress: () => {
               const next = !doc.reminders;
               update({ ...doc, reminders: next });
-              showToast(next ? 'Daily Khata reminder ON' : 'Daily Khata reminder OFF');
+              showToast(next ? tt('Daily reminder on') : tt('Daily reminder off'));
             },
           },
           { key: 'profile', label: `${tt('Profile')}: ${profile === 'personal' ? tt('Personal') : tt('Business')}`, icon: <UserCircle color={colors.accent} size={18} weight="bold" />, onPress: () => setShowProfile(true) },

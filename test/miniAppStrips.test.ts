@@ -39,12 +39,9 @@ describe('strips that stay lose the metric that repeated its neighbour', () => {
     expect(read('markdown')).toMatch(/label: 'Chars'/);
   });
 
-  it('habits does not repeat the Today count that the progress card shows', () => {
+  it('habits has no strip: today and the best streak live in the progress card', () => {
     const habits = read('habits');
-    // Only the strip: the share panel further down keeps its own Today metric.
-    const strip = habits.slice(habits.indexOf('<MiniCommandDeck'), habits.indexOf('/>', habits.indexOf('<MiniCommandDeck')));
-    expect(strip).not.toMatch(/label: tt\('Today'\)/);
-    expect(strip).toMatch(/label: tt\('Best'\)/);
-    expect(strip).toMatch(/label: tt\('Proof'\)/);
+    expect(habits).not.toMatch(/<MiniCommandDeck/);
+    expect(habits).toMatch(/tt\('best streak'\)/);
   });
 });

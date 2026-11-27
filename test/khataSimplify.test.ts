@@ -8,22 +8,17 @@ import { describe, expect, it } from 'vitest';
  */
 const screen = readFileSync('app/mini-apps/expenses.tsx', 'utf8');
 
-describe('Khata navigation', () => {
-  it('has one set of tabs, at the bottom, and no second bar at the top', () => {
-    expect(screen).not.toMatch(/Top Tab Bar/);
+describe('Money navigation', () => {
+  it('has one set of view tabs, at the top, as the app chips', () => {
+    expect(screen).not.toMatch(/Top Tab Bar|Floating Bottom Navigation/);
     expect(screen.match(/setActiveTab\('/g)?.length ?? 0).toBe(0);
     expect(screen).toMatch(/\{ key: 'dashboard'[\s\S]*?\{ key: 'table'[\s\S]*?\{ key: 'parties'/);
   });
 
-  it('labels every tab all the time, not only the selected one', () => {
-    const bar = screen.slice(screen.indexOf('Floating Bottom Navigation'));
-    expect(bar).toMatch(/<Text[^>]*>\{label\}<\/Text>/);
-    expect(bar).not.toMatch(/activeTab === '\w+' && <Text/);
-  });
-
-  it('reports the selected tab to a screen reader', () => {
-    expect(screen).toMatch(/accessibilityRole="tab"/);
-    expect(screen).toMatch(/accessibilityState=\{\{ selected: active \}\}/);
+  it('labels every tab all the time and reports the selected one (MiniChip does both)', () => {
+    expect(screen).toMatch(/<MiniChip key=\{key\} accent=\{colors\.accent\} label=\{label\} active=\{activeTab === key\}/);
+    const chip = readFileSync('components/mini-apps/MiniKit.tsx', 'utf8');
+    expect(chip).toMatch(/accessibilityState=\{\{ selected: active \}\}/);
   });
 });
 
