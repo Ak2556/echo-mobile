@@ -223,10 +223,12 @@ export default function ProfileScreen() {
           <View style={{ paddingTop: 32, paddingBottom: 40, alignItems: 'center' }}>
             <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
               {/* Eases in from nothing. Starting at full strength it cut a hard
-                  line across the screen under the status bar (iPhone, 2026-11-27). */}
+                  line across the screen under the status bar, and a single peak
+                  read as a streak behind the avatar (iPhone, 2026-11-27), so it
+                  holds briefly instead of peaking. */}
               <LinearGradient
-                colors={['transparent', `${profileAccent}22`, 'transparent']}
-                locations={[0, 0.25, 1]}
+                colors={['transparent', `${profileAccent}1C`, `${profileAccent}16`, 'transparent']}
+                locations={[0, 0.22, 0.5, 1]}
                 style={{ width: '100%', height: 350, position: 'absolute', top: 0 }}
                 start={{ x: 0.5, y: 0 }}
                 end={{ x: 0.5, y: 1 }}
