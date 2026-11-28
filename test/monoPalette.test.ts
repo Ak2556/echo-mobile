@@ -68,3 +68,11 @@ describe('text on an accent fill picks black or white by contrast', () => {
     expect(read('components/ai/ChatInput.tsx')).not.toMatch(/canSend \? '#fff'/);
   });
 });
+
+describe('navigation', () => {
+  it('draws the open tab filled and the rest as outlines (phone tab bar and side rail)', () => {
+    const layout = read('app/(tabs)/_layout.tsx');
+    expect(layout).not.toMatch(/<IconComp color=\{color\} size=\{(18|iconSize)\} weight="regular" \/>/);
+    expect(layout.match(/weight=\{isFocused \? 'fill' : 'regular'\}/g)?.length).toBe(5);
+  });
+});
