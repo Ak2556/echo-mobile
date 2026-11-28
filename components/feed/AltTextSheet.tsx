@@ -61,7 +61,7 @@ export function AltTextSheet({ visible, uri, initial, onSave, onClose }: AltText
               accessibilityRole="button"
               style={{ paddingHorizontal: 18, paddingVertical: 10, borderRadius: radius.lg, backgroundColor: colors.accent }}
             >
-              <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx('Save')}</Text>
+              <Text style={{ color: colors.onAccent, fontWeight: '700' }}>{ttx('Save')}</Text>
             </Pressable>
           </View>
         </View>

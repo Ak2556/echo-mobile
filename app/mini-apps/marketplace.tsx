@@ -124,7 +124,7 @@ function CategoryPill({ label, active, onPress }: { label: string; active: boole
           borderColor: active ? colors.accent : colors.border,
         }}
       >
-        <Icon color={active ? colors.onAccent : meta.color} size={16} weight="bold" />
+        <Icon color={active ? colors.onAccent : colors.textSecondary} size={16} weight="bold" />
         <Text style={[font.bodySemibold, { color: active ? colors.onAccent : colors.textSecondary, fontSize: fontSizes.small }]}>
           {label}
         </Text>

@@ -19,7 +19,7 @@ import { useFeed } from '../hooks/useFeed';
 import { isSupabaseRemote } from '../lib/core/remoteConfig';
 import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
 import { ttx } from '../lib/i18n/i18n';
-import { BRAND } from '../lib/ui/fixedColors';
+
 import { useUserRefresh } from '../hooks/useUserRefresh';
 
 export default function BookmarksScreen() {
@@ -114,7 +114,7 @@ export default function BookmarksScreen() {
         </View>
       ) : bookmarked.length === 0 ? (
         <EmptyState
-          icon={<BookmarkSimple color={BRAND.indigo} size={32} />}
+          icon={<BookmarkSimple color={colors.textMuted} size={32} />}
           title={ttx("No bookmarks yet")}
           subtitle={ttx("Save echoes you want to revisit later by tapping the bookmark icon.")}
           actionLabel={ttx("Explore")}

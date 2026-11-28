@@ -12,7 +12,6 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { VideoTrimmer } from '../../components/mini-apps/VideoTrimmer';
 import { showToast } from '../../components/ui/Toast';
 import { canSaveToGallery, canTrimVideo, mediaErrorMessage, saveToGallery } from '../../lib/media/echoMedia';
-import { WARM, BRAND } from '../../lib/ui/fixedColors';
 
 export default function EditorApp() {
   const { colors, radius, font, fontSizes } = useTheme();
@@ -96,8 +95,8 @@ export default function EditorApp() {
         </View>
 
         <Pressable onPress={pickAndEditPhoto} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgPure, padding: 20, borderRadius: radius.xl, gap: 16 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(224, 96, 48, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
-            <ImageSquare size={ICON_SIZE.lg} color={BRAND.ember} weight="fill" />
+          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
+            <ImageSquare size={ICON_SIZE.lg} color={colors.text} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>{ttx('Edit photo')}</Text>
@@ -106,8 +105,8 @@ export default function EditorApp() {
         </Pressable>
 
         <Pressable onPress={pickAndEditVideo} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgPure, padding: 20, borderRadius: radius.xl, gap: 16 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(78, 139, 122, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
-            <VideoCamera size={ICON_SIZE.lg} color={WARM.sage} weight="fill" />
+          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
+            <VideoCamera size={ICON_SIZE.lg} color={colors.text} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>{ttx('Trim video')}</Text>

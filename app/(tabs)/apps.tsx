@@ -25,7 +25,7 @@ import { resolveMiniAppId } from '../../lib/mini-apps/miniAppIntegration';
 import { getRecentTools, recordToolOpen } from '../../lib/mini-apps/miniAppRecents';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { useI18n, ttx } from '../../lib/i18n/i18n';
-import { WARM, STAT } from '../../lib/ui/fixedColors';
+
 
 const GAP = 12;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
@@ -127,14 +127,13 @@ function RecentChip({ app, onOpen }: { app: MiniApp; onOpen: (app: MiniApp) => v
 }
 
 /** Compact live stat chip for the condensed "Today" strip. */
-function StatChip({ value, label, sub, color, onPress }: {
-  value: string; label: string; sub: string; color: string; onPress: () => void;
+function StatChip({ value, label, sub, onPress }: {
+  value: string; label: string; sub: string; onPress: () => void;
 }) {
   const { colors, font, fontSizes } = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.96 : 1 }] })}>
       <View style={{ width: 138, minHeight: 96, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
-        <LinearGradient colors={[`${color}22`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
         <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, letterSpacing: -0.5 }} numberOfLines={1}>{value}</Text>
         <Text style={{ color: colors.text, ...font.bodySemibold, fontSize: fontSizes.small, marginTop: 5 }} numberOfLines={1}>{label}</Text>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 1 }} numberOfLines={1}>{sub}</Text>
@@ -151,7 +150,8 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
 }) {
   const tracking = useTracking();
   const { colors, font, radius, fontSizes } = useTheme();
-  const accent = primary?.color ?? colors.accent;
+  // Mono: the card no longer takes the tool's own colour.
+  const accent = colors.accent;
 
   return (
     <View style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
@@ -427,10 +427,10 @@ export default function AppsScreen() {
               <View>
                 <Eyebrow>{ttx("Today")}</Eyebrow>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: GAP }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
-                  <StatChip color={STAT.blue} value={`${dashboard.tasks.open}`} label={ttx("Open tasks")} sub={`${dashboard.tasks.dueToday} due today`} onPress={() => router.push('/mini-apps/tasks' as Href)} />
-                  <StatChip color={STAT.violet} value={`${dashboard.planner.open}`} label={ttx("Plan open")} sub={`${dashboard.planner.done}/${dashboard.planner.total} done`} onPress={() => router.push('/mini-apps/planner' as Href)} />
-                  <StatChip color={STAT.green} value={`${dashboard.shopping.remaining}`} label={ttx("Shopping")} sub={`${dashboard.shopping.checked} checked`} onPress={() => router.push('/mini-apps/shopping-list' as Href)} />
-                  <StatChip color={WARM.plum} value={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(Math.abs(dashboard.expenses.balance))}`} label={ttx("Weekly balance")} sub={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(dashboard.expenses.expense)} spent`} onPress={() => router.push('/mini-apps/expenses' as Href)} />
+                  <StatChip value={`${dashboard.tasks.open}`} label={ttx("Open tasks")} sub={`${dashboard.tasks.dueToday} due today`} onPress={() => router.push('/mini-apps/tasks' as Href)} />
+                  <StatChip value={`${dashboard.planner.open}`} label={ttx("Plan open")} sub={`${dashboard.planner.done}/${dashboard.planner.total} done`} onPress={() => router.push('/mini-apps/planner' as Href)} />
+                  <StatChip value={`${dashboard.shopping.remaining}`} label={ttx("Shopping")} sub={`${dashboard.shopping.checked} checked`} onPress={() => router.push('/mini-apps/shopping-list' as Href)} />
+                  <StatChip value={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(Math.abs(dashboard.expenses.balance))}`} label={ttx("Weekly balance")} sub={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(dashboard.expenses.expense)} spent`} onPress={() => router.push('/mini-apps/expenses' as Href)} />
                 </ScrollView>
               </View>
             )}

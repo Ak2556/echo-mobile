@@ -151,7 +151,7 @@ export function TutorialOverlay() {
               style={{ backgroundColor: colors.accent, borderRadius: 99, paddingHorizontal: 18, paddingVertical: 9 }}
               scaleValue={0.95}
             >
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>
+              <Text style={{ color: colors.onAccent, fontSize: 14, fontWeight: '800' }}>
                 {step.cta ?? (isLast ? 'Done' : 'Next')}
               </Text>
             </AnimatedPressable>

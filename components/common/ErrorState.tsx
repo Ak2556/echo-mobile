@@ -65,8 +65,8 @@ export function ErrorState({ kind = 'unknown', title, message, onRetry }: ErrorS
             backgroundColor: colors.accent,
           }}
         >
-          <ArrowsClockwise color="#fff" size={ICON_SIZE.xs} />
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{ttx("Try again")}</Text>
+          <ArrowsClockwise color={colors.onAccent} size={ICON_SIZE.xs} />
+          <Text style={{ color: colors.onAccent, fontSize: 13, fontWeight: '700' }}>{ttx("Try again")}</Text>
         </Pressable>
       )}
     </View>

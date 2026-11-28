@@ -157,7 +157,7 @@ export function ToolCallCard({ item, onConfirm, onReject }: Props) {
                 }}
                 haptic="medium"
               >
-                <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Confirm")}</Text>
+                <Text style={{ color: colors.onAccent, fontWeight: '700' }}>{ttx("Confirm")}</Text>
               </AnimatedPressable>
             </View>
           )}

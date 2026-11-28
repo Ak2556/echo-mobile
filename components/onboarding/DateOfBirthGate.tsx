@@ -131,8 +131,8 @@ export function DateOfBirthGate() {
               {({ pressed }) => (
                 <View style={{ paddingVertical: 15, alignItems: 'center', opacity: pressed ? 0.9 : 1 }}>
                   {saving
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx('Continue')}</Text>}
+                    ? <ActivityIndicator color={colors.onAccent} />
+                    : <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: 16 }}>{ttx('Continue')}</Text>}
                 </View>
               )}
             </Pressable>

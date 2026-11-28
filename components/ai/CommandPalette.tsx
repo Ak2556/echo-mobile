@@ -326,7 +326,7 @@ export function CommandPalette() {
                     haptic="light"
                   >
                     {input.trim() ? (
-                      <ArrowUp size={18} color="#fff" weight="bold" />
+                      <ArrowUp size={18} color={colors.onAccent} weight="bold" />
                     ) : (
                       <X size={ICON_SIZE.sm} color={colors.textSecondary} />
                     )}

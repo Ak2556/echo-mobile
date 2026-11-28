@@ -61,7 +61,7 @@ import { useTutorialStore } from '../../store/tutorialStore';
 import { ttx, useI18n, type TranslationKey } from '../../lib/i18n/i18n';
 import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/retention/dailyThoughts';
 import { personName } from '../../lib/social/personName';
-import { BRAND, ON_MEDIA } from '../../lib/ui/fixedColors';
+
 import { useUserRefresh } from '../../hooks/useUserRefresh';
 import { capFeed, feedHasEnded } from '../../lib/feed/feedEnd';
 import { FeedEnd } from '../../components/feed/FeedEnd';
@@ -259,26 +259,26 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }) {
   const router = useRouter();
-  const { font, fontSizes, lineHeights, radius } = useTheme();
+  const { colors, font, fontSizes, lineHeights, radius } = useTheme();
   const layout = useResponsiveLayout();
   const target = useTutorialTarget('home-nextstep');
 
   const step = !hasStartedFirstChat
     ? {
-        icon: <ChatCircleText color={ON_MEDIA} size={22} weight="fill" />,
+        icon: <ChatCircleText color={colors.onAccent} size={22} weight="fill" />,
         title: t('home.nextStartChat'),
         body: t('home.nextStartChatBody'),
         route: '/(tabs)/chat' as const,
       }
     : publishedCount === 0
       ? {
-          icon: <PencilSimpleLine color={ON_MEDIA} size={22} weight="fill" />,
+          icon: <PencilSimpleLine color={colors.onAccent} size={22} weight="fill" />,
           title: t('home.nextShareEcho'),
           body: t('home.nextShareEchoBody'),
           route: '/create-post' as const,
         }
       : {
-          icon: <Waveform color={ON_MEDIA} size={22} weight="fill" />,
+          icon: <Waveform color={colors.onAccent} size={22} weight="fill" />,
           title: t('home.nextDaily'),
           body: t('home.nextDailyBody'),
           route: '/daily-question' as const,
@@ -295,23 +295,18 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
         haptic="medium"
         style={{ borderRadius: radius.xl, overflow: 'hidden' }}
       >
-        <LinearGradient
-          colors={[BRAND.emberFrom, BRAND.emberTo]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 16 }}
-        >
-          <View style={{ width: 44, height: 44, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 16, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, borderRadius: radius.xl }}>
+          <View style={{ width: 44, height: 44, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }}>
             {step.icon}
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[font.display, { color: ON_MEDIA, fontSize: 17, lineHeight: 22 }]}>{step.title}</Text>
-            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 2 }}>
+            <Text style={[font.display, { color: colors.text, fontSize: 17, lineHeight: 22 }]}>{step.title}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 2 }}>
               {step.body}
             </Text>
           </View>
-          <ArrowUpRight color={ON_MEDIA} size={ICON_SIZE.md} weight="bold" />
-        </LinearGradient>
+          <ArrowUpRight color={colors.text} size={ICON_SIZE.md} weight="bold" />
+        </View>
       </AnimatedPressable>
     </View>
   );
@@ -642,23 +637,18 @@ export default function DiscoverScreen() {
           engaged home, right under the greeting, before the feed controls. */}
       {dailyQuestionEnabled && !focusedHome && (
         <Pressable onPress={() => router.push('/daily-question')} style={{ marginHorizontal: layout.gutter, marginTop: 4, marginBottom: 6 }}>
-          <View style={{ borderRadius: 20, overflow: 'hidden' }}>
-            <LinearGradient
-              colors={[BRAND.emberFrom, BRAND.emberTo]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ paddingHorizontal: 18, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[font.display, { color: ON_MEDIA, fontSize: 18, lineHeight: 24 }]}>
-                  {t('home.todayQuestion')}
-                </Text>
-                <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.meta, marginTop: 2, ...font.bodyMedium }}>
-                  {t('home.tapToAnswer')}
-                </Text>
-              </View>
-              <ArrowUpRight color={ON_MEDIA} size={ICON_SIZE.md} weight="bold" />
-            </LinearGradient>
+          {/* Mono palette: a plain card with a border. The orange gradient was the
+              loudest thing on the screen and fought the posts below it. */}
+          <View style={{ borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, paddingHorizontal: 18, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={[font.display, { color: colors.text, fontSize: 18, lineHeight: 24 }]}>
+                {t('home.todayQuestion')}
+              </Text>
+              <Text style={{ color: colors.textSecondary, fontSize: fontSizes.meta, marginTop: 2, ...font.bodyMedium }}>
+                {t('home.tapToAnswer')}
+              </Text>
+            </View>
+            <ArrowUpRight color={colors.text} size={ICON_SIZE.md} weight="bold" />
           </View>
         </Pressable>
       )}

@@ -68,7 +68,7 @@ export function StoryCircles() {
                 borderColor: colors.bg,
               }}
             >
-              <Plus color="#fff" size={11} weight="bold" />
+              <Plus color={colors.onAccent} size={11} weight="bold" />
             </View>
           </View>
           <Text

@@ -282,8 +282,8 @@ export default function EditProfileScreen() {
                   borderWidth: 2, borderColor: colors.bg,
                 }}>
                   {uploadingAvatar
-                    ? <ActivityIndicator size="small" color={ON_MEDIA} style={{ width: 14, height: 14 }} />
-                    : <Camera size={ICON_SIZE.xs} color={ON_MEDIA} weight="fill" />
+                    ? <ActivityIndicator size="small" color={colors.onAccent} style={{ width: 14, height: 14 }} />
+                    : <Camera size={ICON_SIZE.xs} color={colors.onAccent} weight="fill" />
                   }
                 </View>
               </AnimatedPressable>

@@ -84,7 +84,7 @@ export function ReviewerSignInSheet({ visible, onClose, onSubmit }: ReviewerSign
               accessibilityRole="button"
               style={{ paddingVertical: 14, alignItems: 'center' }}
             >
-              <Text style={[font.bodyBold, { color: '#fff', fontSize: 16 }]}>{busy ? 'Signing in…' : 'Sign in'}</Text>
+              <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 16 }]}>{busy ? 'Signing in…' : 'Sign in'}</Text>
             </Pressable>
           </View>
           <Pressable onPress={onClose} accessibilityRole="button" style={{ paddingVertical: 10, alignItems: 'center' }}>

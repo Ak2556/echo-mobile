@@ -183,8 +183,8 @@ export default function GetVerifiedScreen() {
                 <Text style={{ color: colors.text, fontSize: 17, ...font.displayBlack }}>{pose}</Text>
               </View>
               <AnimatedPressable onPress={takeSelfie} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
-                <Camera color={ON_MEDIA} size={18} weight="fill" />
-                <Text style={{ color: ON_MEDIA, fontWeight: '800', fontSize: fontSizes.body }}>{ttx("Take the selfie")}</Text>
+                <Camera color={colors.onAccent} size={18} weight="fill" />
+                <Text style={{ color: colors.onAccent, fontWeight: '800', fontSize: fontSizes.body }}>{ttx("Take the selfie")}</Text>
               </AnimatedPressable>
             </>
           )}

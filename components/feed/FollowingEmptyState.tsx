@@ -56,7 +56,7 @@ export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
                   onPress={(e) => { e.stopPropagation(); onFollow(user.id); }}
                   style={{ backgroundColor: colors.accent, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 }}
                 >
-                  <Text style={[font.bodyBold, { color: '#fff', fontSize: 13 }]}>{ttx('Follow')}</Text>
+                  <Text style={[font.bodyBold, { color: colors.onAccent, fontSize: 13 }]}>{ttx('Follow')}</Text>
                 </Pressable>
               </Pressable>
             ))}

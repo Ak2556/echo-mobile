@@ -244,7 +244,7 @@ export function CommentsPanel({ echoId, bottomInset = 0, onCountChange }: Props)
           accessibilityLabel={ttx("Send comment")}
           accessibilityRole="button"
         >
-          <PaperPlaneTilt color="#fff" size={18} />
+          <PaperPlaneTilt color={text.trim() && !addRemote.isPending ? colors.onAccent : colors.textMuted} size={18} />
         </Pressable>
       </View>
     </View>
