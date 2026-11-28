@@ -30,6 +30,8 @@ export const TT_PHRASES: Partial<Record<AppLanguageCode, Record<string, string>>
     'Add your first entry with the + button.': '+ बटन से पहली एंट्री जोड़ें।',
     'Daily reminder on': 'रोज़ का रिमाइंडर चालू', 'Daily reminder off': 'रोज़ का रिमाइंडर बंद',
     'Export entries': 'एंट्री एक्सपोर्ट करें', 'Could not export entries': 'एंट्री एक्सपोर्ट नहीं हो सकीं',
+    'Back to today': 'आज पर लौटें', 'Nothing planned for this day.': 'इस दिन के लिए कोई प्लान नहीं।',
+    "Log a meal to see today's calories and protein.": 'आज की कैलोरी और प्रोटीन देखने के लिए खाना लॉग करें।',
 
     // Tasks
     'Tasks': 'कार्य', 'Your execution queue': 'आपकी कार्य सूची', 'Priorities, dates, action.': 'प्राथमिकताएं, तारीखें, कार्रवाई।',

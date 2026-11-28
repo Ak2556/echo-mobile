@@ -265,7 +265,7 @@ export default function VoiceMemoApp() {
   );
 
   return (
-    <MiniAppShell title={ttx("Voice Memo")} subtitle={ttx("Record")} headerRight={CountBadge}>
+    <MiniAppShell title={ttx("Voice Memo")} headerRight={CountBadge}>
       {/* Recording widget */}
       <GlassPanel
         variant="medium"

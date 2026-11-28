@@ -131,7 +131,7 @@ export default function MarkdownScreen() {
   const ClearBtn = <HeaderActionButton icon={Trash} label={ttx("Clear text")} onPress={() => setText('')} />;
 
   return (
-    <MiniAppShell title={ttx("Markdown")} subtitle={ttx("Write")} headerRight={ClearBtn} scrollable={false}>
+    <MiniAppShell title={ttx("Markdown")} headerRight={ClearBtn} scrollable={false}>
       <View style={{ flex: 1, paddingTop: 4 }}>
         <MiniCommandDeck
           compact

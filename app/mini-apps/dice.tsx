@@ -110,7 +110,7 @@ export default function DiceApp() {
   );
 
   return (
-    <MiniAppShell title={ttx("Dice & Coin")} subtitle={ttx("Chance")} headerRight={ClearBtn}>
+    <MiniAppShell title={ttx("Dice & Coin")} headerRight={ClearBtn}>
       {/* Die selector */}
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SELECT DIE")}</Text>

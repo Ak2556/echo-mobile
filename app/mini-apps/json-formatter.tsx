@@ -74,7 +74,7 @@ export default function JsonFormatterScreen() {
   ) : undefined;
 
   return (
-    <MiniAppShell title={ttx("JSON Tools")} subtitle={ttx("Clean")} headerRight={HeaderActions}>
+    <MiniAppShell title={ttx("JSON Tools")} headerRight={HeaderActions}>
       <View>
         {input.trim().length > 0 && (
           <MiniCommandDeck

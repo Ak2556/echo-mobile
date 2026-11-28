@@ -127,7 +127,7 @@ export default function WorldClockScreen() {
   const AddButton = <HeaderAddButton onPress={() => setAdding(value => !value)} open={adding} label={adding ? ttx("Close") : ttx("Add location")} />;
 
   return (
-    <MiniAppShell title={ttx("World Clock")} subtitle={ttx("Meet")} headerRight={AddButton}>
+    <MiniAppShell title={ttx("World Clock")} headerRight={AddButton}>
 
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 18 }} style={{ marginBottom: 14, borderColor: `${isLocalDay ? colors.warning : colors.textMuted}44` }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
