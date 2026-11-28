@@ -81,7 +81,7 @@ export default function ConverterScreen() {
   const result = convert();
 
   return (
-    <MiniAppShell title={ttx("Converter")} subtitle={ttx("Convert")} scrollPadding={0}>
+    <MiniAppShell title={ttx("Converter")} scrollPadding={0}>
       {/* Category pills */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingBottom: 12, paddingTop: 4 }}>
         {CATEGORIES.map((c, i) => (

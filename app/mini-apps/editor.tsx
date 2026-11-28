@@ -83,7 +83,7 @@ export default function EditorApp() {
   };
 
   return (
-    <MiniAppShell title="Editor" subtitle="Post-process">
+    <MiniAppShell title="Editor">
       <Stack.Screen options={{ title: 'Editor', headerTitleStyle: { fontFamily: font.bodyBold.fontFamily } }} />
       
       <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 16 }}>

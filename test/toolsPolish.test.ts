@@ -65,3 +65,36 @@ describe('Echo actions panel', () => {
     expect(pomodoro).toMatch(/\{\(stats\.count > 0 \|\| streak > 0\) && <EdgeFeaturePanel/);
   });
 });
+
+// 2026-11-28 pass (Fitness, Learn, Planner).
+const fitness = read('app/mini-apps/fitness.tsx');
+const planner = read('app/mini-apps/planner.tsx');
+
+describe('tool headers', () => {
+  it('carry no one-word lane tag as a subtitle ("Fit", "Plan", "Master", …)', () => {
+    for (const f of ['markdown', 'json-formatter', 'world-clock', 'editor', 'studio', 'planner', 'dice', 'learn', 'calculator', 'color-tools', 'converter', 'bill-splitter', 'fitness', 'voice-memo']) {
+      expect(read(`app/mini-apps/${f}.tsx`)).not.toMatch(/<MiniAppShell[^>]*?subtitle=(\{ttx\("\w+"\)\}|"Post-process"|\{activeGoal)/);
+    }
+  });
+});
+
+describe('Fitness', () => {
+  it('has no always-up trend icon and labels the weight chart by date', () => {
+    expect(fitness).not.toMatch(/<TrendUp color=\{colors\.accent\} size=\{36\}/);
+    expect(fitness).toMatch(/chartDate\(pts\[0\]\.date\)/);
+    expect(fitness).not.toMatch(/\{min\.toFixed\(1\)\} \{ttx\("kg"\)\}/);
+  });
+
+  it('shows the actions panel only once something is logged', () => {
+    expect(fitness).toMatch(/\{\(totals\.calories > 0 \|\| weekCount > 0 \|\| streak > 0\) && <EdgeFeaturePanel/);
+  });
+});
+
+describe('Planner', () => {
+  it('shows a readable date, one empty line and no panel on an empty day', () => {
+    expect(planner).not.toMatch(/marginTop: 2 \}\}>\{date\}<\/Text>/);
+    expect(planner).toMatch(/ttx\("Nothing planned for this day\."\)/);
+    expect(planner).not.toMatch(/ttx\("No"\) \{section\.label/);
+    expect(planner).toMatch(/\{stats\.total > 0 && <EdgeFeaturePanel/);
+  });
+});

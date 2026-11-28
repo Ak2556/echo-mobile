@@ -488,7 +488,6 @@ export default function LearnScreen() {
   return (
     <MiniAppShell
       title={ttx("Learn")}
-      subtitle={activeGoal ? 'Master' : 'Master'}
       headerRight={(
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <HeaderActionButton icon={GearSix} label={ttx("Learning settings")} onPress={() => setTab('settings')} />

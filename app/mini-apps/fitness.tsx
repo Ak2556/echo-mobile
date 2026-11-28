@@ -834,6 +834,8 @@ function MeasurementModal({ latest, onAdd, onClose }: {
 
 // ── Progress chart ───────────────────────────────────────────────────────────
 
+const chartDate = (iso: string) => new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' });
+
 function WeightChart({ entries, colors }: { entries: WeightEntry[]; colors: any }) {
   const W = 300; const H = 120; const PADX = 10; const PADY = 14;
   const pts = [...entries].sort((a, b) => a.date.localeCompare(b.date)).slice(-20);
@@ -853,8 +855,10 @@ function WeightChart({ entries, colors }: { entries: WeightEntry[]; colors: any 
         ))}
       </Svg>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={{ color: colors.textMuted, fontSize: 11 }}>{min.toFixed(1)} {ttx("kg")}</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 11 }}>{max.toFixed(1)} {ttx("kg")}</Text>
+        {/* The x axis is time: label the first and last entry by date. Min and
+            max kg here read as start and end weights, which they are not. */}
+        <Text style={{ color: colors.textMuted, fontSize: 11 }}>{chartDate(pts[0].date)}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 11 }}>{chartDate(pts[pts.length - 1].date)}</Text>
       </View>
     </View>
   );
@@ -936,7 +940,7 @@ export default function FitnessApp() {
     </View>
   );
 
-  if (!doc) return <MiniAppShell title={ttx("Fitness")} subtitle={ttx("Fit")}><View /></MiniAppShell>;
+  if (!doc) return <MiniAppShell title={ttx("Fitness")}><View /></MiniAppShell>;
 
   const totals = todayMealTotals(doc.meals);
   const calPct = Math.min(100, Math.round((totals.calories / doc.goals.calories) * 100));
@@ -987,7 +991,7 @@ export default function FitnessApp() {
   };
 
   return (
-    <MiniAppShell title={ttx("Fitness")} subtitle={ttx("Fit")} headerRight={HeaderActions}>
+    <MiniAppShell title={ttx("Fitness")} headerRight={HeaderActions}>
       {/* Tabs */}
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
         {TABS.map(t => (
@@ -1082,7 +1086,7 @@ export default function FitnessApp() {
               accent={colors.accent}
               icon={<ForkKnife color={colors.textMuted} size={ICON_SIZE.hero} weight="duotone" />}
               title={ttx("Nothing logged today")}
-              subtitle={ttx("Log the first meal to see calories, protein, and daily direction.")}
+              subtitle={ttx("Log a meal to see today's calories and protein.")}
               actionLabel={ttx("Log your first meal")}
               onAction={() => setShowAddMeal(true)}
             />
@@ -1253,12 +1257,11 @@ export default function FitnessApp() {
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> {ttx("kg")}</Text>
                 </Text>
                 {sortedWeights.length > 1 && (
-                  <Text style={{ color: delta <= 0 ? colors.success : colors.warning, fontSize: fontSizes.small, fontWeight: '700', marginTop: 2 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '700', marginTop: 2 }}>
                     {delta > 0 ? '+' : ''}{delta.toFixed(1)} {ttx("kg since")} {new Date(firstWeight.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                   </Text>
                 )}
               </View>
-              <TrendUp color={colors.accent} size={36} weight="fill" />
             </View>
             {sortedWeights.length > 1 && (
               <View style={{ marginTop: 16 }}>
@@ -1513,8 +1516,9 @@ export default function FitnessApp() {
         </>
       )}
 
-      {/* Echo actions sit after the content, not between a summary and the list it summarises. */}
-      <EdgeFeaturePanel
+      {/* Echo actions sit after the content, not between a summary and the list it summarises.
+          Hidden until something is logged: sharing "0 kcal, 0 workouts" is noise. */}
+      {(totals.calories > 0 || weekCount > 0 || streak > 0) && <EdgeFeaturePanel
         appName="Fitness"
         accent={colors.accent}
         headline={ttx("Fitness that turns into momentum")}
@@ -1528,7 +1532,7 @@ export default function FitnessApp() {
         shareText={`Fitness progress: ${Math.round(totals.calories)}/${doc.goals.calories} kcal today, ${weekCount}/${doc.goals.workoutsPerWeek} workouts this week, ${streak} week streak.`}
         publishTitle="Fitness progress"
         publishBody={`Today I logged ${Math.round(totals.calories)} kcal and ${Math.round(totals.protein)}g protein. This week I completed ${weekCount} of ${doc.goals.workoutsPerWeek} workouts with a ${streak}-week streak.`}
-      />
+      />}
 
       {showAddMeal && (
         <AddMealModal

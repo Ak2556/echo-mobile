@@ -98,7 +98,7 @@ export default function ColorToolsScreen() {
   const save = () => { if (!saved.includes(hex)) setSaved(s=>[hex,...s].slice(0,20)); };
 
   return (
-    <MiniAppShell title={ttx("Color Tools")} subtitle={ttx("Color")}>
+    <MiniAppShell title={ttx("Color Tools")}>
       <ColorIntelligencePanel hex={hex} saved={saved} />
       {/* Hero swatch */}
       <View style={{ height: 160, borderRadius: radius.card, backgroundColor: hex, alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, shadowColor: hex, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 8 } }}>

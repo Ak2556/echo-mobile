@@ -370,7 +370,7 @@ export default function StudioApp() {
   }
 
   return (
-    <MiniAppShell title={ttx("Studio")} subtitle={ttx("Create")} headerRight={GalleryBtn}>
+    <MiniAppShell title={ttx("Studio")} headerRight={GalleryBtn}>
       <CaptureIntentRail value={intent} accent={ACCENT} onChange={setIntent} />
       
       <Animated.View style={[captureStyle, { marginBottom: 24, marginTop: 12, flexDirection: 'row', gap: 12 }]}>

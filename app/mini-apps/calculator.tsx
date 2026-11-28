@@ -315,7 +315,7 @@ export default function CalculatorScreen() {
   const activeScience = expression ? operator : '';
 
   return (
-    <MiniAppShell title={ttx("Calculator")} subtitle={ttx("Solve")} headerRight={HeaderActions} scrollable={false}>
+    <MiniAppShell title={ttx("Calculator")} headerRight={HeaderActions} scrollable={false}>
       <View style={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 14 }}>
         <View style={{ width: panelWidth, maxWidth: '100%' }}>
           <GlassPanel

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
-import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CaretLeft, CaretRight, CheckCircle, CircleDashed, Plus, Trash } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
@@ -47,7 +47,8 @@ export default function PlannerScreen() {
 
   const dayItems = useMemo(() => items.filter(item => item.date === date), [date, items]);
   const stats = plannerStats(items, date);
-  const dayLabel = date === plannerToday()
+  const isToday = date === plannerToday();
+  const dayLabel = isToday
     ? 'Today'
     : new Date(`${date}T12:00:00`).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 
@@ -80,7 +81,7 @@ export default function PlannerScreen() {
   };
 
   return (
-    <MiniAppShell title={ttx("Planner")} subtitle={ttx("Plan")}>
+    <MiniAppShell title={ttx("Planner")}>
       {stats.total > 0 && (
         <MiniCommandDeck
           accent={accent}
@@ -102,7 +103,14 @@ export default function PlannerScreen() {
           <Pressable onPress={() => setDate(plannerToday())}>
             <View style={{ alignItems: 'center' }}>
               <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack }}>{dayLabel}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }}>{date}</Text>
+              {/* Today: the readable date. Another day: the title already names it, so offer the way back. */}
+              {isToday ? (
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }}>
+                  {new Date(`${date}T12:00:00`).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
+                </Text>
+              ) : (
+                <Text style={{ color: accent, fontSize: fontSizes.meta, fontWeight: '700', marginTop: 2 }}>{ttx("Back to today")}</Text>
+              )}
             </View>
           </Pressable>
           <Pressable onPress={() => setDate(shiftPlannerDate(date, 1))} hitSlop={8}>
@@ -127,9 +135,15 @@ export default function PlannerScreen() {
         <MiniButton label={ttx("Add to day")} accent={accent} onPress={add} icon={<Plus color={colors.bgPure} size={18} weight="bold" />} />
       </GlassPanel>
 
-      <View style={{ gap: 14 }}>
+      <View style={{ gap: 14, marginBottom: 16 }}>
+        {dayItems.length === 0 && (
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.label, textAlign: 'center', paddingVertical: 20 }}>
+            {ttx("Nothing planned for this day.")}
+          </Text>
+        )}
         {PLANNER_SLOTS.map(section => {
           const rows = dayItems.filter(item => item.slot === section.id);
+          if (rows.length === 0) return null;
           return (
             <View key={section.id}>
               <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 8 }]}>
@@ -151,18 +165,13 @@ export default function PlannerScreen() {
                     </View>
                   </GlassPanel>
                 ))}
-                {rows.length === 0 && (
-                  <View style={{ height: 44, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta }}>{ttx("No")} {section.label.toLowerCase()} {ttx("plans")}</Text>
-                  </View>
-                )}
               </View>
             </View>
           );
         })}
       </View>
 
-      <EdgeFeaturePanel
+      {stats.total > 0 && <EdgeFeaturePanel
         appId="planner"
         appName="Planner"
         accent={accent}
@@ -177,7 +186,7 @@ export default function PlannerScreen() {
         shareText={`Planner: ${stats.total} plans today, ${stats.done} done, ${stats.open} open.`}
         publishTitle="Daily plan"
         publishBody={`Today's plan has ${stats.total} items, with ${stats.open} still open.`}
-      />
+      />}
     </MiniAppShell>
   );
 }
