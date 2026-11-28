@@ -10,7 +10,6 @@ import { fetchConversationMedia, type ConversationMedia } from '../../lib/supaba
 import { ttx } from '../../lib/i18n/i18n';
 import { useAuth } from '../../lib/auth';
 import { BackButton } from '../../components/ui/BackButton';
-import { ON_MEDIA } from '../../lib/ui/fixedColors';
 
 export default function ChatMediaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

@@ -25,7 +25,6 @@ import { useResponsiveLayout } from '../lib/ui/responsive';
 import { ttx } from '../lib/i18n/i18n';
 import { writeErrorMessage } from '../lib/moderation/textFilterError';
 import { PhotoEditor } from '../components/feed/PhotoEditor';
-import { ON_MEDIA } from '../lib/ui/fixedColors';
 
 // The picker offers the canonical warm identity palette. It previously held
 // raw Tailwind hues, which meant a freshly-edited profile could set a colour

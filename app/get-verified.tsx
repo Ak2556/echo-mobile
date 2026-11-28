@@ -14,7 +14,6 @@ import {
   VerificationState, getVerificationState, randomPose, submitVerification,
 } from '../lib/social/verificationApi';
 import { ttx } from '../lib/i18n/i18n';
-import { ON_MEDIA } from '../lib/ui/fixedColors';
 
 type Phase = 'loading' | 'intro' | 'preview' | 'submitting' | 'approved' | 'pending' | 'rejected';
 
