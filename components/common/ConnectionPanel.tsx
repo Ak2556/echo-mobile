@@ -71,7 +71,7 @@ export function ConnectionPanel({ title, subtitle, actions }: ConnectionPanelPro
                   ) : null}
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text
-                      style={[font.bodySemibold, { color: primary ? '#fff' : colors.text, fontSize: 13 }]}
+                      style={[font.bodySemibold, { color: primary ? colors.onAccent : colors.text, fontSize: 13 }]}
                       numberOfLines={1}
                     >
                       {action.label}

@@ -49,7 +49,7 @@ export default function ChatMediaScreen() {
         {(['photos', 'links'] as const).map(t => (
           <Pressable key={t} onPress={() => setTab(t)} accessibilityRole="button"
             style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: tab === t ? colors.accent : colors.surfaceHover }}>
-            <Text style={{ color: tab === t ? ON_MEDIA : colors.textSecondary, fontSize: fontSizes.small, fontWeight: '800' }}>
+            <Text style={{ color: tab === t ? colors.onAccent : colors.textSecondary, fontSize: fontSizes.small, fontWeight: '800' }}>
               {t === 'photos' ? `Photos${media.images.length ? ` · ${media.images.length}` : ''}` : `Links${media.links.length ? ` · ${media.links.length}` : ''}`}
             </Text>
           </Pressable>

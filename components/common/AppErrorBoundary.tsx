@@ -75,8 +75,8 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
               opacity: pressed ? 0.85 : 1,
             })}
           >
-            <ArrowClockwise color="#fff" size={ICON_SIZE.sm} weight="bold" />
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{ttx("Try again")}</Text>
+            <ArrowClockwise color={colors.onAccent} size={ICON_SIZE.sm} weight="bold" />
+            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: 15 }}>{ttx("Try again")}</Text>
           </Pressable>
         </View>
 

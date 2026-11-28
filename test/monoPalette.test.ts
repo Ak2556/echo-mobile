@@ -57,3 +57,14 @@ describe('Mono surfaces', () => {
     expect(read('components/ai/MessageBubble.tsx')).not.toMatch(/isUser \? '#fff'/);
   });
 });
+
+describe('text on an accent fill picks black or white by contrast', () => {
+  it('shared chips, buttons and the solid icon button do not hard-code white', () => {
+    const kit = read('components/mini-apps/MiniKit.tsx');
+    expect(kit).not.toMatch(/active \? '#fff'/);
+    expect(kit).not.toMatch(/filled \? '#fff'/);
+    expect(read('components/ui/IconButton.tsx')).toMatch(/variant === 'solid' \? \(tint \? '#fff' : colors\.onAccent\)/);
+    expect(read('components/ui/Polish.tsx')).not.toMatch(/active \? '#fff'/);
+    expect(read('components/ai/ChatInput.tsx')).not.toMatch(/canSend \? '#fff'/);
+  });
+});

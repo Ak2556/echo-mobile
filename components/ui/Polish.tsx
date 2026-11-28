@@ -49,7 +49,7 @@ export function Pill({
         ]}
       >
         {icon}
-        <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 13, ...font.bodySemibold }}>
+        <Text style={{ color: active ? colors.onAccent : colors.textSecondary, fontSize: 13, ...font.bodySemibold }}>
           {label}
         </Text>
       </View>

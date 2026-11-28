@@ -386,6 +386,21 @@ export const getPairedTheme = (themeName: ThemeName, wantDark: boolean): BaseThe
   return pairedKey && THEMES[pairedKey] ? THEMES[pairedKey] : (wantDark ? THEMES.midnight : THEMES.light);
 };
 
+/**
+ * Whichever of near-black / white contrasts better with `hex`, by WCAG relative
+ * luminance. The threshold is the crossover point where the two swap places
+ * ((L+0.05)^2 = 0.0588), not a guess. Use it for text on any accent fill.
+ */
+export function readableOn(hex: string): string {
+  const raw = (hex || '').replace('#', '');
+  const full = raw.length === 3 ? raw.split('').map(ch => ch + ch).join('') : raw;
+  if (full.length < 6 || /[^0-9a-f]/i.test(full.slice(0, 6))) return '#FFFFFF';
+  const channel = (i: number) => parseInt(full.slice(i, i + 2), 16) / 255;
+  const lin = (v: number) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+  const luminance = 0.2126 * lin(channel(0)) + 0.7152 * lin(channel(2)) + 0.0722 * lin(channel(4));
+  return luminance > 0.1925 ? '#09090B' : '#FFFFFF';
+}
+
 export function useTheme() {
   const themeName = useAppStore(s => s.theme);
   const appearance = useAppStore(s => s.appearance);
@@ -404,21 +419,6 @@ export function useTheme() {
 
   const base = getPairedTheme(themeName, darkMode);
 
-  
-  /**
-   * Whichever of near-black / white contrasts better with the accent, by WCAG
-   * relative luminance. The threshold is the crossover point where the two
-   * swap places (L+0.05)^2 = 0.0588, not a guess.
-   */
-  const readableOn = (hex: string): string => {
-    const raw = (hex || '').replace('#', '');
-    const full = raw.length === 3 ? raw.split('').map(ch => ch + ch).join('') : raw;
-    if (full.length < 6 || /[^0-9a-f]/i.test(full.slice(0, 6))) return '#FFFFFF';
-    const channel = (i: number) => parseInt(full.slice(i, i + 2), 16) / 255;
-    const lin = (v: number) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
-    const luminance = 0.2126 * lin(channel(0)) + 0.7152 * lin(channel(2)) + 0.0722 * lin(channel(4));
-    return luminance > 0.1925 ? '#09090B' : '#FFFFFF';
-  };
 
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);

@@ -161,7 +161,7 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
               {isStop ? (
                 <Stop color="#fff" size={18} weight="fill" />
               ) : (
-                <ArrowUp color={canSend ? '#fff' : colors.textMuted} size={ICON_SIZE.md} weight="bold" />
+                <ArrowUp color={canSend ? colors.onAccent : colors.textMuted} size={ICON_SIZE.md} weight="bold" />
               )}
             </View>
           </AnimatedPressable>

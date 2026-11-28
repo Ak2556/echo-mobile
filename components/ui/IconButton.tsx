@@ -50,7 +50,7 @@ export function IconButton({
 }: IconButtonProps) {
   const { colors } = useTheme();
   const accent = tint ?? colors.accent;
-  const glyphColor = color ?? (variant === 'solid' ? '#fff' : colors.text);
+  const glyphColor = color ?? (variant === 'solid' ? (tint ? '#fff' : colors.onAccent) : colors.text);
   const bg = variant === 'solid' ? accent
     : variant === 'tinted' ? accent + '1A'
     : variant === 'surface' ? colors.surface

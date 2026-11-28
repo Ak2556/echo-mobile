@@ -141,7 +141,7 @@ export function StoryCircles() {
                   fontSize: 10,
                   marginTop: 6,
                   fontWeight: '500',
-                  color: hasUnviewed ? '#fff' : colors.textMuted,
+                  color: hasUnviewed ? colors.text : colors.textMuted,
                 }}
                 numberOfLines={1}
               >
