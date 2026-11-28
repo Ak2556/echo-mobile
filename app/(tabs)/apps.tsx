@@ -133,7 +133,7 @@ function StatChip({ value, label, sub, onPress }: {
   const { colors, font, fontSizes } = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-      <View style={{ width: 138, minHeight: 96, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
+      <View style={{ width: 138, minHeight: 96, borderRadius: 20, padding: 14, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
         <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, letterSpacing: -0.5 }} numberOfLines={1}>{value}</Text>
         <Text style={{ color: colors.text, ...font.bodySemibold, fontSize: fontSizes.small, marginTop: 5 }} numberOfLines={1}>{label}</Text>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 1 }} numberOfLines={1}>{sub}</Text>

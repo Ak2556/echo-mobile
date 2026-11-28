@@ -13,6 +13,7 @@ import {
   Globe,
   ImageSquare,
   Aperture,
+  Storefront,
   Key,
   ListChecks,
   Microphone,
@@ -68,6 +69,7 @@ export function MiniAppGlyph({ id, color, size = 24, weight = 'fill' }: MiniAppG
     case 'json-formatter': return <Code {...p} />;
     case 'color-tools': return <Palette {...p} />;
     case 'editor': return <SlidersHorizontal {...p} />;
+    case 'marketplace': return <Storefront {...p} />;
     default: return <ListChecks {...p} />;
   }
 }
