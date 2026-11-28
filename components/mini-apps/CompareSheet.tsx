@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Modal, Pressable, Switch, Text, View } from 'react-native';
 import { X, Trophy } from 'phosphor-react-native';
-import { useTheme } from '../../lib/ui/theme';
+import { readableOn, useTheme } from '../../lib/ui/theme';
 import { Avatar } from '../ui/Avatar';
 import {
   fetchLeaderboard,
@@ -76,7 +76,7 @@ export function CompareSheet({
               <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14 }]}>{ttx("Let your followers see this")}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{ttx("Only your streak numbers. Never your notes or entries.")}</Text>
             </View>
-            <Switch value={sharing} onValueChange={toggleShare} trackColor={{ true: accent, false: colors.border }} />
+            <Switch value={sharing} onValueChange={toggleShare} trackColor={{ true: accent, false: colors.border }} thumbColor={sharing ? readableOn(accent) : '#FFFFFF'} />
           </View>
 
           {loading ? (

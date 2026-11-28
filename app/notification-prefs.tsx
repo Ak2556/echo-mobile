@@ -60,7 +60,7 @@ export default function NotificationPrefsScreen() {
         value={value}
         onValueChange={onValueChange}
         trackColor={switchTrack}
-        thumbColor={SWITCH_THUMB}
+        thumbColor={value ? colors.onAccent : SWITCH_THUMB}
       />
     </View>
   );

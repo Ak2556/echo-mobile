@@ -85,3 +85,14 @@ describe('navigation', () => {
     expect(layout.match(/weight=\{isFocused \? 'fill' : 'regular'\}/g)?.length).toBe(5);
   });
 });
+
+describe('switches', () => {
+  it('an on switch never draws a white thumb on the accent track', () => {
+    for (const f of ['app/settings.tsx', 'app/persona.tsx', 'app/notification-prefs.tsx', 'app/mini-apps/pomodoro.tsx', 'app/mini-apps/fitness.tsx', 'app/mini-apps/learn.tsx', 'components/mini-apps/CompareSheet.tsx']) {
+      const src = read(f);
+      for (const m of src.matchAll(/<Switch[\s\S]*?\/>/g)) {
+        expect(m[0], f).toMatch(/thumbColor=\{[^}]*\? (colors\.onAccent|readableOn\(accent\))/);
+      }
+    }
+  });
+});

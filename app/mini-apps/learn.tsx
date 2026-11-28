@@ -1776,8 +1776,8 @@ function SettingsToggle({ title, subtitle, value, onValueChange }: {
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: colors.surfaceHover, true: `${colors.accent}88` }}
-        thumbColor={value ? colors.accent : colors.textMuted}
+        trackColor={{ false: colors.surfaceHover, true: colors.accent }}
+        thumbColor={value ? colors.onAccent : colors.textMuted}
       />
     </View>
   );

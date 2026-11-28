@@ -900,7 +900,7 @@ export default function SettingsScreen() {
   };
 
   const SwitchEl = (v: boolean, onChange: (val: boolean) => void) => (
-    <Switch value={v} onValueChange={onChange} trackColor={switchTrack} thumbColor={SWITCH_THUMB} />
+    <Switch value={v} onValueChange={onChange} trackColor={switchTrack} thumbColor={v ? colors.onAccent : SWITCH_THUMB} />
   );
 
   const chevronValue = (label: string) => (

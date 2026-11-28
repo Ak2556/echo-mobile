@@ -555,7 +555,7 @@ function ToggleRow({ label, hint, value, onChange }: { label: string; hint?: str
         <Text style={{ color: colors.text, fontSize: fontSizes.label, fontWeight: '600' }}>{label}</Text>
         {hint ? <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }}>{hint}</Text> : null}
       </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.accent, false: colors.border }} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.accent, false: colors.border }} thumbColor={value ? colors.onAccent : '#FFFFFF'} />
     </View>
   );
 }

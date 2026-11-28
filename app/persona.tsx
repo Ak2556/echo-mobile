@@ -148,7 +148,7 @@ export default function PersonaScreen() {
                 value={personaLearningEnabled && profile.enabled}
                 onValueChange={togglePersona}
                 trackColor={{ false: colors.surfaceHover, true: colors.accent }}
-                thumbColor={SWITCH_THUMB}
+                thumbColor={personaLearningEnabled && profile.enabled ? colors.onAccent : SWITCH_THUMB}
               />
             </View>
 

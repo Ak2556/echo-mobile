@@ -88,8 +88,8 @@ export default function TargetProgressScreen() {
           </View>
         </View>
 
-        {/* Choosing the target lives here (moved from the Tools tab, 2026-11-28):
-            Settings and the assistant both open this screen. */}
+        {/* Choosing the target lives here (moved from the Tools tab, 2026-11-28).
+            Settings → Target tools opens this screen. */}
         <View style={{ gap: 10 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -layout.gutter, paddingHorizontal: layout.gutter }}>
             {TARGET_CATEGORIES.map(option => {
