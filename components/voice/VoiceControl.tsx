@@ -123,9 +123,9 @@ export function VoiceControl() {
                  borderWidth: 2, borderColor: 'rgba(255, 255, 255, 0.4)'
               }, animatedMicStyle]}>
                  {state.phase === 'thinking' ? (
-                   <ActivityIndicator color="#fff" />
+                   <ActivityIndicator color={colors.onAccent} />
                  ) : (
-                   <Microphone color="#fff" size={30} weight="fill" />
+                   <Microphone color={state.phase === 'error' ? '#fff' : colors.onAccent} size={30} weight="fill" />
                  )}
               </Animated.View>
             </Pressable>

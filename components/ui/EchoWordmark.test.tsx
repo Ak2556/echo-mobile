@@ -44,6 +44,17 @@ describe('EchoWordmark', () => {
     expect(dot(container)!.getAttribute('style')).toContain('122, 139, 78'); // #7A8B4E
   });
 
+  it('falls back to the ember of the app icon when the accent is the text colour (Mono)', () => {
+    const accent = theme.colors.accent;
+    theme.colors.accent = theme.colors.text;
+    try {
+      const { container } = render(<EchoWordmark />);
+      expect(dot(container)!.getAttribute('style')).toContain('224, 96, 48'); // #E06030
+    } finally {
+      theme.colors.accent = accent;
+    }
+  });
+
   it('keeps the source proportions at any height', () => {
     const { container } = render(<EchoWordmark height={204} />);
     const style = glyph(container)!.getAttribute('style') ?? '';

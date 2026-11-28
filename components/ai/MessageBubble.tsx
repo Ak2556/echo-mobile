@@ -78,7 +78,7 @@ function buildMarkdownStyles(colors: any, textSize: number) {
 
 export function MessageBubble({ message, isStreaming, onCopy, onEdit, onRegenerate, onBranch }: MessageBubbleProps) {
   const isUser = message.role === 'user';
-  const { chatBubbleStyle, fontSize, reduceAnimations, accentColor, fontScale } = useAppStore();
+  const { chatBubbleStyle, fontSize, reduceAnimations, fontScale } = useAppStore();
   const { colors } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
   const speaking = useTtsStore((s) => s.speakingId === `msg:${message.id}`);
@@ -109,7 +109,7 @@ export function MessageBubble({ message, isStreaming, onCopy, onEdit, onRegenera
   })();
 
   const padding = { paddingHorizontal: 16, paddingVertical: 12 };
-  const textColor = isUser ? '#fff' : colors.text;
+  const textColor = isUser && chatBubbleStyle !== 'minimal' ? colors.onAccent : colors.text;
 
   const handleLongPress = () => {
     if (message.id === 'welcome') return;
@@ -186,8 +186,8 @@ export function MessageBubble({ message, isStreaming, onCopy, onEdit, onRegenera
   // User bubble — accent colored, always solid
   if (isUser) {
     const minimalStyle = chatBubbleStyle === 'minimal'
-      ? { borderBottomWidth: 2, borderBottomColor: accentColor }
-      : { backgroundColor: accentColor };
+      ? { borderBottomWidth: 2, borderBottomColor: colors.accent }
+      : { backgroundColor: colors.accent };
 
     return (
       <>

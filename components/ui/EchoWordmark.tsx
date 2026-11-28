@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '../../lib/ui/theme';
+import { BRAND } from '../../lib/ui/fixedColors';
 
 /**
  * The Echo lockup: the mark from the app icon, then the name.
@@ -15,7 +16,9 @@ import { useTheme } from '../../lib/ui/theme';
  * invisible against the background. Tinting a single flat PNG would fix that
  * and flatten the orange dot with it. Separated, the glyph follows colors.text
  * and the dot follows colors.accent, so the lockup reads correctly on every
- * theme and picks up the user's Accent Color as a bonus.
+ * theme and picks up the user's Accent Color as a bonus. Under the Mono default
+ * the accent IS the text colour, which would leave a white-on-white dot with no
+ * brand in it, so there the dot falls back to the ember of the app icon.
  *
  * The proportions are measured from the source art rather than guessed: in the
  * 1024px icon the glyph is 190x204, the dot is 69px across and the gap is 50px,
@@ -56,7 +59,7 @@ export function EchoWordmark({ height = 26 }: { height?: number }) {
         tintColor={colors.text}
         cachePolicy="memory-disk"
       />
-      <View style={{ width: dot, height: dot, borderRadius: dot / 2, backgroundColor: colors.accent }} />
+      <View style={{ width: dot, height: dot, borderRadius: dot / 2, backgroundColor: colors.accent.toLowerCase() === colors.text.toLowerCase() ? BRAND.ember : colors.accent }} />
     </View>
   );
 }

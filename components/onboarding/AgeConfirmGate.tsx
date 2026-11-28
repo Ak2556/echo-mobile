@@ -126,7 +126,7 @@ export function AgeConfirmGate() {
 
           <Pressable onPress={() => { void save(); }} disabled={!iso || saving} accessibilityRole="button" accessibilityState={{ disabled: !iso || saving }}>
             <View style={{ marginTop: 8, minHeight: 50, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: iso ? colors.accent : colors.surfaceHover, opacity: saving ? 0.6 : 1 }}>
-              <Text style={[font.bodyBold, { color: iso ? '#fff' : colors.textMuted, fontSize: fontSizes.body }]}>{saving ? ttx('Saving…') : ttx('Continue')}</Text>
+              <Text style={[font.bodyBold, { color: iso ? colors.onAccent : colors.textMuted, fontSize: fontSizes.body }]}>{saving ? ttx('Saving…') : ttx('Continue')}</Text>
             </View>
           </Pressable>
 

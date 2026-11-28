@@ -224,10 +224,10 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
               <ReflectiveNavIcon active={isFocused} size={30} radius={10}>
                 {badgeCount > 0 ? (
                   <BadgeIcon count={badgeCount}>
-                    <IconComp color={color} size={18} weight="regular" />
+                    <IconComp color={color} size={18} weight={isFocused ? 'fill' : 'regular'} />
                   </BadgeIcon>
                 ) : (
-                  <IconComp color={color} size={18} weight="regular" />
+                  <IconComp color={color} size={18} weight={isFocused ? 'fill' : 'regular'} />
                 )}
               </ReflectiveNavIcon>
               <Text
@@ -466,14 +466,14 @@ function FloatingTabBar(props: BottomTabBarProps) {
                 <ReflectiveNavIcon active={isFocused} size={isTabletTabs ? 34 : 30} radius={12}>
                   {badgeCount > 0 ? (
                     <BadgeIcon count={badgeCount}>
-                      <IconComp color={color} size={iconSize} weight="regular" />
+                      <IconComp color={color} size={iconSize} weight={isFocused ? 'fill' : 'regular'} />
                     </BadgeIcon>
                   ) : route.name === 'chat' && checkinPending && !isFocused ? (
                     <DotIcon>
-                      <IconComp color={color} size={iconSize} weight="regular" />
+                      <IconComp color={color} size={iconSize} weight={isFocused ? 'fill' : 'regular'} />
                     </DotIcon>
                   ) : (
-                    <IconComp color={color} size={iconSize} weight="regular" />
+                    <IconComp color={color} size={iconSize} weight={isFocused ? 'fill' : 'regular'} />
                   )}
                 </ReflectiveNavIcon>
                 <Text

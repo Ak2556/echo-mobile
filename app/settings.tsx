@@ -347,6 +347,8 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
 
 
 const ACCENT_COLORS = [
+  // '' = the theme's own accent (white on dark, black on light): the default.
+  { color: '', name: 'Default' },
   { color: WARM.terracotta, name: 'Terracotta' },
   { color: WARM.ochre, name: 'Ochre' },
   { color: WARM.olive, name: 'Olive' },
@@ -410,12 +412,12 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
               >
                 <View
                   style={[{ width: 48, height: 48, borderRadius: theme.radius.full, alignItems: 'center', justifyContent: 'center' }, {
-                    backgroundColor: c.color,
-                    borderWidth: value === c.color ? 2 : 0,
-                    borderColor: colors.text,
+                    backgroundColor: c.color || colors.text,
+                    borderWidth: value === c.color ? 2 : (c.color ? 0 : StyleSheet.hairlineWidth),
+                    borderColor: value === c.color ? (c.color ? colors.text : colors.accent) : colors.border,
                   }]}
                 >
-                  {value === c.color && <Check color={ON_MEDIA} size={ICON_SIZE.md} />}
+                  {value === c.color && <Check color={c.color ? ON_MEDIA : colors.bg} size={ICON_SIZE.md} />}
                 </View>
                 <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 6 }}>{c.name}</Text>
               </AnimatedPressable>
@@ -1083,13 +1085,13 @@ export default function SettingsScreen() {
             <SettingsRow
               theme={theme}
               icon={Palette}
-              iconColor={s.accentColor}
+              iconColor={colors.accent}
               label={ttx("Accent color")}
               subtitle={ttx("Customize the app's accent color")}
               onPress={() => setShowAccentPicker(true)}
               right={
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={{ width: 20, height: 20, borderRadius: 999, marginRight: 8, backgroundColor: s.accentColor }} />
+                  <View style={{ width: 20, height: 20, borderRadius: 999, marginRight: 8, backgroundColor: colors.accent, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }} />
                   <CaretRight color={colors.textMuted} size={18} />
                 </View>
               }

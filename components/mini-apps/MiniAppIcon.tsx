@@ -1,6 +1,6 @@
 import React from 'react';
-import { Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Image, StyleSheet, View } from 'react-native';
+import { useTheme } from '../../lib/ui/theme';
 import {
   ArrowsLeftRight,
   Barbell,
@@ -13,6 +13,7 @@ import {
   Globe,
   ImageSquare,
   Aperture,
+  Storefront,
   Key,
   ListChecks,
   Microphone,
@@ -40,15 +41,8 @@ interface MiniAppGlyphProps {
 
 interface MiniAppIconProps extends MiniAppGlyphProps {
   plate?: boolean;
-}
-
-// factor > 0 darkens, factor < 0 lightens. Clamped 0–255 both ways so a
-// lighter top stop is safe.
-function shade(hex: string, factor: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  const f = (c: number) => Math.min(255, Math.max(0, Math.round(c * (1 - factor))));
-  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(f);
-  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+  /** Pressed or hovered: the tile's colour gets stronger. */
+  active?: boolean;
 }
 
 export function MiniAppGlyph({ id, color, size = 24, weight = 'fill' }: MiniAppGlyphProps) {
@@ -77,6 +71,7 @@ export function MiniAppGlyph({ id, color, size = 24, weight = 'fill' }: MiniAppG
     case 'json-formatter': return <Code {...p} />;
     case 'color-tools': return <Palette {...p} />;
     case 'editor': return <SlidersHorizontal {...p} />;
+    case 'marketplace': return <Storefront {...p} />;
     default: return <ListChecks {...p} />;
   }
 }
@@ -91,7 +86,41 @@ const ICON_ASSETS: Record<string, number> = {
   // …
 };
 
-export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = true }: MiniAppIconProps) {
+/**
+ * Tool colours for the Mono palette: one hue per tool so each keeps an identity,
+ * spaced around the wheel at a similar strength so no tile shouts. No pure red
+ * (likes and delete) and no ember (the logo). Tools not listed keep their
+ * catalog colour.
+ */
+export const TOOL_TINT: Record<string, string> = {
+  tasks: '#5B8DEF',
+  habits: '#3FB37F',
+  fitness: '#2BB3A6',
+  notes: '#E0A63A',
+  pomodoro: '#E8775A',
+  expenses: '#9A7BE8',
+  learn: '#3EA8D8',
+  planner: '#7B83EB',
+  'shopping-list': '#74B84A',
+  studio: '#B07FB0',
+  editor: '#E38B3E',
+  marketplace: '#C99A4E',
+};
+
+/** Mix a hex colour toward black (amount > 0) so a glyph keeps contrast on a light tile. */
+function darken(hex: string, amount: number): string {
+  const n = parseInt(hex.replace('#', '').slice(0, 6), 16);
+  const ch = (v: number) => Math.round(v * (1 - amount)).toString(16).padStart(2, '0');
+  return `#${ch(n >> 16)}${ch((n >> 8) & 255)}${ch(n & 255)}`;
+}
+
+function withAlpha(hex: string, alpha: number): string {
+  const n = parseInt(hex.replace('#', '').slice(0, 6), 16);
+  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = true, active = false }: MiniAppIconProps) {
+  const { colors } = useTheme();
   if (!plate) return <MiniAppGlyph id={id} color={color} size={size} weight={weight} />;
 
   const radius = Math.round(size * 0.235); // iOS-squircle-ish
@@ -101,24 +130,25 @@ export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = tru
   if (asset) {
     return <Image source={asset} style={{ width: size, height: size, borderRadius: radius }} resizeMode="cover" />;
   }
-  // A restrained diagonal gradient — subtle depth, no glossy sheen and no
-  // decorative ring (that gloss is exactly what reads cheap/"AI-made"). Flat,
-  // confident, generous glyph padding — the modern app-icon look.
+  // Mono palette (2026-11-28): the app is greyscale, tools keep a colour each,
+  // as a coloured glyph on a faint wash of the same colour. Full-colour gradient
+  // tiles made the grid read like a toy box; all-grey tiles read as disabled.
+  const tint = TOOL_TINT[id] ?? color;
+  const glyph = colors.isDark ? tint : darken(tint, 0.28);
   return (
-    <LinearGradient
-      colors={[shade(color, -0.1), color, shade(color, 0.18)]}
-      locations={[0, 0.5, 1]}
-      start={{ x: 0.15, y: 0 }}
-      end={{ x: 0.85, y: 1 }}
+    <View
       style={{
         width: size,
         height: size,
         borderRadius: radius,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: withAlpha(tint, active ? 0.3 : (colors.isDark ? 0.16 : 0.13)),
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: withAlpha(tint, active ? 0.5 : 0.26),
       }}
     >
-      <MiniAppGlyph id={id} color="#fff" size={Math.round(size * 0.46)} weight={weight} />
-    </LinearGradient>
+      <MiniAppGlyph id={id} color={glyph} size={Math.round(size * 0.46)} weight={weight} />
+    </View>
   );
 }

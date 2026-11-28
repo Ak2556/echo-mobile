@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TextInput, type ViewStyle, type TextStyle, type StyleProp } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '../../lib/ui/theme';
+import { readableOn, useTheme } from '../../lib/ui/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 
@@ -191,7 +191,7 @@ export function MiniChip({
         borderColor: active ? accent : colors.border,
       }}>
         {icon}
-        <Text style={[font.bodySemibold, { color: active ? '#fff' : colors.textSecondary, fontSize: 12.5 }]}>{label}</Text>
+        <Text style={[font.bodySemibold, { color: active ? readableOn(accent) : colors.textSecondary, fontSize: 12.5 }]}>{label}</Text>
       </View>
     </AnimatedPressable>
   );
@@ -348,7 +348,7 @@ export function MiniButton({
           </>
         ) : null}
         {icon}
-        <Text style={[font.bodyBold, { color: filled ? '#fff' : colors.text, fontSize: 15 }]}>{label}</Text>
+        <Text style={[font.bodyBold, { color: filled ? readableOn(accent) : colors.text, fontSize: 15 }]}>{label}</Text>
       </View>
     </AnimatedPressable>
   );

@@ -68,7 +68,7 @@ export function StoryCircles() {
                 borderColor: colors.bg,
               }}
             >
-              <Plus color="#fff" size={11} weight="bold" />
+              <Plus color={colors.onAccent} size={11} weight="bold" />
             </View>
           </View>
           <Text
@@ -141,7 +141,7 @@ export function StoryCircles() {
                   fontSize: 10,
                   marginTop: 6,
                   fontWeight: '500',
-                  color: hasUnviewed ? '#fff' : colors.textMuted,
+                  color: hasUnviewed ? colors.text : colors.textMuted,
                 }}
                 numberOfLines={1}
               >

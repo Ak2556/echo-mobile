@@ -61,7 +61,7 @@ export function ConsentSheet({ gate, icon, title, paragraphs, allowLabel, declin
               <Pressable onPress={() => gate.answer(true)} accessibilityRole="button" accessibilityLabel={ttx(allowLabel)}>
                 {({ pressed }) => (
                   <View style={{ paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.9 : 1 }}>
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx(allowLabel)}</Text>
+                    <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: 16 }}>{ttx(allowLabel)}</Text>
                   </View>
                 )}
               </Pressable>

@@ -100,8 +100,8 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
               backgroundColor: colors.accent,
             }}
           >
-            <Plus color="#fff" size={18} />
-            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{ttx("New conversation")}</Text>
+            <Plus color={colors.onAccent} size={18} />
+            <Text style={{ color: colors.onAccent, fontSize: 15, fontWeight: '700' }}>{ttx("New conversation")}</Text>
           </Pressable>
           <FlashList
             data={sorted}

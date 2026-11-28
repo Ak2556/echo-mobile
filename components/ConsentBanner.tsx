@@ -125,7 +125,7 @@ export function ConsentBanner() {
           >
             {({ pressed }) => (
               <View style={[styles.btn, { backgroundColor: pressed ? colors.accentMuted : colors.accent }]}>
-                <Text style={[font.bodySemibold, { color: '#fff', fontSize: 14 }]}>
+                <Text style={[font.bodySemibold, { color: colors.onAccent, fontSize: 14 }]}>
                   {ttx("Accept")}
                 </Text>
               </View>

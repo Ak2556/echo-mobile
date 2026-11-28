@@ -965,7 +965,7 @@ export default function ChatScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: radius.full }}>
                   <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                    <Text style={{ color: ON_MEDIA, fontSize: fontSizes.small, fontWeight: '700' }}>Echo</Text>
+                    <Text style={{ color: colors.onAccent, fontSize: fontSizes.small, fontWeight: '700' }}>Echo</Text>
                   </View>
                   <Pressable onPress={() => router.push('/messages' as Href)} accessibilityRole="button">
                     <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.full }}>

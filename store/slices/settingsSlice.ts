@@ -7,18 +7,21 @@ import { DEFAULT_APP_LANGUAGE, detectDeviceLanguage, normalizeAppLanguage, type 
 import type { ThemeName } from '../../lib/ui/theme';
 import { initialAppearance, type AppearanceMode } from '../../lib/ui/appearance';
 
-const DEFAULT_ACCENT_COLOR = '#7A8B4E';
-const LEGACY_DEFAULT_ACCENT_COLOR = '#E06030';
+/** Empty = the theme's own accent: white on dark, black on light (the Mono palette, 2026-11-28). */
+const DEFAULT_ACCENT_COLOR = '';
+/** Earlier defaults nobody chose on purpose: ember until 2026-09, olive until 2026-11-28. */
+const FORMER_DEFAULT_ACCENTS = ['#E06030', '#7A8B4E'];
 
-function getAccentColor(): string {
+export function getAccentColor(): string {
   const value = persistGet<string>('accentColor', DEFAULT_ACCENT_COLOR);
-  const migrated = persistGet('accentColorDefaultMigrated', false);
-  if (!migrated && value === LEGACY_DEFAULT_ACCENT_COLOR) {
-    persistSet('accentColor', DEFAULT_ACCENT_COLOR);
-    persistSet('accentColorDefaultMigrated', true);
-    return DEFAULT_ACCENT_COLOR;
+  const migrated = persistGet('accentColorMonoMigrated', false);
+  if (!migrated) {
+    persistSet('accentColorMonoMigrated', true);
+    if (FORMER_DEFAULT_ACCENTS.includes((value || '').toUpperCase())) {
+      persistSet('accentColor', DEFAULT_ACCENT_COLOR);
+      return DEFAULT_ACCENT_COLOR;
+    }
   }
-  if (!migrated) persistSet('accentColorDefaultMigrated', true);
   return value;
 }
 

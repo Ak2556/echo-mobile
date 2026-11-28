@@ -275,7 +275,7 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRe
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
                   {playing && <Pressable onPress={togglePlay} style={PILL}><Pause size={ICON_SIZE.sm} color="#fff" /></Pressable>}
                   <Pressable onPress={toggleLoop} style={[PILL, loop && { backgroundColor: colors.accent + 'CC' }]}>
-                    <ArrowsClockwise size={ICON_SIZE.sm} color="#fff" weight={loop ? 'fill' : 'regular'} />
+                    <ArrowsClockwise size={ICON_SIZE.sm} color={loop ? colors.onAccent : '#fff'} weight={loop ? 'fill' : 'regular'} />
                   </Pressable>
                   <Pressable onPress={toggleMute} style={PILL}>
                     {muted ? <SpeakerSlash size={ICON_SIZE.sm} color="#fff" /> : <SpeakerHigh size={ICON_SIZE.sm} color="#fff" />}
