@@ -18,6 +18,7 @@ import { setPendingPublishContext } from '../lib/feed/publishContext';
 import { IconBadge } from '../components/ui/IconBadge';
 import { ttx } from '../lib/i18n/i18n';
 import { WARM } from '../lib/ui/fixedColors';
+import { getCurrencySymbol, type CurrencyCode } from '../lib/mini-apps/currency';
 
 export default function TargetProgressScreen() {
   const router = useRouter();
@@ -120,7 +121,7 @@ export default function TargetProgressScreen() {
               <CrossStat icon={<CheckCircle color={WARM.olive} size={ICON_SIZE.sm} weight="fill" />} value={`${cross.habitBestStreak}`} label={ttx("day streak")} />
               <CrossStat icon={<Barbell color={WARM.sage} size={ICON_SIZE.sm} weight="fill" />} value={`${cross.fitnessWorkoutsWeek}`} label={ttx("workouts · wk")} />
               <CrossStat icon={<ListChecks color={WARM.steel} size={ICON_SIZE.sm} weight="fill" />} value={`${cross.tasksOpen}`} label={cross.tasksDueToday ? `open · ${cross.tasksDueToday} due` : 'open tasks'} />
-              <CrossStat icon={<Wallet color={WARM.ochre} size={ICON_SIZE.sm} weight="fill" />} value={`${cross.expenseCurrency ?? ''}${Math.round(cross.expenseNetMonth)}`} label={ttx("net · mo")} />
+              <CrossStat icon={<Wallet color={WARM.ochre} size={ICON_SIZE.sm} weight="fill" />} value={`${cross.expenseCurrency ? getCurrencySymbol(cross.expenseCurrency as CurrencyCode) : ''}${Math.round(cross.expenseNetMonth)}`} label={ttx("net · mo")} />
             </View>
           </View>
         ) : null}
@@ -233,7 +234,7 @@ function ActionButton({
         <Text style={[font.bodyBold, { color: filled ? colors.onAccent : colors.text, fontSize: fontSizes.label }]}>
           {label}
         </Text>
-        <Text style={[font.body, { color: filled ? 'rgba(255,255,255,0.78)' : colors.textMuted, fontSize: fontSizes.meta, lineHeight: 17, marginTop: 2 }]}>
+        <Text style={[font.body, { color: filled ? colors.onAccent : colors.textMuted, opacity: filled ? 0.78 : 1, fontSize: fontSizes.meta, lineHeight: 17, marginTop: 2 }]}>
           {caption}
         </Text>
       </View>

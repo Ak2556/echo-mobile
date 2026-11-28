@@ -1,4 +1,5 @@
 import { formatMoney } from '../mini-apps/expenses';
+import { getCurrencySymbol } from '../mini-apps/currency';
 import type { TodayProductivity } from '../core/localSearch';
 import type { TargetCategory } from './targetCategories';
 
@@ -21,7 +22,9 @@ export function buildTargetProgressDigest(
   const notesLine = productivity.notes.total
     ? `${productivity.notes.total} notes saved. Recent: ${productivity.notes.recent.map(note => note.title).join(', ') || 'none'}.`
     : 'No notes are saved yet.';
-  const expensesLine = `This week: $${formatMoney(productivity.expenses.expense)} spent, $${formatMoney(productivity.expenses.income)} income, $${formatMoney(productivity.expenses.balance)} balance.`;
+  // The user's own currency symbol: this line said "$0.00" to rupee users.
+  const cur = getCurrencySymbol(productivity.expenses.currency);
+  const expensesLine = `This week: ${cur}${formatMoney(productivity.expenses.expense)} spent, ${cur}${formatMoney(productivity.expenses.income)} income, ${cur}${formatMoney(productivity.expenses.balance)} balance.`;
   const memosLine = productivity.voiceMemos.total
     ? `${productivity.voiceMemos.total} voice memos captured.`
     : 'No voice memos captured yet.';
