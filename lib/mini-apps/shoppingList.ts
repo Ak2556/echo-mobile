@@ -25,14 +25,17 @@ export interface ShoppingItem {
 
 export const SHOPPING_CATEGORIES = ['Produce', 'Protein', 'Pantry', 'Dairy', 'Bakery', 'Frozen', 'Beverages', 'Home', 'Electronics', 'Hardware', 'Personal', 'Other'];
 
+// No prices: guessed prices were US dollars shown with a rupee sign. The
+// person adds a price on the item if they want a total.
 export const FREQUENT_ITEMS = [
-  { name: 'Milk', category: 'Dairy', price: 3.99 },
-  { name: 'Eggs', category: 'Dairy', price: 4.50 },
-  { name: 'Bread', category: 'Bakery', price: 2.99 },
-  { name: 'Apples', category: 'Produce', price: 4.00 },
-  { name: 'Chicken Breast', category: 'Protein', price: 8.50 },
-  { name: 'Paper Towels', category: 'Home', price: 15.00 },
-  { name: 'Batteries', category: 'Electronics', price: 12.00 },
+  { name: 'Milk', category: 'Dairy', price: 0 },
+  { name: 'Bread', category: 'Bakery', price: 0 },
+  { name: 'Eggs', category: 'Protein', price: 0 },
+  { name: 'Rice', category: 'Pantry', price: 0 },
+  { name: 'Atta', category: 'Pantry', price: 0 },
+  { name: 'Dal', category: 'Pantry', price: 0 },
+  { name: 'Onions', category: 'Produce', price: 0 },
+  { name: 'Tomatoes', category: 'Produce', price: 0 },
 ];
 
 function normalizeItems(raw: unknown): ShoppingItem[] {

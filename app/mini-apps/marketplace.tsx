@@ -35,6 +35,9 @@ import {
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { Button } from '../../components/ui/Button';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
+import { BackButton } from '../../components/ui/BackButton';
+import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
+import { miniAppById } from '../../lib/mini-apps/miniAppCatalog';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { ListingCardSkeleton } from '../../components/ui/Skeleton';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
@@ -116,13 +119,13 @@ function CategoryPill({ label, active, onPress }: { label: string; active: boole
           gap: 8,
           paddingHorizontal: 13,
           borderRadius: radius.full,
-          backgroundColor: active ? meta.color : colors.surface,
+          backgroundColor: active ? colors.accent : colors.surface,
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: active ? meta.color : colors.border,
+          borderColor: active ? colors.accent : colors.border,
         }}
       >
-        <Icon color={active ? ON_MEDIA : meta.color} size={16} weight="bold" />
-        <Text style={[font.bodySemibold, { color: active ? ON_MEDIA : colors.textSecondary, fontSize: fontSizes.small }]}>
+        <Icon color={active ? colors.onAccent : meta.color} size={16} weight="bold" />
+        <Text style={[font.bodySemibold, { color: active ? colors.onAccent : colors.textSecondary, fontSize: fontSizes.small }]}>
           {label}
         </Text>
       </View>
@@ -360,6 +363,8 @@ function RecentlyViewedRail({ items, onClear }: { items: RecentListing[]; onClea
   );
 }
 
+const MARKET_META = miniAppById('marketplace');
+
 export default function MarketplaceScreen() {
   const insets = useSafeAreaInsets();
   const { colors, font, fontSizes, radius } = useTheme();
@@ -539,7 +544,9 @@ export default function MarketplaceScreen() {
         </View>
       ) : null}
 
-      <SectionHeader title={ttx("Latest Listings")} caption={`${sortedListings.length} result${sortedListings.length === 1 ? '' : 's'}`} />
+      {sortedListings.length > 0 ? (
+        <SectionHeader title={ttx("Latest listings")} caption={`${sortedListings.length} ${sortedListings.length === 1 ? ttx('listing') : ttx('listings')}`} />
+      ) : null}
     </View>
   );
 
@@ -551,15 +558,13 @@ export default function MarketplaceScreen() {
         backgroundColor: colors.bg,
       }}>
         <View style={{ width: '100%', maxWidth: gridOuterWidth, alignSelf: 'center', paddingHorizontal: CARD_H_PADDING, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `${colors.accent}15`, alignItems: 'center', justifyContent: 'center' }}>
-              <Storefront color={colors.accent} size={ICON_SIZE.lg} weight="bold" />
-            </View>
-            <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]}>
-                {ttx("Market")}
-              </Text>
-            </View>
+          {/* Same header as every other tool: back, the Tools tile icon, the tile's name. */}
+          <BackButton fallback="/(tabs)/apps" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1, minWidth: 0 }}>
+            {MARKET_META ? <MiniAppIcon id={MARKET_META.id} color={MARKET_META.color} size={42} /> : null}
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, lineHeight: 33, letterSpacing: -0.5, flex: 1 }]} numberOfLines={1}>
+              {ttx("Marketplace")}
+            </Text>
           </View>
           <HeaderAddButton onPress={() => router.push('/create-listing' as Href)} label={ttx("Sell")} />
         </View>
@@ -601,10 +606,10 @@ export default function MarketplaceScreen() {
                 <Package color={colors.accent} size={30} weight="bold" />
               </View>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.body, textAlign: 'center' }]}>
-                {ttx("No listings found")}
+                {query.trim() || category !== 'All' ? ttx("No listings match") : ttx("No listings yet")}
               </Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: 19, textAlign: 'center' }]}>
-                {ttx("Try another lane or seed the market with the first useful listing.")}
+                {query.trim() || category !== 'All' ? ttx("Try another search or category.") : ttx("Be the first to sell something here.")}
               </Text>
               <Pressable
                 onPress={() => router.push('/create-listing' as Href)}

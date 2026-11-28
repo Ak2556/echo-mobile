@@ -98,3 +98,40 @@ describe('Planner', () => {
     expect(planner).toMatch(/\{stats\.total > 0 && <EdgeFeaturePanel/);
   });
 });
+
+// 2026-11-28 pass (Shopping, Studio, Editor, Marketplace).
+const shopping = read('app/mini-apps/shopping-list.tsx');
+const studio = read('app/mini-apps/studio.tsx');
+const editor = read('app/mini-apps/editor.tsx');
+const market = read('app/mini-apps/marketplace.tsx');
+
+describe('Shopping', () => {
+  it('is named as on its tile, hides totals on an empty list, and shows no dollar prices', () => {
+    expect(shopping).toMatch(/<MiniAppShell title=\{ttx\("Shopping"\)\} /);
+    expect(shopping).toMatch(/\{listItems\.length > 0 && \(<>/);
+    expect(shopping).not.toMatch(/• \$\{item\.price/);
+    expect(read('lib/mini-apps/shoppingList.ts')).not.toMatch(/price: [1-9]/);
+  });
+});
+
+describe('Studio', () => {
+  it('does not paint the Video button red', () => {
+    expect(studio).not.toMatch(/backgroundColor: colors\.danger/);
+  });
+});
+
+describe('Editor', () => {
+  it('promises only what it does: video is trim only', () => {
+    expect(editor).not.toMatch(/native effects|Full Scale|Pro-grade/);
+    expect(editor).toMatch(/ttx\('Trim video'\)/);
+  });
+});
+
+describe('Marketplace', () => {
+  it('has a back button, its tile name, and accent chips', () => {
+    expect(market).toMatch(/<BackButton fallback="\/\(tabs\)\/apps" \/>/);
+    expect(market).toMatch(/ttx\("Marketplace"\)/);
+    expect(market).not.toMatch(/backgroundColor: active \? meta\.color/);
+    expect(market).not.toMatch(/seed the market/);
+  });
+});
