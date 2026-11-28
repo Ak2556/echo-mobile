@@ -3,12 +3,11 @@ import { openRoute } from '../../lib/routing/openRoute';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, UsersThree, Waveform, X, type Icon } from 'phosphor-react-native';
+import { ArrowUpRight, ChatCircleText, ShareNetwork, UsersThree, Waveform, X, type Icon } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
-import { createNote } from '../../lib/mini-apps/notes';
 import { miniAppSnapshotText } from '../../lib/mini-apps/miniAppIntegration';
 import { askMiniAppCoach, coachAppFor } from '../../lib/mini-apps/miniAppCoach';
 import { CompareSheet } from './CompareSheet';
@@ -57,16 +56,6 @@ export function EdgeFeaturePanel({
     });
   };
 
-  const saveSnapshot = () => {
-    void createNote({
-      title: `${appName} snapshot`,
-      body: snapshot,
-      color: accent,
-    })
-      .then(() => showToast('Saved to Notes', 'Saved'))
-      .catch(() => showToast('Could not save note', 'Error'));
-  };
-
   const openTargetProgress = () => router.push('/target-progress' as Href);
   const openEcho = () => openRoute('/chat' as Href);
 
@@ -94,8 +83,10 @@ export function EdgeFeaturePanel({
       .finally(() => setLoading(false));
   };
 
+  // No "Note" action: one tap filed a "Tasks snapshot: 0 open, 0 due today"
+  // note into Notes, where it read as the user's own writing (2026-11-27).
+  // Share and Post already carry the same snapshot.
   const secondary: { label: string; a11y: string; Icon: Icon; onPress: () => void }[] = [
-    { label: 'Note', a11y: 'Save a snapshot to Notes', Icon: NotePencil, onPress: saveSnapshot },
     { label: 'Share', a11y: 'Share progress', Icon: ShareNetwork, onPress: shareProgress },
     { label: 'Compare', a11y: 'Compare consistency', Icon: UsersThree, onPress: onCompare },
     { label: 'Post', a11y: 'Post progress as an Echo', Icon: ArrowUpRight, onPress: publish },

@@ -14,7 +14,7 @@ import { useI18n } from '../../lib/i18n/i18n';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton';
-import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniChip, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { ActionSheet, type ActionItem } from '../../components/common/ActionSheet';
 import { showToast } from '../../components/ui/Toast';
 import { NOTE_COLORS, Note, loadNotes, saveNotes } from '../../lib/mini-apps/notes';
@@ -384,7 +384,10 @@ function NoteCard({ note, onOpen, onMore }: { note: Note; onOpen: () => void; on
   const stats = checklistStats(note.body);
   const progress = stats.total ? stats.done / stats.total : 0;
   const preview = previewText(note.body);
-  const meta = [formatDate(note.updatedAt), folderName(note), ...(note.tags ?? []).slice(0, 2).map(tag => `#${tag}`)].join(' · ');
+  // "Inbox" is the default folder, so it said Inbox on every note. Only a
+  // folder the user chose is worth a word.
+  const folder = folderName(note);
+  const meta = [formatDate(note.updatedAt), ...(folder === 'Inbox' ? [] : [folder]), ...(note.tags ?? []).slice(0, 2).map(tag => `#${tag}`)].join(' · ');
 
   return (
     <Pressable
@@ -403,11 +406,11 @@ function NoteCard({ note, onOpen, onMore }: { note: Note; onOpen: () => void; on
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: colors.glassBorder,
       }}>
-        <View style={{ width: 4, backgroundColor: note.color }} />
-        <View style={{ flex: 1, minWidth: 0, paddingVertical: 14, paddingLeft: 14 }}>
+        {/* No colour stripe down the left: it meant nothing the user could read. */}
+        <View style={{ flex: 1, minWidth: 0, paddingVertical: 14, paddingLeft: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 16.5, flexShrink: 1 }]} numberOfLines={1}>{note.title}</Text>
-            {note.pinned ? <PushPin color={note.color} size={ICON_SIZE.xs} weight="fill" /> : null}
+            {note.pinned ? <PushPin color={colors.accent} size={ICON_SIZE.xs} weight="fill" /> : null}
             {note.favorite ? <Star color={colors.warning} size={ICON_SIZE.xs} weight="fill" /> : null}
             <View style={{ flex: 1 }} />
             <Pressable onPress={onMore} hitSlop={12} accessibilityRole="button" accessibilityLabel={tt('Note actions')}>
@@ -426,7 +429,7 @@ function NoteCard({ note, onOpen, onMore }: { note: Note; onOpen: () => void; on
           {stats.total > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, paddingRight: 14 }}>
               <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-                <View style={{ width: `${Math.round(progress * 100)}%`, height: '100%', backgroundColor: note.color }} />
+                <View style={{ width: `${Math.round(progress * 100)}%`, height: '100%', backgroundColor: colors.accent }} />
               </View>
               <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: 11.5 }]}>{stats.done}/{stats.total}</Text>
             </View>
@@ -664,13 +667,15 @@ export default function NotesApp() {
         {filters.filter(f => f.count === undefined || f.count > 0 || view === f.id).map(f => {
           const active = view === f.id;
           return (
-            <Pressable key={f.id} onPress={() => setView(f.id)} accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={tt(f.label)}>
-              <View style={{ height: 34, paddingHorizontal: 14, borderRadius: radius.full, justifyContent: 'center', backgroundColor: active ? colors.text : colors.surface }}>
-                <Text style={[font.bodyBold, { color: active ? colors.bg : colors.textSecondary, fontSize: fontSizes.small }]}>
-                  {tt(f.label)}{f.count ? ` ${f.count}` : ''}
-                </Text>
-              </View>
-            </Pressable>
+            // The app's chip (accent when selected). It was drawn in solid white,
+            // the only chip in the app styled that way (2026-11-27).
+            <MiniChip
+              key={f.id}
+              accent={colors.accent}
+              label={`${tt(f.label)}${f.count ? ` ${f.count}` : ''}`}
+              active={active}
+              onPress={() => setView(f.id)}
+            />
           );
         })}
         {folders.length > 1 ? (

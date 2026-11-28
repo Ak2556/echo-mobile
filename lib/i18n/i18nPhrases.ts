@@ -22,6 +22,15 @@ export const TT_PHRASES: Partial<Record<AppLanguageCode, Record<string, string>>
     'Done': 'पूर्ण', 'Normal': 'सामान्य', 'Low': 'कम', 'Tomorrow': 'कल', 'Morning': 'सुबह',
     'Noon': 'दोपहर', 'Evening': 'शाम', 'Night': 'रात',
 
+    // Habits and Money (2026-11-27 tools pass)
+    'done today': 'आज पूरे', 'best streak': 'सबसे लंबी लय', 'Any time': 'कभी भी',
+    'Entries': 'एंट्री', 'Daybook': 'रोज़नामचा', 'Parties': 'पार्टियां', 'Friends': 'दोस्त',
+    'Profit': 'मुनाफ़ा', 'Loss': 'घाटा', 'Money in': 'आया', 'Money out': 'गया',
+    'Recent activity': 'हाल की एंट्री', 'Matching entries': 'मिलती एंट्री',
+    'Add your first entry with the + button.': '+ बटन से पहली एंट्री जोड़ें।',
+    'Daily reminder on': 'रोज़ का रिमाइंडर चालू', 'Daily reminder off': 'रोज़ का रिमाइंडर बंद',
+    'Export entries': 'एंट्री एक्सपोर्ट करें', 'Could not export entries': 'एंट्री एक्सपोर्ट नहीं हो सकीं',
+
     // Tasks
     'Tasks': 'कार्य', 'Your execution queue': 'आपकी कार्य सूची', 'Priorities, dates, action.': 'प्राथमिकताएं, तारीखें, कार्रवाई।',
     'due now': 'अभी बाकी', 'Plan next 3': 'अगले 3 प्लान करें', 'Add a task...': 'एक कार्य जोड़ें...',

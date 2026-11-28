@@ -9,7 +9,6 @@ import { Play, Pause, ArrowCounterClockwise, GearSix, Fire, Minus, Plus, X, Ligh
 import Animated, {
   cancelAnimation,
   Easing,
-  interpolateColor,
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
@@ -47,23 +46,11 @@ const MODE_META: Record<Mode, { label: string; marker: string }> = {
   long: { label: 'Long Break', marker: 'LB' },
 };
 
-function modeColor(mode: Mode, colors: any): string {
-  if (mode === 'short') return colors.success;
-  if (mode === 'long') return colors.accent;
-  return colors.warning;
-}
-
-function timerColor(mode: Mode, remainingRatio: number, colors: any): string {
-  const clamped = Math.max(0, Math.min(1, remainingRatio));
-  if (mode !== 'focus') {
-    if (clamped > 0.66) return colors.success;
-    if (clamped > 0.33) return colors.accent;
-    return colors.textMuted;
-  }
-  if (clamped > 0.66) return colors.success;
-  if (clamped > 0.33) return colors.warning;
-  if (clamped > 0.15) return colors.warning;
-  return colors.danger;
+// One colour for the whole tool: the app's accent. It was a traffic light
+// (green at the start, amber, red at the end) with an orange Focus tab and a
+// green Short Break tab, three colours none of which is the app's (2026-11-27).
+function modeColor(_mode: Mode, colors: any): string {
+  return colors.accent;
 }
 
 function timerPhase(mode: Mode, remainingRatio: number): string {
@@ -500,7 +487,7 @@ export default function PomodoroScreen() {
   const totalSecs = activeTotalSecs ?? (mode === 'focus' && draftTotalSecs ? draftTotalSecs : configuredTotalSecs);
   const remainingRatio = seconds / Math.max(totalSecs, 1);
   const elapsedRatio = totalSecs > 0 ? Math.max(0, Math.min(1, (totalSecs - seconds) / totalSecs)) : 0;
-  const accent = timerColor(mode, remainingRatio, colors);
+  const accent = modeColor(mode, colors);
   const endAtLabel = useMemo(() => {
     const activeEnd = activeRef.current?.endAt;
     if (running && activeEnd) return formatClockTime(new Date(activeEnd));
@@ -800,13 +787,7 @@ export default function PomodoroScreen() {
   const circumference = 2 * Math.PI * circleRadius;
   const animatedCircleProps = useAnimatedProps(() => ({
     strokeDashoffset: circumference * progress.value,
-    stroke: interpolateColor(
-      progress.value,
-      mode === 'focus' ? [0, 0.15, 0.33, 0.66, 1] : [0, 0.33, 0.66, 1],
-      mode === 'focus'
-        ? [colors.danger, colors.danger, colors.warning, colors.warning, colors.success]
-        : [colors.textMuted, colors.textMuted, colors.accent, colors.success],
-    ),
+    stroke: accent,
   }));
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulse.value }],
@@ -814,13 +795,7 @@ export default function PomodoroScreen() {
   const glowStyle = useAnimatedStyle(() => ({
     opacity: glow.value,
     transform: [{ scale: 1 + glow.value * 0.06 }],
-    backgroundColor: interpolateColor(
-      progress.value,
-      mode === 'focus' ? [0, 0.15, 0.33, 0.66, 1] : [0, 0.33, 0.66, 1],
-      mode === 'focus'
-        ? ['rgba(232,72,72,0.22)', 'rgba(232,72,72,0.2)', 'rgba(217,119,69,0.18)', 'rgba(198,163,74,0.16)', 'rgba(78,139,122,0.16)']
-        : ['rgba(6,182,212,0.18)', 'rgba(6,182,212,0.16)', 'rgba(59,130,246,0.16)', 'rgba(78,139,122,0.16)'],
-    ),
+    backgroundColor: `${accent}29`,
   }));
 
   const HeaderRight = (
@@ -845,7 +820,7 @@ export default function PomodoroScreen() {
           >
             <View style={{ paddingVertical: 12, borderRadius: radius.md, alignItems: 'center', backgroundColor: mode === m ? modeColor(m, colors) : 'transparent' }}>
               <Text style={{ color: mode === m ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: fontSizes.small }}>
-                {tt(MODE_META[m].label.split(' ')[0])} · {m === 'focus' && draftTotalSecs ? Math.round(draftTotalSecs / 60) : minutesFor(m)}m
+                {tt(MODE_META[m].label.split(' ')[0])} · {m === mode ? activeFocusMinutes : minutesFor(m)}m
               </Text>
             </View>
           </Pressable>
@@ -1067,8 +1042,9 @@ export default function PomodoroScreen() {
         </GlassPanel>
       )}
 
-      {/* Echo actions sit after the content, not between a summary and the list it summarises. */}
-      <EdgeFeaturePanel
+      {/* Echo actions sit after the content, and only once a session has been
+          done: unstarted, it offered to share "0 focus sessions". */}
+      {(stats.count > 0 || streak > 0) && <EdgeFeaturePanel
         appId="pomodoro"
         appName="Pomodoro"
         accent={accent}
@@ -1083,7 +1059,7 @@ export default function PomodoroScreen() {
         shareText={`Pomodoro: ${stats.count} focus sessions today (${stats.minutes} min), ${streak}-day goal streak.`}
         publishTitle="Focus progress"
         publishBody={`I completed ${stats.count} focus sessions today — ${stats.minutes} minutes of deep work, on a ${streak}-day streak.`}
-      />
+      />}
 
       {showSettings && (
         <SettingsSheet
