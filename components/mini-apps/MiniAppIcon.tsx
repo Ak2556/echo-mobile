@@ -41,6 +41,8 @@ interface MiniAppGlyphProps {
 
 interface MiniAppIconProps extends MiniAppGlyphProps {
   plate?: boolean;
+  /** Pressed or hovered: the tile's colour gets stronger. */
+  active?: boolean;
 }
 
 export function MiniAppGlyph({ id, color, size = 24, weight = 'fill' }: MiniAppGlyphProps) {
@@ -84,7 +86,40 @@ const ICON_ASSETS: Record<string, number> = {
   // …
 };
 
-export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = true }: MiniAppIconProps) {
+/**
+ * Tool colours for the Mono palette: one hue per tool so each keeps an identity,
+ * spaced around the wheel at a similar strength so no tile shouts. No pure red
+ * (likes and delete) and no ember (the logo). Tools not listed keep their
+ * catalog colour.
+ */
+export const TOOL_TINT: Record<string, string> = {
+  tasks: '#5B8DEF',
+  habits: '#3FB37F',
+  fitness: '#2BB3A6',
+  notes: '#E0A63A',
+  pomodoro: '#E8775A',
+  expenses: '#9A7BE8',
+  learn: '#3EA8D8',
+  planner: '#7B83EB',
+  'shopping-list': '#74B84A',
+  studio: '#B07FB0',
+  editor: '#E38B3E',
+  marketplace: '#C99A4E',
+};
+
+/** Mix a hex colour toward black (amount > 0) so a glyph keeps contrast on a light tile. */
+function darken(hex: string, amount: number): string {
+  const n = parseInt(hex.replace('#', '').slice(0, 6), 16);
+  const ch = (v: number) => Math.round(v * (1 - amount)).toString(16).padStart(2, '0');
+  return `#${ch(n >> 16)}${ch((n >> 8) & 255)}${ch(n & 255)}`;
+}
+
+function withAlpha(hex: string, alpha: number): string {
+  const n = parseInt(hex.replace('#', '').slice(0, 6), 16);
+  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = true, active = false }: MiniAppIconProps) {
   const { colors } = useTheme();
   if (!plate) return <MiniAppGlyph id={id} color={color} size={size} weight={weight} />;
 
@@ -95,9 +130,11 @@ export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = tru
   if (asset) {
     return <Image source={asset} style={{ width: size, height: size, borderRadius: radius }} resizeMode="cover" />;
   }
-  // Mono palette (2026-11-28): every tool shares one plate, a raised neutral
-  // tile with the glyph in the text colour. Twelve unrelated bright gradients
-  // made the Tools grid read like a toy box. `color` still tints plate={false}.
+  // Mono palette (2026-11-28): the app is greyscale, tools keep a colour each,
+  // as a coloured glyph on a faint wash of the same colour. Full-colour gradient
+  // tiles made the grid read like a toy box; all-grey tiles read as disabled.
+  const tint = TOOL_TINT[id] ?? color;
+  const glyph = colors.isDark ? tint : darken(tint, 0.28);
   return (
     <View
       style={{
@@ -106,12 +143,12 @@ export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = tru
         borderRadius: radius,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.surfaceHover,
+        backgroundColor: withAlpha(tint, active ? 0.3 : (colors.isDark ? 0.16 : 0.13)),
         borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.border,
+        borderColor: withAlpha(tint, active ? 0.5 : 0.26),
       }}
     >
-      <MiniAppGlyph id={id} color={colors.text} size={Math.round(size * 0.46)} weight={weight} />
+      <MiniAppGlyph id={id} color={glyph} size={Math.round(size * 0.46)} weight={weight} />
     </View>
   );
 }

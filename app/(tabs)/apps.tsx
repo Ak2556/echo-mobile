@@ -84,9 +84,10 @@ function AppCard({ app, width, onOpen }: { app: MiniApp; width: number; onOpen: 
       >
         {/* Layout on an inner View: a style *function* on a Pressable drops its
             padding in Release, which is why the rows had no space between them. */}
-        {({ pressed }) => (
+        {/* `hovered` exists on web and the Mac app (react-native-web); phones only press. */}
+        {({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => (
           <View style={{ width: '100%', alignItems: 'center', gap: 8, paddingTop: 6, paddingBottom: 14, transform: [{ scale: pressed ? 0.92 : 1 }] }}>
-            <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
+            <MiniAppIcon id={app.id} color={app.color} size={iconSize} active={pressed || !!hovered} />
             <Text
               style={{ alignSelf: 'stretch', color: colors.text, fontSize: 13.5, ...font.bodyMedium, textAlign: 'center', lineHeight: 18 }}
               numberOfLines={1}

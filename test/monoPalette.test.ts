@@ -35,10 +35,19 @@ describe('default accent', () => {
 });
 
 describe('Mono surfaces', () => {
-  it('tool icons use one neutral plate, not a per-tool gradient', () => {
+  it('tool icons are a coloured glyph on a faint wash, not a full-colour gradient', () => {
     const icon = read('components/mini-apps/MiniAppIcon.tsx');
     expect(icon).not.toMatch(/LinearGradient/);
-    expect(icon).toMatch(/backgroundColor: colors\.surfaceHover/);
+    expect(icon).toMatch(/backgroundColor: withAlpha\(tint, active \? 0\.3/);
+  });
+
+  it('each main tool has its own hue, none of them red or the logo ember', () => {
+    // Read from source: importing the component pulls the store, which this file mocks.
+    const block = read('components/mini-apps/MiniAppIcon.tsx').split('export const TOOL_TINT')[1].split('};')[0];
+    const hues = [...block.matchAll(/'(#[0-9A-Fa-f]{6})'/g)].map(m => m[1].toUpperCase());
+    expect(hues).toHaveLength(12);
+    expect(new Set(hues).size).toBe(12);
+    for (const h of hues) expect(['#EF4444', '#E06030', '#F0506E']).not.toContain(h);
   });
 
   it('the Daily Question and next-step cards on Home have no orange gradient', () => {
