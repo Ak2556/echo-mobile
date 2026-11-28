@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "echo",
+    "name": "EchoX",
     "slug": "echo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "echo",
+    "scheme": ["echo", "echox"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -16,10 +16,10 @@
         "applinks:downloadecho.com"
       ],
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Echo uses your microphone when you give a voice command, send a voice message, or record a voice memo.",
-        "NSCameraUsageDescription": "Echo uses your camera to take photos for your profile and marketplace listings.",
-        "NSPhotoLibraryUsageDescription": "Echo accesses your photo library so you can upload photos to your profile, marketplace listings, and send images in direct messages.",
-        "NSPhotoLibraryAddUsageDescription": "Echo saves images to your photo library.",
+        "NSMicrophoneUsageDescription": "EchoX uses your microphone when you give a voice command, send a voice message, or record a voice memo.",
+        "NSCameraUsageDescription": "EchoX uses your camera to take photos for your profile and marketplace listings.",
+        "NSPhotoLibraryUsageDescription": "EchoX accesses your photo library so you can upload photos to your profile, marketplace listings, and send images in direct messages.",
+        "NSPhotoLibraryAddUsageDescription": "EchoX saves images to your photo library.",
         "UIBackgroundModes": [
           "audio"
         ]
@@ -103,14 +103,14 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Echo uses your microphone when you give a voice command, send a voice message, or record a voice memo."
+          "microphonePermission": "EchoX uses your microphone when you give a voice command, send a voice message, or record a voice memo."
         }
       ],
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Echo uses your microphone when you give a voice command, send a voice message, or record a voice memo.",
-          "speechRecognitionPermission": "Allow Echo to recognise your speech so commands run instantly on your device.",
+          "microphonePermission": "EchoX uses your microphone when you give a voice command, send a voice message, or record a voice memo.",
+          "speechRecognitionPermission": "Allow EchoX to recognise your speech so commands run instantly on your device.",
           "androidSpeechServicePackages": [
             "com.google.android.googlequicksearchbox"
           ]
@@ -127,8 +127,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Echo to access your photos to share images.",
-          "cameraPermission": "Allow Echo to use your camera to take photos and videos."
+          "photosPermission": "Allow EchoX to access your photos to share images.",
+          "cameraPermission": "Allow EchoX to use your camera to take photos and videos."
         }
       ],
       [

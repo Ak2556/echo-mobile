@@ -109,8 +109,8 @@ class EchoProcessTextActivity : Activity() {
 });
 
 const SHORTCUTS = [
-  { id: 'speak',    url: 'echo:///voice',           short: 'Speak',    long: 'Speak to Echo' },
-  { id: 'compose',  url: 'echo:///create-post',     short: 'New echo', long: 'Write a new echo' },
+  { id: 'speak',    url: 'echo:///voice',           short: 'Speak',    long: 'Speak to EchoX' },
+  { id: 'compose',  url: 'echo:///create-post',     short: 'New post', long: 'Write a new post' },
   { id: 'messages', url: 'echo:///messages',        short: 'Messages', long: 'Open your messages' },
 ];
 
