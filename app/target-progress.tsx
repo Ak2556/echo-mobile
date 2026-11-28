@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { openRoute } from '../lib/routing/openRoute';
 import { ICON_SIZE } from '../lib/ui/icons';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { ChatCircleText, ShareNetwork, Target, UsersThree, SquaresFour , CheckCircle, Barbell, Wallet, ListChecks } from 'phosphor-react-native';
@@ -10,7 +10,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/ui/theme';
 import { useResponsiveLayout } from '../lib/ui/responsive';
 import { useAppStore } from '../store/useAppStore';
-import { getTargetCategory } from '../lib/retention/targetCategories';
+import { TARGET_CATEGORIES, getTargetCategory } from '../lib/retention/targetCategories';
 import { getTodayProductivity, type TodayProductivity } from '../lib/core/localSearch';
 import { buildTargetProgressDigest, type TargetProgressDigest } from '../lib/retention/targetProgress';
 import { fetchCrossAppProgress, type CrossAppProgress } from '../lib/retention/targetProgressRemote';
@@ -26,6 +26,8 @@ export default function TargetProgressScreen() {
   const layout = useResponsiveLayout();
   const targetCategory = useAppStore(s => s.targetCategory);
   const targetOutcome = useAppStore(s => s.targetOutcome);
+  const setTargetCategory = useAppStore(s => s.setTargetCategory);
+  const setTargetOutcome = useAppStore(s => s.setTargetOutcome);
   const category = getTargetCategory(targetCategory);
   const [productivity, setProductivity] = useState<TodayProductivity | null>(null);
   const [cross, setCross] = useState<CrossAppProgress | null>(null);
@@ -84,6 +86,31 @@ export default function TargetProgressScreen() {
               {targetOutcome.trim() || category.outcome}
             </Text>
           </View>
+        </View>
+
+        {/* Choosing the target lives here (moved from the Tools tab, 2026-11-28):
+            Settings and the assistant both open this screen. */}
+        <View style={{ gap: 10 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -layout.gutter, paddingHorizontal: layout.gutter }}>
+            {TARGET_CATEGORIES.map(option => {
+              const active = option.id === category.id;
+              return (
+                <Pressable key={option.id} onPress={() => setTargetCategory(option.id)} accessibilityRole="button" accessibilityState={{ selected: active }}>
+                  <View style={{ height: 34, borderRadius: radius.full, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? colors.accent : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border }}>
+                    <Text style={[font.bodyMedium, { color: active ? colors.onAccent : colors.textSecondary, fontSize: 13 }]}>{ttx(option.label)}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <TextInput
+            value={targetOutcome}
+            onChangeText={setTargetOutcome}
+            placeholder={ttx("What do you want to get done? (optional)")}
+            placeholderTextColor={colors.textMuted}
+            accessibilityLabel={ttx("Your goal in your own words")}
+            style={{ color: colors.text, borderRadius: radius.lg, paddingHorizontal: 15, paddingVertical: 12, backgroundColor: colors.surface, fontSize: 14.5, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
+          />
         </View>
 
         {cross ? (

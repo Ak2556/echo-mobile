@@ -36,6 +36,11 @@ export const TT_PHRASES: Partial<Record<AppLanguageCode, Record<string, string>>
     'Marketplace': 'मार्केटप्लेस', 'No listings yet': 'अभी कोई लिस्टिंग नहीं', 'No listings match': 'कोई लिस्टिंग मेल नहीं खाती',
     'Try another search or category.': 'कोई और खोज या श्रेणी आज़माएं।', 'Be the first to sell something here.': 'यहां सबसे पहले कुछ बेचें।',
     'Latest listings': 'नई लिस्टिंग', 'listing': 'लिस्टिंग', 'listings': 'लिस्टिंग',
+    'What do you want to get done? (optional)': 'आप क्या पूरा करना चाहते हैं? (वैकल्पिक)', 'Your goal in your own words': 'अपने शब्दों में आपका लक्ष्य',
+    'Deep focus': 'गहरा फ़ोकस', 'Weight loss': 'वज़न घटाना', 'Career': 'करियर', 'Exams': 'परीक्षाएं', 'Startup': 'स्टार्टअप', 'Budgeting': 'बजट',
+    'Coding': 'कोडिंग', 'Content': 'कंटेंट', 'Mental health': 'मानसिक स्वास्थ्य', 'Sleep': 'नींद', 'Language': 'भाषा', 'Relationships': 'रिश्ते',
+    'Parenting': 'पेरेंटिंग', 'Creativity': 'रचनात्मकता', 'Cooking': 'खाना बनाना', 'Spirituality': 'आध्यात्म', 'Gaming': 'गेमिंग', 'Sales': 'सेल्स',
+    'Reading': 'पढ़ना', 'Home': 'घर',
     'Back to today': 'आज पर लौटें', 'Nothing planned for this day.': 'इस दिन के लिए कोई प्लान नहीं।',
     "Log a meal to see today's calories and protein.": 'आज की कैलोरी और प्रोटीन देखने के लिए खाना लॉग करें।',
 

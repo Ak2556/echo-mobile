@@ -1,14 +1,12 @@
 import { getCurrencySymbol } from '../../lib/mini-apps/currency';
-import { ICON_SIZE } from '../../lib/ui/icons';
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Platform, Pressable, TextInput, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Platform, Pressable, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Pulse, Target, MagnifyingGlass, CaretRight } from 'phosphor-react-native';
+import { MagnifyingGlass } from 'phosphor-react-native';
 import { useTheme } from '../../lib/ui/theme';
 import { useTracking } from '../../lib/ui/tracking';
 import { noteScroll } from '../../lib/ui/scrollActivity';
@@ -18,8 +16,6 @@ import { MOTION } from '../../lib/ui/motion';
 import { useResponsiveLayout } from '../../lib/ui/responsive';
 import { TabHeader } from '../../components/ui/TabHeader';
 import { SearchBar } from '../../components/feed/SearchBar';
-import { TARGET_CATEGORIES, getTargetCategory } from '../../lib/retention/targetCategories';
-import { useAppStore } from '../../store/useAppStore';
 import { MINI_APP_CATALOG, FLAGSHIP_MINI_APPS, isFlagshipMiniApp, type MiniAppCatalogItem } from '../../lib/mini-apps/miniAppCatalog';
 import { resolveMiniAppId } from '../../lib/mini-apps/miniAppIntegration';
 import { getRecentTools, recordToolOpen } from '../../lib/mini-apps/miniAppRecents';
@@ -29,19 +25,6 @@ import { useI18n, ttx } from '../../lib/i18n/i18n';
 
 const GAP = 12;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
-
-type ToolLane = 'all' | 'master' | 'plan' | 'focus' | 'money' | 'health' | 'capture' | 'utility';
-
-const TOOL_LANES: { id: ToolLane; label: string; apps?: string[] }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'master', label: 'Master', apps: ['learn', 'notes', 'pomodoro', 'tasks'] },
-  { id: 'plan', label: 'Plan', apps: ['learn', 'tasks', 'planner', 'notes', 'habits'] },
-  { id: 'focus', label: 'Focus', apps: ['pomodoro', 'learn', 'tasks', 'habits', 'notes'] },
-  { id: 'money', label: 'Money', apps: ['expenses', 'shopping-list', 'calculator', 'notes'] },
-  { id: 'health', label: 'Health', apps: ['fitness', 'habits', 'planner', 'notes'] },
-  { id: 'capture', label: 'Capture', apps: ['notes', 'voice-memo', 'studio', 'editor', 'markdown', 'tasks'] },
-  { id: 'utility', label: 'Utility', apps: ['calculator', 'world-clock', 'marketplace'] },
-];
 
 type MiniApp = MiniAppCatalogItem;
 const APPS: MiniApp[] = MINI_APP_CATALOG.filter(a => 
@@ -101,7 +84,7 @@ function AppCard({ app, width, onOpen }: { app: MiniApp; width: number; onOpen: 
   );
 }
 
-/** Compact tool chip for the "Jump back in" recents row. */
+/** Compact tool chip for the Recent row. */
 function RecentChip({ app, onOpen }: { app: MiniApp; onOpen: (app: MiniApp) => void }) {
   const { colors, font, radius } = useTheme();
   return (
@@ -143,88 +126,24 @@ function StatChip({ value, label, sub, onPress }: {
   );
 }
 
-function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
-  primary?: MiniApp;
-  targetApps: MiniApp[];
-  targetLabel: string;
-  onOpen: (app: MiniApp) => void;
-}) {
-  const tracking = useTracking();
-  const { colors, font, radius, fontSizes } = useTheme();
-  // Mono: the card no longer takes the tool's own colour.
-  const accent = colors.accent;
-
-  return (
-    <View style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-      <LinearGradient colors={[`${accent}26`, `${colors.accent}0C`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
-      <View style={{ padding: 16, gap: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11.5, ...font.bodyBold, letterSpacing: tracking(1.2), textTransform: 'uppercase' }}>
-              {ttx("Smart start")}
-            </Text>
-            <Text style={{ color: colors.text, fontSize: fontSizes.title, lineHeight: 25, ...font.displayBlack, marginTop: 3 }} numberOfLines={1}>
-              {primary ? ttx('Continue {name}').replace('{name}', ttx(primary.name)) : ttx('Tools for {target}').replace('{target}', targetLabel)}
-            </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={2}>
-              {primary ? ttx('Echo remembers where you left off.') : ttx('A short path based on your current target.')}
-            </Text>
-          </View>
-          {primary ? (
-            <Pressable onPress={() => onOpen(primary)} accessibilityRole="button" accessibilityLabel={ttx('Continue {name}').replace('{name}', ttx(primary.name))} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.95 : 1 }] })}>
-              <MiniAppIcon id={primary.id} color={primary.color} size={52} />
-            </Pressable>
-          ) : (
-            <View style={{ width: 52, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}1F` }}>
-              <Target color={colors.accent} size={25} weight="bold" />
-            </View>
-          )}
-        </View>
-        {targetApps.length > 0 && (
-          // Wrapped, not a sideways scroll: inside the card's padding a scrolling
-          // row was cut mid-chip at the card edge ("N…", iPhone, 2026-11-27).
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {targetApps.slice(0, 4).map(app => (
-              <Pressable key={app.id} onPress={() => onOpen(app)} accessibilityRole="button" accessibilityLabel={ttx('Open {name}').replace('{name}', ttx(app.name))}>
-                <View style={{ height: 38, borderRadius: radius.full, paddingLeft: 6, paddingRight: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-                  <MiniAppIcon id={app.id} color={app.color} size={28} />
-                  <Text style={{ color: colors.text, fontSize: 12.5, ...font.bodySemibold }}>{ttx(app.name)}</Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
-    </View>
-  );
-}
-
 export default function AppsScreen() {
-  const { colors, reduceAnimations, font, radius, fontSizes } = useTheme();
+  const { colors, reduceAnimations, font, fontSizes } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const layout = useResponsiveLayout();
-  const targetCategory = useAppStore(s => s.targetCategory);
-  const targetOutcome = useAppStore(s => s.targetOutcome);
-  const setTargetCategory = useAppStore(s => s.setTargetCategory);
-  const setTargetOutcome = useAppStore(s => s.setTargetOutcome);
   const { width: windowWidth } = useWindowDimensions();
   const [dashboard, setDashboard] = useState<TodayProductivity | null>(null);
   const [recents, setRecents] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<LocalSearchResult[]>([]);
-  const [lane, setLane] = useState<ToolLane>('all');
 
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
-  // Tall enough for both lines the header actually draws. At 70 the sticky
-  // header clipped "12 connected essentials" through the middle, because the
-  // container sets overflow:'hidden' while its content needs roughly 83pt: 10
-  // top padding, a 34pt Fraunces title that lays out near 44, 2 of margin, a
-  // 14pt subtitle near 19, and 8 of bottom padding. The desktop title is 40pt,
-  // so it needs correspondingly more.
-  const HEADER_HEIGHT = insets.top + (layout.isPhone ? 88 : 98);
+  // The header draws the title only: 10 top padding, a 34pt Fraunces title that
+  // lays out near 44, and 8 of bottom padding. The container clips
+  // (overflow:'hidden'), so this must cover the title. Desktop's title is 40pt.
+  const HEADER_HEIGHT = insets.top + (layout.isPhone ? 64 : 74);
   const PAD = layout.gutter;
   const contentMaxWidth = Math.min(windowWidth, layout.isDesktop ? 980 : layout.wideMaxWidth);
   const columns = layout.isDesktop ? 6 : layout.isTablet ? 4 : 3;
@@ -256,7 +175,6 @@ export default function AppsScreen() {
   }, [scrollY]);
 
   const appById = useMemo(() => new Map<string, MiniApp>(APPS.map(app => [app.id, app])), []);
-  const selectedTarget = useMemo(() => getTargetCategory(targetCategory), [targetCategory]);
 
   const openTool = useCallback((app: MiniApp) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -293,41 +211,25 @@ export default function AppsScreen() {
       })
     : [], [q, searching]);
 
-  const laneApps = useMemo(() => {
-    if (lane === 'all') {
-      // Flagship (core daily-loop) apps pinned + highlighted first, in their
-      // canonical order; everything else follows ordered by this user's own
-      // usage (most-recently-opened first), then catalog order as a fallback.
-      const flagship = FLAGSHIP_MINI_APPS
-        .map(id => appById.get(id))
-        .filter((a): a is MiniApp => Boolean(a));
-      // Catalog order, not recency: recents load after the grid draws, so the
-      // tiles moved under the user's finger. "Jump back in" shows recency.
-      const rest = APPS.filter(a => !isFlagshipMiniApp(a.id));
-      return [...flagship, ...rest];
-    }
-    const def = TOOL_LANES.find(l => l.id === lane);
-    if (!def?.apps) return APPS;
-    return def.apps.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a));
-  }, [lane, appById]);
+  // Flagship (core daily-loop) tools first in their canonical order, then the
+  // rest in catalog order. Not recency: recents load after the grid draws, so
+  // tiles moved under the user's finger. The Recent row above shows recency.
+  const gridApps = useMemo(() => {
+    const flagship = FLAGSHIP_MINI_APPS
+      .map(id => appById.get(id))
+      .filter((a): a is MiniApp => Boolean(a));
+    return [...flagship, ...APPS.filter(a => !isFlagshipMiniApp(a.id))];
+  }, [appById]);
 
   const recentApps = useMemo(
-    () => recents.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a)).slice(0, 6),
+    () => recents.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a)).slice(0, 4),
     [recents, appById],
   );
-  const primaryApp = recentApps[0];
-  const targetApps = useMemo(
-    () => selectedTarget.apps
-      .map(id => appById.get(id))
-      .filter((a): a is MiniApp => a !== undefined && a.id !== primaryApp?.id),
-    [selectedTarget.apps, appById, primaryApp?.id],
+  // The Today cards only when one of them has something in it: four zeros say nothing.
+  const hasToday = !!dashboard && (
+    dashboard.tasks.open > 0 || dashboard.planner.total > 0 || dashboard.shopping.remaining > 0
+    || dashboard.expenses.expense > 0 || dashboard.expenses.balance !== 0
   );
-  // "Jump back in" leaves out what the Smart start card above already offers.
-  // Shown in both, Fitness, Pomodoro and Habits sat twice within a screen.
-  const jumpBackApps = useMemo(() => {
-    const shown = new Set([primaryApp?.id, ...targetApps.slice(0, 4).map(a => a.id)]);
-    return recentApps.filter(a => !shown.has(a.id));
-  }, [recentApps, targetApps, primaryApp?.id]);
 
   // One wrapping container, tiles keyed by tool. With a View per row, a tool
   // that changed rows was unmounted and mounted again.
@@ -381,50 +283,26 @@ export default function AppsScreen() {
           </Animated.View>
         ) : (
           /* ── Browse ── */
+          // 2026-11-28 simplify: one Recent row, then every tool. The Smart start
+          // card, a second recents row and the grid showed the same tools three times
+          // before the list began; the lane chips (Master, Plan, …) filtered 12
+          // tools that fit on one screen; the target picker moved to Progress.
           <>
-            <SmartStartCard
-              primary={primaryApp}
-              targetApps={targetApps}
-              targetLabel={selectedTarget.label}
-              onOpen={openTool}
-            />
-
-            {/* Category lanes */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
-              {TOOL_LANES.map(l => {
-                const active = lane === l.id;
-                return (
-                  <Pressable key={l.id} onPress={() => { void Haptics.selectionAsync(); setLane(l.id); }} accessibilityRole="button" accessibilityState={{ selected: active }}>
-                    <View style={{
-                      height: 36, borderRadius: radius.full, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center',
-                      backgroundColor: active ? colors.accent : colors.surface,
-                      borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder,
-                    }}>
-                      <Text style={{ color: active ? colors.onAccent : colors.textSecondary, fontSize: 13.5, fontFamily: active ? 'Inter_600SemiBold' : 'Inter_500Medium' }}>{ttx(l.label)}</Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            {/* Jump back in */}
-            {lane === 'all' && jumpBackApps.length > 0 && (
+            {recentApps.length > 0 && (
               <View>
-                <Eyebrow>{ttx("Jump back in")}</Eyebrow>
+                <Eyebrow>{ttx("Recent")}</Eyebrow>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
-                  {jumpBackApps.map(app => <RecentChip key={app.id} app={app} onOpen={openTool} />)}
+                  {recentApps.map(app => <RecentChip key={app.id} app={app} onOpen={openTool} />)}
                 </ScrollView>
               </View>
             )}
 
-            {/* Tools grid */}
             <View style={{ gap: GAP }}>
-              <Eyebrow>{lane === 'all' ? `${ttx('All tools')} · ${APPS.length}` : `${ttx(TOOL_LANES.find(l => l.id === lane)?.label ?? '')} · ${laneApps.length}`}</Eyebrow>
-              {renderGrid(laneApps)}
+              <Eyebrow>{ttx('All tools')}</Eyebrow>
+              {renderGrid(gridApps)}
             </View>
 
-            {/* Today — condensed live strip */}
-            {dashboard && (
+            {hasToday && dashboard && (
               <View>
                 <Eyebrow>{ttx("Today")}</Eyebrow>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: GAP }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
@@ -435,48 +313,6 @@ export default function AppsScreen() {
                 </ScrollView>
               </View>
             )}
-
-            {/* Target — demoted to a single tappable card */}
-            <View>
-              <Eyebrow>{ttx("Your target")}</Eyebrow>
-              <Pressable onPress={() => router.push('/target-progress' as Href)} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
-                <View style={{ borderRadius: 20, overflow: 'hidden', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 13 }}>
-                  <LinearGradient colors={[`${colors.accent}1F`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
-                  <View style={{ width: 44, height: 44, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}15` }}>
-                    <Target color={colors.accent} size={22} weight="bold" />
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={{ color: colors.text, ...font.bodySemibold, fontSize: 15 }} numberOfLines={1}>{selectedTarget.label}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 1 }} numberOfLines={1}>{targetOutcome.trim() || selectedTarget.outcome}</Text>
-                  </View>
-                  <CaretRight color={colors.textMuted} size={ICON_SIZE.sm} />
-                </View>
-              </Pressable>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
-                {TARGET_CATEGORIES.map(category => {
-                  const active = category.id === selectedTarget.id;
-                  return (
-                    <Pressable key={category.id} onPress={() => setTargetCategory(category.id)} accessibilityRole="button" accessibilityState={{ selected: active }}>
-                      <View style={{ height: 32, borderRadius: radius.full, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border, backgroundColor: active ? `${colors.accent}18` : colors.surface, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ color: active ? colors.accent : colors.textSecondary, ...font.bodyMedium, fontSize: 12.5 }}>{category.label}</Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-              <TextInput
-                value={targetOutcome}
-                onChangeText={setTargetOutcome}
-                placeholder={ttx("Name the output you want…")}
-                placeholderTextColor={colors.textMuted}
-                style={{ color: colors.text, borderRadius: radius.lg, paddingHorizontal: 15, paddingVertical: 12, backgroundColor: colors.surfaceHover, fontSize: 14.5, marginTop: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}
-              />
-            </View>
-
-            <View style={{ alignItems: 'center', paddingVertical: 12, gap: 6 }}>
-              <Pulse color={colors.textMuted} size={22} weight="bold" />
-              <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '500' }}>{ttx("Private · Ready")}</Text>
-            </View>
           </>
         )}
       </ScrollView>
@@ -486,7 +322,7 @@ export default function AppsScreen() {
         {useBlur && <AnimatedBlurView animatedProps={blurAnimatedProps} tint={tint} style={StyleSheet.absoluteFill} />}
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }, headerBgStyle]} />
         <View style={{ width: '100%', maxWidth: contentMaxWidth, alignSelf: 'center', paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
-          <TabHeader title={ttx("Tools")} subtitle={`${APPS.length} ${ttx("connected essentials")}`} />
+          <TabHeader title={ttx("Tools")} />
         </View>
         <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: 'transparent' }, headerBorderStyle]} />
       </View>
