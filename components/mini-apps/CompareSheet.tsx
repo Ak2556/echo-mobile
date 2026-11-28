@@ -1,3 +1,4 @@
+import { SWITCH_THUMB } from '../../lib/ui/fixedColors';
 import React, { useEffect, useState } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { ActivityIndicator, Modal, Pressable, Switch, Text, View } from 'react-native';
@@ -76,7 +77,7 @@ export function CompareSheet({
               <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14 }]}>{ttx("Let your followers see this")}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{ttx("Only your streak numbers. Never your notes or entries.")}</Text>
             </View>
-            <Switch value={sharing} onValueChange={toggleShare} trackColor={{ true: accent, false: colors.border }} thumbColor={sharing ? readableOn(accent) : '#FFFFFF'} />
+            <Switch value={sharing} onValueChange={toggleShare} trackColor={{ true: accent, false: colors.border }} thumbColor={sharing ? readableOn(accent) : SWITCH_THUMB} />
           </View>
 
           {loading ? (

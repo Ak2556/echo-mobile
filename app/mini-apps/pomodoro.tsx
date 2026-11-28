@@ -1,3 +1,4 @@
+import { SWITCH_THUMB } from '../../lib/ui/fixedColors';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { tap } from '../../lib/ui/haptics';
@@ -131,7 +132,7 @@ function SettingsSheet({ settings, onSave, onClose }: {
               <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600' }}>{tt('Auto-start breaks')}</Text>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }}>{tt('Break timer starts the moment focus ends')}</Text>
             </View>
-            <Switch value={s.autoStartBreaks} onValueChange={v => setS({ ...s, autoStartBreaks: v })} trackColor={switchTrack} thumbColor={s.autoStartBreaks ? colors.onAccent : '#FFFFFF'} />
+            <Switch value={s.autoStartBreaks} onValueChange={v => setS({ ...s, autoStartBreaks: v })} trackColor={switchTrack} thumbColor={s.autoStartBreaks ? colors.onAccent : SWITCH_THUMB} />
           </View>
           <AnimatedPressable
             onPress={() => { onSave(s); onClose(); }}

@@ -1,3 +1,4 @@
+import { SWITCH_THUMB } from '../../lib/ui/fixedColors';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ICON_SIZE } from '../../lib/ui/icons';
 import { View, Text, TextInput, Pressable, Modal, StyleSheet, ScrollView, Switch, ActivityIndicator } from 'react-native';
@@ -555,7 +556,7 @@ function ToggleRow({ label, hint, value, onChange }: { label: string; hint?: str
         <Text style={{ color: colors.text, fontSize: fontSizes.label, fontWeight: '600' }}>{label}</Text>
         {hint ? <Text style={{ color: colors.textMuted, fontSize: fontSizes.meta, marginTop: 2 }}>{hint}</Text> : null}
       </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.accent, false: colors.border }} thumbColor={value ? colors.onAccent : '#FFFFFF'} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.accent, false: colors.border }} thumbColor={value ? colors.onAccent : SWITCH_THUMB} />
     </View>
   );
 }
