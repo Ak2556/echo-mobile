@@ -30,6 +30,12 @@ export const TT_PHRASES: Partial<Record<AppLanguageCode, Record<string, string>>
     'Add your first entry with the + button.': '+ बटन से पहली एंट्री जोड़ें।',
     'Daily reminder on': 'रोज़ का रिमाइंडर चालू', 'Daily reminder off': 'रोज़ का रिमाइंडर बंद',
     'Export entries': 'एंट्री एक्सपोर्ट करें', 'Could not export entries': 'एंट्री एक्सपोर्ट नहीं हो सकीं',
+    'Edit a photo or video': 'फ़ोटो या वीडियो एडिट करें', 'Pick one from your gallery, then save it or share it.': 'गैलरी से एक चुनें, फिर सेव या शेयर करें।',
+    'Edit photo': 'फ़ोटो एडिट करें', 'Trim video': 'वीडियो ट्रिम करें', 'Cut the start or end of a video': 'वीडियो का शुरू या आखिरी हिस्सा काटें',
+    'Crop, adjust colour and add filters': 'क्रॉप करें, रंग बदलें और फ़िल्टर लगाएं', 'Editor': 'एडिटर', 'What is it for?': 'यह किस लिए है?',
+    'Marketplace': 'मार्केटप्लेस', 'No listings yet': 'अभी कोई लिस्टिंग नहीं', 'No listings match': 'कोई लिस्टिंग मेल नहीं खाती',
+    'Try another search or category.': 'कोई और खोज या श्रेणी आज़माएं।', 'Be the first to sell something here.': 'यहां सबसे पहले कुछ बेचें।',
+    'Latest listings': 'नई लिस्टिंग', 'listing': 'लिस्टिंग', 'listings': 'लिस्टिंग',
     'Back to today': 'आज पर लौटें', 'Nothing planned for this day.': 'इस दिन के लिए कोई प्लान नहीं।',
     "Log a meal to see today's calories and protein.": 'आज की कैलोरी और प्रोटीन देखने के लिए खाना लॉग करें।',
 

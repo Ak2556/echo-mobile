@@ -49,7 +49,7 @@ function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; 
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 9 }}>
-        {ttx("Capture intent")}
+        {ttx("What is it for?")}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {INTENTS.map(intent => {
@@ -399,11 +399,12 @@ export default function StudioApp() {
           scaleValue={0.96}
           haptic="heavy"
           style={{
-            flex: 1, backgroundColor: colors.danger,
+            // Same colour as Photo: red reads as "recording" or "delete", not "start".
+            flex: 1, backgroundColor: ACCENT,
             borderRadius: radius.xl, paddingVertical: 26,
             alignItems: 'center', justifyContent: 'center',
             flexDirection: 'column', gap: 12,
-            shadowColor: colors.danger, shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 },
+            shadowColor: ACCENT, shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 },
           }}
         >
           <VideoCamera color={colors.bg} size={ICON_SIZE.xl} weight="fill" />

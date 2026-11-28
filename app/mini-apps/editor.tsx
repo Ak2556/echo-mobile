@@ -83,15 +83,15 @@ export default function EditorApp() {
   };
 
   return (
-    <MiniAppShell title="Editor">
+    <MiniAppShell title={ttx("Editor")}>
       <Stack.Screen options={{ title: 'Editor', headerTitleStyle: { fontFamily: font.bodyBold.fontFamily } }} />
       
       <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 16 }}>
         <View style={{ alignItems: 'center', marginBottom: 24 }}>
           <SlidersHorizontal size={48} color={colors.accent} weight="duotone" />
-          <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: 24, color: colors.text, marginTop: 16 }}>{ttx('Full Scale Editor')}</Text>
+          <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: 24, color: colors.text, marginTop: 16 }}>{ttx('Edit a photo or video')}</Text>
           <Text style={{ fontFamily: font.body.fontFamily, fontSize: fontSizes.label, color: colors.textMuted, textAlign: 'center', marginTop: 8 }}>
-            {ttx('Pro-grade image color adjustments and native video trimming suite.')}
+            {ttx('Pick one from your gallery, then save it or share it.')}
           </Text>
         </View>
 
@@ -100,8 +100,8 @@ export default function EditorApp() {
             <ImageSquare size={ICON_SIZE.lg} color={BRAND.ember} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>{ttx('Edit Photo')}</Text>
-            <Text style={{ fontFamily: font.body.fontFamily, fontSize: fontSizes.small, color: colors.textMuted, marginTop: 2 }}>{ttx('Color grading, crop, and filters')}</Text>
+            <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>{ttx('Edit photo')}</Text>
+            <Text style={{ fontFamily: font.body.fontFamily, fontSize: fontSizes.small, color: colors.textMuted, marginTop: 2 }}>{ttx('Crop, adjust colour and add filters')}</Text>
           </View>
         </Pressable>
 
@@ -110,8 +110,8 @@ export default function EditorApp() {
             <VideoCamera size={ICON_SIZE.lg} color={WARM.sage} weight="fill" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>{ttx('Edit Video')}</Text>
-            <Text style={{ fontFamily: font.body.fontFamily, fontSize: fontSizes.small, color: colors.textMuted, marginTop: 2 }}>{ttx('Trim, crop, and apply native effects')}</Text>
+            <Text style={{ fontFamily: font.bodyBold.fontFamily, fontSize: fontSizes.body, color: colors.text }}>{ttx('Trim video')}</Text>
+            <Text style={{ fontFamily: font.body.fontFamily, fontSize: fontSizes.small, color: colors.textMuted, marginTop: 2 }}>{ttx('Cut the start or end of a video')}</Text>
           </View>
         </Pressable>
       </View>

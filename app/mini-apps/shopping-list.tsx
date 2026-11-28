@@ -218,7 +218,7 @@ export default function ShoppingListScreen() {
   };
 
   return (
-    <MiniAppShell title={ttx("Shopping List")} subtitle={ttx("Groceries & errands")} headerRight={<HeaderAddButton onPress={() => { tap('medium'); setIsAdding(true); }} label={ttx("Add item")} />}>
+    <MiniAppShell title={ttx("Shopping")} headerRight={<HeaderAddButton onPress={() => { tap('medium'); setIsAdding(true); }} label={ttx("Add item")} />}>
       
       {/* Header with List Selector */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -233,11 +233,13 @@ export default function ShoppingListScreen() {
         </AnimatedPressable>
       </View>
 
+      {/* Totals, "Clear" and the category filter mean nothing on an empty list. */}
+      {listItems.length > 0 && (<>
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 24 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <View>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>{ttx('Est. Total')}</Text>
-            <Text style={{ color: colors.text, fontSize: 36, fontWeight: '900', marginTop: 4 }}>{cur}{stats.cost.toFixed(2)}</Text>
+            <Text style={{ color: colors.text, fontSize: 36, fontWeight: '900', marginTop: 4 }}>{cur}{stats.cost.toFixed(stats.cost % 1 ? 2 : 0)}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>{ttx('Remaining')}</Text>
@@ -265,6 +267,7 @@ export default function ShoppingListScreen() {
           <MiniChip key={item} accent={accent} label={item} active={filter === item} onPress={() => { tap('selection'); setFilter(item); }} />
         ))}
       </ScrollView>
+      </>)}
 
       <View style={{ gap: 12, paddingBottom: 100 }}>
         {visible.map(item => (
@@ -404,7 +407,7 @@ export default function ShoppingListScreen() {
                   <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>{item.name}</Text>
-                      <Text style={{ fontSize: fontSizes.label, fontWeight: '600', color: colors.textMuted, marginTop: 4 }}>{item.category} • ${item.price.toFixed(2)}</Text>
+                      <Text style={{ fontSize: fontSizes.label, fontWeight: '600', color: colors.textMuted, marginTop: 4 }}>{item.category}</Text>
                     </View>
                     <AnimatedPressable onPress={() => addFrequent(item)} style={{ paddingVertical: 10, paddingHorizontal: 16, backgroundColor: accent, borderRadius: radius.lg }}>
                       <Text style={{ color: colors.bgPure, fontWeight: '800' }}>{ttx('Add')}</Text>
